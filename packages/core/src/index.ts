@@ -6,6 +6,8 @@ export type {
   AgreementEvent,
 } from './types.js'
 
+export { VALID_STATUSES } from './types.js'
+
 export {
   MAX_BPS,
   VIRTUAL_SHARE_OFFSET,

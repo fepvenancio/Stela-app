@@ -19,4 +19,16 @@ COPY apps/bot/ apps/bot/
 # Build
 RUN pnpm turbo build --filter bot
 
+# Production stage — smaller image, no dev deps or source
+FROM node:22-alpine AS production
+WORKDIR /app
+
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/packages/core/dist ./packages/core/dist
+COPY --from=base /app/packages/core/package.json ./packages/core/package.json
+COPY --from=base /app/apps/bot/dist ./apps/bot/dist
+COPY --from=base /app/apps/bot/package.json ./apps/bot/package.json
+COPY --from=base /app/package.json ./package.json
+COPY --from=base /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+
 CMD ["node", "apps/bot/dist/bot.js"]

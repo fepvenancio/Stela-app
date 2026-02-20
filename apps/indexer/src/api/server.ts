@@ -1,4 +1,6 @@
+import crypto from 'node:crypto'
 import express from 'express'
+import type { Request, Response, NextFunction, RequestHandler } from 'express'
 import { db } from '../db/queries.js'
 
 const app = express()
@@ -9,33 +11,69 @@ if (!API_KEY) {
   process.exit(1)
 }
 
-// Reject all requests without a valid API key
+const apiKeyBuffer = Buffer.from(API_KEY)
+
+// Timing-safe API key comparison
 app.use((req, res, next) => {
-  if (req.headers['x-api-key'] !== API_KEY) {
+  const provided = req.headers['x-api-key']
+  if (typeof provided !== 'string') {
+    res.status(401).json({ error: 'unauthorized' })
+    return
+  }
+  const providedBuffer = Buffer.from(provided)
+  if (apiKeyBuffer.length !== providedBuffer.length || !crypto.timingSafeEqual(apiKeyBuffer, providedBuffer)) {
     res.status(401).json({ error: 'unauthorized' })
     return
   }
   next()
 })
 
-app.get('/api/agreements', async (req, res) => {
-  const { status, address, page = '1', limit = '20' } = req.query
-  const agreements = await db.getAgreements({
-    status: status as string | undefined,
-    address: address as string | undefined,
-    page: Number(page),
-    limit: Math.min(Number(limit), 100),
-  })
-  res.json(agreements)
-})
+// Wrap async route handlers to catch errors
+function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>): RequestHandler {
+  return (req, res, next) => {
+    fn(req, res, next).catch(next)
+  }
+}
 
-app.get('/api/agreements/:id', async (req, res) => {
-  const agreement = await db.getAgreement(req.params.id)
+// Input validation
+function clampInt(val: unknown, min: number, max: number, fallback: number): number {
+  const n = Number(val)
+  if (!Number.isFinite(n)) return fallback
+  return Math.max(min, Math.min(max, Math.floor(n)))
+}
+
+const HEX_PATTERN = /^0x[0-9a-fA-F]+$/
+
+app.get('/api/agreements', asyncHandler(async (req, res) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : undefined
+  const address = typeof req.query.address === 'string' && HEX_PATTERN.test(req.query.address)
+    ? req.query.address : undefined
+  const page = clampInt(req.query.page, 1, 1000, 1)
+  const limit = clampInt(req.query.limit, 1, 100, 20)
+
+  const agreements = await db.getAgreements({ status, address, page, limit })
+  res.json(agreements)
+}))
+
+app.get('/api/agreements/:id', asyncHandler(async (req, res) => {
+  const id = String(req.params.id)
+  if (!HEX_PATTERN.test(id)) {
+    res.status(400).json({ error: 'invalid agreement id' })
+    return
+  }
+
+  const agreement = await db.getAgreement(id)
   if (!agreement) {
     res.status(404).json({ error: 'not found' })
     return
   }
   res.json(agreement)
+}))
+
+// Global error handler — never leak internal details
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Unhandled error:', err)
+  res.status(500).json({ error: 'internal server error' })
 })
 
 const port = Number(process.env.PORT ?? 3001)

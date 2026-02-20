@@ -1,12 +1,6 @@
 import { db } from '../db/queries.js'
-import { agreementIdToHex, MAX_BPS } from '@stela/core'
-
-interface StarknetEvent {
-  keys: string[]
-  data: string[]
-  transaction: { hash: string }
-  block: { number: bigint; timestamp: bigint }
-}
+import { agreementIdToHex, fromU256, MAX_BPS } from '@stela/core'
+import type { StarknetEvent } from '../types.js'
 
 export async function handleSigned(event: StarknetEvent) {
   const idLow = BigInt(event.data[0])
@@ -14,9 +8,10 @@ export async function handleSigned(event: StarknetEvent) {
   const agreementId = agreementIdToHex({ low: idLow, high: idHigh })
 
   const lender = event.data[2]
-  const percentageLow = BigInt(event.data[3])
-  const percentageHigh = BigInt(event.data[4])
-  const issuedPercentage = percentageLow + (percentageHigh << 128n)
+  const issuedPercentage = fromU256({
+    low: BigInt(event.data[3]),
+    high: BigInt(event.data[4]),
+  })
 
   const status = issuedPercentage >= MAX_BPS ? 'filled' : 'partial'
 

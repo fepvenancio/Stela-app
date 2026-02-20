@@ -1,6 +1,16 @@
 import pg from 'pg'
+import type { AgreementStatus } from '@stela/core'
+import { VALID_STATUSES } from '@stela/core'
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+
+// Allowlisted columns for agreement upserts — prevents SQL injection
+const AGREEMENT_COLUMNS = new Set([
+  'id', 'creator', 'borrower', 'lender', 'status',
+  'issued_debt_percentage', 'multi_lender', 'duration', 'deadline',
+  'signed_at', 'debt_asset_count', 'interest_asset_count',
+  'collateral_asset_count', 'created_at_block', 'created_at_ts', 'updated_at_ts',
+])
 
 interface GetAgreementsParams {
   status?: string
@@ -9,13 +19,17 @@ interface GetAgreementsParams {
   limit: number
 }
 
+function isValidStatus(s: string): s is AgreementStatus {
+  return (VALID_STATUSES as readonly string[]).includes(s)
+}
+
 export const db = {
   async getAgreements({ status, address, page, limit }: GetAgreementsParams) {
     const conditions: string[] = []
     const params: unknown[] = []
     let idx = 1
 
-    if (status) {
+    if (status && isValidStatus(status)) {
       conditions.push(`status = $${idx++}`)
       params.push(status)
     }
@@ -43,15 +57,25 @@ export const db = {
   },
 
   async upsertAgreement(agreement: Record<string, unknown>) {
-    const keys = Object.keys(agreement)
-    const values = Object.values(agreement)
+    const keys: string[] = []
+    const values: unknown[] = []
+
+    for (const [key, val] of Object.entries(agreement)) {
+      if (!AGREEMENT_COLUMNS.has(key)) continue
+      keys.push(key)
+      values.push(val)
+    }
+
+    if (keys.length === 0 || !keys.includes('id')) return
+
     const placeholders = keys.map((_, i) => `$${i + 1}`)
     const updates = keys
       .filter((k) => k !== 'id')
-      .map((k, i) => `${k} = $${i + 2}`)
+      .map((k) => `"${k}" = EXCLUDED."${k}"`)
 
     await pool.query(
-      `INSERT INTO agreements (${keys.join(', ')}) VALUES (${placeholders.join(', ')})
+      `INSERT INTO agreements (${keys.map((k) => `"${k}"`).join(', ')})
+       VALUES (${placeholders.join(', ')})
        ON CONFLICT (id) DO UPDATE SET ${updates.join(', ')}`,
       values
     )

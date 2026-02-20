@@ -41,3 +41,7 @@ export interface AgreementEvent {
   timestamp: bigint
   data: Record<string, unknown>
 }
+
+export const VALID_STATUSES: readonly AgreementStatus[] = [
+  'open', 'partial', 'filled', 'repaid', 'liquidated', 'expired', 'cancelled',
+] as const

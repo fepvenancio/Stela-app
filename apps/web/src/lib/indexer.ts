@@ -1,15 +1,16 @@
-// Server-side only — calls the indexer API with the secret key.
-// This file must only be imported from API routes / server components.
+import 'server-only'
 
-const INDEXER_URL = process.env.INDEXER_URL
-const INDEXER_API_KEY = process.env.INDEXER_API_KEY
-
-if (!INDEXER_URL || !INDEXER_API_KEY) {
-  console.warn('INDEXER_URL and INDEXER_API_KEY must be set for API proxy routes')
+function getEnv(name: string): string {
+  const val = process.env[name]
+  if (!val) throw new Error(`${name} env var is required`)
+  return val
 }
 
 export async function indexerFetch(path: string): Promise<Response> {
-  return fetch(`${INDEXER_URL}${path}`, {
-    headers: { 'x-api-key': INDEXER_API_KEY! },
+  const baseUrl = getEnv('INDEXER_URL')
+  const apiKey = getEnv('INDEXER_API_KEY')
+  const url = new URL(path, baseUrl)
+  return fetch(url, {
+    headers: { 'x-api-key': apiKey },
   })
 }

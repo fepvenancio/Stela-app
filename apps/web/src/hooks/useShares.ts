@@ -3,14 +3,14 @@
 import { useReadContract, useAccount } from '@starknet-react/core'
 import type { Abi } from 'starknet'
 import abi from '@stela/core/abi/stela.json'
-import { STELA_ADDRESS } from '@stela/core'
+import { CONTRACT_ADDRESS } from '@/lib/config'
 
 export function useShares(agreementId: string) {
   const { address } = useAccount()
 
   return useReadContract({
     abi: abi as Abi,
-    address: STELA_ADDRESS.sepolia,
+    address: CONTRACT_ADDRESS,
     functionName: 'balance_of',
     args: address ? [address, agreementId] : undefined,
     watch: true,

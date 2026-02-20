@@ -1,12 +1,6 @@
 import { db } from '../db/queries.js'
 import { agreementIdToHex } from '@stela/core'
-
-interface StarknetEvent {
-  keys: string[]
-  data: string[]
-  transaction: { hash: string }
-  block: { number: bigint; timestamp: bigint }
-}
+import type { StarknetEvent } from '../types.js'
 
 export async function handleRepaid(event: StarknetEvent) {
   const idLow = BigInt(event.data[0])

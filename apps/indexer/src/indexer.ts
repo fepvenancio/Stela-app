@@ -1,10 +1,13 @@
 import { STELA_ADDRESS } from '@stela/core'
+import type { Network } from '@stela/core'
 import { hash } from 'starknet'
+import type { StarknetEvent } from './types.js'
 import { handleCreated } from './handlers/created.js'
 import { handleSigned } from './handlers/signed.js'
 import { handleRepaid } from './handlers/repaid.js'
 import { handleLiquidated } from './handlers/liquidated.js'
 import { handleRedeemed } from './handlers/redeemed.js'
+import { handleCancelled } from './handlers/cancelled.js'
 
 const SELECTORS = {
   AgreementCreated: hash.getSelectorFromName('AgreementCreated'),
@@ -15,12 +18,7 @@ const SELECTORS = {
   SharesRedeemed: hash.getSelectorFromName('SharesRedeemed'),
 } as const
 
-interface StarknetEvent {
-  keys: string[]
-  data: string[]
-  transaction: { hash: string }
-  block: { number: bigint; timestamp: bigint }
-}
+const network: Network = (process.env.NETWORK as Network) ?? 'sepolia'
 
 // Apibara indexer configuration
 // Requires @apibara/indexer and @apibara/starknet to be properly configured
@@ -32,32 +30,32 @@ export const config = {
   filter: {
     events: [
       {
-        address: STELA_ADDRESS.sepolia,
+        address: STELA_ADDRESS[network],
         keys: Object.values(SELECTORS).map((s) => [s]),
       },
     ],
   },
 }
 
+type Handler = (event: StarknetEvent) => Promise<void>
+
+const HANDLER_MAP: Record<string, Handler> = {
+  [SELECTORS.AgreementCreated]: handleCreated,
+  [SELECTORS.AgreementSigned]: handleSigned,
+  [SELECTORS.AgreementCancelled]: handleCancelled,
+  [SELECTORS.AgreementRepaid]: handleRepaid,
+  [SELECTORS.AgreementLiquidated]: handleLiquidated,
+  [SELECTORS.SharesRedeemed]: handleRedeemed,
+}
+
 export async function transform(events: StarknetEvent[]) {
   for (const event of events) {
-    const selector = event.keys[0]
-    switch (selector) {
-      case SELECTORS.AgreementCreated:
-        await handleCreated(event)
-        break
-      case SELECTORS.AgreementSigned:
-        await handleSigned(event)
-        break
-      case SELECTORS.AgreementRepaid:
-        await handleRepaid(event)
-        break
-      case SELECTORS.AgreementLiquidated:
-        await handleLiquidated(event)
-        break
-      case SELECTORS.SharesRedeemed:
-        await handleRedeemed(event)
-        break
+    const handler = HANDLER_MAP[event.keys[0]]
+    if (!handler) continue
+    try {
+      await handler(event)
+    } catch (err) {
+      console.error(`Error handling event ${event.keys[0]} in tx ${event.transaction.hash}:`, err)
     }
   }
 }

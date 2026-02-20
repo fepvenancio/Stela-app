@@ -1,5 +1,5 @@
 import type { Agreement, AssetType } from '@stela/core'
-import { fromU256 } from './u256'
+import { fromU256 } from '@stela/core'
 
 const ASSET_TYPE_MAP: Record<number, AssetType> = {
   0: 'ERC20',
