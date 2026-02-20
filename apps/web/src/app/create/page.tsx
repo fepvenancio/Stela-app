@@ -1,25 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import type { AssetType } from '@stela/core'
 import { AssetInput } from '@/components/AssetInput'
+import type { AssetInputValue } from '@/components/AssetInput'
 
-interface AssetRow {
-  asset: string
-  asset_type: AssetType
-  value: string
-  token_id: string
-}
-
-const emptyAsset = (): AssetRow => ({
+const emptyAsset = (): AssetInputValue => ({
   asset: '',
   asset_type: 'ERC20',
   value: '',
   token_id: '0',
+  decimals: 18,
 })
 
 const inputBase =
-  'w-full bg-abyss border border-edge rounded-xl px-4 py-2.5 text-sm text-chalk placeholder:text-ash focus:border-star focus:outline-none focus:ring-1 focus:ring-star/30 transition-all'
+  'w-full bg-abyss border border-edge rounded-xl px-4 py-2.5 text-sm text-chalk placeholder:text-dust focus:border-star focus:outline-none focus:ring-1 focus:ring-star/30 transition-all'
 
 function AssetSection({
   title,
@@ -27,8 +21,8 @@ function AssetSection({
   setAssets,
 }: {
   title: string
-  assets: AssetRow[]
-  setAssets: (val: AssetRow[]) => void
+  assets: AssetInputValue[]
+  setAssets: (val: AssetInputValue[]) => void
 }) {
   return (
     <div className="space-y-3">
@@ -70,9 +64,9 @@ function AssetSection({
 export default function CreatePage() {
   const [isBorrow, setIsBorrow] = useState(true)
   const [multiLender, setMultiLender] = useState(false)
-  const [debtAssets, setDebtAssets] = useState<AssetRow[]>([emptyAsset()])
-  const [interestAssets, setInterestAssets] = useState<AssetRow[]>([emptyAsset()])
-  const [collateralAssets, setCollateralAssets] = useState<AssetRow[]>([emptyAsset()])
+  const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([emptyAsset()])
+  const [interestAssets, setInterestAssets] = useState<AssetInputValue[]>([emptyAsset()])
+  const [collateralAssets, setCollateralAssets] = useState<AssetInputValue[]>([emptyAsset()])
   const [duration, setDuration] = useState('')
   const [deadline, setDeadline] = useState('')
 

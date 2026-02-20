@@ -31,6 +31,7 @@ export function useAgreements(params?: { status?: string; address?: string; page
     if (params?.page) searchParams.set('page', String(params.page))
 
     setIsLoading(true)
+    setError(null)
     fetch(`/api/agreements?${searchParams}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -40,7 +41,14 @@ export function useAgreements(params?: { status?: string; address?: string; page
         if (!Array.isArray(json)) throw new Error('Unexpected response format')
         setData(json)
       })
-      .catch(setError)
+      .catch((err: Error) => {
+        // Treat network errors and 5xx as "indexer unavailable" — show empty state
+        if (err.message.match(/fetch|network|HTTP 5/i)) {
+          setData([])
+        } else {
+          setError(err)
+        }
+      })
       .finally(() => setIsLoading(false))
   }, [params?.status, params?.address, params?.page])
 
