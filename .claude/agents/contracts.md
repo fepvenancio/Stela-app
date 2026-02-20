@@ -74,12 +74,12 @@ For `create_inscription`, verify:
 
 | Contract | Address |
 |----------|---------|
-| StelaProtocol | `0x05abdecf7acf10813db62a1b9282ccf07f326b49f6f6c8ef9dd38b33d7c1d8f6` |
-| MockERC20 mUSDC (6 dec) | `0x06c263d4df24f99f43ad6a8126a02c0910960c94751574e6c77300d9c26452a2` |
-| MockERC20 mWETH (18 dec) | `0x00dc7d60021f8a03ede169912e88c4d3f4d0524357721d9088e61f7768952b4d` |
-| MockERC20 mDAI (18 dec) | `0x0264b93b0bb87e8c46350e907c906a5b13d6f36ffccdb7c6e32273e4aa8feefd` |
-| MockERC721 StelaNFT | `0x04e12993ebf74035a597d705dd4bfbc7aa9b6f2a7238376e3729c77f74f7aa35` |
-| MockRegistry | `0x0010919ee5e525a6d5138f8d3c58d95ab1680e9633f6d8c42242157340fbc723` |
+| StelaProtocol | `0x031f738a405157f85e1f20156f3301d15cdaae363d302f4e1f44c49dbc83d437` |
+| MockERC20 mUSDC (6 dec) | `0x034a0cf09c79e7f20fb2136212f27b7dd88e91f9a24b2ac50c5c41ff6b30c59d` |
+| MockERC20 mWETH (18 dec) | `0x07e86764396d61d2179cd1a48033fa4f30897cb172464961a80649aff4da9bdd` |
+| MockERC20 mDAI (18 dec) | `0x0479f31a23241b1337375b083099bd1672716edbf908b1b30148a648657a1cee` |
+| MockERC721 StelaNFT | `0x04f2345306bf8ef1c8c1445661354ef08421aa092459445a5d6b46641237e943` |
+| MockRegistry | `0x0499c5c4929b22fbf1ebd8c500f570b2ec5bd8a43a84ee63e92bf8ac7f9f422b` |
 
 ## Contract Constraints (enforce in off-chain code)
 

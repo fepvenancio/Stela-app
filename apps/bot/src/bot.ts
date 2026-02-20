@@ -27,12 +27,12 @@ const task = cron.schedule('*/2 * * * *', async () => {
 
     console.log(`Found ${candidates.length} candidate(s)`)
 
-    for (const agreement of candidates) {
+    for (const inscription of candidates) {
       try {
-        const txHash = await liquidate(agreement.id)
-        console.log(`Liquidated ${agreement.id}: ${txHash}`)
+        const txHash = await liquidate(inscription.id)
+        console.log(`Liquidated ${inscription.id}: ${txHash}`)
       } catch (err) {
-        console.error(`Failed to liquidate ${agreement.id}:`, err)
+        console.error(`Failed to liquidate ${inscription.id}:`, err)
       }
     }
   } catch (err) {
