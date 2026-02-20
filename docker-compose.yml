@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: stela
+      POSTGRES_PASSWORD: REDACTED
+      POSTGRES_DB: stela
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./apps/indexer/src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+volumes:
+  pgdata:

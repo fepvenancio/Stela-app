@@ -1,0 +1,1186 @@
+[
+  {
+    "type": "impl",
+    "name": "StelaProtocolImpl",
+    "interface_name": "stela::interfaces::istela::IStelaProtocol"
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "stela::types::asset::AssetType",
+    "variants": [
+      {
+        "name": "ERC20",
+        "type": "()"
+      },
+      {
+        "name": "ERC721",
+        "type": "()"
+      },
+      {
+        "name": "ERC1155",
+        "type": "()"
+      },
+      {
+        "name": "ERC4626",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "stela::types::asset::Asset",
+    "members": [
+      {
+        "name": "asset",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "asset_type",
+        "type": "stela::types::asset::AssetType"
+      },
+      {
+        "name": "value",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "token_id",
+        "type": "core::integer::u256"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "stela::types::agreement::AgreementParams",
+    "members": [
+      {
+        "name": "is_borrow",
+        "type": "core::bool"
+      },
+      {
+        "name": "debt_assets",
+        "type": "core::array::Array::<stela::types::asset::Asset>"
+      },
+      {
+        "name": "interest_assets",
+        "type": "core::array::Array::<stela::types::asset::Asset>"
+      },
+      {
+        "name": "collateral_assets",
+        "type": "core::array::Array::<stela::types::asset::Asset>"
+      },
+      {
+        "name": "duration",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "deadline",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "multi_lender",
+        "type": "core::bool"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "stela::types::agreement::StoredAgreement",
+    "members": [
+      {
+        "name": "borrower",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "lender",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "duration",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "deadline",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "signed_at",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "issued_debt_percentage",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "is_repaid",
+        "type": "core::bool"
+      },
+      {
+        "name": "liquidated",
+        "type": "core::bool"
+      },
+      {
+        "name": "multi_lender",
+        "type": "core::bool"
+      },
+      {
+        "name": "debt_asset_count",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "interest_asset_count",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "collateral_asset_count",
+        "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "stela::interfaces::istela::IStelaProtocol",
+    "items": [
+      {
+        "type": "function",
+        "name": "create_agreement",
+        "inputs": [
+          {
+            "name": "params",
+            "type": "stela::types::agreement::AgreementParams"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "sign_agreement",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "issued_debt_percentage",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "cancel_agreement",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "repay",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "liquidate",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "redeem",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "shares",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_agreement",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "stela::types::agreement::StoredAgreement"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_locker",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "convert_to_shares",
+        "inputs": [
+          {
+            "name": "agreement_id",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "issued_debt_percentage",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_agreement_fee",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_agreement_fee",
+        "inputs": [
+          {
+            "name": "fee",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_treasury",
+        "inputs": [
+          {
+            "name": "treasury",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_registry",
+        "inputs": [
+          {
+            "name": "registry",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_agreements_nft",
+        "inputs": [
+          {
+            "name": "agreements_nft",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "ERC1155MixinImpl",
+    "interface_name": "openzeppelin_interfaces::token::erc1155::ERC1155ABI"
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::starknet::contract_address::ContractAddress>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::starknet::contract_address::ContractAddress>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::integer::u256>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::integer::u256>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::felt252>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::felt252>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      {
+        "name": "pending_word",
+        "type": "core::felt252"
+      },
+      {
+        "name": "pending_word_len",
+        "type": "core::internal::bounded_int::BoundedInt::<0, 30>"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "openzeppelin_interfaces::token::erc1155::ERC1155ABI",
+    "items": [
+      {
+        "type": "function",
+        "name": "balance_of",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "token_id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "balance_of_batch",
+        "inputs": [
+          {
+            "name": "accounts",
+            "type": "core::array::Span::<core::starknet::contract_address::ContractAddress>"
+          },
+          {
+            "name": "token_ids",
+            "type": "core::array::Span::<core::integer::u256>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Span::<core::integer::u256>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "safe_transfer_from",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "to",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "token_id",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "value",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "data",
+            "type": "core::array::Span::<core::felt252>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "safe_batch_transfer_from",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "to",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "token_ids",
+            "type": "core::array::Span::<core::integer::u256>"
+          },
+          {
+            "name": "values",
+            "type": "core::array::Span::<core::integer::u256>"
+          },
+          {
+            "name": "data",
+            "type": "core::array::Span::<core::felt252>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "is_approved_for_all",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "operator",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_approval_for_all",
+        "inputs": [
+          {
+            "name": "operator",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "approved",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "supports_interface",
+        "inputs": [
+          {
+            "name": "interface_id",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "uri",
+        "inputs": [
+          {
+            "name": "token_id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "balanceOf",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "tokenId",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "balanceOfBatch",
+        "inputs": [
+          {
+            "name": "accounts",
+            "type": "core::array::Span::<core::starknet::contract_address::ContractAddress>"
+          },
+          {
+            "name": "tokenIds",
+            "type": "core::array::Span::<core::integer::u256>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Span::<core::integer::u256>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "safeTransferFrom",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "to",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "tokenId",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "value",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "data",
+            "type": "core::array::Span::<core::felt252>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "safeBatchTransferFrom",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "to",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "tokenIds",
+            "type": "core::array::Span::<core::integer::u256>"
+          },
+          {
+            "name": "values",
+            "type": "core::array::Span::<core::integer::u256>"
+          },
+          {
+            "name": "data",
+            "type": "core::array::Span::<core::felt252>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "isApprovedForAll",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "operator",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "setApprovalForAll",
+        "inputs": [
+          {
+            "name": "operator",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "approved",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "OwnableMixinImpl",
+    "interface_name": "openzeppelin_interfaces::access::ownable::OwnableABI"
+  },
+  {
+    "type": "interface",
+    "name": "openzeppelin_interfaces::access::ownable::OwnableABI",
+    "items": [
+      {
+        "type": "function",
+        "name": "owner",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "transfer_ownership",
+        "inputs": [
+          {
+            "name": "new_owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "renounce_ownership",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "transferOwnership",
+        "inputs": [
+          {
+            "name": "newOwner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "renounceOwnership",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "treasury",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "agreements_nft",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "registry",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "implementation_hash",
+        "type": "core::felt252"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_token::erc1155::erc1155::ERC1155Component::TransferSingle",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "operator",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "from",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "to",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "id",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "value",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_token::erc1155::erc1155::ERC1155Component::TransferBatch",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "operator",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "from",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "to",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "ids",
+        "type": "core::array::Span::<core::integer::u256>",
+        "kind": "data"
+      },
+      {
+        "name": "values",
+        "type": "core::array::Span::<core::integer::u256>",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_token::erc1155::erc1155::ERC1155Component::ApprovalForAll",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "operator",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "approved",
+        "type": "core::bool",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_token::erc1155::erc1155::ERC1155Component::URI",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "value",
+        "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      },
+      {
+        "name": "id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_token::erc1155::erc1155::ERC1155Component::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "TransferSingle",
+        "type": "openzeppelin_token::erc1155::erc1155::ERC1155Component::TransferSingle",
+        "kind": "nested"
+      },
+      {
+        "name": "TransferBatch",
+        "type": "openzeppelin_token::erc1155::erc1155::ERC1155Component::TransferBatch",
+        "kind": "nested"
+      },
+      {
+        "name": "ApprovalForAll",
+        "type": "openzeppelin_token::erc1155::erc1155::ERC1155Component::ApprovalForAll",
+        "kind": "nested"
+      },
+      {
+        "name": "URI",
+        "type": "openzeppelin_token::erc1155::erc1155::ERC1155Component::URI",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "OwnershipTransferred",
+        "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
+        "kind": "nested"
+      },
+      {
+        "name": "OwnershipTransferStarted",
+        "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_introspection::src5::SRC5Component::Event",
+    "kind": "enum",
+    "variants": []
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_security::reentrancyguard::ReentrancyGuardComponent::Event",
+    "kind": "enum",
+    "variants": []
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::AgreementCreated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "agreement_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "creator",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "is_borrow",
+        "type": "core::bool",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::AgreementSigned",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "agreement_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "borrower",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "lender",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "issued_debt_percentage",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "shares_minted",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::AgreementCancelled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "agreement_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "creator",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::AgreementRepaid",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "agreement_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "repayer",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::AgreementLiquidated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "agreement_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "liquidator",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::SharesRedeemed",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "agreement_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "redeemer",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "shares",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "ERC1155Event",
+        "type": "openzeppelin_token::erc1155::erc1155::ERC1155Component::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "OwnableEvent",
+        "type": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "SRC5Event",
+        "type": "openzeppelin_introspection::src5::SRC5Component::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "ReentrancyGuardEvent",
+        "type": "openzeppelin_security::reentrancyguard::ReentrancyGuardComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "AgreementCreated",
+        "type": "stela::stela::StelaProtocol::AgreementCreated",
+        "kind": "nested"
+      },
+      {
+        "name": "AgreementSigned",
+        "type": "stela::stela::StelaProtocol::AgreementSigned",
+        "kind": "nested"
+      },
+      {
+        "name": "AgreementCancelled",
+        "type": "stela::stela::StelaProtocol::AgreementCancelled",
+        "kind": "nested"
+      },
+      {
+        "name": "AgreementRepaid",
+        "type": "stela::stela::StelaProtocol::AgreementRepaid",
+        "kind": "nested"
+      },
+      {
+        "name": "AgreementLiquidated",
+        "type": "stela::stela::StelaProtocol::AgreementLiquidated",
+        "kind": "nested"
+      },
+      {
+        "name": "SharesRedeemed",
+        "type": "stela::stela::StelaProtocol::SharesRedeemed",
+        "kind": "nested"
+      }
+    ]
+  }
+]
