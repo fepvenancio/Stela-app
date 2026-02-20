@@ -2,7 +2,12 @@ import pg from 'pg'
 import type { AgreementStatus } from '@stela/core'
 import { VALID_STATUSES } from '@stela/core'
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
+})
 
 // Allowlisted columns for agreement upserts — prevents SQL injection
 const AGREEMENT_COLUMNS = new Set([

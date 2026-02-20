@@ -32,8 +32,14 @@ export function useAgreements(params?: { status?: string; address?: string; page
 
     setIsLoading(true)
     fetch(`/api/agreements?${searchParams}`)
-      .then((res) => res.json())
-      .then(setData)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
+      .then((json) => {
+        if (!Array.isArray(json)) throw new Error('Unexpected response format')
+        setData(json)
+      })
       .catch(setError)
       .finally(() => setIsLoading(false))
   }, [params?.status, params?.address, params?.page])

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { indexerFetch } from '@/lib/indexer'
 
-const HEX_PATTERN = /^0x[0-9a-fA-F]+$/
+const HEX_PATTERN = /^0x[0-9a-fA-F]{1,64}$/
 
 export async function GET(
   _request: NextRequest,

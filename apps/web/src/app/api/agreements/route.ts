@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { indexerFetch } from '@/lib/indexer'
 import { VALID_STATUSES } from '@stela/core'
 
-const HEX_PATTERN = /^0x[0-9a-fA-F]+$/
+const HEX_PATTERN = /^0x[0-9a-fA-F]{1,64}$/
 const ALLOWED_PARAMS = new Set(['status', 'address', 'page', 'limit'])
 
 export async function GET(request: NextRequest) {

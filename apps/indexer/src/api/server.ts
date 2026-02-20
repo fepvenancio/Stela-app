@@ -42,7 +42,7 @@ function clampInt(val: unknown, min: number, max: number, fallback: number): num
   return Math.max(min, Math.min(max, Math.floor(n)))
 }
 
-const HEX_PATTERN = /^0x[0-9a-fA-F]+$/
+const HEX_PATTERN = /^0x[0-9a-fA-F]{1,64}$/
 
 app.get('/api/agreements', asyncHandler(async (req, res) => {
   const status = typeof req.query.status === 'string' ? req.query.status : undefined
@@ -77,6 +77,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 })
 
 const port = Number(process.env.PORT ?? 3001)
-app.listen(port, () => {
-  console.log(`Indexer API running on port ${port}`)
+const host = process.env.HOST ?? '127.0.0.1'
+app.listen(port, host, () => {
+  console.log(`Indexer API running on ${host}:${port}`)
 })

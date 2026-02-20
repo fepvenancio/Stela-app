@@ -1,5 +1,4 @@
-import { STELA_ADDRESS } from '@stela/core'
-import type { Network } from '@stela/core'
+import { STELA_ADDRESS, resolveNetwork } from '@stela/core'
 import { hash } from 'starknet'
 import type { StarknetEvent } from './types.js'
 import { handleCreated } from './handlers/created.js'
@@ -18,7 +17,7 @@ const SELECTORS = {
   SharesRedeemed: hash.getSelectorFromName('SharesRedeemed'),
 } as const
 
-const network: Network = (process.env.NETWORK as Network) ?? 'sepolia'
+const network = resolveNetwork(process.env.NETWORK)
 
 // Apibara indexer configuration
 // Requires @apibara/indexer and @apibara/starknet to be properly configured

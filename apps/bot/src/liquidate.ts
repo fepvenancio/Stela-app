@@ -1,9 +1,11 @@
 import { Account, RpcProvider } from 'starknet'
 import { toU256 } from '@stela/core'
-import { CONTRACT_ADDRESS, RPC_URL, BOT_ADDRESS, BOT_PRIVATE_KEY, TX_TIMEOUT_MS } from './config.js'
+import { CONTRACT_ADDRESS, RPC_URL, BOT_ADDRESS, TX_TIMEOUT_MS } from './config.js'
 
 const provider = new RpcProvider({ nodeUrl: RPC_URL })
-const account = new Account(provider, BOT_ADDRESS, BOT_PRIVATE_KEY)
+
+// Read private key directly — never exported as a module constant
+const account = new Account(provider, BOT_ADDRESS, process.env.BOT_PRIVATE_KEY!)
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
