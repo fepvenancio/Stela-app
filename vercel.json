@@ -1,9 +1,6 @@
 {
-  "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
-  "builds": [
-    {
-      "src": "apps/web/package.json",
-      "use": "@vercel/next"
-    }
-  ]
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm --filter web build",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
 }
