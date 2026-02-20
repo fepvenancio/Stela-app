@@ -20,7 +20,7 @@ function getContract(): Contract {
   return contract
 }
 
-interface OnChainAgreement {
+interface OnChainInscription {
   multi_lender: boolean
   duration: bigint
   deadline: bigint
@@ -30,16 +30,16 @@ interface OnChainAgreement {
 }
 
 /**
- * Fetch agreement details from the contract via RPC.
- * Used by handleCreated since the AgreementCreated event
- * only emits agreement_id, creator, and is_borrow.
+ * Fetch inscription details from the contract via RPC.
+ * Used by handleCreated since the InscriptionCreated event
+ * only emits inscription_id, creator, and is_borrow.
  */
-export async function fetchAgreementFromContract(
-  agreementId: string
-): Promise<OnChainAgreement | null> {
+export async function fetchInscriptionFromContract(
+  inscriptionId: string
+): Promise<OnChainInscription | null> {
   try {
     const c = getContract()
-    const result = await c.call('get_agreement', [agreementId])
+    const result = await c.call('get_inscription', [inscriptionId])
 
     // starknet.js decodes struct fields based on the ABI
     const r = result as Record<string, unknown>
@@ -53,7 +53,7 @@ export async function fetchAgreementFromContract(
       collateral_asset_count: Number(r.collateral_asset_count),
     }
   } catch (err) {
-    console.error(`Failed to fetch agreement ${agreementId} from contract:`, err)
+    console.error(`Failed to fetch inscription ${inscriptionId} from contract:`, err)
     return null
   }
 }

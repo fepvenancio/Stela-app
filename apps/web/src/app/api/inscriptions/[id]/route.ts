@@ -10,11 +10,11 @@ export async function GET(
   const { id } = await params
 
   if (!HEX_PATTERN.test(id)) {
-    return NextResponse.json({ error: 'invalid agreement id' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid inscription id' }, { status: 400 })
   }
 
   try {
-    const res = await indexerFetch(`/api/agreements/${encodeURIComponent(id)}`)
+    const res = await indexerFetch(`/api/inscriptions/${encodeURIComponent(id)}`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch {

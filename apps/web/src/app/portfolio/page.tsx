@@ -1,12 +1,12 @@
 'use client'
 
 import { useAccount } from '@starknet-react/core'
-import { useAgreements } from '@/hooks/useAgreements'
-import { AgreementCard } from '@/components/AgreementCard'
+import { useInscriptions } from '@/hooks/useInscriptions'
+import { InscriptionCard } from '@/components/InscriptionCard'
 
 export default function PortfolioPage() {
   const { address } = useAccount()
-  const { data, isLoading, error } = useAgreements(
+  const { data, isLoading, error } = useInscriptions(
     address ? { address } : undefined
   )
 
@@ -56,7 +56,7 @@ export default function PortfolioPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {data.map((a, i) => (
             <div key={a.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-              <AgreementCard
+              <InscriptionCard
                 id={a.id}
                 status={a.status}
                 creator={a.creator}
@@ -79,7 +79,7 @@ export default function PortfolioPage() {
             </svg>
           </div>
           <p className="text-dust text-sm">No positions yet</p>
-          <p className="text-ash text-xs mt-1">Create or sign an agreement to get started</p>
+          <p className="text-ash text-xs mt-1">Create or sign an inscription to get started</p>
         </div>
       )}
     </div>

@@ -16,5 +16,5 @@ export const fromU256 = (u: { low: bigint; high: bigint }): bigint => {
   return uint256.uint256ToBN(u)
 }
 
-export const agreementIdToHex = (u: { low: bigint; high: bigint }): string =>
+export const inscriptionIdToHex = (u: { low: bigint; high: bigint }): string =>
   '0x' + fromU256(u).toString(16).padStart(64, '0')

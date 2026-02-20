@@ -75,10 +75,10 @@ export default function CreatePage() {
       {/* Header */}
       <div className="mb-10">
         <h1 className="font-display text-3xl tracking-wide text-chalk mb-3">
-          Create Agreement
+          Create Inscription
         </h1>
         <p className="text-dust leading-relaxed">
-          Define the terms of your lending agreement on StarkNet.
+          Define the terms of your lending inscription on StarkNet.
         </p>
       </div>
 
@@ -176,7 +176,7 @@ export default function CreatePage() {
           type="button"
           className="w-full py-3.5 rounded-xl text-sm font-semibold bg-gradient-to-b from-star to-star-dim text-void hover:from-star-bright hover:to-star transition-all duration-200 shadow-[0_0_30px_-5px_rgba(232,168,37,0.3)] hover:shadow-[0_0_40px_-5px_rgba(232,168,37,0.45)]"
         >
-          Create Agreement
+          Create Inscription
         </button>
       </div>
     </div>

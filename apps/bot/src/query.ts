@@ -3,7 +3,7 @@ import { pool } from './db.js'
 export async function findLiquidatable(nowSeconds: number) {
   const result = await pool.query(
     `SELECT id
-     FROM agreements
+     FROM inscriptions
      WHERE status = 'filled'
        AND signed_at IS NOT NULL
        AND (signed_at + duration) < $1

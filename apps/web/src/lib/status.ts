@@ -1,7 +1,7 @@
-import type { Agreement, AgreementStatus } from '@stela/core'
+import type { Inscription, InscriptionStatus } from '@stela/core'
 import { MAX_BPS } from '@stela/core'
 
-export function computeStatus(a: Agreement): AgreementStatus {
+export function computeStatus(a: Inscription): InscriptionStatus {
   if (a.is_repaid) return 'repaid'
   if (a.liquidated) return 'liquidated'
   if (a.issued_debt_percentage === 0n) return 'open'

@@ -1,6 +1,6 @@
 export type AssetType = 'ERC20' | 'ERC721' | 'ERC1155' | 'ERC4626'
 
-export type AgreementStatus =
+export type InscriptionStatus =
   | 'open'
   | 'partial'
   | 'filled'
@@ -16,7 +16,7 @@ export interface Asset {
   token_id: bigint
 }
 
-export interface Agreement {
+export interface Inscription {
   id: string
   borrower: string
   lender: string
@@ -30,11 +30,11 @@ export interface Agreement {
   debt_asset_count: number
   interest_asset_count: number
   collateral_asset_count: number
-  status: AgreementStatus
+  status: InscriptionStatus
 }
 
-export interface AgreementEvent {
-  agreement_id: string
+export interface InscriptionEvent {
+  inscription_id: string
   event_type: 'created' | 'signed' | 'cancelled' | 'repaid' | 'liquidated' | 'redeemed'
   tx_hash: string
   block_number: bigint
@@ -42,6 +42,6 @@ export interface AgreementEvent {
   data: Record<string, unknown>
 }
 
-export const VALID_STATUSES: readonly AgreementStatus[] = [
+export const VALID_STATUSES: readonly InscriptionStatus[] = [
   'open', 'partial', 'filled', 'repaid', 'liquidated', 'expired', 'cancelled',
 ] as const

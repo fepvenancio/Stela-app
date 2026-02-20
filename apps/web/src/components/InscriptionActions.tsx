@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import type { AgreementStatus } from '@stela/core'
+import type { InscriptionStatus } from '@stela/core'
 
-interface AgreementActionsProps {
-  agreementId: string
-  status: AgreementStatus
+interface InscriptionActionsProps {
+  inscriptionId: string
+  status: InscriptionStatus
   isOwner: boolean
   hasShares: boolean
 }
 
-export function AgreementActions({ agreementId, status, isOwner, hasShares }: AgreementActionsProps) {
+export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }: InscriptionActionsProps) {
   const [percentage, setPercentage] = useState('')
 
   if (status === 'open' || status === 'partial') {
@@ -20,7 +20,7 @@ export function AgreementActions({ agreementId, status, isOwner, hasShares }: Ag
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            // Wire to useSign(agreementId, BigInt(percentage))
+            // Wire to useSign(inscriptionId, BigInt(percentage))
           }}
           className="flex gap-3"
         >
@@ -52,9 +52,9 @@ export function AgreementActions({ agreementId, status, isOwner, hasShares }: Ag
   if (status === 'filled' && isOwner) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-dust">This agreement is fully signed. Repay to release your collateral.</p>
+        <p className="text-sm text-dust">This inscription is fully signed. Repay to release your collateral.</p>
         <button className="px-6 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-b from-aurora to-aurora/80 text-void hover:shadow-[0_0_20px_-5px_rgba(45,212,191,0.35)] transition-all duration-200">
-          Repay Agreement
+          Repay Inscription
         </button>
       </div>
     )
@@ -63,7 +63,7 @@ export function AgreementActions({ agreementId, status, isOwner, hasShares }: Ag
   if (status === 'expired') {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-dust">This agreement has expired without repayment. Liquidate to claim collateral.</p>
+        <p className="text-sm text-dust">This inscription has expired without repayment. Liquidate to claim collateral.</p>
         <button className="px-6 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-b from-nova to-nova/80 text-white hover:shadow-[0_0_20px_-5px_rgba(240,101,101,0.35)] transition-all duration-200">
           Liquidate
         </button>
@@ -75,7 +75,7 @@ export function AgreementActions({ agreementId, status, isOwner, hasShares }: Ag
     return (
       <div className="space-y-3">
         <p className="text-sm text-dust">
-          {status === 'repaid' ? 'Agreement repaid. Redeem your shares for the interest.' : 'Agreement liquidated. Redeem your shares for the collateral.'}
+          {status === 'repaid' ? 'Inscription repaid. Redeem your shares for the interest.' : 'Inscription liquidated. Redeem your shares for the collateral.'}
         </p>
         <button className="px-6 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-b from-cosmic to-cosmic/80 text-white hover:shadow-[0_0_20px_-5px_rgba(167,139,250,0.35)] transition-all duration-200">
           Redeem Shares
@@ -84,5 +84,5 @@ export function AgreementActions({ agreementId, status, isOwner, hasShares }: Ag
     )
   }
 
-  return <p className="text-sm text-ash">No actions available for this agreement.</p>
+  return <p className="text-sm text-ash">No actions available for this inscription.</p>
 }

@@ -2,7 +2,7 @@ export const MAX_BPS = 10_000n
 export const VIRTUAL_SHARE_OFFSET = 10_000_000_000_000_000n // 1e16
 
 export const STELA_ADDRESS = {
-  sepolia: '0x0',
+  sepolia: '0x05abdecf7acf10813db62a1b9282ccf07f326b49f6f6c8ef9dd38b33d7c1d8f6',
   mainnet: '0x0',
 } as const
 

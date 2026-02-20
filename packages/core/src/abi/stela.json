@@ -78,7 +78,7 @@
   },
   {
     "type": "struct",
-    "name": "stela::types::agreement::AgreementParams",
+    "name": "stela::types::inscription::InscriptionParams",
     "members": [
       {
         "name": "is_borrow",
@@ -112,7 +112,7 @@
   },
   {
     "type": "struct",
-    "name": "stela::types::agreement::StoredAgreement",
+    "name": "stela::types::inscription::StoredInscription",
     "members": [
       {
         "name": "borrower",
@@ -170,11 +170,11 @@
     "items": [
       {
         "type": "function",
-        "name": "create_agreement",
+        "name": "create_inscription",
         "inputs": [
           {
             "name": "params",
-            "type": "stela::types::agreement::AgreementParams"
+            "type": "stela::types::inscription::InscriptionParams"
           }
         ],
         "outputs": [
@@ -186,10 +186,10 @@
       },
       {
         "type": "function",
-        "name": "sign_agreement",
+        "name": "sign_inscription",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           },
           {
@@ -202,10 +202,10 @@
       },
       {
         "type": "function",
-        "name": "cancel_agreement",
+        "name": "cancel_inscription",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           }
         ],
@@ -217,7 +217,7 @@
         "name": "repay",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           }
         ],
@@ -229,7 +229,7 @@
         "name": "liquidate",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           }
         ],
@@ -241,7 +241,7 @@
         "name": "redeem",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           },
           {
@@ -254,16 +254,16 @@
       },
       {
         "type": "function",
-        "name": "get_agreement",
+        "name": "get_inscription",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           }
         ],
         "outputs": [
           {
-            "type": "stela::types::agreement::StoredAgreement"
+            "type": "stela::types::inscription::StoredInscription"
           }
         ],
         "state_mutability": "view"
@@ -273,7 +273,7 @@
         "name": "get_locker",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           }
         ],
@@ -289,7 +289,7 @@
         "name": "convert_to_shares",
         "inputs": [
           {
-            "name": "agreement_id",
+            "name": "inscription_id",
             "type": "core::integer::u256"
           },
           {
@@ -306,7 +306,7 @@
       },
       {
         "type": "function",
-        "name": "get_agreement_fee",
+        "name": "get_inscription_fee",
         "inputs": [],
         "outputs": [
           {
@@ -317,7 +317,7 @@
       },
       {
         "type": "function",
-        "name": "set_agreement_fee",
+        "name": "set_inscription_fee",
         "inputs": [
           {
             "name": "fee",
@@ -353,10 +353,10 @@
       },
       {
         "type": "function",
-        "name": "set_agreements_nft",
+        "name": "set_inscriptions_nft",
         "inputs": [
           {
-            "name": "agreements_nft",
+            "name": "inscriptions_nft",
             "type": "core::starknet::contract_address::ContractAddress"
           }
         ],
@@ -793,7 +793,7 @@
         "type": "core::starknet::contract_address::ContractAddress"
       },
       {
-        "name": "agreements_nft",
+        "name": "inscriptions_nft",
         "type": "core::starknet::contract_address::ContractAddress"
       },
       {
@@ -1001,11 +1001,11 @@
   },
   {
     "type": "event",
-    "name": "stela::stela::StelaProtocol::AgreementCreated",
+    "name": "stela::stela::StelaProtocol::InscriptionCreated",
     "kind": "struct",
     "members": [
       {
-        "name": "agreement_id",
+        "name": "inscription_id",
         "type": "core::integer::u256",
         "kind": "key"
       },
@@ -1023,11 +1023,11 @@
   },
   {
     "type": "event",
-    "name": "stela::stela::StelaProtocol::AgreementSigned",
+    "name": "stela::stela::StelaProtocol::InscriptionSigned",
     "kind": "struct",
     "members": [
       {
-        "name": "agreement_id",
+        "name": "inscription_id",
         "type": "core::integer::u256",
         "kind": "key"
       },
@@ -1055,11 +1055,11 @@
   },
   {
     "type": "event",
-    "name": "stela::stela::StelaProtocol::AgreementCancelled",
+    "name": "stela::stela::StelaProtocol::InscriptionCancelled",
     "kind": "struct",
     "members": [
       {
-        "name": "agreement_id",
+        "name": "inscription_id",
         "type": "core::integer::u256",
         "kind": "key"
       },
@@ -1072,11 +1072,11 @@
   },
   {
     "type": "event",
-    "name": "stela::stela::StelaProtocol::AgreementRepaid",
+    "name": "stela::stela::StelaProtocol::InscriptionRepaid",
     "kind": "struct",
     "members": [
       {
-        "name": "agreement_id",
+        "name": "inscription_id",
         "type": "core::integer::u256",
         "kind": "key"
       },
@@ -1089,11 +1089,11 @@
   },
   {
     "type": "event",
-    "name": "stela::stela::StelaProtocol::AgreementLiquidated",
+    "name": "stela::stela::StelaProtocol::InscriptionLiquidated",
     "kind": "struct",
     "members": [
       {
-        "name": "agreement_id",
+        "name": "inscription_id",
         "type": "core::integer::u256",
         "kind": "key"
       },
@@ -1110,7 +1110,7 @@
     "kind": "struct",
     "members": [
       {
-        "name": "agreement_id",
+        "name": "inscription_id",
         "type": "core::integer::u256",
         "kind": "key"
       },
@@ -1152,28 +1152,28 @@
         "kind": "flat"
       },
       {
-        "name": "AgreementCreated",
-        "type": "stela::stela::StelaProtocol::AgreementCreated",
+        "name": "InscriptionCreated",
+        "type": "stela::stela::StelaProtocol::InscriptionCreated",
         "kind": "nested"
       },
       {
-        "name": "AgreementSigned",
-        "type": "stela::stela::StelaProtocol::AgreementSigned",
+        "name": "InscriptionSigned",
+        "type": "stela::stela::StelaProtocol::InscriptionSigned",
         "kind": "nested"
       },
       {
-        "name": "AgreementCancelled",
-        "type": "stela::stela::StelaProtocol::AgreementCancelled",
+        "name": "InscriptionCancelled",
+        "type": "stela::stela::StelaProtocol::InscriptionCancelled",
         "kind": "nested"
       },
       {
-        "name": "AgreementRepaid",
-        "type": "stela::stela::StelaProtocol::AgreementRepaid",
+        "name": "InscriptionRepaid",
+        "type": "stela::stela::StelaProtocol::InscriptionRepaid",
         "kind": "nested"
       },
       {
-        "name": "AgreementLiquidated",
-        "type": "stela::stela::StelaProtocol::AgreementLiquidated",
+        "name": "InscriptionLiquidated",
+        "type": "stela::stela::StelaProtocol::InscriptionLiquidated",
         "kind": "nested"
       },
       {

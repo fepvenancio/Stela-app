@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { formatAddress } from '@/lib/address'
 
-interface AgreementCardProps {
+interface InscriptionCardProps {
   id: string
   status: string
   creator: string
@@ -27,7 +27,7 @@ function formatDuration(seconds: string): string {
   return `${h}h`
 }
 
-export function AgreementCard({
+export function InscriptionCard({
   id,
   status,
   creator,
@@ -35,12 +35,12 @@ export function AgreementCard({
   duration,
   debtAssetCount,
   collateralAssetCount,
-}: AgreementCardProps) {
+}: InscriptionCardProps) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.open
 
   return (
     <Link
-      href={`/agreement/${id}`}
+      href={`/inscription/${id}`}
       className="group block rounded-2xl border border-edge bg-surface/40 backdrop-blur-sm p-5 hover:border-edge-bright hover:bg-elevated/40 transition-all duration-300 hover:shadow-[0_0_40px_-12px_rgba(232,168,37,0.07)]"
     >
       {/* Header row */}

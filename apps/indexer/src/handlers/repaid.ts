@@ -1,20 +1,20 @@
 import { db } from '../db/queries.js'
-import { agreementIdToHex } from '@stela/core'
+import { inscriptionIdToHex } from '@stela/core'
 import type { StarknetEvent } from '../types.js'
 
 export async function handleRepaid(event: StarknetEvent) {
-  // ABI: agreement_id (key, u256), repayer (data, felt)
+  // ABI: inscription_id (key, u256), repayer (data, felt)
   // keys[0] = selector, keys[1..2] = id
   const idLow = BigInt(event.keys[1])
   const idHigh = BigInt(event.keys[2])
-  const agreementId = agreementIdToHex({ low: idLow, high: idHigh })
+  const inscriptionId = inscriptionIdToHex({ low: idLow, high: idHigh })
 
   const repayer = event.data[0]
 
-  await db.updateAgreementStatus(agreementId, 'repaid', event.block.timestamp)
+  await db.updateInscriptionStatus(inscriptionId, 'repaid', event.block.timestamp)
 
   await db.insertEvent({
-    agreement_id: agreementId,
+    inscription_id: inscriptionId,
     event_type: 'repaid',
     tx_hash: event.transaction.hash,
     block_number: event.block.number,

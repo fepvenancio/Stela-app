@@ -16,12 +16,12 @@ const task = cron.schedule('*/2 * * * *', async () => {
 
   try {
     const now = Math.floor(Date.now() / 1000)
-    console.log(`[${new Date().toISOString()}] Checking for liquidatable agreements...`)
+    console.log(`[${new Date().toISOString()}] Checking for liquidatable inscriptions...`)
 
     const candidates = await findLiquidatable(now)
 
     if (candidates.length === 0) {
-      console.log('No liquidatable agreements found')
+      console.log('No liquidatable inscriptions found')
       return
     }
 

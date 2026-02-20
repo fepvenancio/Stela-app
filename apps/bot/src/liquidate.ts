@@ -16,11 +16,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ])
 }
 
-export async function liquidate(agreementId: string): Promise<string> {
+export async function liquidate(inscriptionId: string): Promise<string> {
   const { transaction_hash } = await account.execute({
     contractAddress: CONTRACT_ADDRESS,
     entrypoint: 'liquidate',
-    calldata: [...toU256(BigInt(agreementId))],
+    calldata: [...toU256(BigInt(inscriptionId))],
   })
 
   await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)

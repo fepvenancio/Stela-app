@@ -1,4 +1,4 @@
-import type { Agreement, AssetType } from '@stela/core'
+import type { Inscription, AssetType } from '@stela/core'
 import { fromU256 } from '@stela/core'
 
 const ASSET_TYPE_MAP: Record<number, AssetType> = {
@@ -12,9 +12,9 @@ export function assetTypeFromEnum(val: number): AssetType {
   return ASSET_TYPE_MAP[val] ?? 'ERC20'
 }
 
-// Parse raw contract response into typed Agreement
+// Parse raw contract response into typed Inscription
 // Adjust field offsets based on actual ABI response structure
-export function parseAgreement(data: Record<string, unknown>): Agreement {
+export function parseInscription(data: Record<string, unknown>): Inscription {
   const raw = data as Record<string, bigint | boolean | { low: bigint; high: bigint }>
 
   const id = typeof raw.id === 'object' && raw.id !== null && 'low' in raw.id

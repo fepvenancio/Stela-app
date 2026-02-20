@@ -33,7 +33,7 @@ interface CreateParams {
   multiLender: boolean
 }
 
-export function useCreateAgreement(params: CreateParams) {
+export function useCreateInscription(params: CreateParams) {
   const calldata = [
     params.isBorrow ? '1' : '0',
     ...serializeAssetArray(params.debtAssets),
@@ -48,7 +48,7 @@ export function useCreateAgreement(params: CreateParams) {
     calls: [
       {
         contractAddress: CONTRACT_ADDRESS,
-        entrypoint: 'create_agreement',
+        entrypoint: 'create_inscription',
         calldata,
       },
     ],

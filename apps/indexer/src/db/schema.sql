@@ -1,4 +1,4 @@
-CREATE TABLE agreements (
+CREATE TABLE inscriptions (
   id                      TEXT PRIMARY KEY,
   creator                 TEXT NOT NULL,
   borrower                TEXT,
@@ -17,20 +17,20 @@ CREATE TABLE agreements (
   updated_at_ts           BIGINT
 );
 
-CREATE TABLE agreement_assets (
-  agreement_id  TEXT NOT NULL REFERENCES agreements(id),
+CREATE TABLE inscription_assets (
+  inscription_id  TEXT NOT NULL REFERENCES inscriptions(id),
   asset_role    TEXT NOT NULL,
   asset_index   INTEGER NOT NULL,
   asset_address TEXT NOT NULL,
   asset_type    TEXT NOT NULL,
   value         TEXT,
   token_id      TEXT,
-  PRIMARY KEY (agreement_id, asset_role, asset_index)
+  PRIMARY KEY (inscription_id, asset_role, asset_index)
 );
 
-CREATE TABLE agreement_events (
+CREATE TABLE inscription_events (
   id            SERIAL PRIMARY KEY,
-  agreement_id  TEXT NOT NULL,
+  inscription_id  TEXT NOT NULL,
   event_type    TEXT NOT NULL,
   tx_hash       TEXT NOT NULL,
   block_number  BIGINT NOT NULL,
@@ -38,8 +38,8 @@ CREATE TABLE agreement_events (
   data          JSONB
 );
 
-CREATE INDEX ON agreements(status);
-CREATE INDEX ON agreements(creator);
-CREATE INDEX ON agreements(borrower);
-CREATE INDEX ON agreements(lender);
-CREATE INDEX ON agreements(deadline);
+CREATE INDEX ON inscriptions(status);
+CREATE INDEX ON inscriptions(creator);
+CREATE INDEX ON inscriptions(borrower);
+CREATE INDEX ON inscriptions(lender);
+CREATE INDEX ON inscriptions(deadline);

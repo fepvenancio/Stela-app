@@ -3,18 +3,18 @@
 import { use, useMemo } from 'react'
 import Link from 'next/link'
 import { useAccount } from '@starknet-react/core'
-import { useAgreement } from '@/hooks/useAgreement'
+import { useInscription } from '@/hooks/useInscription'
 import { useShares } from '@/hooks/useShares'
-import { AgreementActions } from '@/components/AgreementActions'
+import { InscriptionActions } from '@/components/InscriptionActions'
 import { computeStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
-import type { AgreementStatus } from '@stela/core'
+import type { InscriptionStatus } from '@stela/core'
 
-interface AgreementPageProps {
+interface InscriptionPageProps {
   params: Promise<{ id: string }>
 }
 
-const STATUS_CONFIG: Record<AgreementStatus, { color: string; label: string }> = {
+const STATUS_CONFIG: Record<InscriptionStatus, { color: string; label: string }> = {
   open: { color: 'bg-aurora/15 text-aurora border-aurora/20', label: 'Open' },
   partial: { color: 'bg-star/15 text-star border-star/20', label: 'Partial' },
   filled: { color: 'bg-nebula/15 text-nebula border-nebula/20', label: 'Filled' },
@@ -36,23 +36,23 @@ function formatTimestamp(ts: bigint): string {
   return new Date(Number(ts) * 1000).toLocaleString()
 }
 
-export default function AgreementPage({ params }: AgreementPageProps) {
+export default function InscriptionPage({ params }: InscriptionPageProps) {
   const { id } = use(params)
   const { address } = useAccount()
-  const { data: agreement, isLoading, error } = useAgreement(id)
+  const { data: inscription, isLoading, error } = useInscription(id)
   const { data: sharesRaw } = useShares(id)
 
-  const status = useMemo<AgreementStatus>(() => {
-    if (!agreement) return 'open'
-    return computeStatus(agreement as Parameters<typeof computeStatus>[0])
-  }, [agreement])
+  const status = useMemo<InscriptionStatus>(() => {
+    if (!inscription) return 'open'
+    return computeStatus(inscription as Parameters<typeof computeStatus>[0])
+  }, [inscription])
 
   const isOwner = useMemo(() => {
-    if (!address || !agreement) return false
-    const a = agreement as Record<string, unknown>
+    if (!address || !inscription) return false
+    const a = inscription as Record<string, unknown>
     const borrower = a.borrower as string | undefined
     return borrower ? addressesEqual(address, borrower) : false
-  }, [address, agreement])
+  }, [address, inscription])
 
   const hasShares = useMemo(() => {
     if (!sharesRaw) return false
@@ -62,7 +62,7 @@ export default function AgreementPage({ params }: AgreementPageProps) {
   const statusCfg = STATUS_CONFIG[status]
 
   // Build info fields from live data
-  const a = agreement as Record<string, unknown> | undefined
+  const a = inscription as Record<string, unknown> | undefined
   const infoFields = [
     { label: 'Status', value: statusCfg.label },
     { label: 'Duration', value: a?.duration ? formatDuration(BigInt(a.duration as string | bigint)) : '--' },
@@ -82,21 +82,21 @@ export default function AgreementPage({ params }: AgreementPageProps) {
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="transition-transform group-hover:-translate-x-0.5">
           <path d="M10 4l-4 4 4 4" />
         </svg>
-        Back to agreements
+        Back to inscriptions
       </Link>
 
       {/* Loading */}
       {isLoading && (
         <div className="flex items-center gap-3 py-24 justify-center">
           <div className="w-4 h-4 border-2 border-star/30 border-t-star rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
-          <span className="text-dust text-sm">Loading agreement...</span>
+          <span className="text-dust text-sm">Loading inscription...</span>
         </div>
       )}
 
       {/* Error */}
       {error && (
         <div className="text-center py-24">
-          <p className="text-nova text-sm">Failed to load agreement</p>
+          <p className="text-nova text-sm">Failed to load inscription</p>
         </div>
       )}
 
@@ -107,7 +107,7 @@ export default function AgreementPage({ params }: AgreementPageProps) {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <h1 className="font-display text-2xl sm:text-3xl tracking-wide text-chalk">
-                Agreement
+                Inscription
               </h1>
               <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${statusCfg.color}`}>
                 {statusCfg.label}
@@ -145,8 +145,8 @@ export default function AgreementPage({ params }: AgreementPageProps) {
           {/* Actions */}
           <div className="p-5 rounded-xl bg-surface/40 border border-edge">
             <h3 className="text-sm font-medium text-chalk mb-4">Actions</h3>
-            <AgreementActions
-              agreementId={id}
+            <InscriptionActions
+              inscriptionId={id}
               status={status}
               isOwner={isOwner}
               hasShares={hasShares}

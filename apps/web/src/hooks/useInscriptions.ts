@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-interface AgreementRow {
+interface InscriptionRow {
   id: string
   creator: string
   borrower: string | null
@@ -19,8 +19,8 @@ interface AgreementRow {
   created_at_ts: string
 }
 
-export function useAgreements(params?: { status?: string; address?: string; page?: number }) {
-  const [data, setData] = useState<AgreementRow[]>([])
+export function useInscriptions(params?: { status?: string; address?: string; page?: number }) {
+  const [data, setData] = useState<InscriptionRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
@@ -32,7 +32,7 @@ export function useAgreements(params?: { status?: string; address?: string; page
 
     setIsLoading(true)
     setError(null)
-    fetch(`/api/agreements?${searchParams}`)
+    fetch(`/api/inscriptions?${searchParams}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()

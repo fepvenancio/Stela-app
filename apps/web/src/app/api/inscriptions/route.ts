@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     safe.set(key, value)
   }
 
-  const path = safe.size > 0 ? `/api/agreements?${safe}` : '/api/agreements'
+  const path = safe.size > 0 ? `/api/inscriptions?${safe}` : '/api/inscriptions'
 
   try {
     const res = await indexerFetch(path)

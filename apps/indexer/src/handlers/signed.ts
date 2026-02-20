@@ -1,14 +1,14 @@
 import { db } from '../db/queries.js'
-import { agreementIdToHex, fromU256, MAX_BPS } from '@stela/core'
+import { inscriptionIdToHex, fromU256, MAX_BPS } from '@stela/core'
 import type { StarknetEvent } from '../types.js'
 
 export async function handleSigned(event: StarknetEvent) {
-  // ABI: agreement_id (key, u256), borrower (key, felt), lender (key, felt),
+  // ABI: inscription_id (key, u256), borrower (key, felt), lender (key, felt),
   //      issued_debt_percentage (data, u256), shares_minted (data, u256)
   // keys[0] = selector, keys[1..2] = id, keys[3] = borrower, keys[4] = lender
   const idLow = BigInt(event.keys[1])
   const idHigh = BigInt(event.keys[2])
-  const agreementId = agreementIdToHex({ low: idLow, high: idHigh })
+  const inscriptionId = inscriptionIdToHex({ low: idLow, high: idHigh })
 
   const borrower = event.keys[3]
   const lender = event.keys[4]
@@ -21,8 +21,8 @@ export async function handleSigned(event: StarknetEvent) {
 
   const status = issuedPercentage >= MAX_BPS ? 'filled' : 'partial'
 
-  await db.upsertAgreement({
-    id: agreementId,
+  await db.upsertInscription({
+    id: inscriptionId,
     borrower,
     lender,
     status,
@@ -32,7 +32,7 @@ export async function handleSigned(event: StarknetEvent) {
   })
 
   await db.insertEvent({
-    agreement_id: agreementId,
+    inscription_id: inscriptionId,
     event_type: 'signed',
     tx_hash: event.transaction.hash,
     block_number: event.block.number,

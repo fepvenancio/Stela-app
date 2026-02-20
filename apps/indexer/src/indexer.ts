@@ -9,11 +9,11 @@ import { handleRedeemed } from './handlers/redeemed.js'
 import { handleCancelled } from './handlers/cancelled.js'
 
 const SELECTORS = {
-  AgreementCreated: hash.getSelectorFromName('AgreementCreated'),
-  AgreementSigned: hash.getSelectorFromName('AgreementSigned'),
-  AgreementCancelled: hash.getSelectorFromName('AgreementCancelled'),
-  AgreementRepaid: hash.getSelectorFromName('AgreementRepaid'),
-  AgreementLiquidated: hash.getSelectorFromName('AgreementLiquidated'),
+  InscriptionCreated: hash.getSelectorFromName('InscriptionCreated'),
+  InscriptionSigned: hash.getSelectorFromName('InscriptionSigned'),
+  InscriptionCancelled: hash.getSelectorFromName('InscriptionCancelled'),
+  InscriptionRepaid: hash.getSelectorFromName('InscriptionRepaid'),
+  InscriptionLiquidated: hash.getSelectorFromName('InscriptionLiquidated'),
   SharesRedeemed: hash.getSelectorFromName('SharesRedeemed'),
 } as const
 
@@ -39,11 +39,11 @@ export const config = {
 type Handler = (event: StarknetEvent) => Promise<void>
 
 const HANDLER_MAP: Record<string, Handler> = {
-  [SELECTORS.AgreementCreated]: handleCreated,
-  [SELECTORS.AgreementSigned]: handleSigned,
-  [SELECTORS.AgreementCancelled]: handleCancelled,
-  [SELECTORS.AgreementRepaid]: handleRepaid,
-  [SELECTORS.AgreementLiquidated]: handleLiquidated,
+  [SELECTORS.InscriptionCreated]: handleCreated,
+  [SELECTORS.InscriptionSigned]: handleSigned,
+  [SELECTORS.InscriptionCancelled]: handleCancelled,
+  [SELECTORS.InscriptionRepaid]: handleRepaid,
+  [SELECTORS.InscriptionLiquidated]: handleLiquidated,
   [SELECTORS.SharesRedeemed]: handleRedeemed,
 }
 

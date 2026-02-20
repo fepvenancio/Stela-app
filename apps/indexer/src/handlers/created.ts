@@ -1,24 +1,24 @@
 import { db } from '../db/queries.js'
-import { agreementIdToHex } from '@stela/core'
+import { inscriptionIdToHex } from '@stela/core'
 import type { StarknetEvent } from '../types.js'
-import { fetchAgreementFromContract } from '../rpc.js'
+import { fetchInscriptionFromContract } from '../rpc.js'
 
 export async function handleCreated(event: StarknetEvent) {
-  // ABI: agreement_id (key, u256), creator (key, felt), is_borrow (data, bool)
+  // ABI: inscription_id (key, u256), creator (key, felt), is_borrow (data, bool)
   // keys[0] = selector, keys[1..2] = id, keys[3] = creator
   const idLow = BigInt(event.keys[1])
   const idHigh = BigInt(event.keys[2])
-  const agreementId = agreementIdToHex({ low: idLow, high: idHigh })
+  const inscriptionId = inscriptionIdToHex({ low: idLow, high: idHigh })
 
   const creator = event.keys[3]
   // data[0] = is_borrow (not stored in DB, but available)
 
   // The event only emits id, creator, and is_borrow.
   // Duration, deadline, multi_lender, and asset counts must be read from contract.
-  const onChain = await fetchAgreementFromContract(agreementId)
+  const onChain = await fetchInscriptionFromContract(inscriptionId)
 
-  await db.upsertAgreement({
-    id: agreementId,
+  await db.upsertInscription({
+    id: inscriptionId,
     creator,
     status: 'open',
     issued_debt_percentage: 0,
@@ -34,7 +34,7 @@ export async function handleCreated(event: StarknetEvent) {
   })
 
   await db.insertEvent({
-    agreement_id: agreementId,
+    inscription_id: inscriptionId,
     event_type: 'created',
     tx_hash: event.transaction.hash,
     block_number: event.block.number,

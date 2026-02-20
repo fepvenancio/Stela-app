@@ -1,9 +1,9 @@
 export type {
   AssetType,
-  AgreementStatus,
+  InscriptionStatus,
   Asset,
-  Agreement,
-  AgreementEvent,
+  Inscription,
+  InscriptionEvent,
 } from './types.js'
 
 export { VALID_STATUSES } from './types.js'
@@ -20,7 +20,7 @@ export type { Network } from './constants.js'
 export {
   toU256,
   fromU256,
-  agreementIdToHex,
+  inscriptionIdToHex,
 } from './u256.js'
 
 export type { TokenInfo } from './tokens.js'
