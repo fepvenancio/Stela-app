@@ -1,5 +1,3 @@
 {
-  "framework": "nextjs",
-  "installCommand": "cd ../.. && npx pnpm@10 install --filter web... --frozen-lockfile --ignore-scripts",
-  "buildCommand": "cd ../.. && npx pnpm@10 turbo build --filter web"
+  "framework": "nextjs"
 }
