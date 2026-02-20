@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && pnpm install --filter web...",
-  "buildCommand": "cd ../.. && pnpm turbo build --filter web"
+  "installCommand": "cd ../.. && npx pnpm@10 install --filter web... --frozen-lockfile --ignore-scripts",
+  "buildCommand": "cd ../.. && npx pnpm@10 turbo build --filter web"
 }
