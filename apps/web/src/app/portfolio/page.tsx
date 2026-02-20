@@ -3,7 +3,6 @@
 import { useAccount } from '@starknet-react/core'
 import { useAgreements } from '@/hooks/useAgreements'
 import { AgreementCard } from '@/components/AgreementCard'
-import { WalletButton } from '@/components/WalletButton'
 
 export default function PortfolioPage() {
   const { address } = useAccount()
@@ -12,42 +11,77 @@ export default function PortfolioPage() {
   )
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Portfolio</h1>
-        <WalletButton />
-      </div>
-
-      {!address && (
-        <p className="text-neutral-500 text-center py-12">
-          Connect your wallet to view your positions
+    <div className="animate-fade-up">
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-wide text-chalk mb-3">
+          Portfolio
+        </h1>
+        <p className="text-dust leading-relaxed">
+          Your lending positions and borrowing history on StarkNet.
         </p>
-      )}
-
-      {address && isLoading && (
-        <p className="text-neutral-400">Loading your positions...</p>
-      )}
-
-      {error && <p className="text-red-400">Failed to load positions</p>}
-
-      {address && !isLoading && data.length === 0 && (
-        <p className="text-neutral-500 text-center py-12">No positions found</p>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data.map((a) => (
-          <AgreementCard
-            key={a.id}
-            id={a.id}
-            status={a.status}
-            creator={a.creator}
-            multiLender={a.multi_lender}
-            duration={a.duration}
-            debtAssetCount={a.debt_asset_count}
-            collateralAssetCount={a.collateral_asset_count}
-          />
-        ))}
       </div>
+
+      {/* Not connected */}
+      {!address && (
+        <div className="text-center py-24">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 10h18" />
+            </svg>
+          </div>
+          <p className="text-dust text-sm mb-1">Connect your wallet</p>
+          <p className="text-ash text-xs">to view your positions on StarkNet</p>
+        </div>
+      )}
+
+      {/* Loading */}
+      {address && isLoading && (
+        <div className="flex items-center gap-3 py-24 justify-center">
+          <div className="w-4 h-4 border-2 border-star/30 border-t-star rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
+          <span className="text-dust text-sm">Loading positions...</span>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="text-center py-24">
+          <p className="text-nova text-sm">Failed to load positions</p>
+        </div>
+      )}
+
+      {/* Cards */}
+      {address && !isLoading && data.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((a, i) => (
+            <div key={a.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
+              <AgreementCard
+                id={a.id}
+                status={a.status}
+                creator={a.creator}
+                multiLender={a.multi_lender}
+                duration={a.duration}
+                debtAssetCount={a.debt_asset_count}
+                collateralAssetCount={a.collateral_asset_count}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty */}
+      {address && !isLoading && !error && data.length === 0 && (
+        <div className="text-center py-24">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+              <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
+            </svg>
+          </div>
+          <p className="text-dust text-sm">No positions yet</p>
+          <p className="text-ash text-xs mt-1">Create or sign an agreement to get started</p>
+        </div>
+      )}
     </div>
   )
 }

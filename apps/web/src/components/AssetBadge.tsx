@@ -9,11 +9,13 @@ interface AssetBadgeProps {
 
 export function AssetBadge({ address, assetType, value, tokenId }: AssetBadgeProps) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-neutral-800">
-      <span className="font-medium">{assetType}</span>
-      <span className="text-neutral-400">{formatAddress(address)}</span>
-      {value && <span>: {value}</span>}
-      {tokenId && tokenId !== '0' && <span>#{tokenId}</span>}
+    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-surface border border-edge">
+      <span className="font-medium text-star">{assetType}</span>
+      <span className="font-mono text-ash">{formatAddress(address)}</span>
+      {value && <span className="text-chalk">{value}</span>}
+      {tokenId && tokenId !== '0' && (
+        <span className="text-dust">#{tokenId}</span>
+      )}
     </span>
   )
 }

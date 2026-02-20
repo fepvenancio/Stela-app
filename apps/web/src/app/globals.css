@@ -1,1 +1,144 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+  --font-mono: var(--font-ibm-mono), ui-monospace, monospace;
+  --font-display: var(--font-cinzel), Georgia, serif;
+
+  --color-void: #080b16;
+  --color-abyss: #0f1629;
+  --color-surface: #161d35;
+  --color-elevated: #1c2544;
+  --color-glass: rgba(22, 29, 53, 0.55);
+
+  --color-edge: #1e2a4a;
+  --color-edge-bright: #2a3660;
+
+  --color-star: #e8a825;
+  --color-star-bright: #f0c35a;
+  --color-star-dim: #a07518;
+
+  --color-nebula: #4a9eff;
+  --color-aurora: #2dd4bf;
+  --color-nova: #f06565;
+  --color-ember: #f5a623;
+  --color-cosmic: #a78bfa;
+
+  --color-chalk: #e4e8f1;
+  --color-dust: #8b95ad;
+  --color-ash: #4a5578;
+
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  --animate-fade-in: fade-in 0.4s ease-out both;
+}
+
+/* ── Keyframes ─────────────────────────────────────────── */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+@keyframes drift {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-250px, -120px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Base ──────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(30, 58, 138, 0.09) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(88, 28, 135, 0.05) 0%, transparent 55%),
+    #080b16;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: rgba(232, 168, 37, 0.22);
+  color: #e4e8f1;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a3660; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3d4f80; }
+
+/* ── Star Field ────────────────────────────────────────── */
+
+.starfield {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.starfield::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.11), transparent),
+    radial-gradient(1px 1px   at 28% 65%, rgba(255,255,255,0.07), transparent),
+    radial-gradient(2px 2px   at 55% 12%, rgba(255,255,255,0.05), transparent),
+    radial-gradient(1px 1px   at 72% 48%, rgba(255,255,255,0.09), transparent),
+    radial-gradient(1.5px 1.5px at 88% 78%, rgba(255,255,255,0.06), transparent),
+    radial-gradient(1px 1px   at 42% 92%, rgba(255,255,255,0.04), transparent);
+  background-size: 380px 380px;
+}
+
+.starfield::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background-image:
+    radial-gradient(1px 1px   at 22% 38%, rgba(232,168,37,0.09), transparent),
+    radial-gradient(1.5px 1.5px at 68% 22%, rgba(74,158,255,0.07), transparent),
+    radial-gradient(1px 1px   at 82% 62%, rgba(255,255,255,0.05), transparent),
+    radial-gradient(1.5px 1.5px at 12% 82%, rgba(255,255,255,0.04), transparent);
+  background-size: 520px 520px;
+  animation: drift 150s linear infinite;
+}
+
+/* ── Focus States ──────────────────────────────────────── */
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 1px solid rgba(232, 168, 37, 0.5);
+  outline-offset: 2px;
+}
+
+/* ── Form Elements ─────────────────────────────────────── */
+
+select option {
+  background: #0f1629;
+  color: #e4e8f1;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.3;
+}

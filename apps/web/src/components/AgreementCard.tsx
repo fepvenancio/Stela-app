@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { formatAddress } from '@/lib/address'
 
 interface AgreementCardProps {
@@ -10,14 +11,20 @@ interface AgreementCardProps {
   collateralAssetCount: number
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  open: 'bg-green-900 text-green-300',
-  partial: 'bg-yellow-900 text-yellow-300',
-  filled: 'bg-blue-900 text-blue-300',
-  repaid: 'bg-neutral-800 text-neutral-400',
-  liquidated: 'bg-red-900 text-red-300',
-  expired: 'bg-orange-900 text-orange-300',
-  cancelled: 'bg-neutral-800 text-neutral-500',
+const STATUS_CONFIG: Record<string, { color: string; dot: string; label: string }> = {
+  open:       { color: 'text-aurora', dot: 'bg-aurora', label: 'Open' },
+  partial:    { color: 'text-ember',  dot: 'bg-ember',  label: 'Partial' },
+  filled:     { color: 'text-nebula', dot: 'bg-nebula', label: 'Filled' },
+  repaid:     { color: 'text-dust',   dot: 'bg-dust',   label: 'Repaid' },
+  liquidated: { color: 'text-nova',   dot: 'bg-nova',   label: 'Liquidated' },
+  expired:    { color: 'text-ember',  dot: 'bg-ember',  label: 'Expired' },
+  cancelled:  { color: 'text-ash',    dot: 'bg-ash',    label: 'Cancelled' },
+}
+
+function formatDuration(seconds: string): string {
+  const h = Math.floor(Number(seconds) / 3600)
+  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`
+  return `${h}h`
 }
 
 export function AgreementCard({
@@ -29,25 +36,54 @@ export function AgreementCard({
   debtAssetCount,
   collateralAssetCount,
 }: AgreementCardProps) {
-  const durationHours = Math.floor(Number(duration) / 3600)
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.open
 
   return (
-    <a
+    <Link
       href={`/agreement/${id}`}
-      className="block p-4 rounded-lg border border-neutral-800 hover:border-neutral-600 transition-colors"
+      className="group block rounded-2xl border border-edge bg-surface/40 backdrop-blur-sm p-5 hover:border-edge-bright hover:bg-elevated/40 transition-all duration-300 hover:shadow-[0_0_40px_-12px_rgba(232,168,37,0.07)]"
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-mono text-sm text-neutral-400">{formatAddress(id)}</span>
-        <span className={`px-2 py-0.5 rounded text-xs ${STATUS_COLORS[status] ?? 'bg-neutral-800'}`}>
-          {status}
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-4">
+        <span className="font-mono text-[11px] text-ash tracking-wide">
+          {formatAddress(id)}
+        </span>
+        <span className={`flex items-center gap-1.5 text-xs font-medium ${cfg.color}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+          {cfg.label}
         </span>
       </div>
-      <div className="text-sm space-y-1">
-        <div>Creator: {formatAddress(creator)}</div>
-        <div>Duration: {durationHours}h</div>
-        <div>Debt assets: {debtAssetCount} | Collateral: {collateralAssetCount}</div>
-        {multiLender && <div className="text-blue-400 text-xs">Multi-lender</div>}
+
+      {/* Details */}
+      <div className="space-y-2.5 text-sm">
+        <div className="flex justify-between">
+          <span className="text-dust">Duration</span>
+          <span className="text-chalk font-medium">{formatDuration(duration)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-dust">Debt assets</span>
+          <span className="text-chalk">{debtAssetCount}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-dust">Collateral</span>
+          <span className="text-chalk">{collateralAssetCount}</span>
+        </div>
       </div>
-    </a>
+
+      {/* Footer */}
+      <div className="mt-4 pt-3 border-t border-edge flex items-center justify-between">
+        <span className="text-[11px] text-ash font-mono">
+          {formatAddress(creator)}
+        </span>
+        {multiLender && (
+          <span className="flex items-center gap-1 text-[11px] text-star">
+            <svg width="10" height="10" viewBox="0 0 10 10" className="fill-current" aria-hidden="true">
+              <path d="M5 0l1.18 3.82L10 5l-3.82 1.18L5 10l-1.18-3.82L0 5l3.82-1.18z" />
+            </svg>
+            Multi-lender
+          </span>
+        )}
+      </div>
+    </Link>
   )
 }
