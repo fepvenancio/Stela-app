@@ -1,6 +1,9 @@
 {
-  "buildCommand": "pnpm turbo build --filter web",
-  "outputDirectory": "apps/web/.next",
-  "framework": "nextjs",
-  "installCommand": "pnpm install --frozen-lockfile --ignore-scripts"
+  "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
+  "builds": [
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/next"
+    }
+  ]
 }
