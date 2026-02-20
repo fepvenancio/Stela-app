@@ -12,7 +12,8 @@ const VALID_NETWORKS = Object.keys(STELA_ADDRESS) as Network[]
 
 /** Validate and return a Network value, defaulting to 'sepolia' */
 export function resolveNetwork(raw?: string): Network {
-  if (raw && VALID_NETWORKS.includes(raw as Network)) return raw as Network
-  if (raw) console.warn(`Invalid NETWORK "${raw}", falling back to sepolia`)
+  const trimmed = raw?.trim()
+  if (trimmed && VALID_NETWORKS.includes(trimmed as Network)) return trimmed as Network
+  if (trimmed) console.warn(`Invalid NETWORK "${trimmed}", falling back to sepolia`)
   return 'sepolia'
 }
