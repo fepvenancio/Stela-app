@@ -1,8 +1,8 @@
 import type { RpcProvider } from 'starknet'
 import { inscriptionIdToHex, fromU256, MAX_BPS } from '@stela/core'
 import type { D1Queries } from '@stela/core'
-import type { IndexerEvent } from '../types.js'
-import { fetchInscriptionFromContract } from '../rpc.js'
+import type { IndexerEvent, Env } from '../types.js'
+import { fetchInscriptionFromContract, fetchLockerAddress } from '../rpc.js'
 import { fetchAndStoreAssets, parseInscriptionId } from '../parsers.js'
 
 export async function handleCreated(
@@ -45,7 +45,7 @@ export async function handleCreated(
   })
 }
 
-export async function handleSigned(event: IndexerEvent, queries: D1Queries): Promise<void> {
+export async function handleSigned(event: IndexerEvent, queries: D1Queries, env?: Env): Promise<void> {
   // keys[0] = selector, keys[1..2] = id (u256), keys[3] = borrower, keys[4] = lender
   const inscriptionId = parseInscriptionId(event)
   const borrower = event.keys[3]
@@ -68,6 +68,18 @@ export async function handleSigned(event: IndexerEvent, queries: D1Queries): Pro
     signed_at: event.timestamp,
     updated_at_ts: event.timestamp,
   })
+
+  // Fetch and store the locker TBA address when inscription gets signed
+  if (env) {
+    try {
+      const lockerResult = await fetchLockerAddress(env, inscriptionId)
+      if (lockerResult) {
+        await queries.upsertLocker(inscriptionId, lockerResult, event.timestamp)
+      }
+    } catch (err) {
+      console.error(`Failed to fetch locker for ${inscriptionId}:`, err)
+    }
+  }
 
   await queries.insertEvent({
     inscription_id: inscriptionId,
@@ -149,4 +161,22 @@ export async function handleRedeemed(event: IndexerEvent, queries: D1Queries): P
     timestamp: event.timestamp,
     data: { redeemer, shares: shares.toString() },
   })
+}
+
+export async function handleTransferSingle(event: IndexerEvent, queries: D1Queries): Promise<void> {
+  // TransferSingle keys: [selector, operator, from, to]
+  // TransferSingle data: [id_low, id_high, value_low, value_high]
+  const from = event.keys[2]
+  const to = event.keys[3]
+  const inscriptionId = inscriptionIdToHex({ low: BigInt(event.data[0]), high: BigInt(event.data[1]) })
+  const value = fromU256({ low: BigInt(event.data[2]), high: BigInt(event.data[3]) })
+
+  // Decrement from (unless mint: from = 0x0)
+  if (BigInt(from) !== 0n) {
+    await queries.decrementShareBalance(from, inscriptionId, value)
+  }
+  // Increment to (unless burn: to = 0x0)
+  if (BigInt(to) !== 0n) {
+    await queries.incrementShareBalance(to, inscriptionId, value)
+  }
 }

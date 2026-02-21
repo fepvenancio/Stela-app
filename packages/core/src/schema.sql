@@ -53,3 +53,18 @@ CREATE INDEX IF NOT EXISTS idx_inscriptions_lender ON inscriptions(lender);
 CREATE INDEX IF NOT EXISTS idx_inscriptions_deadline ON inscriptions(deadline);
 
 INSERT OR IGNORE INTO _meta (key, value) VALUES ('last_block', '0');
+
+CREATE TABLE IF NOT EXISTS lockers (
+  inscription_id TEXT PRIMARY KEY,
+  locker_address TEXT NOT NULL,
+  created_at_ts  INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_lockers_address ON lockers(locker_address);
+
+CREATE TABLE IF NOT EXISTS share_balances (
+  account        TEXT NOT NULL,
+  inscription_id TEXT NOT NULL,
+  balance        TEXT NOT NULL DEFAULT '0',
+  PRIMARY KEY (account, inscription_id)
+);
+CREATE INDEX IF NOT EXISTS idx_shares_account ON share_balances(account);

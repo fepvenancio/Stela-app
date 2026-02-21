@@ -10,6 +10,7 @@ import {
   handleRepaid,
   handleLiquidated,
   handleRedeemed,
+  handleTransferSingle,
 } from './handlers/index.js'
 
 // Max blocks to process per invocation to stay within Worker 30s CPU limit
@@ -23,16 +24,18 @@ type EventHandler = (
   event: IndexerEvent,
   queries: D1Queries,
   provider: RpcProvider,
-  stelaAddress: string
+  stelaAddress: string,
+  env: Env
 ) => Promise<void>
 
 const HANDLER_MAP: Record<string, EventHandler> = {
   [SELECTORS.InscriptionCreated]: handleCreated,
-  [SELECTORS.InscriptionSigned]: (e, q) => handleSigned(e, q),
+  [SELECTORS.InscriptionSigned]: (e, q, _p, _s, env) => handleSigned(e, q, env),
   [SELECTORS.InscriptionCancelled]: (e, q) => handleCancelled(e, q),
   [SELECTORS.InscriptionRepaid]: (e, q) => handleRepaid(e, q),
   [SELECTORS.InscriptionLiquidated]: (e, q) => handleLiquidated(e, q),
   [SELECTORS.SharesRedeemed]: (e, q) => handleRedeemed(e, q),
+  [SELECTORS.TransferSingle]: (e, q) => handleTransferSingle(e, q),
 }
 
 // ---------------------------------------------------------------------------
@@ -97,7 +100,7 @@ async function pollEvents(env: Env): Promise<void> {
     }
 
     try {
-      await handler(event, queries, provider, env.STELA_ADDRESS)
+      await handler(event, queries, provider, env.STELA_ADDRESS, env)
       lastSuccessBlock = raw.block_number
     } catch (err) {
       failedCount++

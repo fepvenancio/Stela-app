@@ -1,5 +1,7 @@
 import { RpcProvider, Contract, hash } from 'starknet'
+import { toU256 } from '@stela/core'
 import stelaAbi from '@stela/core/abi/stela.json'
+import type { Env } from './types.js'
 import type { RpcEvent, GetEventsResult, OnChainInscription } from './types.js'
 
 /** All event selectors the indexer listens for */
@@ -10,6 +12,7 @@ export const SELECTORS = {
   InscriptionRepaid: hash.getSelectorFromName('InscriptionRepaid'),
   InscriptionLiquidated: hash.getSelectorFromName('InscriptionLiquidated'),
   SharesRedeemed: hash.getSelectorFromName('SharesRedeemed'),
+  TransferSingle: hash.getSelectorFromName('TransferSingle'),
 } as const
 
 const ALL_SELECTORS = Object.values(SELECTORS)
@@ -68,6 +71,19 @@ export async function getBlockTimestamp(
     return ts
   } catch {
     return 0
+  }
+}
+
+/** Fetch the locker TBA address for a given inscription from the contract */
+export async function fetchLockerAddress(env: Env, inscriptionId: string): Promise<string | null> {
+  const provider = new RpcProvider({ nodeUrl: env.RPC_URL })
+  try {
+    const contract = new Contract(stelaAbi, env.STELA_ADDRESS, provider)
+    const result = await contract.call('get_locker', toU256(BigInt(inscriptionId)))
+    const addr = (result as unknown[])[0] as string | bigint | undefined
+    return addr && BigInt(addr) !== 0n ? String(addr) : null
+  } catch {
+    return null
   }
 }
 

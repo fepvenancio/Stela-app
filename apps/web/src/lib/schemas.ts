@@ -17,3 +17,8 @@ export const inscriptionListSchema = z.object({
 export const inscriptionIdSchema = z.object({
   id: hex,
 })
+
+/** Hex address path param */
+export const addressSchema = z.object({
+  address: hex,
+})

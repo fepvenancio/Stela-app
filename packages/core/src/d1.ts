@@ -248,6 +248,131 @@ export function createD1Queries(db: D1Database) {
         .all<{ id: string }>()
       return result.results
     },
+
+    // -----------------------------------------------------------------------
+    // Locker queries
+    // -----------------------------------------------------------------------
+
+    async upsertLocker(inscriptionId: string, lockerAddress: string, timestamp: number): Promise<void> {
+      await db
+        .prepare(
+          `INSERT OR REPLACE INTO lockers (inscription_id, locker_address, created_at_ts)
+           VALUES (?, ?, ?)`
+        )
+        .bind(inscriptionId, lockerAddress, timestamp)
+        .run()
+    },
+
+    async getLockerAddress(inscriptionId: string): Promise<string | null> {
+      const row = await db
+        .prepare('SELECT locker_address FROM lockers WHERE inscription_id = ?')
+        .bind(inscriptionId)
+        .first<{ locker_address: string }>()
+      return row ? row.locker_address : null
+    },
+
+    async getLockersByCreator(address: string): Promise<{ inscription_id: string; locker_address: string }[]> {
+      const result = await db
+        .prepare(
+          `SELECT l.inscription_id, l.locker_address
+           FROM lockers l
+           JOIN inscriptions i ON i.id = l.inscription_id
+           WHERE LOWER(i.creator) = LOWER(?)`
+        )
+        .bind(address)
+        .all<{ inscription_id: string; locker_address: string }>()
+      return result.results
+    },
+
+    // -----------------------------------------------------------------------
+    // Share balance queries
+    // -----------------------------------------------------------------------
+
+    async incrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
+      await db
+        .prepare(
+          `INSERT INTO share_balances (account, inscription_id, balance)
+           VALUES (?, ?, ?)
+           ON CONFLICT (account, inscription_id) DO UPDATE
+           SET balance = CAST((CAST(balance AS INTEGER) + CAST(excluded.balance AS INTEGER)) AS TEXT)`
+        )
+        .bind(account, inscriptionId, amount.toString())
+        .run()
+    },
+
+    async decrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
+      await db
+        .prepare(
+          `UPDATE share_balances
+           SET balance = CAST(MAX(0, CAST(balance AS INTEGER) - ?) AS TEXT)
+           WHERE account = ? AND inscription_id = ?`
+        )
+        .bind(amount.toString(), account, inscriptionId)
+        .run()
+    },
+
+    async getShareBalances(account: string): Promise<{ inscription_id: string; balance: string }[]> {
+      const result = await db
+        .prepare(
+          `SELECT inscription_id, balance FROM share_balances
+           WHERE account = ? AND CAST(balance AS INTEGER) > 0
+           ORDER BY inscription_id`
+        )
+        .bind(account)
+        .all<{ inscription_id: string; balance: string }>()
+      return result.results
+    },
+
+    async getShareBalance(account: string, inscriptionId: string): Promise<string> {
+      const row = await db
+        .prepare('SELECT balance FROM share_balances WHERE account = ? AND inscription_id = ?')
+        .bind(account, inscriptionId)
+        .first<{ balance: string }>()
+      return row ? row.balance : '0'
+    },
+
+    // -----------------------------------------------------------------------
+    // Treasury aggregation
+    // -----------------------------------------------------------------------
+
+    async getLockedAssetsByAddress(address: string): Promise<{
+      inscription_id: string; asset_address: string; asset_type: string;
+      value: string; token_id: string; status: string;
+    }[]> {
+      const result = await db
+        .prepare(
+          `SELECT ia.inscription_id, ia.asset_address, ia.asset_type,
+                  ia.value, ia.token_id, i.status
+           FROM inscription_assets ia
+           JOIN inscriptions i ON i.id = ia.inscription_id
+           WHERE LOWER(i.creator) = LOWER(?)
+             AND i.status IN ('filled', 'partial')
+             AND ia.asset_role = 'collateral'
+           ORDER BY ia.inscription_id`
+        )
+        .bind(address)
+        .all<{
+          inscription_id: string; asset_address: string; asset_type: string;
+          value: string; token_id: string; status: string;
+        }>()
+      return result.results
+    },
+
+    // -----------------------------------------------------------------------
+    // Inscription events
+    // -----------------------------------------------------------------------
+
+    async getInscriptionEvents(inscriptionId: string) {
+      const result = await db
+        .prepare(
+          `SELECT * FROM inscription_events
+           WHERE inscription_id = ?
+           ORDER BY block_number ASC, id ASC`
+        )
+        .bind(inscriptionId)
+        .all()
+      return result.results
+    },
   }
 }
 
