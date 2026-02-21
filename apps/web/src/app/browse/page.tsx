@@ -1,21 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { InscriptionCard } from '@/components/InscriptionCard'
 import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { computeStatus } from '@/lib/status'
 
 const FILTERS = [
   { key: 'open', label: 'Open' },
   { key: 'partial', label: 'Partial' },
   { key: 'filled', label: 'Filled' },
+  { key: 'expired', label: 'Expired' },
   { key: '', label: 'All' },
 ]
 
+/** Recompute status client-side using the SDK logic (handles deadline expiry) */
+function enrichStatus(row: { status: string; signed_at: string | null; duration: string; issued_debt_percentage: string; deadline: string }): string {
+  return computeStatus({
+    signed_at: BigInt(row.signed_at ?? '0'),
+    duration: BigInt(row.duration),
+    issued_debt_percentage: BigInt(row.issued_debt_percentage),
+    is_repaid: row.status === 'repaid',
+    liquidated: row.status === 'liquidated',
+    deadline: BigInt(row.deadline ?? '0'),
+    status: row.status,
+  })
+}
+
 export default function BrowsePage() {
   const [statusFilter, setStatusFilter] = useState('open')
-  const { data, isLoading, error } = useInscriptions({ status: statusFilter })
+
+  // 'expired' is never stored in D1 — fetch all and filter client-side
+  const isClientFilter = statusFilter === 'expired'
+  const apiStatus = isClientFilter ? '' : statusFilter
+
+  const { data: rawData, isLoading, error } = useInscriptions({ status: apiStatus })
+
+  // Enrich all rows with client-side computed status (handles deadline expiry)
+  const data = useMemo(() => {
+    const enriched = rawData.map((row) => ({
+      ...row,
+      status: enrichStatus(row),
+    }))
+    if (isClientFilter) {
+      return enriched.filter((row) => row.status === 'expired')
+    }
+    return enriched
+  }, [rawData, isClientFilter])
 
   return (
     <div className="animate-fade-up">

@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CopyButton } from '@/components/CopyButton'
 
 interface InscriptionPageProps {
   params: Promise<{ id: string }>
@@ -109,7 +110,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
       )}
 
       {/* Content */}
-      {isValidId && !isLoading && (
+      {isValidId && !isLoading && inscription && (
         <>
           {/* Header */}
           <div className="mb-8">
@@ -121,7 +122,10 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                 {statusLabel}
               </Badge>
             </div>
-            <p className="font-mono text-xs sm:text-sm text-ash break-all leading-relaxed">{id}</p>
+            <p className="font-mono text-xs sm:text-sm text-ash break-all leading-relaxed inline-flex items-center gap-2">
+              {id}
+              <CopyButton value={id} label="Inscription ID" />
+            </p>
           </div>
 
           {/* Info grid */}
@@ -197,10 +201,27 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                 status={status}
                 isOwner={isOwner}
                 shares={shares}
+                multiLender={Boolean(a?.multi_lender)}
+                totalDebt={(() => {
+                  const debtAssets = assets.filter((r) => r.asset_role === 'debt')
+                  return debtAssets[0]?.value ?? undefined
+                })()}
+                debtDecimals={(() => {
+                  const debtAssets = assets.filter((r) => r.asset_role === 'debt')
+                  const token = debtAssets[0] ? findTokenByAddress(debtAssets[0].asset_address) : undefined
+                  return token?.decimals ?? 18
+                })()}
               />
             </CardContent>
           </Card>
         </>
+      )}
+
+      {/* Not found */}
+      {isValidId && !isLoading && !error && !inscription && (
+        <div className="text-center py-24">
+          <p className="text-dust text-sm">Inscription not found on-chain</p>
+        </div>
       )}
     </div>
   )

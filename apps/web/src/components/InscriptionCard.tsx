@@ -91,6 +91,16 @@ export function InscriptionCard({
             </div>
           </div>
           <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Interest</span>
+            <div className="flex justify-start">
+              {hasAssets ? (
+                <AssetSummary assets={assets} role="interest" />
+              ) : (
+                <span className="text-ash italic">unspecified</span>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
             <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
             <div className="flex justify-start">
               {hasAssets ? (

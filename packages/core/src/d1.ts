@@ -76,8 +76,12 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        conditions.push('(LOWER(creator) = LOWER(?) OR LOWER(borrower) = LOWER(?) OR LOWER(lender) = LOWER(?))')
-        params.push(address, address, address)
+        // Normalize: handle both padded (0x049d3...) and unpadded (0x49d3...) StarkNet addresses
+        const stripped = address.replace(/^0x/i, '').toLowerCase()
+        const padded = '0x' + stripped.padStart(64, '0')
+        const unpadded = '0x' + (stripped.replace(/^0+/, '') || '0')
+        conditions.push('(LOWER(creator) IN (?, ?) OR LOWER(borrower) IN (?, ?) OR LOWER(lender) IN (?, ?))')
+        params.push(padded, unpadded, padded, unpadded, padded, unpadded)
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''

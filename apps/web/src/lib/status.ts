@@ -1,15 +1,14 @@
-import type { Inscription, InscriptionStatus } from '@stela/core'
-import { MAX_BPS } from '@stela/core'
+import { computeStatus as sdkComputeStatus } from '@fepvenancio/stela-sdk'
+import type { StatusInput } from '@fepvenancio/stela-sdk'
+import type { InscriptionStatus } from '@stela/core'
 
-export function computeStatus(a: Inscription): InscriptionStatus {
-  if (a.is_repaid) return 'repaid'
-  if (a.liquidated) return 'liquidated'
-  if (a.issued_debt_percentage === 0n) return 'open'
+export type { StatusInput }
 
-  const now = BigInt(Math.floor(Date.now() / 1000))
-  const dueAt = a.signed_at + a.duration
-
-  if (a.signed_at > 0n && now > dueAt) return 'expired'
-  if (a.issued_debt_percentage === MAX_BPS) return 'filled'
-  return 'partial'
+/**
+ * Delegates to the SDK's computeStatus — single source of truth.
+ * Handles: deadline expiry for open inscriptions, cancelled status,
+ * partial/filled/expired for signed inscriptions.
+ */
+export function computeStatus(a: StatusInput): InscriptionStatus {
+  return sdkComputeStatus(a)
 }

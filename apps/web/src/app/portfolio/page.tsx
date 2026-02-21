@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { InscriptionCard } from '@/components/InscriptionCard'
@@ -7,12 +8,29 @@ import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { normalizeAddress } from '@/lib/address'
+import { computeStatus } from '@/lib/status'
 
 export default function PortfolioPage() {
   const { address } = useAccount()
-  const { data, isLoading, error } = useInscriptions(
-    address ? { address } : undefined
+  const normalized = address ? normalizeAddress(address) : undefined
+  const { data: rawData, isLoading, error } = useInscriptions(
+    normalized ? { address: normalized } : undefined
   )
+
+  // Recompute status client-side to handle deadline expiry (D1 never stores 'expired')
+  const data = useMemo(() => rawData.map((row) => ({
+    ...row,
+    status: computeStatus({
+      signed_at: BigInt(row.signed_at ?? '0'),
+      duration: BigInt(row.duration),
+      issued_debt_percentage: BigInt(row.issued_debt_percentage),
+      is_repaid: row.status === 'repaid',
+      liquidated: row.status === 'liquidated',
+      deadline: BigInt(row.deadline ?? '0'),
+      status: row.status,
+    }),
+  })), [rawData])
 
   return (
     <div className="animate-fade-up">
