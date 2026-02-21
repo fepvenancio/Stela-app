@@ -1,11 +1,10 @@
 'use client'
 
 import { useAccount, useConnect, useDisconnect, useNetwork } from '@starknet-react/core'
-import type { Connector } from '@starknet-react/core'
 import { useStarknetkitConnectModal } from 'starknetkit'
 import type { StarknetkitConnector } from 'starknetkit'
 import { formatAddress } from '@/lib/address'
-import { connectors } from '@/lib/connectors'
+import { connectors as modalConnectors } from '@/lib/connectors'
 
 function NetworkBadge() {
   const { chain } = useNetwork()
@@ -28,11 +27,11 @@ function NetworkBadge() {
 
 export function WalletButton() {
   const { address, status } = useAccount()
-  const { connect } = useConnect()
+  const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
 
   const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: connectors as unknown as StarknetkitConnector[],
+    connectors: modalConnectors as unknown as StarknetkitConnector[],
     modalTheme: 'dark',
     dappName: 'Stela Protocol',
   })
@@ -40,7 +39,11 @@ export function WalletButton() {
   const connectWallet = async () => {
     const { connector } = await starknetkitConnectModal()
     if (connector) {
-      connect({ connector: connector as unknown as Connector })
+      // Match starknetkit selection to @starknet-react/core connector by ID
+      const match = connectors.find((c) => c.id === connector.id)
+      if (match) {
+        connect({ connector: match })
+      }
     }
   }
 
