@@ -38,6 +38,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export default {
+  async fetch(): Promise<Response> {
+    return new Response('stela-bot', { status: 200 })
+  },
+
   async scheduled(
     _controller: ScheduledController,
     env: Env,
