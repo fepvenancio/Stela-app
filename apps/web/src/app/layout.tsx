@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { href: '/', label: 'Browse' },
   { href: '/create', label: 'Create' },
   { href: '/portfolio', label: 'Portfolio' },
+  { href: '/faucet', label: 'Faucet' },
 ]
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
