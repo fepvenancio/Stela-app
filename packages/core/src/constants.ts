@@ -17,3 +17,4 @@ export function resolveNetwork(raw?: string): Network {
   if (trimmed) console.warn(`Invalid NETWORK "${trimmed}", falling back to sepolia`)
   return 'sepolia'
 }
+

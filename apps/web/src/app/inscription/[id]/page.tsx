@@ -4,24 +4,31 @@ import { use, useMemo } from 'react'
 import Link from 'next/link'
 import { useAccount } from '@starknet-react/core'
 import { useInscription } from '@/hooks/useInscription'
+import { useInscriptionAssets } from '@/hooks/useInscriptionAssets'
 import { useShares } from '@/hooks/useShares'
 import { InscriptionActions } from '@/components/InscriptionActions'
+import { AssetBadge } from '@/components/AssetBadge'
 import { computeStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
+import { findTokenByAddress } from '@stela/core'
 import type { InscriptionStatus } from '@stela/core'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface InscriptionPageProps {
   params: Promise<{ id: string }>
 }
 
-const STATUS_CONFIG: Record<InscriptionStatus, { color: string; label: string }> = {
-  open: { color: 'bg-aurora/15 text-aurora border-aurora/20', label: 'Open' },
-  partial: { color: 'bg-star/15 text-star border-star/20', label: 'Partial' },
-  filled: { color: 'bg-nebula/15 text-nebula border-nebula/20', label: 'Filled' },
-  repaid: { color: 'bg-aurora/15 text-aurora border-aurora/20', label: 'Repaid' },
-  liquidated: { color: 'bg-nova/15 text-nova border-nova/20', label: 'Liquidated' },
-  expired: { color: 'bg-ember/15 text-ember border-ember/20', label: 'Expired' },
-  cancelled: { color: 'bg-ash/15 text-ash border-ash/20', label: 'Cancelled' },
+const STATUS_LABELS: Record<InscriptionStatus, string> = {
+  open: 'Open',
+  partial: 'Partial',
+  filled: 'Filled',
+  repaid: 'Repaid',
+  liquidated: 'Liquidated',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
 }
 
 function formatDuration(seconds: bigint): string {
@@ -36,10 +43,23 @@ function formatTimestamp(ts: bigint): string {
   return new Date(Number(ts) * 1000).toLocaleString()
 }
 
+function formatTokenValue(raw: string | null, decimals: number): string {
+  if (!raw || raw === '0') return '0'
+  const n = BigInt(raw)
+  if (decimals === 0) return n.toString()
+  const divisor = 10n ** BigInt(decimals)
+  const whole = n / divisor
+  const frac = n % divisor
+  if (frac === 0n) return whole.toString()
+  const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '')
+  return `${whole}.${fracStr}`
+}
+
 export default function InscriptionPage({ params }: InscriptionPageProps) {
   const { id } = use(params)
   const { address } = useAccount()
   const { data: inscription, isLoading, error } = useInscription(id)
+  const { data: assets, isLoading: assetsLoading } = useInscriptionAssets(id)
   const { data: sharesRaw } = useShares(id)
 
   const status = useMemo<InscriptionStatus>(() => {
@@ -59,12 +79,12 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
     return BigInt(sharesRaw as string | bigint) > 0n
   }, [sharesRaw])
 
-  const statusCfg = STATUS_CONFIG[status]
+  const statusLabel = STATUS_LABELS[status]
 
   // Build info fields from live data
   const a = inscription as Record<string, unknown> | undefined
   const infoFields = [
-    { label: 'Status', value: statusCfg.label },
+    { label: 'Status', value: statusLabel },
     { label: 'Duration', value: a?.duration ? formatDuration(BigInt(a.duration as string | bigint)) : '--' },
     { label: 'Borrower', value: a?.borrower ? formatAddress(a.borrower as string) : '--', mono: true },
     { label: 'Lender', value: a?.lender && a.lender !== '0x0' ? formatAddress(a.lender as string) : '--', mono: true },
@@ -87,9 +107,18 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
 
       {/* Loading */}
       {isLoading && (
-        <div className="flex items-center gap-3 py-24 justify-center">
-          <div className="w-4 h-4 border-2 border-star/30 border-t-star rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
-          <span className="text-dust text-sm">Loading inscription...</span>
+        <div className="space-y-6 py-4">
+          <div className="space-y-3">
+            <Skeleton className="h-9 w-64 bg-surface" />
+            <Skeleton className="h-5 w-full max-w-md bg-surface" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 rounded-xl bg-surface" />
+            ))}
+          </div>
+          <Skeleton className="h-32 rounded-xl bg-surface" />
+          <Skeleton className="h-24 rounded-xl bg-surface" />
         </div>
       )}
 
@@ -109,9 +138,9 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
               <h1 className="font-display text-2xl sm:text-3xl tracking-wide text-chalk">
                 Inscription
               </h1>
-              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${statusCfg.color}`}>
-                {statusCfg.label}
-              </span>
+              <Badge variant={status as "open" | "partial" | "filled" | "repaid" | "liquidated" | "expired" | "cancelled"}>
+                {statusLabel}
+              </Badge>
             </div>
             <p className="font-mono text-xs sm:text-sm text-ash break-all leading-relaxed">{id}</p>
           </div>
@@ -128,30 +157,70 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
             ))}
           </div>
 
+          <Separator className="mb-6" />
+
           {/* Assets */}
-          <div className="p-5 rounded-xl bg-surface/40 border border-edge mb-6">
-            <h3 className="text-sm font-medium text-chalk mb-3">Assets</h3>
-            {!address ? (
-              <p className="text-sm text-ash leading-relaxed">
-                Connect your wallet to load asset details from the contract.
-              </p>
-            ) : (
-              <p className="text-sm text-ash leading-relaxed">
-                {Number(a?.debt_asset_count ?? 0)} debt, {Number(a?.interest_asset_count ?? 0)} interest, {Number(a?.collateral_asset_count ?? 0)} collateral assets
-              </p>
-            )}
-          </div>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-sm">Assets</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {assetsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-48 bg-surface" />
+                  <Skeleton className="h-8 w-40 bg-surface" />
+                </div>
+              ) : assets.length > 0 ? (
+                <>
+                  {(['debt', 'interest', 'collateral'] as const).map((role) => {
+                    const roleAssets = assets.filter((r) => r.asset_role === role)
+                    if (roleAssets.length === 0) return null
+                    return (
+                      <div key={role}>
+                        <div className="text-[11px] text-ash uppercase tracking-wider mb-2">{role}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {roleAssets.map((ra) => {
+                            const token = findTokenByAddress(ra.asset_address)
+                            const formattedValue = ra.asset_type === 'ERC721'
+                              ? undefined
+                              : formatTokenValue(ra.value, token?.decimals ?? 18)
+                            return (
+                              <AssetBadge
+                                key={`${ra.asset_role}-${ra.asset_index}`}
+                                address={ra.asset_address}
+                                assetType={ra.asset_type}
+                                value={formattedValue}
+                                tokenId={ra.token_id ?? undefined}
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </>
+              ) : (
+                <p className="text-sm text-ash leading-relaxed">
+                  {Number(a?.debt_asset_count ?? 0)} debt, {Number(a?.interest_asset_count ?? 0)} interest, {Number(a?.collateral_asset_count ?? 0)} collateral assets
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Actions */}
-          <div className="p-5 rounded-xl bg-surface/40 border border-edge">
-            <h3 className="text-sm font-medium text-chalk mb-4">Actions</h3>
-            <InscriptionActions
-              inscriptionId={id}
-              status={status}
-              isOwner={isOwner}
-              hasShares={hasShares}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InscriptionActions
+                inscriptionId={id}
+                status={status}
+                isOwner={isOwner}
+                hasShares={hasShares}
+              />
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

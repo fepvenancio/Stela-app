@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
 import { toU256 } from '@stela/core'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 
 const MOCK_TOKENS = [
   {
@@ -48,13 +53,9 @@ function MintCard({
   const { sendAsync, isPending } = useSendTransaction({})
   const [amount, setAmount] = useState(token.defaultAmount)
   const [tokenId, setTokenId] = useState(() => String(Math.floor(Math.random() * 1_000_000)))
-  const [txHash, setTxHash] = useState<string | null>(null)
-  const [txError, setTxError] = useState<string | null>(null)
 
   async function handleMint() {
     if (!address) return
-    setTxError(null)
-    setTxHash(null)
 
     try {
       if (token.type === 'ERC20') {
@@ -66,7 +67,7 @@ function MintCard({
             calldata: [address, ...toU256(rawAmount)],
           },
         ])
-        setTxHash(result.transaction_hash)
+        toast.success(`Minted ${token.symbol}`, { description: result.transaction_hash })
       } else {
         const result = await sendAsync([
           {
@@ -75,74 +76,65 @@ function MintCard({
             calldata: [address, ...toU256(BigInt(tokenId))],
           },
         ])
-        setTxHash(result.transaction_hash)
+        toast.success(`Minted ${token.symbol}`, { description: result.transaction_hash })
         setTokenId(String(Math.floor(Math.random() * 1_000_000)))
       }
     } catch (err: unknown) {
-      setTxError(err instanceof Error ? err.message : String(err))
+      toast.error(`Failed to mint ${token.symbol}`, { description: err instanceof Error ? err.message : String(err) })
     }
   }
 
   return (
-    <div className="border border-edge rounded-xl bg-surface/30 p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-medium text-chalk">{token.symbol}</h3>
-          <p className="text-xs text-ash mt-0.5">{token.name}</p>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base">{token.symbol}</CardTitle>
+            <CardDescription className="text-xs mt-0.5">{token.name}</CardDescription>
+          </div>
+          <span className="text-[10px] font-mono text-dust bg-abyss px-2 py-1 rounded-md">
+            {token.type}
+          </span>
         </div>
-        <span className="text-[10px] font-mono text-dust bg-abyss px-2 py-1 rounded-md">
-          {token.type}
-        </span>
-      </div>
-
-      <p className="text-[11px] font-mono text-dust break-all leading-relaxed">
-        {token.address}
-      </p>
-
-      <div className="flex gap-3 items-end">
-        {token.type === 'ERC20' ? (
-          <div className="flex-1">
-            <label className="block text-xs text-dust mb-1.5">Amount</label>
-            <input
-              type="text"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-abyss border border-edge rounded-lg px-3 py-2 text-sm text-chalk placeholder:text-ash focus:border-star focus:outline-none focus:ring-1 focus:ring-star/30 transition-all"
-            />
-          </div>
-        ) : (
-          <div className="flex-1">
-            <label className="block text-xs text-dust mb-1.5">Token ID</label>
-            <input
-              type="text"
-              value={tokenId}
-              onChange={(e) => setTokenId(e.target.value)}
-              className="w-full bg-abyss border border-edge rounded-lg px-3 py-2 text-sm text-chalk placeholder:text-ash focus:border-star focus:outline-none focus:ring-1 focus:ring-star/30 transition-all"
-            />
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={handleMint}
-          disabled={isPending || !address}
-          className="px-5 py-2 rounded-lg text-sm font-medium bg-gradient-to-b from-star to-star-dim text-void hover:from-star-bright hover:to-star transition-all duration-200 shadow-[0_0_20px_-5px_rgba(232,168,37,0.25)] hover:shadow-[0_0_30px_-5px_rgba(232,168,37,0.4)] disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {isPending ? 'Minting...' : 'Mint'}
-        </button>
-      </div>
-
-      {txHash && (
-        <p className="text-xs text-aurora font-mono break-all">
-          Tx: {txHash}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-[11px] font-mono text-dust break-all leading-relaxed">
+          {token.address}
         </p>
-      )}
-      {txError && (
-        <p className="text-xs text-nova break-all">
-          {txError}
-        </p>
-      )}
-    </div>
+
+        <div className="flex gap-3 items-end">
+          {token.type === 'ERC20' ? (
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor={`amount-${token.symbol}`} className="text-xs text-dust">Amount</Label>
+              <Input
+                id={`amount-${token.symbol}`}
+                type="text"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor={`tokenid-${token.symbol}`} className="text-xs text-dust">Token ID</Label>
+              <Input
+                id={`tokenid-${token.symbol}`}
+                type="text"
+                value={tokenId}
+                onChange={(e) => setTokenId(e.target.value)}
+              />
+            </div>
+          )}
+
+          <Button
+            variant="gold"
+            onClick={handleMint}
+            disabled={isPending || !address}
+          >
+            {isPending ? 'Minting...' : 'Mint'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

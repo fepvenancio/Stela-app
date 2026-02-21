@@ -26,8 +26,27 @@ export async function GET(request: NextRequest) {
   try {
     const { env } = getCloudflareContext()
     const db = createD1Queries(env.DB as unknown as D1Database)
-    const inscriptions = await db.getInscriptions({ status, address, page, limit })
-    return NextResponse.json(inscriptions)
+    const inscriptions = await db.getInscriptions({ status, address, page, limit }) as Record<string, unknown>[]
+
+    // Batch-fetch assets for all returned inscriptions
+    const ids = inscriptions.map((i) => i.id as string)
+    const allAssets = await db.getAssetsForInscriptions(ids) as Record<string, unknown>[]
+
+    // Group assets by inscription_id
+    const assetMap = new Map<string, Record<string, unknown>[]>()
+    for (const asset of allAssets) {
+      const key = asset.inscription_id as string
+      if (!assetMap.has(key)) assetMap.set(key, [])
+      assetMap.get(key)!.push(asset)
+    }
+
+    // Attach assets to each inscription
+    const result = inscriptions.map((i) => ({
+      ...i,
+      assets: assetMap.get(i.id as string) ?? [],
+    }))
+
+    return NextResponse.json(result)
   } catch (err) {
     console.error('D1 query error:', err)
     return NextResponse.json({ error: 'service unavailable' }, { status: 502 })

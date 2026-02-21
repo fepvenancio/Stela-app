@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { InscriptionCard } from '@/components/InscriptionCard'
+import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 const FILTERS = [
   { key: 'open', label: 'Open' },
@@ -28,27 +30,24 @@ export default function BrowsePage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-8">
+      <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2 mb-8">
         {FILTERS.map(({ key, label }) => (
-          <button
+          <ToggleGroupItem
             key={key}
-            onClick={() => setStatusFilter(key)}
-            className={`px-4 py-2 rounded-xl text-sm transition-all duration-200 ${
-              statusFilter === key
-                ? 'bg-star/15 text-star border border-star/30'
-                : 'text-dust border border-transparent hover:text-chalk hover:bg-surface/50'
-            }`}
+            value={key}
+            className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
           >
             {label}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
 
       {/* Loading */}
       {isLoading && (
-        <div className="flex items-center gap-3 py-24 justify-center">
-          <div className="w-4 h-4 border-2 border-star/30 border-t-star rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
-          <span className="text-dust text-sm">Loading inscriptions...</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <InscriptionCardSkeleton key={i} />
+          ))}
         </div>
       )}
 
@@ -70,8 +69,7 @@ export default function BrowsePage() {
                 creator={a.creator}
                 multiLender={a.multi_lender}
                 duration={a.duration}
-                debtAssetCount={a.debt_asset_count}
-                collateralAssetCount={a.collateral_asset_count}
+                assets={a.assets ?? []}
               />
             </div>
           ))}

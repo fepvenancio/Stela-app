@@ -4,6 +4,10 @@ import { useState } from 'react'
 import type { AssetType, TokenInfo } from '@stela/core'
 import { getTokensForNetwork } from '@stela/core'
 import { NETWORK } from '@/lib/config'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 
 export interface AssetInputValue {
   asset: string
@@ -23,9 +27,6 @@ interface AssetInputProps {
 const ASSET_TYPES: AssetType[] = ['ERC20', 'ERC721', 'ERC1155', 'ERC4626']
 
 const CUSTOM_TOKEN_KEY = '__custom__'
-
-const inputBase =
-  'bg-surface border border-edge rounded-lg px-3 py-2 text-sm text-chalk placeholder:text-dust focus:border-star focus:outline-none transition-colors'
 
 const networkTokens = getTokensForNetwork(NETWORK)
 
@@ -79,46 +80,65 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
       <div className="flex-1 space-y-2">
         {/* Row 1: Asset type + Token selector */}
         <div className="grid grid-cols-[110px_1fr] gap-2">
-          <select
-            value={value.asset_type}
-            onChange={(e) => onChange({ ...value, asset_type: e.target.value as AssetType })}
-            className={inputBase}
-          >
-            {ASSET_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+          <div>
+            <Label htmlFor={`asset-type-${index}`} className="sr-only">Asset type</Label>
+            <Select
+              value={value.asset_type}
+              onValueChange={(v) => onChange({ ...value, asset_type: v as AssetType })}
+            >
+              <SelectTrigger id={`asset-type-${index}`} className="w-full bg-surface border-edge text-chalk text-sm h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ASSET_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <select
-            value={selectedKey}
-            onChange={(e) => handleTokenSelect(e.target.value)}
-            className={inputBase}
-          >
-            <option value="" disabled>Select token</option>
-            {networkTokens.map((t) => (
-              <option key={t.symbol} value={t.symbol}>
-                {t.symbol} — {t.name}
-              </option>
-            ))}
-            <option value={CUSTOM_TOKEN_KEY}>Custom token</option>
-          </select>
+          <div>
+            <Label htmlFor={`token-select-${index}`} className="sr-only">Token</Label>
+            <Select
+              value={selectedKey}
+              onValueChange={handleTokenSelect}
+            >
+              <SelectTrigger id={`token-select-${index}`} className="w-full bg-surface border-edge text-chalk text-sm h-9">
+                <SelectValue placeholder="Select token" />
+              </SelectTrigger>
+              <SelectContent>
+                {networkTokens.map((t) => (
+                  <SelectItem key={t.symbol} value={t.symbol}>
+                    {t.symbol} — {t.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value={CUSTOM_TOKEN_KEY}>Custom token</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Row 2: Custom address (only when custom selected) */}
         {isCustom && (
-          <input
-            type="text"
-            placeholder="Contract address (0x...)"
-            value={value.asset}
-            onChange={(e) => onChange({ ...value, asset: e.target.value })}
-            className={`${inputBase} w-full font-mono`}
-          />
+          <div>
+            <Label htmlFor={`custom-addr-${index}`} className="sr-only">Contract address</Label>
+            <Input
+              id={`custom-addr-${index}`}
+              type="text"
+              placeholder="Contract address (0x...)"
+              value={value.asset}
+              onChange={(e) => onChange({ ...value, asset: e.target.value })}
+              className="font-mono"
+            />
+          </div>
         )}
 
         {/* Row 3: Amount + Token ID (conditional) */}
         <div className={`grid gap-2 ${showTokenId ? 'grid-cols-2' : 'grid-cols-1'}`}>
           <div className="relative">
-            <input
+            <Label htmlFor={`amount-${index}`} className="sr-only">Amount</Label>
+            <Input
+              id={`amount-${index}`}
               type="text"
               inputMode="decimal"
               placeholder="0.00"
@@ -129,7 +149,7 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
                   onChange({ ...value, value: raw })
                 }
               }}
-              className={`${inputBase} w-full ${symbol ? 'pr-16' : ''}`}
+              className={symbol ? 'pr-16' : ''}
             />
             {symbol && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-dust font-mono pointer-events-none">
@@ -139,27 +159,32 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
           </div>
 
           {showTokenId && (
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="Token ID"
-              value={value.token_id}
-              onChange={(e) => onChange({ ...value, token_id: e.target.value })}
-              className={inputBase}
-            />
+            <div>
+              <Label htmlFor={`token-id-${index}`} className="sr-only">Token ID</Label>
+              <Input
+                id={`token-id-${index}`}
+                type="text"
+                inputMode="numeric"
+                placeholder="Token ID"
+                value={value.token_id}
+                onChange={(e) => onChange({ ...value, token_id: e.target.value })}
+              />
+            </div>
           )}
         </div>
       </div>
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={onRemove}
-        className="mt-2 p-1.5 rounded-lg text-ash hover:text-nova hover:bg-nova/10 transition-colors shrink-0"
+        className="mt-2 text-ash hover:text-nova hover:bg-nova/10 shrink-0"
         aria-label="Remove asset"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M4 4l8 8M12 4l-8 8" />
         </svg>
-      </button>
+      </Button>
     </div>
   )
 }

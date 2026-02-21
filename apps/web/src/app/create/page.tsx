@@ -1,13 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
 import { toU256 } from '@stela/core'
 import type { AssetType } from '@stela/core'
 import { CONTRACT_ADDRESS } from '@/lib/config'
 import { AssetInput } from '@/components/AssetInput'
 import type { AssetInputValue } from '@/components/AssetInput'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { toast } from 'sonner'
 
 const emptyAsset = (): AssetInputValue => ({
   asset: '',
@@ -16,9 +21,6 @@ const emptyAsset = (): AssetInputValue => ({
   token_id: '0',
   decimals: 18,
 })
-
-const inputBase =
-  'w-full bg-abyss border border-edge rounded-xl px-4 py-2.5 text-sm text-chalk placeholder:text-dust focus:border-star focus:outline-none focus:ring-1 focus:ring-star/30 transition-all'
 
 const ASSET_TYPE_ENUM: Record<AssetType, number> = {
   ERC20: 0,
@@ -103,7 +105,6 @@ function AssetSection({
 }
 
 export default function CreatePage() {
-  const router = useRouter()
   const { address } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
 
@@ -114,8 +115,6 @@ export default function CreatePage() {
   const [collateralAssets, setCollateralAssets] = useState<AssetInputValue[]>([emptyAsset()])
   const [duration, setDuration] = useState('')
   const [deadline, setDeadline] = useState('')
-  const [txHash, setTxHash] = useState<string | null>(null)
-  const [txError, setTxError] = useState<string | null>(null)
   const [showErrors, setShowErrors] = useState(false)
 
   const hasDebt = debtAssets.some((a) => a.asset)
@@ -127,8 +126,6 @@ export default function CreatePage() {
     if (!address) return
     setShowErrors(true)
     if (!isValid) return
-    setTxError(null)
-    setTxHash(null)
 
     const calldata = [
       isBorrow ? '1' : '0',
@@ -148,9 +145,9 @@ export default function CreatePage() {
           calldata,
         },
       ])
-      setTxHash(result.transaction_hash)
+      toast.success('Inscription created', { description: result.transaction_hash })
     } catch (err: unknown) {
-      setTxError(err instanceof Error ? err.message : String(err))
+      toast.error('Failed to create inscription', { description: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -191,99 +188,70 @@ export default function CreatePage() {
           ))}
         </div>
 
-        <div className="h-px bg-edge" />
+        <Separator />
 
         {/* Asset sections */}
         <AssetSection title="Debt Assets" assets={debtAssets} setAssets={setDebtAssets} required showErrors={showErrors} />
         <AssetSection title="Interest Assets" assets={interestAssets} setAssets={setInterestAssets} />
         <AssetSection title="Collateral Assets" assets={collateralAssets} setAssets={setCollateralAssets} required showErrors={showErrors} />
 
-        <div className="h-px bg-edge" />
+        <Separator />
 
         {/* Duration & deadline */}
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-dust mb-2">
+          <div className="space-y-2">
+            <Label htmlFor="duration" className="text-dust">
               Duration (seconds) <span className="text-star">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
+              id="duration"
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="e.g. 86400 for 1 day"
-              className={`${inputBase} ${showErrors && !hasDuration ? 'border-nova/50' : ''}`}
+              aria-invalid={showErrors && !hasDuration ? true : undefined}
+              className={showErrors && !hasDuration ? 'border-nova/50' : ''}
             />
             {showErrors && !hasDuration && (
-              <p className="text-xs text-nova mt-1.5">Duration is required.</p>
+              <p className="text-xs text-nova">Duration is required.</p>
             )}
           </div>
-          <div>
-            <label className="block text-sm text-dust mb-2">Deadline (unix timestamp)</label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="deadline" className="text-dust">Deadline (unix timestamp)</Label>
+            <Input
+              id="deadline"
               type="number"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               placeholder="e.g. 1700000000"
-              className={inputBase}
             />
           </div>
         </div>
 
         {/* Multi-lender toggle */}
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div
-            className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
-              multiLender
-                ? 'bg-star border-star'
-                : 'border-edge group-hover:border-edge-bright'
-            }`}
-          >
-            {multiLender && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" className="text-void">
-                <path d="M2.5 6l2.5 2.5 4.5-5" />
-              </svg>
-            )}
-          </div>
-          <input
-            type="checkbox"
-            checked={multiLender}
-            onChange={(e) => setMultiLender(e.target.checked)}
-            className="sr-only"
-          />
-          <div>
+        <div className="flex items-start gap-3">
+          <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
+          <Label htmlFor="multi-lender" className="cursor-pointer">
             <span className="text-sm text-chalk block">Allow multiple lenders</span>
-            <span className="text-xs text-ash block mt-0.5">
-              Lenders can each fund a portion of the total debt
-            </span>
-          </div>
-        </label>
+            <span className="text-xs text-ash block mt-0.5">Lenders can each fund a portion of the total debt</span>
+          </Label>
+        </div>
 
-        <div className="h-px bg-edge" />
+        <Separator />
 
         {/* Submit */}
         {!address ? (
           <p className="text-sm text-ash text-center py-3">Connect your wallet to create an inscription.</p>
         ) : (
-          <button
-            type="button"
+          <Button
+            variant="gold"
+            size="xl"
+            className="w-full"
             onClick={handleSubmit}
             disabled={isPending}
-            className="w-full py-3.5 rounded-xl text-sm font-semibold bg-gradient-to-b from-star to-star-dim text-void hover:from-star-bright hover:to-star transition-all duration-200 shadow-[0_0_30px_-5px_rgba(232,168,37,0.3)] hover:shadow-[0_0_40px_-5px_rgba(232,168,37,0.45)] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isPending ? 'Creating...' : 'Create Inscription'}
-          </button>
-        )}
-
-        {/* Feedback */}
-        {txHash && (
-          <p className="text-xs text-aurora font-mono break-all">
-            Tx submitted: {txHash}
-          </p>
-        )}
-        {txError && (
-          <p className="text-xs text-nova break-all">
-            {txError}
-          </p>
+          </Button>
         )}
       </div>
     </div>

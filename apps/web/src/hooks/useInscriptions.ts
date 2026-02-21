@@ -2,6 +2,16 @@
 
 import { useState, useEffect } from 'react'
 
+export interface AssetRow {
+  inscription_id: string
+  asset_role: string
+  asset_index: number
+  asset_address: string
+  asset_type: string
+  value: string | null
+  token_id: string | null
+}
+
 interface InscriptionRow {
   id: string
   creator: string
@@ -17,6 +27,7 @@ interface InscriptionRow {
   interest_asset_count: number
   collateral_asset_count: number
   created_at_ts: string
+  assets: AssetRow[]
 }
 
 export function useInscriptions(params?: { status?: string; address?: string; page?: number }) {

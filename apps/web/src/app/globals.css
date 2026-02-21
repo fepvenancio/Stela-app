@@ -64,6 +64,41 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── shadcn/ui CSS Variable Bridge ─────────────────────── */
+
+@layer base {
+  :root {
+    --background: var(--color-void);
+    --foreground: var(--color-chalk);
+    --card: var(--color-surface);
+    --card-foreground: var(--color-chalk);
+    --popover: var(--color-abyss);
+    --popover-foreground: var(--color-chalk);
+    --primary: var(--color-star);
+    --primary-foreground: var(--color-void);
+    --secondary: var(--color-surface);
+    --secondary-foreground: var(--color-chalk);
+    --muted: var(--color-elevated);
+    --muted-foreground: var(--color-dust);
+    --accent: var(--color-elevated);
+    --accent-foreground: var(--color-chalk);
+    --destructive: var(--color-nova);
+    --destructive-foreground: white;
+    --border: var(--color-edge);
+    --input: var(--color-edge);
+    --ring: var(--color-star);
+    --radius: 0.75rem;
+    --sidebar: var(--color-void);
+    --sidebar-foreground: var(--color-chalk);
+    --sidebar-primary: var(--color-star);
+    --sidebar-primary-foreground: var(--color-void);
+    --sidebar-accent: var(--color-surface);
+    --sidebar-accent-foreground: var(--color-chalk);
+    --sidebar-border: var(--color-edge);
+    --sidebar-ring: var(--color-star);
+  }
+}
+
 /* ── Base ──────────────────────────────────────────────── */
 
 html {

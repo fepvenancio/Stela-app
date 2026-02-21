@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { WalletButton } from './WalletButton'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
 const NAV_LINKS = [
   { href: '/', label: 'Browse' },
@@ -114,38 +116,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* ── Desktop sidebar ───────────────────── */}
+      {/* Desktop sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col bg-void/90 backdrop-blur-xl border-r border-edge z-40">
         <SidebarContent />
       </aside>
 
-      {/* ── Mobile overlay ────────────────────── */}
-      {mobileOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-void/60 backdrop-blur-sm z-40 lg:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="fixed inset-y-0 left-0 w-56 bg-void/95 backdrop-blur-xl border-r border-edge z-50 lg:hidden animate-slide-in">
-            <SidebarContent onNavigate={() => setMobileOpen(false)} />
-          </aside>
-        </>
-      )}
+      {/* Mobile sidebar (Sheet) */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-56 bg-void/95 backdrop-blur-xl border-edge p-0" showCloseButton={false}>
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SidebarContent onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
-      {/* ── Main column ───────────────────────── */}
+      {/* Main column */}
       <div className="lg:ml-56 min-h-dvh flex flex-col">
         {/* Header */}
         <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 sm:px-6 backdrop-blur-xl bg-void/80 border-b border-edge">
           {/* Hamburger (mobile) */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-2 -ml-2 text-dust hover:text-chalk transition-colors"
+            className="lg:hidden -ml-2 text-dust hover:text-chalk"
             aria-label="Open menu"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
-          </button>
+          </Button>
 
           {/* Spacer for desktop (no hamburger) */}
           <div className="hidden lg:block" />

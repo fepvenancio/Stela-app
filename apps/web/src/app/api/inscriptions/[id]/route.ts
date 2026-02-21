@@ -24,7 +24,9 @@ export async function GET(
       return NextResponse.json({ error: 'not found' }, { status: 404 })
     }
 
-    return NextResponse.json(inscription)
+    const assets = await db.getInscriptionAssets(id)
+
+    return NextResponse.json({ ...inscription as Record<string, unknown>, assets })
   } catch (err) {
     console.error('D1 query error:', err)
     return NextResponse.json({ error: 'service unavailable' }, { status: 502 })

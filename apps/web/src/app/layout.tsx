@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Outfit, IBM_Plex_Mono, Cinzel } from 'next/font/google'
 import { Providers } from './providers'
 import { AppShell } from '@/components/AppShell'
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
@@ -20,8 +22,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${outfit.variable} ${ibmMono.variable} ${cinzel.variable} font-sans bg-void text-chalk antialiased`}
       >
         <Providers>
-          <div className="starfield" aria-hidden="true" />
-          <AppShell>{children}</AppShell>
+          <TooltipProvider>
+            <div className="starfield" aria-hidden="true" />
+            <AppShell>{children}</AppShell>
+            <Toaster richColors />
+          </TooltipProvider>
         </Providers>
       </body>
     </html>

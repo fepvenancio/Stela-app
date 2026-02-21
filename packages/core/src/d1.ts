@@ -107,6 +107,18 @@ export function createD1Queries(db: D1Database) {
       return result.results
     },
 
+    async getAssetsForInscriptions(ids: string[]) {
+      if (ids.length === 0) return []
+      const placeholders = ids.map(() => '?').join(', ')
+      const result = await db
+        .prepare(
+          `SELECT * FROM inscription_assets WHERE inscription_id IN (${placeholders}) ORDER BY inscription_id, asset_role, asset_index`
+        )
+        .bind(...ids)
+        .all()
+      return result.results
+    },
+
     // -----------------------------------------------------------------------
     // Writes
     // -----------------------------------------------------------------------

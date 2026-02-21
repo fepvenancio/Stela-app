@@ -3,6 +3,7 @@
 import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { InscriptionCard } from '@/components/InscriptionCard'
+import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 
 export default function PortfolioPage() {
   const { address } = useAccount()
@@ -38,9 +39,10 @@ export default function PortfolioPage() {
 
       {/* Loading */}
       {address && isLoading && (
-        <div className="flex items-center gap-3 py-24 justify-center">
-          <div className="w-4 h-4 border-2 border-star/30 border-t-star rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
-          <span className="text-dust text-sm">Loading positions...</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <InscriptionCardSkeleton key={i} />
+          ))}
         </div>
       )}
 
@@ -62,8 +64,7 @@ export default function PortfolioPage() {
                 creator={a.creator}
                 multiLender={a.multi_lender}
                 duration={a.duration}
-                debtAssetCount={a.debt_asset_count}
-                collateralAssetCount={a.collateral_asset_count}
+                assets={a.assets ?? []}
               />
             </div>
           ))}

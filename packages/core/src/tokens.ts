@@ -74,6 +74,39 @@ export const TOKENS: TokenInfo[] = [
       mainnet: '0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2',
     },
   },
+  // Mock tokens (Stela Sepolia testnet)
+  {
+    symbol: 'mUSDC',
+    name: 'Mock USDC',
+    decimals: 6,
+    addresses: {
+      sepolia: '0x034a0cf09c79e7f20fb2136212f27b7dd88e91f9a24b2ac50c5c41ff6b30c59d',
+    },
+  },
+  {
+    symbol: 'mWETH',
+    name: 'Mock WETH',
+    decimals: 18,
+    addresses: {
+      sepolia: '0x07e86764396d61d2179cd1a48033fa4f30897cb172464961a80649aff4da9bdd',
+    },
+  },
+  {
+    symbol: 'mDAI',
+    name: 'Mock DAI',
+    decimals: 18,
+    addresses: {
+      sepolia: '0x0479f31a23241b1337375b083099bd1672716edbf908b1b30148a648657a1cee',
+    },
+  },
+  {
+    symbol: 'StelaNFT',
+    name: 'Stela NFT',
+    decimals: 0,
+    addresses: {
+      sepolia: '0x04f2345306bf8ef1c8c1445661354ef08421aa092459445a5d6b46641237e943',
+    },
+  },
 ]
 
 /** Get tokens available on a specific network */
