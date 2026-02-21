@@ -1,8 +1,10 @@
 'use client'
 
-import { StarknetConfig, argent, braavos, jsonRpcProvider } from '@starknet-react/core'
+import { StarknetConfig, jsonRpcProvider } from '@starknet-react/core'
+import type { Connector } from '@starknet-react/core'
 import { sepolia, mainnet } from '@starknet-react/chains'
 import { NETWORK } from '@/lib/config'
+import { connectors } from '@/lib/connectors'
 
 const chains = NETWORK === 'mainnet' ? [mainnet] : [sepolia]
 
@@ -17,7 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <StarknetConfig
       chains={chains}
       provider={provider}
-      connectors={[argent(), braavos()]}
+      connectors={connectors as unknown as Connector[]}
       autoConnect
     >
       {children}

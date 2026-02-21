@@ -4,6 +4,7 @@ import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { InscriptionCard } from '@/components/InscriptionCard'
 import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
+import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 
 export default function PortfolioPage() {
   const { address } = useAccount()
@@ -23,66 +24,54 @@ export default function PortfolioPage() {
         </p>
       </div>
 
-      {/* Not connected */}
-      {!address && (
-        <div className="text-center py-24">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <path d="M3 10h18" />
-            </svg>
+      <Web3ActionWrapper message="to view your positions on StarkNet">
+        {/* Loading */}
+        {isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <InscriptionCardSkeleton key={i} />
+            ))}
           </div>
-          <p className="text-dust text-sm mb-1">Connect your wallet</p>
-          <p className="text-ash text-xs">to view your positions on StarkNet</p>
-        </div>
-      )}
+        )}
 
-      {/* Loading */}
-      {address && isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <InscriptionCardSkeleton key={i} />
-          ))}
-        </div>
-      )}
+        {/* Error */}
+        {error && (
+          <div className="text-center py-24">
+            <p className="text-nova text-sm">Failed to load positions</p>
+          </div>
+        )}
 
-      {/* Error */}
-      {error && (
-        <div className="text-center py-24">
-          <p className="text-nova text-sm">Failed to load positions</p>
-        </div>
-      )}
+        {/* Cards */}
+        {!isLoading && data.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {data.map((a, i) => (
+              <div key={a.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
+                <InscriptionCard
+                  id={a.id}
+                  status={a.status}
+                  creator={a.creator}
+                  multiLender={a.multi_lender}
+                  duration={a.duration}
+                  assets={a.assets ?? []}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
-      {/* Cards */}
-      {address && !isLoading && data.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.map((a, i) => (
-            <div key={a.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-              <InscriptionCard
-                id={a.id}
-                status={a.status}
-                creator={a.creator}
-                multiLender={a.multi_lender}
-                duration={a.duration}
-                assets={a.assets ?? []}
-              />
+        {/* Empty */}
+        {!isLoading && !error && data.length === 0 && (
+          <div className="text-center py-24">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+                <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
+              </svg>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Empty */}
-      {address && !isLoading && !error && data.length === 0 && (
-        <div className="text-center py-24">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
-              <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
-            </svg>
+            <p className="text-dust text-sm">No positions yet</p>
+            <p className="text-ash text-xs mt-1">Create or sign an inscription to get started</p>
           </div>
-          <p className="text-dust text-sm">No positions yet</p>
-          <p className="text-ash text-xs mt-1">Create or sign an inscription to get started</p>
-        </div>
-      )}
+        )}
+      </Web3ActionWrapper>
     </div>
   )
 }

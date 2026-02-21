@@ -1,431 +1,19 @@
-import { RpcProvider, Contract, hash } from 'starknet'
-import {
-  createD1Queries,
-  inscriptionIdToHex,
-  fromU256,
-  MAX_BPS,
-} from '@stela/core'
+import { RpcProvider } from 'starknet'
+import { createD1Queries } from '@stela/core'
 import type { D1Queries } from '@stela/core'
-import stelaAbi from '@stela/core/abi/stela.json'
+import type { Env, IndexerEvent } from './types.js'
+import { SELECTORS, fetchAllEvents, getBlockTimestamp } from './rpc.js'
+import {
+  handleCreated,
+  handleSigned,
+  handleCancelled,
+  handleRepaid,
+  handleLiquidated,
+  handleRedeemed,
+} from './handlers/index.js'
 
 // Max blocks to process per invocation to stay within Worker 30s CPU limit
 const MAX_BLOCK_RANGE = 500
-
-// ---------------------------------------------------------------------------
-// Asset type enum mapping (matches Cairo AssetType)
-// ---------------------------------------------------------------------------
-
-const ASSET_TYPE_MAP: Record<number, string> = {
-  0: 'ERC20',
-  1: 'ERC721',
-  2: 'ERC1155',
-  3: 'ERC4626',
-}
-
-interface ParsedAsset {
-  asset_address: string
-  asset_type: string
-  value: string
-  token_id: string
-}
-
-// ---------------------------------------------------------------------------
-// Environment
-// ---------------------------------------------------------------------------
-
-interface Env {
-  DB: D1Database
-  STELA_ADDRESS: string
-  RPC_URL: string
-}
-
-// ---------------------------------------------------------------------------
-// Event selectors
-// ---------------------------------------------------------------------------
-
-const SELECTORS = {
-  InscriptionCreated: hash.getSelectorFromName('InscriptionCreated'),
-  InscriptionSigned: hash.getSelectorFromName('InscriptionSigned'),
-  InscriptionCancelled: hash.getSelectorFromName('InscriptionCancelled'),
-  InscriptionRepaid: hash.getSelectorFromName('InscriptionRepaid'),
-  InscriptionLiquidated: hash.getSelectorFromName('InscriptionLiquidated'),
-  SharesRedeemed: hash.getSelectorFromName('SharesRedeemed'),
-} as const
-
-const ALL_SELECTORS = Object.values(SELECTORS)
-
-// ---------------------------------------------------------------------------
-// RPC event shape (from starknet.js getEvents)
-// ---------------------------------------------------------------------------
-
-interface RpcEvent {
-  keys: string[]
-  data: string[]
-  transaction_hash: string
-  block_number: number
-  block_hash: string
-}
-
-interface GetEventsResult {
-  events: RpcEvent[]
-  continuation_token?: string
-}
-
-// ---------------------------------------------------------------------------
-// Enriched event with resolved block timestamp
-// ---------------------------------------------------------------------------
-
-interface IndexerEvent {
-  keys: string[]
-  data: string[]
-  transaction_hash: string
-  block_number: number
-  timestamp: number
-}
-
-// ---------------------------------------------------------------------------
-// Fetch inscription from contract (for InscriptionCreated)
-// ---------------------------------------------------------------------------
-
-interface OnChainInscription {
-  multi_lender: boolean
-  duration: number
-  deadline: number
-  debt_asset_count: number
-  interest_asset_count: number
-  collateral_asset_count: number
-}
-
-async function fetchInscriptionFromContract(
-  provider: RpcProvider,
-  stelaAddress: string,
-  inscriptionId: string
-): Promise<OnChainInscription | null> {
-  try {
-    const contract = new Contract(stelaAbi, stelaAddress, provider)
-    const result = await contract.call('get_inscription', [inscriptionId])
-    const r = result as Record<string, unknown>
-
-    return {
-      multi_lender: Boolean(r.multi_lender),
-      duration: Number(BigInt(r.duration as string | bigint)),
-      deadline: Number(BigInt(r.deadline as string | bigint)),
-      debt_asset_count: Number(r.debt_asset_count),
-      interest_asset_count: Number(r.interest_asset_count),
-      collateral_asset_count: Number(r.collateral_asset_count),
-    }
-  } catch (err) {
-    console.error(`Failed to fetch inscription ${inscriptionId} from contract:`, err)
-    return null
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function parseInscriptionId(event: IndexerEvent): string {
-  return inscriptionIdToHex({
-    low: BigInt(event.keys[1]),
-    high: BigInt(event.keys[2]),
-  })
-}
-
-// ---------------------------------------------------------------------------
-// Transaction calldata parsing — extract assets from create_inscription
-// ---------------------------------------------------------------------------
-
-/**
- * Parse an Array<Asset> from serialized calldata starting at `offset`.
- * Each Asset = [address, type_enum, value_low, value_high, token_id_low, token_id_high]
- */
-function parseAssetArray(
-  calldata: string[],
-  offset: number
-): { assets: ParsedAsset[]; nextOffset: number } {
-  const len = Number(BigInt(calldata[offset]))
-  offset++
-  const assets: ParsedAsset[] = []
-  for (let i = 0; i < len; i++) {
-    const asset_address = calldata[offset]
-    const asset_type_num = Number(BigInt(calldata[offset + 1]))
-    const value_low = BigInt(calldata[offset + 2])
-    const value_high = BigInt(calldata[offset + 3])
-    const token_id_low = BigInt(calldata[offset + 4])
-    const token_id_high = BigInt(calldata[offset + 5])
-
-    const value = (value_high << 128n) | value_low
-    const token_id = (token_id_high << 128n) | token_id_low
-
-    assets.push({
-      asset_address,
-      asset_type: ASSET_TYPE_MAP[asset_type_num] ?? 'ERC20',
-      value: value.toString(),
-      token_id: token_id.toString(),
-    })
-    offset += 6
-  }
-  return { assets, nextOffset: offset }
-}
-
-/**
- * Parse the inner calldata of create_inscription(InscriptionParams).
- * Layout: is_borrow, debt_assets[], interest_assets[], collateral_assets[], duration, deadline, multi_lender
- */
-function parseCreateInscriptionCalldata(innerCalldata: string[]): {
-  debt: ParsedAsset[]
-  interest: ParsedAsset[]
-  collateral: ParsedAsset[]
-} | null {
-  try {
-    let offset = 0
-    offset++ // skip is_borrow
-
-    const { assets: debt, nextOffset: o1 } = parseAssetArray(innerCalldata, offset)
-    const { assets: interest, nextOffset: o2 } = parseAssetArray(innerCalldata, o1)
-    const { assets: collateral } = parseAssetArray(innerCalldata, o2)
-
-    return { debt, interest, collateral }
-  } catch {
-    return null
-  }
-}
-
-/**
- * Extract inner calldata from the account's __execute__ transaction calldata.
- * Handles both SNIP-6 (new) and legacy (old) account formats.
- */
-function extractInnerCalldata(calldata: string[], createSelector: string): string[] | null {
-  if (!calldata || calldata.length < 5) return null
-
-  // Verify this is a single call to create_inscription
-  if (Number(BigInt(calldata[0])) !== 1) return null
-  if (BigInt(calldata[2]) !== BigInt(createSelector)) return null
-
-  // SNIP-6 format: [1, to, selector, calldata_len, ...inner_calldata]
-  // Legacy format: [1, to, selector, data_offset(0), data_len, total_calldata_len, ...inner_calldata]
-  const field3 = BigInt(calldata[3])
-
-  if (field3 === 0n) {
-    // Legacy format — data_offset is 0 for single call
-    const dataLen = Number(BigInt(calldata[4]))
-    if (calldata.length >= 6 + dataLen) {
-      return calldata.slice(6, 6 + dataLen)
-    }
-  } else {
-    // SNIP-6 format — field3 is calldata_len
-    const calldataLen = Number(field3)
-    if (calldata.length >= 4 + calldataLen) {
-      return calldata.slice(4, 4 + calldataLen)
-    }
-  }
-
-  return null
-}
-
-/**
- * Fetch the create_inscription transaction, parse its calldata, and store assets in D1.
- */
-async function fetchAndStoreAssets(
-  provider: RpcProvider,
-  txHash: string,
-  inscriptionId: string,
-  queries: D1Queries
-): Promise<void> {
-  try {
-    const createSelector = hash.getSelectorFromName('create_inscription')
-    const tx = await provider.getTransaction(txHash) as Record<string, unknown>
-    const calldata = tx.calldata as string[] | undefined
-
-    if (!calldata) return
-
-    const innerCalldata = extractInnerCalldata(calldata, createSelector)
-    if (!innerCalldata) return
-
-    const parsed = parseCreateInscriptionCalldata(innerCalldata)
-    if (!parsed) return
-
-    const roles = [
-      ['debt', parsed.debt],
-      ['interest', parsed.interest],
-      ['collateral', parsed.collateral],
-    ] as const
-
-    for (const [role, assets] of roles) {
-      for (let i = 0; i < assets.length; i++) {
-        await queries.insertAsset({
-          inscription_id: inscriptionId,
-          asset_role: role,
-          asset_index: i,
-          asset_address: assets[i].asset_address,
-          asset_type: assets[i].asset_type,
-          value: assets[i].value,
-          token_id: assets[i].token_id,
-        })
-      }
-    }
-
-    console.log(
-      `Stored ${parsed.debt.length} debt, ${parsed.interest.length} interest, ${parsed.collateral.length} collateral assets for ${inscriptionId}`
-    )
-  } catch (err) {
-    console.error(`Failed to parse/store assets for ${inscriptionId}:`, err)
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Event handlers
-// ---------------------------------------------------------------------------
-
-async function handleCreated(
-  event: IndexerEvent,
-  queries: D1Queries,
-  provider: RpcProvider,
-  stelaAddress: string
-): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256), keys[3] = creator
-  const inscriptionId = parseInscriptionId(event)
-  const creator = event.keys[3]
-
-  const onChain = await fetchInscriptionFromContract(provider, stelaAddress, inscriptionId)
-
-  await queries.upsertInscription({
-    id: inscriptionId,
-    creator,
-    status: 'open',
-    issued_debt_percentage: 0,
-    multi_lender: onChain?.multi_lender ? 1 : 0,
-    duration: onChain?.duration ?? 0,
-    deadline: onChain?.deadline ?? 0,
-    debt_asset_count: onChain?.debt_asset_count ?? 0,
-    interest_asset_count: onChain?.interest_asset_count ?? 0,
-    collateral_asset_count: onChain?.collateral_asset_count ?? 0,
-    created_at_block: event.block_number,
-    created_at_ts: event.timestamp,
-    updated_at_ts: event.timestamp,
-  })
-
-  // Parse transaction calldata to extract and store asset details
-  await fetchAndStoreAssets(provider, event.transaction_hash, inscriptionId, queries)
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'created',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-  })
-}
-
-async function handleSigned(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256), keys[3] = borrower, keys[4] = lender
-  const inscriptionId = parseInscriptionId(event)
-  const borrower = event.keys[3]
-  const lender = event.keys[4]
-
-  // data[0..1] = issued_debt_percentage (u256), data[2..3] = shares_minted (u256)
-  const issuedPercentage = fromU256({
-    low: BigInt(event.data[0]),
-    high: BigInt(event.data[1]),
-  })
-
-  const status = issuedPercentage >= MAX_BPS ? 'filled' : 'partial'
-
-  await queries.upsertInscription({
-    id: inscriptionId,
-    borrower,
-    lender,
-    status,
-    issued_debt_percentage: Number(issuedPercentage),
-    signed_at: event.timestamp,
-    updated_at_ts: event.timestamp,
-  })
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'signed',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-    data: {
-      borrower,
-      lender,
-      issued_debt_percentage: issuedPercentage.toString(),
-    },
-  })
-}
-
-async function handleRepaid(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256)
-  const inscriptionId = parseInscriptionId(event)
-  const repayer = event.data[0]
-
-  await queries.updateInscriptionStatus(inscriptionId, 'repaid', event.timestamp)
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'repaid',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-    data: { repayer },
-  })
-}
-
-async function handleLiquidated(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256)
-  const inscriptionId = parseInscriptionId(event)
-  const liquidator = event.data[0]
-
-  await queries.updateInscriptionStatus(inscriptionId, 'liquidated', event.timestamp)
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'liquidated',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-    data: { liquidator },
-  })
-}
-
-async function handleCancelled(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256)
-  const inscriptionId = parseInscriptionId(event)
-  const creator = event.data[0]
-
-  await queries.updateInscriptionStatus(inscriptionId, 'cancelled', event.timestamp)
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'cancelled',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-    data: { creator },
-  })
-}
-
-async function handleRedeemed(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256), keys[3] = redeemer
-  const inscriptionId = parseInscriptionId(event)
-  const redeemer = event.keys[3]
-
-  // data[0..1] = shares (u256)
-  const shares = fromU256({
-    low: BigInt(event.data[0]),
-    high: BigInt(event.data[1]),
-  })
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'redeemed',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-    data: { redeemer, shares: shares.toString() },
-  })
-}
 
 // ---------------------------------------------------------------------------
 // Event router
@@ -445,69 +33,6 @@ const HANDLER_MAP: Record<string, EventHandler> = {
   [SELECTORS.InscriptionRepaid]: (e, q) => handleRepaid(e, q),
   [SELECTORS.InscriptionLiquidated]: (e, q) => handleLiquidated(e, q),
   [SELECTORS.SharesRedeemed]: (e, q) => handleRedeemed(e, q),
-}
-
-// ---------------------------------------------------------------------------
-// Fetch all events with pagination
-// ---------------------------------------------------------------------------
-
-async function fetchAllEvents(
-  provider: RpcProvider,
-  stelaAddress: string,
-  fromBlock: number,
-  toBlock: number
-): Promise<RpcEvent[]> {
-  const allEvents: RpcEvent[] = []
-  let continuationToken: string | undefined
-
-  do {
-    const params: {
-      from_block: { block_number: number }
-      to_block: { block_number: number }
-      address: string
-      keys: string[][]
-      chunk_size: number
-      continuation_token?: string
-    } = {
-      from_block: { block_number: fromBlock },
-      to_block: { block_number: toBlock },
-      address: stelaAddress,
-      keys: [ALL_SELECTORS],
-      chunk_size: 100,
-    }
-
-    if (continuationToken) {
-      params.continuation_token = continuationToken
-    }
-
-    const result = (await provider.getEvents(params)) as unknown as GetEventsResult
-    allEvents.push(...result.events)
-    continuationToken = result.continuation_token
-  } while (continuationToken)
-
-  return allEvents
-}
-
-// ---------------------------------------------------------------------------
-// Get block timestamp via RPC (cached per run)
-// ---------------------------------------------------------------------------
-
-async function getBlockTimestamp(
-  provider: RpcProvider,
-  blockNumber: number,
-  cache: Map<number, number>
-): Promise<number> {
-  const cached = cache.get(blockNumber)
-  if (cached !== undefined) return cached
-
-  try {
-    const block = await provider.getBlockWithTxHashes(blockNumber)
-    const ts = block.timestamp
-    cache.set(blockNumber, ts)
-    return ts
-  } catch {
-    return 0
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -551,6 +76,11 @@ async function pollEvents(env: Env): Promise<void> {
   // Cache block timestamps to avoid redundant RPC calls
   const timestampCache = new Map<number, number>()
 
+  // Track the last block where ALL events processed successfully.
+  // Only advance cursor to this point so failed events can be reprocessed.
+  let lastSuccessBlock = fromBlock - 1
+  let failedCount = 0
+
   for (const raw of rawEvents) {
     const selector = raw.keys[0]
     const handler = HANDLER_MAP[selector]
@@ -568,16 +98,45 @@ async function pollEvents(env: Env): Promise<void> {
 
     try {
       await handler(event, queries, provider, env.STELA_ADDRESS)
+      lastSuccessBlock = raw.block_number
     } catch (err) {
+      failedCount++
       console.error(
         `Error handling event ${selector} in tx ${raw.transaction_hash}:`,
         err
       )
+      // Stop processing further events — we cannot advance past a failed block
+      break
     }
   }
 
-  await queries.setLastBlock(cappedTo)
-  console.log(`Indexed ${rawEvents.length} events, cursor advanced to ${cappedTo}`)
+  if (failedCount === 0) {
+    // All events processed successfully — safe to advance to the capped end
+    await queries.setLastBlock(cappedTo)
+    console.log(`Indexed ${rawEvents.length} events, cursor advanced to ${cappedTo}`)
+  } else if (lastSuccessBlock >= fromBlock) {
+    // Partial success — advance cursor to the block before the first failure
+    await queries.setLastBlock(lastSuccessBlock - 1)
+    console.log(
+      `Partially indexed (${failedCount} failed), cursor advanced to ${lastSuccessBlock - 1}`
+    )
+  } else {
+    // First event failed — do not advance cursor at all
+    console.log(`First event failed, cursor NOT advanced (stays at ${lastBlock})`)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Security helpers
+// ---------------------------------------------------------------------------
+
+/** Constant-time string comparison to prevent timing attacks on secret tokens */
+function timingSafeEqual(a: string, b: string): boolean {
+  const encoder = new TextEncoder()
+  const bufA = encoder.encode(a)
+  const bufB = encoder.encode(b)
+  if (bufA.byteLength !== bufB.byteLength) return false
+  return crypto.subtle.timingSafeEqual(bufA, bufB)
 }
 
 // ---------------------------------------------------------------------------
@@ -592,18 +151,21 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
 
-    // Health check endpoint
+    // Health check endpoint — no internal state leaked
     if (url.pathname === '/health') {
-      const queries = createD1Queries(env.DB)
-      const lastBlock = await queries.getLastBlock()
-      return Response.json({ ok: true, last_block: lastBlock })
+      return Response.json({ ok: true })
     }
 
-    // Manual trigger for testing — only from Cloudflare dashboard / wrangler
+    // Manual trigger — secured with shared secret via Authorization header only
     if (url.pathname === '/trigger') {
-      // Block external requests — only allow from localhost or Cloudflare internal
-      const cfRay = request.headers.get('cf-ray')
-      if (cfRay) {
+      if (!env.TRIGGER_SECRET) {
+        return Response.json({ error: 'trigger not configured' }, { status: 503 })
+      }
+      const authHeader = request.headers.get('Authorization')
+      const token = authHeader?.startsWith('Bearer ')
+        ? authHeader.slice(7).trim()
+        : null
+      if (!token || !timingSafeEqual(token, env.TRIGGER_SECRET)) {
         return new Response('Forbidden', { status: 403 })
       }
       await pollEvents(env)

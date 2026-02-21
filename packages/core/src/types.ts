@@ -64,3 +64,11 @@ export const ASSET_TYPE_ENUM: Record<AssetType, number> = {
   ERC1155: 2,
   ERC4626: 3,
 }
+
+/** Reverse mapping: numeric enum value -> AssetType name */
+export const ASSET_TYPE_NAMES: Record<number, AssetType> = {
+  0: 'ERC20',
+  1: 'ERC721',
+  2: 'ERC1155',
+  3: 'ERC4626',
+}

@@ -4,9 +4,10 @@ import { useReadContract, useAccount } from '@starknet-react/core'
 import type { Abi } from 'starknet'
 import abi from '@stela/core/abi/stela.json'
 import { CONTRACT_ADDRESS } from '@/lib/config'
+import { isStarknetReady } from './ensure-context'
 
 export function useShares(inscriptionId: string) {
-  const { address } = useAccount()
+  const { address, status } = useAccount()
 
   return useReadContract({
     abi: abi as Abi,
@@ -14,6 +15,6 @@ export function useShares(inscriptionId: string) {
     functionName: 'balance_of',
     args: address ? [address, inscriptionId] : undefined,
     watch: true,
-    enabled: Boolean(address),
+    enabled: isStarknetReady({ address, status }),
   })
 }

@@ -10,6 +10,7 @@ export {
   VALID_STATUSES,
   STATUS_LABELS,
   ASSET_TYPE_ENUM,
+  ASSET_TYPE_NAMES,
 } from './types.js'
 
 export {

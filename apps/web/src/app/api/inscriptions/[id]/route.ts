@@ -1,34 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { createD1Queries } from '@stela/core'
-import type { D1Database } from '@stela/core'
+import { NextRequest } from 'next/server'
+import { getD1, jsonResponse, errorResponse, handleOptions } from '@/lib/api'
+import { inscriptionIdSchema } from '@/lib/schemas'
 
-const HEX_PATTERN = /^0x[0-9a-fA-F]{1,64}$/
+export function OPTIONS(request: NextRequest) {
+  return handleOptions(request)
+}
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  const raw = await params
+  const parsed = inscriptionIdSchema.safeParse(raw)
 
-  if (!HEX_PATTERN.test(id)) {
-    return NextResponse.json({ error: 'invalid inscription id' }, { status: 400 })
+  if (!parsed.success) {
+    return errorResponse('invalid inscription id', 400, request)
   }
 
+  const { id } = parsed.data
+
   try {
-    const { env } = getCloudflareContext()
-    const db = createD1Queries(env.DB as unknown as D1Database)
+    const db = getD1()
     const inscription = await db.getInscription(id)
 
     if (!inscription) {
-      return NextResponse.json({ error: 'not found' }, { status: 404 })
+      return errorResponse('not found', 404, request)
     }
 
     const assets = await db.getInscriptionAssets(id)
 
-    return NextResponse.json({ ...inscription as Record<string, unknown>, assets })
+    return jsonResponse({
+      data: { ...inscription as Record<string, unknown>, assets },
+    }, request)
   } catch (err) {
-    console.error('D1 query error:', err)
-    return NextResponse.json({ error: 'service unavailable' }, { status: 502 })
+    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    return errorResponse('service unavailable', 502, request)
   }
 }

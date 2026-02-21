@@ -1,67 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
+import { useFetchApi, buildApiUrl } from './api'
+import type { InscriptionRow, InscriptionListParams, ApiListResponse } from '@/types/api'
 
-export interface AssetRow {
-  inscription_id: string
-  asset_role: string
-  asset_index: number
-  asset_address: string
-  asset_type: string
-  value: string | null
-  token_id: string | null
-}
+export type { InscriptionRow }
+export type { AssetRow } from '@/types/api'
 
-interface InscriptionRow {
-  id: string
-  creator: string
-  borrower: string | null
-  lender: string | null
-  status: string
-  issued_debt_percentage: string
-  multi_lender: boolean
-  duration: string
-  deadline: string
-  signed_at: string | null
-  debt_asset_count: number
-  interest_asset_count: number
-  collateral_asset_count: number
-  created_at_ts: string
-  assets: AssetRow[]
-}
+export function useInscriptions(params?: InscriptionListParams) {
+  const url = useMemo(
+    () =>
+      buildApiUrl('/api/inscriptions', {
+        status: params?.status,
+        address: params?.address,
+        page: params?.page,
+      }),
+    [params?.status, params?.address, params?.page],
+  )
 
-export function useInscriptions(params?: { status?: string; address?: string; page?: number }) {
-  const [data, setData] = useState<InscriptionRow[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
+  const { data: raw, isLoading, error, refetch } = useFetchApi<ApiListResponse<InscriptionRow>>(url)
+  const data = raw?.data ?? []
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams()
-    if (params?.status) searchParams.set('status', params.status)
-    if (params?.address) searchParams.set('address', params.address)
-    if (params?.page) searchParams.set('page', String(params.page))
-
-    setIsLoading(true)
-    setError(null)
-    fetch(`/api/inscriptions?${searchParams}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
-      })
-      .then((json) => {
-        if (!Array.isArray(json)) throw new Error('Unexpected response format')
-        setData(json)
-      })
-      .catch((err: Error) => {
-        // Treat network errors and 5xx as "indexer unavailable" — show empty state
-        if (err.message.match(/fetch|network|HTTP 5/i)) {
-          setData([])
-        } else {
-          setError(err)
-        }
-      })
-      .finally(() => setIsLoading(false))
-  }, [params?.status, params?.address, params?.page])
-
-  return { data, isLoading, error }
+  return { data, isLoading, error, refetch }
 }

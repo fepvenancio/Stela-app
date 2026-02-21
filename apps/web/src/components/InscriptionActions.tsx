@@ -1,14 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { useSendTransaction, useAccount } from '@starknet-react/core'
-import { toU256 } from '@stela/core'
+import { useAccount } from '@starknet-react/core'
 import type { InscriptionStatus } from '@stela/core'
-import { CONTRACT_ADDRESS } from '@/lib/config'
-import { sendTxWithToast } from '@/lib/tx'
+import {
+  useSignInscription,
+  useRepayInscription,
+  useCancelInscription,
+  useLiquidateInscription,
+  useRedeemShares,
+} from '@/hooks/transactions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/tx'
 
 interface InscriptionActionsProps {
   inscriptionId: string
@@ -20,13 +26,14 @@ interface InscriptionActionsProps {
 export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [percentage, setPercentage] = useState('')
-  const { sendAsync, isPending } = useSendTransaction({})
 
-  const idCalldata = [...toU256(BigInt(inscriptionId))]
+  const { sign, isPending: signPending } = useSignInscription(inscriptionId)
+  const { repay, isPending: repayPending } = useRepayInscription(inscriptionId)
+  const { cancel, isPending: cancelPending } = useCancelInscription(inscriptionId)
+  const { liquidate, isPending: liquidatePending } = useLiquidateInscription(inscriptionId)
+  const { redeem, isPending: redeemPending } = useRedeemShares(inscriptionId)
 
-  async function call(entrypoint: string, calldata: string[] = idCalldata): Promise<void> {
-    await sendTxWithToast(sendAsync, [{ contractAddress: CONTRACT_ADDRESS, entrypoint, calldata }], 'Transaction submitted')
-  }
+  const isPending = signPending || repayPending || cancelPending || liquidatePending || redeemPending
 
   if (!address) {
     return <p className="text-sm text-ash">Connect your wallet to interact with this inscription.</p>
@@ -37,9 +44,18 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
       <div className="space-y-4">
         <p className="text-sm text-dust">Sign as lender by committing a percentage of the debt.</p>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
-            if (percentage) call('sign_inscription', [...idCalldata, ...toU256(BigInt(percentage))])
+            const bps = Number(percentage)
+            if (!Number.isInteger(bps) || bps < 1 || bps > 10000) {
+              toast.error('Invalid percentage', { description: 'Must be a whole number between 1 and 10000 BPS' })
+              return
+            }
+            try {
+              await sign(bps)
+            } catch (err) {
+              toast.error('Sign failed', { description: getErrorMessage(err) })
+            }
           }}
           className="flex gap-3"
         >
@@ -51,28 +67,29 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
               placeholder="Percentage"
               min={1}
               max={10000}
+              step={1}
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-ash select-none">
               BPS
             </span>
           </div>
           <Button type="submit" variant="gold" disabled={isPending || !percentage}>
-            {isPending ? 'Signing...' : 'Sign'}
+            {signPending ? 'Signing...' : 'Sign'}
           </Button>
         </form>
         {isOwner && status === 'open' && (
           <ConfirmDialog
             trigger={
               <Button variant="outline" className="hover:text-nova hover:border-nova/30" disabled={isPending}>
-                {isPending ? 'Cancelling...' : 'Cancel Inscription'}
+                {cancelPending ? 'Cancelling...' : 'Cancel Inscription'}
               </Button>
             }
             title="Cancel Inscription"
             description="Are you sure you want to cancel this inscription? This action cannot be undone."
             confirmLabel="Cancel Inscription"
             confirmVariant="nova"
-            onConfirm={() => call('cancel_inscription')}
-            isPending={isPending}
+            onConfirm={cancel}
+            isPending={cancelPending}
           />
         )}
       </div>
@@ -83,8 +100,8 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
     return (
       <div className="space-y-3">
         <p className="text-sm text-dust">This inscription is fully signed. Repay to release your collateral.</p>
-        <Button variant="aurora" onClick={() => call('repay')} disabled={isPending}>
-          {isPending ? 'Repaying...' : 'Repay Inscription'}
+        <Button variant="aurora" onClick={repay} disabled={isPending}>
+          {repayPending ? 'Repaying...' : 'Repay Inscription'}
         </Button>
       </div>
     )
@@ -97,15 +114,15 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
         <ConfirmDialog
           trigger={
             <Button variant="nova" disabled={isPending}>
-              {isPending ? 'Liquidating...' : 'Liquidate'}
+              {liquidatePending ? 'Liquidating...' : 'Liquidate'}
             </Button>
           }
           title="Liquidate Inscription"
           description="Are you sure you want to liquidate this inscription? This will claim the collateral and cannot be undone."
           confirmLabel="Liquidate"
           confirmVariant="nova"
-          onConfirm={() => call('liquidate')}
-          isPending={isPending}
+          onConfirm={liquidate}
+          isPending={liquidatePending}
         />
       </div>
     )
@@ -117,8 +134,8 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
         <p className="text-sm text-dust">
           {status === 'repaid' ? 'Inscription repaid. Redeem your shares for the interest.' : 'Inscription liquidated. Redeem your shares for the collateral.'}
         </p>
-        <Button variant="cosmic" onClick={() => call('redeem')} disabled={isPending}>
-          {isPending ? 'Redeeming...' : 'Redeem Shares'}
+        <Button variant="cosmic" onClick={redeem} disabled={isPending}>
+          {redeemPending ? 'Redeeming...' : 'Redeem Shares'}
         </Button>
       </div>
     )

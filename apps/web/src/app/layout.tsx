@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Outfit, IBM_Plex_Mono, Cinzel } from 'next/font/google'
 import { Providers } from './providers'
 import { AppShell } from '@/components/AppShell'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <TooltipProvider>
             <div className="starfield" aria-hidden="true" />
-            <AppShell>{children}</AppShell>
+            <AppShell>
+              <ErrorBoundary>{children}</ErrorBoundary>
+            </AppShell>
             <Toaster richColors />
           </TooltipProvider>
         </Providers>

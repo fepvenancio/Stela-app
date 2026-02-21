@@ -5,8 +5,10 @@ import { useAccount, useSendTransaction } from '@starknet-react/core'
 import { toU256, ASSET_TYPE_ENUM } from '@stela/core'
 import type { AssetType } from '@stela/core'
 import { CONTRACT_ADDRESS } from '@/lib/config'
+import { parseAmount } from '@/lib/amount'
 import { AssetInput } from '@/components/AssetInput'
 import type { AssetInputValue } from '@/components/AssetInput'
+import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,15 +26,19 @@ const emptyAsset = (): AssetInputValue => ({
 })
 
 function serializeAssets(assets: AssetInputValue[]): string[] {
-  const valid = assets.filter((a) => a.asset)
+  const valid = assets.filter((a) => {
+    if (!a.asset) return false
+    // NFTs use token_id, fungibles must have a non-zero value
+    if (a.asset_type === 'ERC721' || a.asset_type === 'ERC1155') return true
+    const raw = a.value ? parseAmount(a.value, a.decimals) : 0n
+    return raw > 0n
+  })
   const calldata: string[] = [String(valid.length)]
   for (const a of valid) {
     calldata.push(a.asset)
     calldata.push(String(ASSET_TYPE_ENUM[a.asset_type]))
     // Convert human-readable amount to raw value using decimals
-    const rawValue = a.value
-      ? BigInt(Math.floor(parseFloat(a.value) * 10 ** a.decimals))
-      : 0n
+    const rawValue = a.value ? parseAmount(a.value, a.decimals) : 0n
     calldata.push(...toU256(rawValue))
     calldata.push(...toU256(BigInt(a.token_id || '0')))
   }
@@ -234,9 +240,7 @@ export default function CreatePage() {
         <Separator />
 
         {/* Submit */}
-        {!address ? (
-          <p className="text-sm text-ash text-center py-3">Connect your wallet to create an inscription.</p>
-        ) : (
+        <Web3ActionWrapper message="Connect your wallet to create an inscription">
           <Button
             variant="gold"
             size="xl"
@@ -246,7 +250,7 @@ export default function CreatePage() {
           >
             {isPending ? 'Creating...' : 'Create Inscription'}
           </Button>
-        )}
+        </Web3ActionWrapper>
       </div>
     </div>
   )

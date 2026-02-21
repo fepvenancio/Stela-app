@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "account_id": "616231e4ffa88bb203ec4cbedeab4a8e",
+  // account_id: set via CLOUDFLARE_ACCOUNT_ID env var
   "name": "stela-app",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-04-01",

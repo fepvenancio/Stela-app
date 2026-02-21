@@ -1,15 +1,8 @@
 import type { Inscription, AssetType } from '@stela/core'
-import { fromU256 } from '@stela/core'
-
-const ASSET_TYPE_MAP: Record<number, AssetType> = {
-  0: 'ERC20',
-  1: 'ERC721',
-  2: 'ERC1155',
-  3: 'ERC4626',
-}
+import { fromU256, ASSET_TYPE_NAMES } from '@stela/core'
 
 export function assetTypeFromEnum(val: number): AssetType {
-  return ASSET_TYPE_MAP[val] ?? 'ERC20'
+  return ASSET_TYPE_NAMES[val] ?? 'ERC20'
 }
 
 // Parse raw contract response into typed Inscription

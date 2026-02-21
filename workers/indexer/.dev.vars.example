@@ -1,0 +1,4 @@
+# Required: StarkNet RPC endpoint (use wrangler secret put for production)
+RPC_URL=https://starknet-sepolia.public.blastapi.io
+# Optional: shared secret to allow manual /trigger calls
+TRIGGER_SECRET=

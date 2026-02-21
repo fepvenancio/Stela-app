@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
 import { toU256 } from '@stela/core'
+import { parseAmount } from '@/lib/amount'
+import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -62,7 +64,7 @@ function MintCard({
 
     try {
       if (token.type === 'ERC20') {
-        const rawAmount = BigInt(Math.floor(parseFloat(amount) * 10 ** token.decimals))
+        const rawAmount = parseAmount(amount, token.decimals)
         const result = await sendAsync([
           {
             contractAddress: token.address,
@@ -145,8 +147,6 @@ function MintCard({
 }
 
 export default function FaucetPage() {
-  const { address } = useAccount()
-
   return (
     <div className="animate-fade-up max-w-2xl">
       <div className="mb-10">
@@ -172,17 +172,13 @@ export default function FaucetPage() {
         </p>
       </div>
 
-      {!address ? (
-        <p className="text-sm text-ash text-center py-8">
-          Connect your wallet to mint test tokens.
-        </p>
-      ) : (
+      <Web3ActionWrapper message="Connect your wallet to mint test tokens">
         <div className="space-y-4">
           {MOCK_TOKENS.map((token) => (
             <MintCard key={token.symbol} token={token} />
           ))}
         </div>
-      )}
+      </Web3ActionWrapper>
     </div>
   )
 }

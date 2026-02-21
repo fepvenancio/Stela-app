@@ -24,12 +24,15 @@ interface InscriptionPageProps {
 
 
 
+const VALID_HEX_ID = /^0x[0-9a-fA-F]{1,64}$/
+
 export default function InscriptionPage({ params }: InscriptionPageProps) {
   const { id } = use(params)
+  const isValidId = VALID_HEX_ID.test(id)
   const { address } = useAccount()
-  const { data: inscription, isLoading, error } = useInscription(id)
-  const { data: assets, isLoading: assetsLoading } = useInscriptionAssets(id)
-  const { data: sharesRaw } = useShares(id)
+  const { data: inscription, isLoading, error } = useInscription(isValidId ? id : '')
+  const { data: assets, isLoading: assetsLoading } = useInscriptionAssets(isValidId ? id : '')
+  const { data: sharesRaw } = useShares(isValidId ? id : '')
 
   const status = useMemo<InscriptionStatus>(() => {
     if (!inscription) return 'open'
@@ -74,8 +77,15 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
         Back to inscriptions
       </Link>
 
+      {/* Invalid ID */}
+      {!isValidId && (
+        <div className="text-center py-24">
+          <p className="text-nova text-sm">Invalid inscription ID</p>
+        </div>
+      )}
+
       {/* Loading */}
-      {isLoading && (
+      {isValidId && isLoading && (
         <div className="space-y-6 py-4">
           <div className="space-y-3">
             <Skeleton className="h-9 w-64 bg-surface" />
@@ -92,14 +102,14 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
       )}
 
       {/* Error */}
-      {error && (
+      {isValidId && error && (
         <div className="text-center py-24">
           <p className="text-nova text-sm">Failed to load inscription</p>
         </div>
       )}
 
       {/* Content */}
-      {!isLoading && (
+      {isValidId && !isLoading && (
         <>
           {/* Header */}
           <div className="mb-8">

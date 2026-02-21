@@ -176,6 +176,9 @@ export function createD1Queries(db: D1Database) {
     },
 
     async updateInscriptionStatus(id: string, status: string, updatedAt: number) {
+      if (!isValidStatus(status)) {
+        throw new Error(`Invalid inscription status: ${status}`)
+      }
       await db
         .prepare('UPDATE inscriptions SET status = ?, updated_at_ts = ? WHERE id = ?')
         .bind(status, updatedAt, id)

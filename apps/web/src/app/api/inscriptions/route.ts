@@ -1,31 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { createD1Queries, VALID_STATUSES } from '@stela/core'
-import type { D1Database } from '@stela/core'
+import { NextRequest } from 'next/server'
+import { getD1, jsonResponse, errorResponse, handleOptions } from '@/lib/api'
+import { inscriptionListSchema } from '@/lib/schemas'
 
-const HEX_PATTERN = /^0x[0-9a-fA-F]{1,64}$/
+export function OPTIONS(request: NextRequest) {
+  return handleOptions(request)
+}
 
 export async function GET(request: NextRequest) {
-  const params = request.nextUrl.searchParams
+  const raw = Object.fromEntries(request.nextUrl.searchParams.entries())
+  const parsed = inscriptionListSchema.safeParse(raw)
 
-  const status = params.get('status') ?? undefined
-  const address = params.get('address') ?? undefined
-  const pageRaw = params.get('page')
-  const limitRaw = params.get('limit')
-
-  if (status && !(VALID_STATUSES as readonly string[]).includes(status)) {
-    return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-  }
-  if (address && !HEX_PATTERN.test(address)) {
-    return NextResponse.json({ error: 'invalid address' }, { status: 400 })
+  if (!parsed.success) {
+    return errorResponse(parsed.error.issues[0]?.message ?? 'invalid params', 400, request)
   }
 
-  const page = pageRaw && Number.isFinite(Number(pageRaw)) ? Math.max(1, Number(pageRaw)) : 1
-  const limit = limitRaw && Number.isFinite(Number(limitRaw)) ? Math.min(100, Math.max(1, Number(limitRaw))) : 20
+  const { status, address, page, limit } = parsed.data
 
   try {
-    const { env } = getCloudflareContext()
-    const db = createD1Queries(env.DB as unknown as D1Database)
+    const db = getD1()
     const inscriptions = await db.getInscriptions({ status, address, page, limit }) as Record<string, unknown>[]
 
     // Batch-fetch assets for all returned inscriptions
@@ -41,14 +33,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Attach assets to each inscription
-    const result = inscriptions.map((i) => ({
+    const data = inscriptions.map((i) => ({
       ...i,
       assets: assetMap.get(i.id as string) ?? [],
     }))
 
-    return NextResponse.json(result)
+    return jsonResponse({
+      data,
+      meta: { page, limit, total: data.length },
+    }, request)
   } catch (err) {
-    console.error('D1 query error:', err)
-    return NextResponse.json({ error: 'service unavailable' }, { status: 502 })
+    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    return errorResponse('service unavailable', 502, request)
   }
 }
