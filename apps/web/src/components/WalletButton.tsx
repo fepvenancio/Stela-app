@@ -1,8 +1,27 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useAccount, useConnect, useDisconnect } from '@starknet-react/core'
+import { useAccount, useConnect, useDisconnect, useNetwork } from '@starknet-react/core'
 import { formatAddress } from '@/lib/address'
+
+function NetworkBadge() {
+  const { chain } = useNetwork()
+
+  const isTestnet = chain.network === 'sepolia'
+  const label = isTestnet ? 'Sepolia' : 'Mainnet'
+
+  return (
+    <span
+      className={`px-2 py-0.5 rounded-md text-[10px] font-medium tracking-wide uppercase ${
+        isTestnet
+          ? 'bg-aurora/10 text-aurora border border-aurora/20'
+          : 'bg-star/10 text-star border border-star/20'
+      }`}
+    >
+      {label}
+    </span>
+  )
+}
 
 export function WalletButton() {
   const { address, status } = useAccount()
@@ -24,18 +43,21 @@ export function WalletButton() {
 
   if (status === 'connected' && address) {
     return (
-      <button
-        onClick={() => disconnect()}
-        className="group flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-surface border border-edge hover:border-edge-bright transition-all duration-200"
-      >
-        <span
-          className="w-2 h-2 rounded-full bg-aurora shrink-0"
-          style={{ animation: 'pulse-dot 3s ease-in-out infinite' }}
-        />
-        <span className="font-mono text-sm text-dust group-hover:text-chalk transition-colors">
-          {formatAddress(address)}
-        </span>
-      </button>
+      <div className="flex items-center gap-2">
+        <NetworkBadge />
+        <button
+          onClick={() => disconnect()}
+          className="group flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-surface border border-edge hover:border-edge-bright transition-all duration-200"
+        >
+          <span
+            className="w-2 h-2 rounded-full bg-aurora shrink-0"
+            style={{ animation: 'pulse-dot 3s ease-in-out infinite' }}
+          />
+          <span className="font-mono text-sm text-dust group-hover:text-chalk transition-colors">
+            {formatAddress(address)}
+          </span>
+        </button>
+      </div>
     )
   }
 
