@@ -17,6 +17,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@fepvenancio/stela-sdk':
+        specifier: ^0.1.0
+        version: 0.1.0(starknet@6.24.1)
       '@opennextjs/cloudflare':
         specifier: ^1.0.0
         version: 1.16.5(next@15.5.12(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.67.0(@cloudflare/workers-types@4.20260227.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
@@ -68,9 +71,6 @@ importers:
       starknetkit:
         specifier: ^3.4.3
         version: 3.4.3(329d3245936c32e589de04c55cb24faf)
-      stela-sdk:
-        specifier: file:../../../stela-sdk-ts
-        version: file:../stela-sdk-ts(starknet@6.24.1)
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
@@ -1120,6 +1120,11 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fepvenancio/stela-sdk@0.1.0':
+    resolution: {integrity: sha512-Lso+rBVET8n+wIMETCPVF9lv5aWoj3WSpdgWRw4BFrT9Vl7yvEaK8dRQ5PUTYPkywyhRsGsNHUQ0l+An+vKpMw==, tarball: https://npm.pkg.github.com/download/@fepvenancio/stela-sdk/0.1.0/efa900c632fe80bca856169f003b5d28602bcce8}
+    peerDependencies:
+      starknet: ^6.0.0
 
   '@floating-ui/core@1.7.4':
     resolution: {integrity: sha512-C3HlIdsBxszvm5McXlB8PeOEWfBhcGBTZGkGlWc2U0KFY5IwG5OQEuQ8rq52DZmcHDlPLd+YFBK+cZcytwIFWg==}
@@ -5671,11 +5676,6 @@ packages:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
     engines: {node: '>= 0.8'}
 
-  stela-sdk@file:../stela-sdk-ts:
-    resolution: {directory: ../stela-sdk-ts, type: directory}
-    peerDependencies:
-      starknet: ^6.0.0
-
   stream-chain@2.2.5:
     resolution: {integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==}
 
@@ -7772,6 +7772,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.3':
     optional: true
+
+  '@fepvenancio/stela-sdk@0.1.0(starknet@6.24.1)':
+    dependencies:
+      starknet: 6.24.1
 
   '@floating-ui/core@1.7.4':
     dependencies:
@@ -13905,10 +13909,6 @@ snapshots:
   statuses@1.5.0: {}
 
   statuses@2.0.2: {}
-
-  stela-sdk@file:../stela-sdk-ts(starknet@6.24.1):
-    dependencies:
-      starknet: 6.24.1
 
   stream-chain@2.2.5:
     optional: true

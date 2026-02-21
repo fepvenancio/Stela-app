@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react'
 import { useSendTransaction, useAccount } from '@starknet-react/core'
-import { InscriptionClient } from 'stela-sdk'
+import { InscriptionClient } from '@fepvenancio/stela-sdk'
 import { RpcProvider } from 'starknet'
 import { CONTRACT_ADDRESS } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'

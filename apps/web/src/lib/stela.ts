@@ -1,5 +1,5 @@
-import type { Inscription, AssetType } from 'stela-sdk'
-import { fromU256, ASSET_TYPE_NAMES } from 'stela-sdk'
+import type { Inscription, AssetType } from '@fepvenancio/stela-sdk'
+import { fromU256, ASSET_TYPE_NAMES } from '@fepvenancio/stela-sdk'
 
 export function assetTypeFromEnum(val: number): AssetType {
   return ASSET_TYPE_NAMES[val] ?? 'ERC20'
