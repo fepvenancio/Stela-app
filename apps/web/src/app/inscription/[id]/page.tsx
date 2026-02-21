@@ -46,9 +46,9 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
     return borrower ? addressesEqual(address, borrower) : false
   }, [address, inscription])
 
-  const hasShares = useMemo(() => {
-    if (!sharesRaw) return false
-    return BigInt(sharesRaw as string | bigint) > 0n
+  const shares = useMemo(() => {
+    if (!sharesRaw) return 0n
+    return BigInt(sharesRaw as string | bigint)
   }, [sharesRaw])
 
   const statusLabel = STATUS_LABELS[status]
@@ -196,7 +196,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                 inscriptionId={id}
                 status={status}
                 isOwner={isOwner}
-                hasShares={hasShares}
+                shares={shares}
               />
             </CardContent>
           </Card>

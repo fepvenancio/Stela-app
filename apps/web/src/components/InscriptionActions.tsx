@@ -20,10 +20,10 @@ interface InscriptionActionsProps {
   inscriptionId: string
   status: InscriptionStatus
   isOwner: boolean
-  hasShares: boolean
+  shares: bigint
 }
 
-export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }: InscriptionActionsProps) {
+export function InscriptionActions({ inscriptionId, status, isOwner, shares }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [percentage, setPercentage] = useState('')
 
@@ -128,13 +128,13 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
     )
   }
 
-  if ((status === 'repaid' || status === 'liquidated') && hasShares) {
+  if ((status === 'repaid' || status === 'liquidated') && shares > 0n) {
     return (
       <div className="space-y-3">
         <p className="text-sm text-dust">
           {status === 'repaid' ? 'Inscription repaid. Redeem your shares for the interest.' : 'Inscription liquidated. Redeem your shares for the collateral.'}
         </p>
-        <Button variant="cosmic" onClick={redeem} disabled={isPending}>
+        <Button variant="cosmic" onClick={() => redeem(shares)} disabled={isPending}>
           {redeemPending ? 'Redeeming...' : 'Redeem Shares'}
         </Button>
       </div>

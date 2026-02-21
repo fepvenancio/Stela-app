@@ -1,20 +1,24 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSendTransaction, useAccount } from '@starknet-react/core'
-import { toU256, MAX_BPS } from '@stela/core'
+import { InscriptionClient } from 'stela-sdk'
+import { RpcProvider } from 'starknet'
 import { CONTRACT_ADDRESS } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
 
-/** Shared call helper: builds a single-call transaction to the Stela contract */
-function buildCall(entrypoint: string, calldata: string[]) {
-  return { contractAddress: CONTRACT_ADDRESS, entrypoint, calldata }
-}
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://starknet-sepolia.public.blastapi.io'
 
-/** Convert inscription ID to u256 calldata pair */
-function idCalldata(inscriptionId: string): string[] {
-  return [...toU256(BigInt(inscriptionId))]
+function useInscriptionClient() {
+  return useMemo(
+    () =>
+      new InscriptionClient({
+        stelaAddress: CONTRACT_ADDRESS,
+        provider: new RpcProvider({ nodeUrl: RPC_URL }),
+      }),
+    [],
+  )
 }
 
 /**
@@ -23,6 +27,7 @@ function idCalldata(inscriptionId: string): string[] {
 export function useSignInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
+  const client = useInscriptionClient()
 
   const sign = useCallback(
     async (bps: number) => {
@@ -32,10 +37,10 @@ export function useSignInscription(inscriptionId: string) {
         throw new Error('Percentage must be between 1 and 10000 BPS')
       }
 
-      const calldata = [...idCalldata(inscriptionId), ...toU256(BigInt(bps))]
-      await sendTxWithToast(sendAsync, [buildCall('sign_inscription', calldata)], 'Inscription signed')
+      const call = client.buildSignInscription(BigInt(inscriptionId), BigInt(bps))
+      await sendTxWithToast(sendAsync, [call], 'Inscription signed')
     },
-    [address, status, inscriptionId, sendAsync],
+    [address, status, inscriptionId, sendAsync, client],
   )
 
   return { sign, isPending }
@@ -47,11 +52,13 @@ export function useSignInscription(inscriptionId: string) {
 export function useRepayInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
+  const client = useInscriptionClient()
 
   const repay = useCallback(async () => {
     ensureStarknetContext({ address, status })
-    await sendTxWithToast(sendAsync, [buildCall('repay', idCalldata(inscriptionId))], 'Inscription repaid')
-  }, [address, status, inscriptionId, sendAsync])
+    const call = client.buildRepay(BigInt(inscriptionId))
+    await sendTxWithToast(sendAsync, [call], 'Inscription repaid')
+  }, [address, status, inscriptionId, sendAsync, client])
 
   return { repay, isPending }
 }
@@ -62,11 +69,13 @@ export function useRepayInscription(inscriptionId: string) {
 export function useCancelInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
+  const client = useInscriptionClient()
 
   const cancel = useCallback(async () => {
     ensureStarknetContext({ address, status })
-    await sendTxWithToast(sendAsync, [buildCall('cancel_inscription', idCalldata(inscriptionId))], 'Inscription cancelled')
-  }, [address, status, inscriptionId, sendAsync])
+    const call = client.buildCancelInscription(BigInt(inscriptionId))
+    await sendTxWithToast(sendAsync, [call], 'Inscription cancelled')
+  }, [address, status, inscriptionId, sendAsync, client])
 
   return { cancel, isPending }
 }
@@ -77,11 +86,13 @@ export function useCancelInscription(inscriptionId: string) {
 export function useLiquidateInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
+  const client = useInscriptionClient()
 
   const liquidate = useCallback(async () => {
     ensureStarknetContext({ address, status })
-    await sendTxWithToast(sendAsync, [buildCall('liquidate', idCalldata(inscriptionId))], 'Inscription liquidated')
-  }, [address, status, inscriptionId, sendAsync])
+    const call = client.buildLiquidate(BigInt(inscriptionId))
+    await sendTxWithToast(sendAsync, [call], 'Inscription liquidated')
+  }, [address, status, inscriptionId, sendAsync, client])
 
   return { liquidate, isPending }
 }
@@ -92,11 +103,13 @@ export function useLiquidateInscription(inscriptionId: string) {
 export function useRedeemShares(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
+  const client = useInscriptionClient()
 
-  const redeem = useCallback(async () => {
+  const redeem = useCallback(async (shares: bigint) => {
     ensureStarknetContext({ address, status })
-    await sendTxWithToast(sendAsync, [buildCall('redeem', idCalldata(inscriptionId))], 'Shares redeemed')
-  }, [address, status, inscriptionId, sendAsync])
+    const call = client.buildRedeem(BigInt(inscriptionId), shares)
+    await sendTxWithToast(sendAsync, [call], 'Shares redeemed')
+  }, [address, status, inscriptionId, sendAsync, client])
 
   return { redeem, isPending }
 }

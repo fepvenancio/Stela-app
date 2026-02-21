@@ -65,7 +65,8 @@ export function createD1Queries(db: D1Database) {
     // Reads
     // -----------------------------------------------------------------------
 
-    async getInscriptions({ status, address, page, limit }: GetInscriptionsParams) {
+    async getInscriptions({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
+      const limit = Math.min(rawLimit, 100)
       const conditions: string[] = []
       const params: unknown[] = []
 

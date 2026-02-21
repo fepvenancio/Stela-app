@@ -68,6 +68,9 @@ importers:
       starknetkit:
         specifier: ^3.4.3
         version: 3.4.3(329d3245936c32e589de04c55cb24faf)
+      stela-sdk:
+        specifier: file:../../../stela-sdk-ts
+        version: file:../stela-sdk-ts(starknet@6.24.1)
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
@@ -5667,6 +5670,11 @@ packages:
   statuses@2.0.2:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
     engines: {node: '>= 0.8'}
+
+  stela-sdk@file:../stela-sdk-ts:
+    resolution: {directory: ../stela-sdk-ts, type: directory}
+    peerDependencies:
+      starknet: ^6.0.0
 
   stream-chain@2.2.5:
     resolution: {integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==}
@@ -13897,6 +13905,10 @@ snapshots:
   statuses@1.5.0: {}
 
   statuses@2.0.2: {}
+
+  stela-sdk@file:../stela-sdk-ts(starknet@6.24.1):
+    dependencies:
+      starknet: 6.24.1
 
   stream-chain@2.2.5:
     optional: true
