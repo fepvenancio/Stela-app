@@ -202,13 +202,12 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                 isOwner={isOwner}
                 shares={shares}
                 multiLender={Boolean(a?.multi_lender)}
-                totalDebt={(() => {
-                  const debtAssets = assets.filter((r) => r.asset_role === 'debt')
-                  return debtAssets[0]?.value ?? undefined
-                })()}
+                debtAssets={assets
+                  .filter((r) => r.asset_role === 'debt')
+                  .map((r) => ({ address: r.asset_address, value: r.value ?? '0' }))}
                 debtDecimals={(() => {
-                  const debtAssets = assets.filter((r) => r.asset_role === 'debt')
-                  const token = debtAssets[0] ? findTokenByAddress(debtAssets[0].asset_address) : undefined
+                  const da = assets.filter((r) => r.asset_role === 'debt')
+                  const token = da[0] ? findTokenByAddress(da[0].asset_address) : undefined
                   return token?.decimals ?? 18
                 })()}
               />

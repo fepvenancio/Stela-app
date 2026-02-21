@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react'
 import { useSendTransaction, useAccount } from '@starknet-react/core'
-import { InscriptionClient } from '@fepvenancio/stela-sdk'
+import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
 import { RpcProvider } from 'starknet'
 import { CONTRACT_ADDRESS } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'
@@ -21,8 +21,15 @@ function useInscriptionClient() {
   )
 }
 
+/** Debt asset info needed to build ERC20 approval calls */
+export interface DebtAssetInfo {
+  address: string
+  value: string
+}
+
 /**
- * useSignInscription - validates BPS range, sends sign_inscription tx, shows toast.
+ * useSignInscription - validates BPS range, builds ERC20 approvals for debt
+ * tokens, and sends [approve..., sign_inscription] as an atomic multicall.
  */
 export function useSignInscription(inscriptionId: string) {
   const { address, status } = useAccount()
@@ -30,15 +37,31 @@ export function useSignInscription(inscriptionId: string) {
   const client = useInscriptionClient()
 
   const sign = useCallback(
-    async (bps: number) => {
+    async (bps: number, debtAssets?: DebtAssetInfo[]) => {
       ensureStarknetContext({ address, status })
 
       if (bps < 1 || bps > 10000) {
         throw new Error('Percentage must be between 1 and 10000 BPS')
       }
 
-      const call = client.buildSignInscription(BigInt(inscriptionId), BigInt(bps))
-      await sendTxWithToast(sendAsync, [call], 'Inscription signed')
+      // Build ERC20 approval calls for each debt asset
+      const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+      if (debtAssets) {
+        for (const asset of debtAssets) {
+          const totalValue = BigInt(asset.value || '0')
+          if (totalValue <= 0n) continue
+          // Calculate proportional amount with ceiling: ceil(value * bps / 10000)
+          const amount = (totalValue * BigInt(bps) + 9999n) / 10000n
+          approvals.push({
+            contractAddress: asset.address,
+            entrypoint: 'approve',
+            calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+          })
+        }
+      }
+
+      const signCall = client.buildSignInscription(BigInt(inscriptionId), BigInt(bps))
+      await sendTxWithToast(sendAsync, [...approvals, signCall], 'Inscription signed')
     },
     [address, status, inscriptionId, sendAsync, client],
   )

@@ -10,6 +10,7 @@ import {
   useLiquidateInscription,
   useRedeemShares,
 } from '@/hooks/transactions'
+import type { DebtAssetInfo } from '@/hooks/transactions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -23,13 +24,13 @@ interface InscriptionActionsProps {
   isOwner: boolean
   shares: bigint
   multiLender: boolean
-  totalDebt?: string
+  debtAssets: DebtAssetInfo[]
   debtDecimals?: number
 }
 
 export function InscriptionActions({
   inscriptionId, status, isOwner, shares,
-  multiLender, totalDebt, debtDecimals = 18,
+  multiLender, debtAssets, debtDecimals = 18,
 }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [lendAmount, setLendAmount] = useState('')
@@ -73,7 +74,7 @@ export function InscriptionActions({
             disabled={isPending}
             onClick={async () => {
               try {
-                await sign(10000)
+                await sign(10000, debtAssets)
               } catch (err) {
                 toast.error('Lend failed', { description: getErrorMessage(err) })
               }
@@ -87,6 +88,7 @@ export function InscriptionActions({
     }
 
     // Multi-lender: amount-based input with auto BPS calculation
+    const totalDebt = debtAssets[0]?.value
     const totalDebtFormatted = totalDebt ? formatTokenValue(totalDebt, debtDecimals) : undefined
 
     return (
@@ -118,7 +120,7 @@ export function InscriptionActions({
               return
             }
             try {
-              await sign(bps)
+              await sign(bps, debtAssets)
             } catch (err) {
               toast.error('Lend failed', { description: getErrorMessage(err) })
             }
