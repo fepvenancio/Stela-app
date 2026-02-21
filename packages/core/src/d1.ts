@@ -75,7 +75,7 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        conditions.push('(creator = ? OR borrower = ? OR lender = ?)')
+        conditions.push('(LOWER(creator) = LOWER(?) OR LOWER(borrower) = LOWER(?) OR LOWER(lender) = LOWER(?))')
         params.push(address, address, address)
       }
 

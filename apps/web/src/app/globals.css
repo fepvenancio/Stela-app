@@ -5,28 +5,28 @@
   --font-mono: var(--font-ibm-mono), ui-monospace, monospace;
   --font-display: var(--font-cinzel), Georgia, serif;
 
-  --color-void: #080b16;
-  --color-abyss: #0f1629;
-  --color-surface: #161d35;
-  --color-elevated: #1c2544;
-  --color-glass: rgba(22, 29, 53, 0.55);
+  --color-void: #0a0a0e;
+  --color-abyss: #121216;
+  --color-surface: #1a1a1e;
+  --color-elevated: #242428;
+  --color-glass: rgba(18, 18, 22, 0.65);
 
-  --color-edge: #1e2a4a;
-  --color-edge-bright: #2a3660;
+  --color-edge: #2a2a2e;
+  --color-edge-bright: #3a3a3e;
 
   --color-star: #e8a825;
   --color-star-bright: #f0c35a;
   --color-star-dim: #a07518;
 
-  --color-nebula: #4a9eff;
-  --color-aurora: #2dd4bf;
-  --color-nova: #f06565;
-  --color-ember: #f5a623;
-  --color-cosmic: #a78bfa;
+  --color-nebula: #6366f1;
+  --color-aurora: #10b981;
+  --color-nova: #ef4444;
+  --color-ember: #c57b3f;
+  --color-cosmic: #8b5cf6;
 
-  --color-chalk: #e4e8f1;
-  --color-dust: #8b95ad;
-  --color-ash: #4a5578;
+  --color-chalk: #d1d5db;
+  --color-dust: #9ca3af;
+  --color-ash: #6b7280;
 
   --animate-fade-up: fade-up 0.5s ease-out both;
   --animate-fade-in: fade-in 0.4s ease-out both;
@@ -108,9 +108,9 @@ html {
 
 body {
   background:
-    radial-gradient(ellipse at 12% 0%, rgba(30, 58, 138, 0.09) 0%, transparent 55%),
-    radial-gradient(ellipse at 90% 100%, rgba(88, 28, 135, 0.05) 0%, transparent 55%),
-    #080b16;
+    radial-gradient(ellipse at 12% 0%, rgba(232, 168, 37, 0.04) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(255, 255, 255, 0.02) 0%, transparent 55%),
+    var(--color-void);
   min-height: 100dvh;
 }
 
@@ -123,8 +123,8 @@ body {
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a3660; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3d4f80; }
+::-webkit-scrollbar-thumb { background: var(--color-edge-bright); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-star-dim); }
 
 /* ── Star Field ────────────────────────────────────────── */
 
@@ -141,12 +141,12 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.11), transparent),
-    radial-gradient(1px 1px   at 28% 65%, rgba(255,255,255,0.07), transparent),
-    radial-gradient(2px 2px   at 55% 12%, rgba(255,255,255,0.05), transparent),
-    radial-gradient(1px 1px   at 72% 48%, rgba(255,255,255,0.09), transparent),
-    radial-gradient(1.5px 1.5px at 88% 78%, rgba(255,255,255,0.06), transparent),
-    radial-gradient(1px 1px   at 42% 92%, rgba(255,255,255,0.04), transparent);
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.08), transparent),
+    radial-gradient(1px 1px   at 28% 65%, rgba(255,255,255,0.05), transparent),
+    radial-gradient(2px 2px   at 55% 12%, rgba(255,255,255,0.04), transparent),
+    radial-gradient(1px 1px   at 72% 48%, rgba(255,255,255,0.07), transparent),
+    radial-gradient(1.5px 1.5px at 88% 78%, rgba(255,255,255,0.04), transparent),
+    radial-gradient(1px 1px   at 42% 92%, rgba(255,255,255,0.03), transparent);
   background-size: 380px 380px;
 }
 
@@ -155,10 +155,10 @@ body {
   position: absolute;
   inset: -20%;
   background-image:
-    radial-gradient(1px 1px   at 22% 38%, rgba(232,168,37,0.09), transparent),
-    radial-gradient(1.5px 1.5px at 68% 22%, rgba(74,158,255,0.07), transparent),
-    radial-gradient(1px 1px   at 82% 62%, rgba(255,255,255,0.05), transparent),
-    radial-gradient(1.5px 1.5px at 12% 82%, rgba(255,255,255,0.04), transparent);
+    radial-gradient(1px 1px   at 22% 38%, rgba(232,168,37,0.06), transparent),
+    radial-gradient(1.5px 1.5px at 68% 22%, rgba(255,255,255,0.03), transparent),
+    radial-gradient(1px 1px   at 82% 62%, rgba(255,255,255,0.03), transparent),
+    radial-gradient(1.5px 1.5px at 12% 82%, rgba(255,255,255,0.03), transparent);
   background-size: 520px 520px;
   animation: drift 150s linear infinite;
 }
@@ -169,6 +169,20 @@ body {
   background-image: 
     radial-gradient(circle at 2px 2px, rgba(232, 168, 37, 0.05) 1px, transparent 0);
   background-size: 24px 24px;
+}
+
+.granite-noise {
+  position: relative;
+}
+
+.granite-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('https://www.transparenttextures.com/patterns/granite.png');
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .stela-border {
@@ -190,16 +204,35 @@ body {
 
 input:focus-visible,
 select:focus-visible,
-button:focus-visible {
-  outline: 1px solid rgba(232, 168, 37, 0.5);
-  outline-offset: 2px;
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-star);
+  box-shadow: 
+    0 0 0 1px var(--color-star),
+    0 0 12px rgba(232, 168, 37, 0.25),
+    inset 0 0 8px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease-out;
+}
+
+.stela-focus {
+  transition: all 0.2s ease-out;
+}
+
+.stela-focus:focus-within,
+.stela-focus[data-state="on"],
+.stela-focus.active {
+  border-color: var(--color-star-bright);
+  background: var(--color-abyss);
+  box-shadow: 
+    0 0 20px rgba(232, 168, 37, 0.15),
+    inset 0 0 12px rgba(232, 168, 37, 0.05);
 }
 
 /* ── Form Elements ─────────────────────────────────────── */
 
 select option {
-  background: #0f1629;
-  color: #e4e8f1;
+  background: var(--color-abyss);
+  color: var(--color-chalk);
 }
 
 input[type="number"]::-webkit-inner-spin-button,

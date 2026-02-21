@@ -155,8 +155,8 @@ export default function CreatePage() {
     <div className="animate-fade-up max-w-2xl">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="font-display text-3xl tracking-wide text-chalk mb-3">
-          Create Inscription
+        <h1 className="font-display text-3xl tracking-widest text-chalk mb-3 uppercase">
+          Inscribe the Stela
         </h1>
         <p className="text-dust leading-relaxed">
           Define the terms of your lending inscription on StarkNet.
@@ -167,23 +167,23 @@ export default function CreatePage() {
         {/* Role selector */}
         <div className="grid grid-cols-2 gap-3">
           {([
-            { val: true, label: 'I want to borrow', desc: 'Request a loan with collateral' },
-            { val: false, label: 'I want to lend', desc: 'Offer a loan to earn interest' },
+            { val: true, label: 'Borrower', desc: 'Inscribe a debt to receive liquidity' },
+            { val: false, label: 'Lender', desc: 'Prepare a stela for signing' },
           ] as const).map(({ val, label, desc }) => (
             <button
               key={String(val)}
               type="button"
               onClick={() => setIsBorrow(val)}
-              className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+              className={`p-5 rounded-2xl border text-left transition-all duration-300 stela-focus ${
                 isBorrow === val
-                  ? 'border-star/40 bg-star/[0.06]'
-                  : 'border-edge bg-surface/30 hover:border-edge-bright'
+                  ? 'border-star/50 bg-abyss shadow-[0_0_25px_rgba(232,168,37,0.15),inset_0_0_15px_rgba(0,0,0,0.6)]'
+                  : 'border-edge bg-surface/30 hover:border-edge-bright opacity-60 hover:opacity-100'
               }`}
             >
-              <div className={`text-sm font-medium ${isBorrow === val ? 'text-star' : 'text-chalk'}`}>
+              <div className={`text-sm font-display uppercase tracking-widest ${isBorrow === val ? 'text-star' : 'text-dust'}`}>
                 {label}
               </div>
-              <div className="text-xs text-dust mt-1">{desc}</div>
+              <div className="text-xs text-ash mt-2 leading-relaxed">{desc}</div>
             </button>
           ))}
         </div>

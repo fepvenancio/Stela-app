@@ -65,8 +65,8 @@ export function InscriptionCard({
       href={`/inscription/${id}`}
       className="group block transition-all duration-300 hover:-translate-y-1"
     >
-      <Card className="relative overflow-hidden p-6 border-edge/30 bg-surface/20 backdrop-blur-sm group-hover:border-star/30 transition-all duration-300">
-        <div className="absolute inset-0 bg-gradient-to-br from-star/2 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Card className="relative overflow-hidden p-6 border-edge bg-surface/40 backdrop-blur-sm group-hover:border-star/40 transition-all duration-300 granite-noise">
+        <div className="absolute inset-0 bg-gradient-to-br from-star/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         
         <CardHeader className="p-0 pb-4 gap-0 border-b border-edge/10 relative z-10">
           <div className="flex items-center justify-between">

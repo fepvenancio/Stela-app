@@ -18,12 +18,12 @@ const NAV_LINKS = [
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
   )},
-  { href: '/create', label: 'Create', icon: (props: any) => (
+  { href: '/create', label: 'Inscribe', icon: (props: any) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
     </svg>
   )},
-  { href: '/portfolio', label: 'Portfolio', icon: (props: any) => (
+  { href: '/portfolio', label: 'Vaults', icon: (props: any) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
