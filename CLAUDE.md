@@ -2,8 +2,10 @@
 
 ## Project Overview
 
-Stela is a P2P lending/agreements protocol on StarkNet. The contracts are in a separate repo
+Stela is a P2P lending/inscriptions protocol on StarkNet. The contracts are in a separate repo
 (`stela-contracts/`). This repo contains everything else: frontend, indexer, and liquidation bot.
+
+**Everything runs on Cloudflare:** Workers, D1 (SQLite), and OpenNext for the frontend.
 
 Read this entire file before writing any code.
 
@@ -12,14 +14,15 @@ Read this entire file before writing any code.
 ## Repo Structure
 
 ```
-stela/                          ← this repo
+stela/                              ← this repo
 ├── packages/
-│   └── core/                  ← shared types, ABI, constants
+│   └── core/                      ← shared types, ABI, constants, D1 queries
 ├── apps/
-│   ├── web/                   ← Next.js frontend
-│   ├── indexer/               ← Apibara event indexer
-│   └── bot/                   ← liquidation bot
-├── package.json               ← pnpm workspace root
+│   └── web/                       ← Next.js frontend (OpenNext → Cloudflare Workers)
+├── workers/
+│   ├── indexer/                   ← RPC polling cron Worker → D1
+│   └── bot/                       ← liquidation cron Worker → StarkNet
+├── package.json                   ← pnpm workspace root
 ├── pnpm-workspace.yaml
 └── turbo.json
 ```
@@ -29,7 +32,9 @@ stela/                          ← this repo
 ## Toolchain
 
 ```
-Node.js:     22+
+Runtime:     Cloudflare Workers (workerd)
+Database:    Cloudflare D1 (SQLite)
+Frontend:    Next.js 15 via @opennextjs/cloudflare
 Package mgr: pnpm (workspaces)
 Build:       Turborepo
 Language:    TypeScript strict mode everywhere
@@ -44,6 +49,7 @@ Language:    TypeScript strict mode everywhere
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'workers/*'
 ```
 
 ```json
@@ -51,8 +57,9 @@ packages:
 {
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
-    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "dist/**"] },
+    "build": { "dependsOn": ["^build"], "outputs": [".next/**", ".open-next/**", "dist/**"] },
     "dev": { "cache": false, "persistent": true },
+    "deploy": { "dependsOn": ["^build"], "cache": false },
     "lint": {}
   }
 }
@@ -62,50 +69,57 @@ packages:
 
 ## Package: @stela/core
 
-**Purpose:** Single source of truth for types, ABI, and contract addresses.
-Every app imports from here. Never duplicate these across apps.
+**Purpose:** Single source of truth for types, ABI, contract addresses, D1 queries.
+Every app and worker imports from here. Never duplicate across packages.
 
 ```
 packages/core/
 ├── src/
 │   ├── abi/
 │   │   └── stela.json         ← copied from contracts build output
-│   ├── types.ts               ← Agreement, Asset, AssetType etc
+│   ├── types.ts               ← Inscription, Asset, AssetType etc
 │   ├── constants.ts           ← addresses, MAX_BPS
+│   ├── u256.ts                ← bigint <-> u256 felt pair conversion
+│   ├── tokens.ts              ← token registry
+│   ├── d1.ts                  ← shared D1 query module (all Workers + API routes)
+│   ├── schema.sql             ← D1 schema reference
 │   └── index.ts               ← re-exports everything
 └── package.json
 ```
 
+### D1 Query Module (`d1.ts`)
+
+All D1 database access goes through `createD1Queries(db)`:
+
+```typescript
+import { createD1Queries } from '@stela/core'
+import type { D1Database } from '@stela/core'
+
+const queries = createD1Queries(env.DB as unknown as D1Database)
+await queries.getInscriptions({ status: 'open', page: 1, limit: 20 })
+await queries.upsertInscription({ id, creator, status: 'open', ... })
+await queries.findLiquidatable(nowSeconds)
+```
+
+**Security:** Column allowlists prevent SQL injection in dynamic upserts.
+All queries use prepared statements with `?` parameters.
+
 ### Types
 
 ```typescript
-// packages/core/src/types.ts
-
 export type AssetType = 'ERC20' | 'ERC721' | 'ERC1155' | 'ERC4626'
 
-export type AgreementStatus =
-  | 'open'        // issued_debt_percentage == 0
-  | 'partial'     // 0 < issued_debt_percentage < MAX_BPS, multi_lender only
-  | 'filled'      // issued_debt_percentage == MAX_BPS, not yet repaid/liquidated
-  | 'repaid'
-  | 'liquidated'
-  | 'expired'     // filled, past deadline+duration, not liquidated yet (needs bot)
-  | 'cancelled'
+export type InscriptionStatus =
+  | 'open' | 'partial' | 'filled' | 'repaid'
+  | 'liquidated' | 'expired' | 'cancelled'
 
-export interface Asset {
-  asset: string        // contract address as hex string
-  asset_type: AssetType
-  value: bigint        // token amount (ERC20/ERC1155/ERC4626)
-  token_id: bigint     // NFT ID (ERC721/ERC1155)
-}
-
-export interface Agreement {
+export interface Inscription {
   id: string           // u256 as 0x-prefixed hex string
   borrower: string     // ContractAddress as hex
   lender: string
   duration: bigint     // seconds
   deadline: bigint     // unix timestamp
-  signed_at: bigint    // set on first sign_agreement, 0 if unsigned
+  signed_at: bigint
   issued_debt_percentage: bigint  // BPS, max 10_000
   is_repaid: boolean
   liquidated: boolean
@@ -113,43 +127,32 @@ export interface Agreement {
   debt_asset_count: number
   interest_asset_count: number
   collateral_asset_count: number
-  status: AgreementStatus  // computed by indexer, NOT from contract
+  status: InscriptionStatus  // computed by indexer, NOT from contract
 }
-
-export interface AgreementEvent {
-  agreement_id: string
-  event_type: 'created' | 'signed' | 'cancelled' | 'repaid' | 'liquidated' | 'redeemed'
-  tx_hash: string
-  block_number: bigint
-  timestamp: bigint
-  data: Record<string, unknown>
-}
-```
-
-### Constants
-
-```typescript
-// packages/core/src/constants.ts
-
-export const MAX_BPS = 10_000n
-export const VIRTUAL_SHARE_OFFSET = 10_000_000_000_000_000n // 1e16
-
-export const STELA_ADDRESS = {
-  sepolia: '0x0',   // fill in after deployment
-  mainnet: '0x0',   // fill in after deployment
-} as const
-
-export type Network = keyof typeof STELA_ADDRESS
 ```
 
 ### ABI Sync
 
-After every contract build, run:
 ```bash
-pnpm sync-abi
-# copies target/dev/stela_StelaProtocol.contract_class.json
-# into packages/core/src/abi/stela.json
-# script lives in root package.json scripts
+pnpm sync-abi  # copies ABI from contracts build into packages/core/src/abi/stela.json
+```
+
+---
+
+## D1 Database (stela-db)
+
+**ID:** `e8633170-f033-4e41-8c45-ab59f07d4006`
+
+SQLite database shared by all Workers and the frontend API routes. Tables:
+
+- `inscriptions` — main inscription state (status, participants, timestamps)
+- `inscription_assets` — per-inscription asset details (debt/interest/collateral)
+- `inscription_events` — event log for history/auditing
+- `_meta` — key/value store for indexer block cursor
+
+Schema is in `packages/core/src/schema.sql`. Apply via:
+```bash
+wrangler d1 execute stela-db --file=packages/core/src/schema.sql
 ```
 
 ---
@@ -159,597 +162,206 @@ pnpm sync-abi
 ### Stack
 ```
 Next.js 15 (App Router)
+@opennextjs/cloudflare        ← deploy to Cloudflare Workers
+Cloudflare D1                  ← API routes query D1 directly
 TypeScript strict
 Tailwind CSS 4
 starknet.js v6
 @starknet-react/core v3
-get-starknet-core v4
 ```
 
-### Structure
+### Key Files
 ```
 apps/web/
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── providers.tsx        ← StarknetConfig wrapper
-│   │   ├── page.tsx             ← browse open agreements
-│   │   ├── create/
-│   │   │   └── page.tsx         ← create agreement form
-│   │   ├── agreement/
-│   │   │   └── [id]/
-│   │   │       └── page.tsx     ← agreement detail + actions
-│   │   └── portfolio/
-│   │       └── page.tsx         ← user's positions
-│   ├── components/
-│   │   ├── WalletButton.tsx
-│   │   ├── AgreementCard.tsx
-│   │   ├── AgreementActions.tsx ← sign/repay/liquidate/redeem switcher
-│   │   ├── AssetInput.tsx       ← reusable asset row (type + address + amount)
-│   │   └── AssetBadge.tsx       ← display asset pill
-│   ├── hooks/
-│   │   ├── useAgreement.ts      ← read single agreement from contract
-│   │   ├── useAgreements.ts     ← read list from API (indexer-backed)
-│   │   ├── useShares.ts         ← ERC1155 balance_of for current wallet
-│   │   ├── useSign.ts           ← sign_agreement write
-│   │   ├── useRepay.ts          ← repay write
-│   │   ├── useLiquidate.ts      ← liquidate write
-│   │   ├── useRedeem.ts         ← redeem write
-│   │   └── useCreateAgreement.ts
-│   └── lib/
-│       ├── stela.ts             ← typed contract instance helper
-│       ├── u256.ts              ← bigint <-> u256 felt pair conversion
-│       ├── address.ts           ← address formatting helpers
-│       └── status.ts            ← compute AgreementStatus from Agreement fields
+├── wrangler.jsonc             ← D1 binding, assets config, nodejs_compat
+├── open-next.config.ts        ← OpenNext config
+├── cloudflare-env.d.ts        ← CloudflareEnv type (DB binding)
+├── next.config.ts
+└── src/
+    ├── app/
+    │   ├── layout.tsx, page.tsx, providers.tsx
+    │   ├── create/page.tsx
+    │   ├── inscription/[id]/page.tsx
+    │   ├── portfolio/page.tsx
+    │   └── api/inscriptions/     ← D1 queries (server-side)
+    ├── components/
+    ├── hooks/
+    └── lib/
 ```
 
-### Provider Setup
+### API Routes — D1 Direct Access
+
+API routes query D1 directly via Cloudflare bindings (no external proxy):
 
 ```typescript
-// src/app/providers.tsx
-'use client'
-import { StarknetConfig, argent, braavos, publicProvider } from '@starknet-react/core'
-import { sepolia } from '@starknet-react/chains'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { createD1Queries } from '@stela/core'
+import type { D1Database } from '@stela/core'
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <StarknetConfig
-      chains={[sepolia]}
-      provider={publicProvider()}
-      connectors={[argent(), braavos()]}
-      autoConnect
-    >
-      {children}
-    </StarknetConfig>
-  )
+export async function GET(request: NextRequest) {
+  const { env } = getCloudflareContext()
+  const db = createD1Queries(env.DB as unknown as D1Database)
+  const inscriptions = await db.getInscriptions({ status, page, limit })
+  return NextResponse.json(inscriptions)
 }
 ```
 
-### Contract Read Pattern
+### Deployment
+```bash
+pnpm --filter web preview   # local preview in workerd
+pnpm --filter web deploy    # deploy to Cloudflare Workers
+```
 
-```typescript
-// src/hooks/useAgreement.ts
-import { useContractRead } from '@starknet-react/core'
-import { abi } from '@stela/core/abi/stela.json'
-import { STELA_ADDRESS } from '@stela/core'
-import { parseAgreement } from '../lib/stela'
+### Environment Variables
 
-export function useAgreement(agreementId: string) {
-  return useContractRead({
-    address: STELA_ADDRESS.sepolia,
-    abi,
-    functionName: 'get_agreement',
-    args: [agreementId],
-    watch: true,
-    select: (data) => parseAgreement(data),
-  })
+Variables are set in `wrangler.jsonc` for production:
+```json
+"vars": {
+  "NEXT_PUBLIC_NETWORK": "sepolia",
+  "NEXT_PUBLIC_STELA_ADDRESS": "0x031f...",
+  "NEXT_PUBLIC_RPC_URL": "https://starknet-sepolia.public.blastapi.io"
 }
 ```
 
-### Contract Write Pattern
+---
 
-```typescript
-// src/hooks/useSign.ts
-import { useContractWrite, useAccount } from '@starknet-react/core'
-import { abi } from '@stela/core/abi/stela.json'
-import { STELA_ADDRESS } from '@stela/core'
-import { toU256 } from '../lib/u256'
+## Worker: indexer (RPC Polling)
 
-export function useSign(agreementId: string, percentage: bigint) {
-  const { writeAsync, isPending, error } = useContractWrite({
-    calls: [{
-      contractAddress: STELA_ADDRESS.sepolia,
-      entrypoint: 'sign_agreement',
-      calldata: [
-        ...toU256(BigInt(agreementId)),  // u256 = [low, high]
-        ...toU256(percentage),
-      ],
-    }],
-  })
-  return { sign: writeAsync, isPending, error }
-}
+### Purpose
+Poll StarkNet RPC for Stela contract events and write to D1.
+This is the only way to enumerate inscriptions for browsing/discovery.
+
+### Stack
+```
+Cloudflare Worker + Cron Trigger (*/1 * * * *)
+starknet.js v6 (RpcProvider.getEvents)
+D1 via @stela/core createD1Queries
 ```
 
-### Critical: u256 Handling
+### How It Works
+```
+scheduled() handler:
+1. Read last_block from D1 _meta table
+2. Cap range to MAX_BLOCK_RANGE (500) to avoid Worker timeout
+3. provider.getEvents({ from_block, to_block, address, keys, chunk_size: 100 })
+4. Handle pagination via continuation_token
+5. For each event → route by selector to handler
+6. Write to D1 via shared query module
+7. Update last_block in _meta
+```
 
-**This will bite you everywhere. u256 in Cairo = two felt252 values (low, high).**
+### Key Files
+```
+workers/indexer/
+├── wrangler.jsonc      ← D1 binding, cron trigger, nodejs_compat
+├── package.json
+├── tsconfig.json
+└── src/index.ts        ← all logic in one file
+```
+
+### Deployment
+```bash
+cd workers/indexer && pnpm deploy
+```
+
+---
+
+## Worker: bot (Liquidation)
+
+### Purpose
+Call `liquidate()` on inscriptions that have expired without repayment.
+
+### Stack
+```
+Cloudflare Worker + Cron Trigger (*/2 * * * *)
+starknet.js v6 (Account.execute)
+D1 via @stela/core createD1Queries
+```
+
+### How It Works
+```
+scheduled() handler:
+1. Query D1: inscriptions WHERE status='filled' AND signed_at+duration < now
+2. For each → Account.execute({ entrypoint: 'liquidate', calldata: toU256(id) })
+3. Serialize liquidations to avoid StarkNet nonce conflicts
+```
+
+### Secrets
+Set via `wrangler secret put` (NOT in wrangler.jsonc):
+```bash
+cd workers/bot
+wrangler secret put BOT_PRIVATE_KEY
+wrangler secret put BOT_ADDRESS
+```
+
+### Deployment
+```bash
+cd workers/bot && pnpm deploy
+```
+
+**CRITICAL:** The bot wallet must hold enough ETH/STRK to pay gas. Never commit `BOT_PRIVATE_KEY`.
+
+---
+
+## Critical: u256 Handling
+
+**u256 in Cairo = two felt252 values (low, high).** This applies everywhere:
+inscription IDs, token amounts, share counts, percentages.
 
 ```typescript
-// src/lib/u256.ts
-import { uint256 } from 'starknet'
+import { toU256, fromU256, inscriptionIdToHex } from '@stela/core'
 
 // bigint → [low, high] calldata pair
-export const toU256 = (n: bigint): [string, string] => {
-  const { low, high } = uint256.bnToUint256(n)
-  return [low.toString(), high.toString()]
-}
+const calldata = toU256(BigInt('0x123'))  // ['0x123', '0x0']
 
-// Contract response { low: bigint, high: bigint } → bigint
-export const fromU256 = (u: { low: bigint; high: bigint }): bigint =>
-  uint256.uint256ToBN(u)
+// { low, high } → bigint
+const value = fromU256({ low: 123n, high: 0n })  // 123n
 
-// Agreement IDs come back as u256 — always convert before using as string keys
-export const agreementIdToHex = (u: { low: bigint; high: bigint }): string =>
-  '0x' + fromU256(u).toString(16).padStart(64, '0')
+// u256 → hex string (for DB keys)
+const id = inscriptionIdToHex({ low: 123n, high: 0n })  // '0x0000...007b'
 ```
 
-### Status Computation
+## StarkNet Event Parsing
 
-```typescript
-// src/lib/status.ts
-import { Agreement, AgreementStatus, MAX_BPS } from '@stela/core'
+Event fields are split between `keys[]` and `data[]` based on `kind` in the ABI:
+- `keys[0]` = selector
+- `keys[1..N]` = fields with `kind: "key"`
+- `data[0..M]` = fields with `kind: "data"`
+- **u256 = TWO slots** (low, high)
+- **ContractAddress = ONE slot**
 
-export function computeStatus(a: Agreement): AgreementStatus {
-  if (a.is_repaid) return 'repaid'
-  if (a.liquidated) return 'liquidated'
-  if (a.issued_debt_percentage === 0n) return 'open'
-
-  const now = BigInt(Math.floor(Date.now() / 1000))
-  const dueAt = a.signed_at + a.duration
-
-  if (a.signed_at > 0n && now > dueAt) return 'expired'
-  if (a.issued_debt_percentage === MAX_BPS) return 'filled'
-  return 'partial'
-}
-```
-
-### Pages: What Each Page Does
-
-**`/` (browse):**
-- Fetches open/partial agreements from `GET /api/agreements?status=open`
-- Renders `AgreementCard` grid
-- Filter controls: asset type, amount range, duration
-
-**`/create`:**
-- Multi-step form: asset arrays (debt, collateral, interest), duration, deadline, multi_lender toggle
-- Calls `create_agreement` on submit
-- Redirects to `/agreement/[id]` on success
-
-**`/agreement/[id]`:**
-- Reads agreement state directly from contract (`useAgreement`)
-- Reads caller's share balance (`useShares`)
-- Shows correct action based on status:
-  - `open` / `partial` → sign form (percentage input for multi_lender)
-  - `filled` + within window → repay button
-  - `expired` → liquidate button
-  - `repaid` || `liquidated` → redeem button (if shares > 0)
-
-**`/portfolio`:**
-- Fetches from `GET /api/agreements?address={wallet}` 
-- Shows agreements where wallet is borrower OR lender
-- Groups by: active loans, active lends, closed positions
-
-### Environment Variables
-
-```bash
-# apps/web/.env.local
-NEXT_PUBLIC_STELA_ADDRESS=0x...
-NEXT_PUBLIC_NETWORK=sepolia
-NEXT_PUBLIC_RPC_URL=https://starknet-sepolia.public.blastapi.io
-NEXT_PUBLIC_API_URL=http://localhost:3001  # indexer API
-```
+| Event | keys | data |
+|-------|------|------|
+| InscriptionCreated | [selector, id_low, id_high, creator] | [is_borrow] |
+| InscriptionSigned | [selector, id_low, id_high, borrower, lender] | [pct_low, pct_high, shares_low, shares_high] |
+| InscriptionCancelled | [selector, id_low, id_high] | [creator] |
+| InscriptionRepaid | [selector, id_low, id_high] | [repayer] |
+| InscriptionLiquidated | [selector, id_low, id_high] | [liquidator] |
+| SharesRedeemed | [selector, id_low, id_high, redeemer] | [shares_low, shares_high] |
 
 ---
 
-## App: indexer
-
-### Purpose
-Stream Stela contract events from StarkNet into Postgres.
-This is the only way to enumerate agreements for browsing/discovery.
-
-### Stack
-```
-@apibara/indexer
-@apibara/starknet
-postgres (pg driver)
-```
-
-### Structure
-```
-apps/indexer/
-├── src/
-│   ├── indexer.ts       ← Apibara DNA stream handler
-│   ├── handlers/
-│   │   ├── created.ts   ← AgreementCreated event handler
-│   │   ├── signed.ts    ← AgreementSigned event handler
-│   │   ├── repaid.ts    ← AgreementRepaid event handler
-│   │   ├── liquidated.ts
-│   │   └── redeemed.ts
-│   ├── db/
-│   │   ├── schema.sql   ← Postgres schema (run once)
-│   │   └── queries.ts   ← typed pg queries
-│   └── api/
-│       └── server.ts    ← tiny Express API over the Postgres data
-└── package.json
-```
-
-### Database Schema
-
-```sql
--- apps/indexer/src/db/schema.sql
-
-CREATE TABLE agreements (
-  id                      TEXT PRIMARY KEY,     -- u256 as 0x hex
-  creator                 TEXT NOT NULL,
-  borrower                TEXT,
-  lender                  TEXT,
-  status                  TEXT NOT NULL DEFAULT 'open',
-  issued_debt_percentage  BIGINT NOT NULL DEFAULT 0,
-  multi_lender            BOOLEAN NOT NULL DEFAULT FALSE,
-  duration                BIGINT,
-  deadline                BIGINT,
-  signed_at               BIGINT,
-  debt_asset_count        INTEGER,
-  interest_asset_count    INTEGER,
-  collateral_asset_count  INTEGER,
-  created_at_block        BIGINT,
-  created_at_ts           BIGINT,
-  updated_at_ts           BIGINT
-);
-
-CREATE TABLE agreement_assets (
-  agreement_id  TEXT NOT NULL REFERENCES agreements(id),
-  asset_role    TEXT NOT NULL,   -- 'debt' | 'interest' | 'collateral'
-  asset_index   INTEGER NOT NULL,
-  asset_address TEXT NOT NULL,
-  asset_type    TEXT NOT NULL,
-  value         TEXT,            -- stored as string (u256 too large for bigint)
-  token_id      TEXT,
-  PRIMARY KEY (agreement_id, asset_role, asset_index)
-);
-
-CREATE TABLE agreement_events (
-  id            SERIAL PRIMARY KEY,
-  agreement_id  TEXT NOT NULL,
-  event_type    TEXT NOT NULL,
-  tx_hash       TEXT NOT NULL,
-  block_number  BIGINT NOT NULL,
-  timestamp     BIGINT,
-  data          JSONB
-);
-
-CREATE INDEX ON agreements(status);
-CREATE INDEX ON agreements(creator);
-CREATE INDEX ON agreements(borrower);
-CREATE INDEX ON agreements(lender);
-CREATE INDEX ON agreements(deadline);
-```
-
-### Indexer Core Pattern
-
-```typescript
-// apps/indexer/src/indexer.ts
-import { defineIndexer } from '@apibara/indexer'
-import { StarknetStream } from '@apibara/starknet'
-import { STELA_ADDRESS } from '@stela/core'
-import { handleCreated } from './handlers/created'
-import { handleSigned } from './handlers/signed'
-import { handleRepaid } from './handlers/repaid'
-import { handleLiquidated } from './handlers/liquidated'
-
-// Event selectors — compute with starknet.js selector.getSelectorFromName()
-const SELECTORS = {
-  AgreementCreated:   '0x...',
-  AgreementSigned:    '0x...',
-  AgreementCancelled: '0x...',
-  AgreementRepaid:    '0x...',
-  AgreementLiquidated:'0x...',
-  SharesRedeemed:     '0x...',
-}
-
-export default defineIndexer(StarknetStream)({
-  streamUrl: process.env.APIBARA_STREAM_URL!,
-  startingBlock: Number(process.env.START_BLOCK ?? 0),
-  filter: {
-    events: [
-      {
-        address: STELA_ADDRESS.sepolia as `0x${string}`,
-        keys: Object.values(SELECTORS).map(s => [s as `0x${string}`]),
-      }
-    ]
-  },
-  async transform({ events }) {
-    for (const event of events) {
-      const selector = event.keys[0]
-      switch (selector) {
-        case SELECTORS.AgreementCreated:    await handleCreated(event); break
-        case SELECTORS.AgreementSigned:     await handleSigned(event); break
-        case SELECTORS.AgreementRepaid:     await handleRepaid(event); break
-        case SELECTORS.AgreementLiquidated: await handleLiquidated(event); break
-      }
-    }
-  }
-})
-```
-
-### API Server
-
-```typescript
-// apps/indexer/src/api/server.ts
-// Tiny Express API that the frontend queries for lists
-// All writes go directly to the contract — this is read-only
-
-import express from 'express'
-import { db } from '../db/queries'
-
-const app = express()
-
-// GET /api/agreements?status=open&page=1&limit=20
-app.get('/api/agreements', async (req, res) => {
-  const { status, address, page = '1', limit = '20' } = req.query
-  const agreements = await db.getAgreements({
-    status: status as string,
-    address: address as string,
-    page: Number(page),
-    limit: Number(limit),
-  })
-  res.json(agreements)
-})
-
-// GET /api/agreements/:id
-app.get('/api/agreements/:id', async (req, res) => {
-  const agreement = await db.getAgreement(req.params.id)
-  if (!agreement) return res.status(404).json({ error: 'not found' })
-  res.json(agreement)
-})
-
-app.listen(3001)
-```
-
-### Environment Variables
-
-```bash
-# apps/indexer/.env
-DATABASE_URL=postgresql://user:pass@localhost:5432/stela
-APIBARA_STREAM_URL=https://sepolia.starknet.a5a.ch
-APIBARA_AUTH_TOKEN=...
-START_BLOCK=0
-PORT=3001
-```
-
----
-
-## App: bot (Liquidation Bot)
-
-### Purpose
-Call `liquidate()` on agreements that have expired without repayment.
-Without this, lenders can never recover collateral from defaulted loans.
-
-### Stack
-```
-starknet.js v6
-node-cron
-pg (postgres)
-```
-
-### Structure
-```
-apps/bot/
-├── src/
-│   ├── bot.ts           ← main loop
-│   ├── liquidate.ts     ← starknet.js write
-│   └── query.ts         ← find liquidatable agreements from DB
-└── package.json
-```
-
-### Core Logic
-
-```typescript
-// apps/bot/src/bot.ts
-import cron from 'node-cron'
-import { findLiquidatable } from './query'
-import { liquidate } from './liquidate'
-
-// Run every 2 minutes
-cron.schedule('*/2 * * * *', async () => {
-  const now = Math.floor(Date.now() / 1000)
-  
-  // Query DB for agreements where:
-  //   status = 'filled' (signed, not yet repaid/liquidated)
-  //   signed_at + duration < now  (window has passed)
-  const candidates = await findLiquidatable(now)
-  
-  for (const agreement of candidates) {
-    try {
-      const txHash = await liquidate(agreement.id)
-      console.log(`Liquidated ${agreement.id}: ${txHash}`)
-    } catch (err) {
-      console.error(`Failed to liquidate ${agreement.id}:`, err)
-      // Don't crash — continue to next agreement
-    }
-  }
-})
-```
-
-```typescript
-// apps/bot/src/liquidate.ts
-import { Account, RpcProvider } from 'starknet'
-import { STELA_ADDRESS } from '@stela/core'
-import { toU256 } from './u256'
-
-const provider = new RpcProvider({ nodeUrl: process.env.RPC_URL! })
-const account = new Account(
-  provider,
-  process.env.BOT_ADDRESS!,
-  process.env.BOT_PRIVATE_KEY!
-)
-
-export async function liquidate(agreementId: string): Promise<string> {
-  const { transaction_hash } = await account.execute({
-    contractAddress: STELA_ADDRESS.sepolia,
-    entrypoint: 'liquidate',
-    calldata: [...toU256(BigInt(agreementId))],
-  })
-  
-  await provider.waitForTransaction(transaction_hash)
-  return transaction_hash
-}
-```
-
-```typescript
-// apps/bot/src/query.ts
-import { pool } from './db'
-
-export async function findLiquidatable(nowSeconds: number) {
-  const result = await pool.query(`
-    SELECT id
-    FROM agreements
-    WHERE status = 'filled'
-      AND signed_at IS NOT NULL
-      AND (signed_at + duration) < $1
-    ORDER BY (signed_at + duration) ASC
-    LIMIT 50
-  `, [nowSeconds])
-  
-  return result.rows
-}
-```
-
-### Environment Variables
-
-```bash
-# apps/bot/.env
-DATABASE_URL=postgresql://user:pass@localhost:5432/stela
-RPC_URL=https://starknet-sepolia.public.blastapi.io
-BOT_ADDRESS=0x...          ← funded StarkNet wallet address
-BOT_PRIVATE_KEY=0x...      ← KEEP SECRET, never commit
-NETWORK=sepolia
-```
-
-**CRITICAL:** The bot wallet must hold enough ETH to pay gas for liquidation calls.
-Never commit `BOT_PRIVATE_KEY` to git. Use environment variables or a secrets manager.
-
----
-
-## Build Order
-
-Build in this sequence. Each step depends on the previous.
-
-**1. Schema + Postgres**
-Run `schema.sql` to create tables. Verify connection.
-
-**2. Indexer**
-Get events flowing into Postgres before touching the frontend.
-Verify `agreements` table is populating. Check event selectors are correct.
-
-**3. Bot**
-Wire up bot with a funded test wallet on sepolia.
-Verify it finds liquidatable agreements and sends transactions.
-
-**4. Frontend**
-By now the hard problems are solved. Build pages against real data.
-
----
-
-## Shared Utilities (copy into each app that needs them)
-
-Both `web/` and `bot/` need the same `toU256` / `fromU256` helpers.
-Define them in `packages/core/src/u256.ts` and import from `@stela/core`.
-
-```typescript
-// packages/core/src/u256.ts
-import { uint256 } from 'starknet'
-
-export const toU256 = (n: bigint): [string, string] => {
-  const { low, high } = uint256.bnToUint256(n)
-  return [low.toString(), high.toString()]
-}
-
-export const fromU256 = (low: bigint, high: bigint): bigint =>
-  uint256.uint256ToBN({ low, high })
-```
-
----
-
-## StarkNet-Specific Gotchas
-
-**u256 is two felts:** Every agreement ID, token amount, share count, and percentage
-is a u256 in Cairo. On the JS side it arrives as `{ low: bigint, high: bigint }`.
-Always use `toU256` / `fromU256`. Forgetting this causes silent wrong values.
-
-**Contract addresses are felt252:** 32-byte hex, left-padded with zeros.
-Use `addAddressPadding` from starknet.js before comparing or displaying.
-
-**Event selectors:** Compute with `selector.getSelectorFromName('AgreementCreated')`.
-Don't hardcode unless you've verified them against the actual ABI.
-
-**Calldata arrays:** When passing `Array<Asset>` to `create_agreement`, Cairo arrays
-serialize as `[length, item0_field0, item0_field1, ..., itemN_fieldN]`.
-starknet.js handles this if you use the ABI encoder. If building calldata manually,
-prefix with the array length as a felt.
-
-**Block timestamps vs JS timestamps:** Cairo timestamps are u64 seconds.
-JS `Date.now()` is milliseconds. Always `Math.floor(Date.now() / 1000)` when comparing.
-
-**Pending transactions:** After a write, `useWaitForTransaction` before assuming
-state has changed. StarkNet finality takes longer than EVM chains.
-
----
-
-## AgreementParams Struct (for create_agreement calldata)
-
-```
-AgreementParams {
-  is_borrow: bool
-  debt_assets: Array<Asset>        ← Cairo array: [len, ...items]
-  interest_assets: Array<Asset>
-  collateral_assets: Array<Asset>
-  duration: u64
-  deadline: u64
-  multi_lender: bool
-}
-
-Asset {
-  asset: ContractAddress           ← felt252
-  asset_type: AssetType            ← enum: 0=ERC20, 1=ERC721, 2=ERC1155, 3=ERC4626
-  value: u256                      ← [low, high]
-  token_id: u256                   ← [low, high]
-}
-```
-
----
-
-## What Goes Where (Decision Rule)
-
-| Action | Goes where |
-|--------|-----------|
-| Read agreement state | Direct contract read (`useContractRead`) |
+## What Goes Where
+
+| Action | Where |
+|--------|-------|
+| Read inscription state | Direct contract read (`useContractRead`) |
 | Read share balance | Direct contract read (`erc1155.balance_of`) |
-| Browse/list agreements | API backed by indexer DB |
-| Portfolio / history | API backed by indexer DB |
+| Browse/list inscriptions | Next.js API route → D1 |
+| Portfolio / history | Next.js API route → D1 |
 | Create, sign, repay, liquidate, redeem, cancel | Direct contract write via user wallet |
-| Trigger liquidation automatically | Bot wallet |
+| Auto-liquidate expired inscriptions | Bot Worker wallet |
+| Index events from chain | Indexer Worker → D1 |
 
 Never proxy writes through the backend. Users sign directly with their wallet.
-The backend is read-only except for the bot's liquidation calls.
 
 ---
 
 ## After Creating/Updating Code
 
 ```bash
-pnpm lint          # lint all apps
-pnpm build         # build all apps
+pnpm lint          # lint all packages
+pnpm build         # build all packages
 pnpm sync-abi      # if contracts changed
 ```
 

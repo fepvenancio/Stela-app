@@ -20,6 +20,7 @@
         "./src/*"
       ]
     },
+    "types": ["@cloudflare/workers-types"],
     "noEmit": true,
     "allowJs": true
   },

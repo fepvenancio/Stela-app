@@ -30,3 +30,14 @@ export {
   getTokensForNetwork,
   findTokenByAddress,
 } from './tokens.js'
+
+export type {
+  D1Database,
+  D1PreparedStatement,
+  D1Result,
+  D1ExecResult,
+  D1Queries,
+  GetInscriptionsParams,
+} from './d1.js'
+
+export { createD1Queries } from './d1.js'

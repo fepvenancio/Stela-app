@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "account_id": "616231e4ffa88bb203ec4cbedeab4a8e",
+  "name": "stela-app",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stela-db",
+      "database_id": "e8633170-f033-4e41-8c45-ab59f07d4006"
+    }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_NETWORK": "sepolia",
+    "NEXT_PUBLIC_STELA_ADDRESS": "0x031f738a405157f85e1f20156f3301d15cdaae363d302f4e1f44c49dbc83d437",
+    "NEXT_PUBLIC_RPC_URL": "https://rpc.starknet-testnet.lava.build"
+  },
+  "routes": [
+    { "pattern": "stela-dapp.xyz", "custom_domain": true },
+    { "pattern": "www.stela-dapp.xyz", "custom_domain": true }
+  ]
+}

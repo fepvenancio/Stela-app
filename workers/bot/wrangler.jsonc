@@ -1,0 +1,20 @@
+{
+  "account_id": "616231e4ffa88bb203ec4cbedeab4a8e",
+  "name": "stela-bot",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stela-db",
+      "database_id": "e8633170-f033-4e41-8c45-ab59f07d4006"
+    }
+  ],
+  "vars": {
+    "STELA_ADDRESS": "0x031f738a405157f85e1f20156f3301d15cdaae363d302f4e1f44c49dbc83d437"
+  },
+  "triggers": {
+    "crons": ["*/2 * * * *"]
+  }
+}
