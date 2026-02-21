@@ -1122,7 +1122,7 @@ packages:
     os: [win32]
 
   '@fepvenancio/stela-sdk@0.1.0':
-    resolution: {integrity: sha512-Lso+rBVET8n+wIMETCPVF9lv5aWoj3WSpdgWRw4BFrT9Vl7yvEaK8dRQ5PUTYPkywyhRsGsNHUQ0l+An+vKpMw==, tarball: https://npm.pkg.github.com/download/@fepvenancio/stela-sdk/0.1.0/efa900c632fe80bca856169f003b5d28602bcce8}
+    resolution: {integrity: sha512-cXU5tBfFwEJnFERYRlkFeFvITQMH7XV9TPvkQqOCyRSMhK9cSsgjXtg2HPzNScgFu9ySrQwq4ejjsaBwu+4UQA==}
     peerDependencies:
       starknet: ^6.0.0
 
