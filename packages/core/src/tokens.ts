@@ -114,10 +114,15 @@ export function getTokensForNetwork(network: Network): TokenInfo[] {
   return TOKENS.filter((t) => t.addresses[network] !== undefined)
 }
 
+/** Strip leading zeros after 0x for consistent comparison */
+function normalizeHex(addr: string): string {
+  return '0x' + addr.replace(/^0x0*/i, '').toLowerCase()
+}
+
 /** Find a token by its address (any network) */
 export function findTokenByAddress(address: string): TokenInfo | undefined {
-  const normalized = address.toLowerCase()
+  const normalized = normalizeHex(address)
   return TOKENS.find((t) =>
-    Object.values(t.addresses).some((a) => a?.toLowerCase() === normalized),
+    Object.values(t.addresses).some((a) => a !== undefined && normalizeHex(a) === normalized),
   )
 }
