@@ -47,15 +47,25 @@ function AssetSection({
   title,
   assets,
   setAssets,
+  required,
+  showErrors,
 }: {
   title: string
   assets: AssetInputValue[]
   setAssets: (val: AssetInputValue[]) => void
+  required?: boolean
+  showErrors?: boolean
 }) {
+  const hasValid = assets.some((a) => a.asset)
+  const missing = required && showErrors && !hasValid
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-chalk">{title}</h3>
+        <h3 className="text-sm font-medium text-chalk">
+          {title}
+          {required && <span className="text-star ml-1">*</span>}
+        </h3>
         <button
           type="button"
           onClick={() => setAssets([...assets, emptyAsset()])}
@@ -84,6 +94,9 @@ function AssetSection({
         {assets.length === 0 && (
           <p className="text-xs text-ash py-3 text-center">No assets added yet</p>
         )}
+        {missing && (
+          <p className="text-xs text-nova">At least one {title.toLowerCase().replace(' assets', '')} asset with a contract address is required.</p>
+        )}
       </div>
     </div>
   )
@@ -103,9 +116,17 @@ export default function CreatePage() {
   const [deadline, setDeadline] = useState('')
   const [txHash, setTxHash] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
+  const [showErrors, setShowErrors] = useState(false)
+
+  const hasDebt = debtAssets.some((a) => a.asset)
+  const hasCollateral = collateralAssets.some((a) => a.asset)
+  const hasDuration = Boolean(duration && Number(duration) > 0)
+  const isValid = hasDebt && hasCollateral && hasDuration
 
   async function handleSubmit() {
     if (!address) return
+    setShowErrors(true)
+    if (!isValid) return
     setTxError(null)
     setTxHash(null)
 
@@ -173,23 +194,28 @@ export default function CreatePage() {
         <div className="h-px bg-edge" />
 
         {/* Asset sections */}
-        <AssetSection title="Debt Assets" assets={debtAssets} setAssets={setDebtAssets} />
+        <AssetSection title="Debt Assets" assets={debtAssets} setAssets={setDebtAssets} required showErrors={showErrors} />
         <AssetSection title="Interest Assets" assets={interestAssets} setAssets={setInterestAssets} />
-        <AssetSection title="Collateral Assets" assets={collateralAssets} setAssets={setCollateralAssets} />
+        <AssetSection title="Collateral Assets" assets={collateralAssets} setAssets={setCollateralAssets} required showErrors={showErrors} />
 
         <div className="h-px bg-edge" />
 
         {/* Duration & deadline */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-dust mb-2">Duration (seconds)</label>
+            <label className="block text-sm text-dust mb-2">
+              Duration (seconds) <span className="text-star">*</span>
+            </label>
             <input
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="e.g. 86400 for 1 day"
-              className={inputBase}
+              className={`${inputBase} ${showErrors && !hasDuration ? 'border-nova/50' : ''}`}
             />
+            {showErrors && !hasDuration && (
+              <p className="text-xs text-nova mt-1.5">Duration is required.</p>
+            )}
           </div>
           <div>
             <label className="block text-sm text-dust mb-2">Deadline (unix timestamp)</label>
