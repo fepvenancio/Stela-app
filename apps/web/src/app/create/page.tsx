@@ -1,6 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAccount, useSendTransaction } from '@starknet-react/core'
+import { toU256 } from '@stela/core'
+import type { AssetType } from '@stela/core'
+import { CONTRACT_ADDRESS } from '@/lib/config'
 import { AssetInput } from '@/components/AssetInput'
 import type { AssetInputValue } from '@/components/AssetInput'
 
@@ -14,6 +19,29 @@ const emptyAsset = (): AssetInputValue => ({
 
 const inputBase =
   'w-full bg-abyss border border-edge rounded-xl px-4 py-2.5 text-sm text-chalk placeholder:text-dust focus:border-star focus:outline-none focus:ring-1 focus:ring-star/30 transition-all'
+
+const ASSET_TYPE_ENUM: Record<AssetType, number> = {
+  ERC20: 0,
+  ERC721: 1,
+  ERC1155: 2,
+  ERC4626: 3,
+}
+
+function serializeAssets(assets: AssetInputValue[]): string[] {
+  const valid = assets.filter((a) => a.asset)
+  const calldata: string[] = [String(valid.length)]
+  for (const a of valid) {
+    calldata.push(a.asset)
+    calldata.push(String(ASSET_TYPE_ENUM[a.asset_type]))
+    // Convert human-readable amount to raw value using decimals
+    const rawValue = a.value
+      ? BigInt(Math.floor(parseFloat(a.value) * 10 ** a.decimals))
+      : 0n
+    calldata.push(...toU256(rawValue))
+    calldata.push(...toU256(BigInt(a.token_id || '0')))
+  }
+  return calldata
+}
 
 function AssetSection({
   title,
@@ -62,6 +90,10 @@ function AssetSection({
 }
 
 export default function CreatePage() {
+  const router = useRouter()
+  const { address } = useAccount()
+  const { sendAsync, isPending } = useSendTransaction({})
+
   const [isBorrow, setIsBorrow] = useState(true)
   const [multiLender, setMultiLender] = useState(false)
   const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([emptyAsset()])
@@ -69,6 +101,37 @@ export default function CreatePage() {
   const [collateralAssets, setCollateralAssets] = useState<AssetInputValue[]>([emptyAsset()])
   const [duration, setDuration] = useState('')
   const [deadline, setDeadline] = useState('')
+  const [txHash, setTxHash] = useState<string | null>(null)
+  const [txError, setTxError] = useState<string | null>(null)
+
+  async function handleSubmit() {
+    if (!address) return
+    setTxError(null)
+    setTxHash(null)
+
+    const calldata = [
+      isBorrow ? '1' : '0',
+      ...serializeAssets(debtAssets),
+      ...serializeAssets(interestAssets),
+      ...serializeAssets(collateralAssets),
+      String(duration || '0'),
+      String(deadline || '0'),
+      multiLender ? '1' : '0',
+    ]
+
+    try {
+      const result = await sendAsync([
+        {
+          contractAddress: CONTRACT_ADDRESS,
+          entrypoint: 'create_inscription',
+          calldata,
+        },
+      ])
+      setTxHash(result.transaction_hash)
+    } catch (err: unknown) {
+      setTxError(err instanceof Error ? err.message : String(err))
+    }
+  }
 
   return (
     <div className="animate-fade-up max-w-2xl">
@@ -172,12 +235,30 @@ export default function CreatePage() {
         <div className="h-px bg-edge" />
 
         {/* Submit */}
-        <button
-          type="button"
-          className="w-full py-3.5 rounded-xl text-sm font-semibold bg-gradient-to-b from-star to-star-dim text-void hover:from-star-bright hover:to-star transition-all duration-200 shadow-[0_0_30px_-5px_rgba(232,168,37,0.3)] hover:shadow-[0_0_40px_-5px_rgba(232,168,37,0.45)]"
-        >
-          Create Inscription
-        </button>
+        {!address ? (
+          <p className="text-sm text-ash text-center py-3">Connect your wallet to create an inscription.</p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isPending}
+            className="w-full py-3.5 rounded-xl text-sm font-semibold bg-gradient-to-b from-star to-star-dim text-void hover:from-star-bright hover:to-star transition-all duration-200 shadow-[0_0_30px_-5px_rgba(232,168,37,0.3)] hover:shadow-[0_0_40px_-5px_rgba(232,168,37,0.45)] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isPending ? 'Creating...' : 'Create Inscription'}
+          </button>
+        )}
+
+        {/* Feedback */}
+        {txHash && (
+          <p className="text-xs text-aurora font-mono break-all">
+            Tx submitted: {txHash}
+          </p>
+        )}
+        {txError && (
+          <p className="text-xs text-nova break-all">
+            {txError}
+          </p>
+        )}
       </div>
     </div>
   )
