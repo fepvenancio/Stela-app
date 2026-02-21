@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 
 export interface AssetInputValue {
   asset: string
@@ -26,49 +27,57 @@ interface AssetInputProps {
 
 const ASSET_TYPES: AssetType[] = ['ERC20', 'ERC721', 'ERC1155', 'ERC4626']
 
-const CUSTOM_TOKEN_KEY = '__custom__'
-
 const networkTokens = getTokensForNetwork(NETWORK)
 
-function getSelectedTokenKey(address: string): string {
-  const match = networkTokens.find(
+function getSelectedToken(address: string): TokenInfo | undefined {
+  return networkTokens.find(
     (t) => t.addresses[NETWORK]?.toLowerCase() === address.toLowerCase(),
   )
-  return match ? match.symbol : address ? CUSTOM_TOKEN_KEY : ''
 }
 
 function getTokenSymbol(address: string): string {
-  const match = networkTokens.find(
-    (t) => t.addresses[NETWORK]?.toLowerCase() === address.toLowerCase(),
-  )
-  return match?.symbol ?? ''
+  return getSelectedToken(address)?.symbol ?? ''
+}
+
+/** Truncate address for display */
+function truncateAddress(addr: string): string {
+  if (!addr || addr.length < 12) return addr
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+}
+
+/** Generate a deterministic color from a string */
+function stringToColor(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue = Math.abs(hash % 360)
+  return `hsl(${hue}, 55%, 45%)`
 }
 
 export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps) {
   const [isCustom, setIsCustom] = useState(() => {
     if (!value.asset) return false
-    return getSelectedTokenKey(value.asset) === CUSTOM_TOKEN_KEY
+    return !getSelectedToken(value.asset)
   })
+  const [modalOpen, setModalOpen] = useState(false)
 
-  const selectedKey = isCustom ? CUSTOM_TOKEN_KEY : getSelectedTokenKey(value.asset)
+  const selectedToken = getSelectedToken(value.asset)
   const symbol = getTokenSymbol(value.asset)
   const showTokenId = value.asset_type === 'ERC721' || value.asset_type === 'ERC1155'
 
-  function handleTokenSelect(key: string) {
-    if (key === CUSTOM_TOKEN_KEY) {
-      setIsCustom(true)
-      onChange({ ...value, asset: '', decimals: 18 })
-      return
-    }
-    if (key === '') return
-
-    const token = networkTokens.find((t) => t.symbol === key) as TokenInfo
+  function handleTokenSelect(token: TokenInfo) {
     setIsCustom(false)
     onChange({
       ...value,
       asset: token.addresses[NETWORK] ?? '',
       decimals: token.decimals,
     })
+  }
+
+  function handleCustomSelect() {
+    setIsCustom(true)
+    onChange({ ...value, asset: '', decimals: 18 })
   }
 
   return (
@@ -78,7 +87,7 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
       </span>
 
       <div className="flex-1 space-y-2">
-        {/* Row 1: Asset type + Token selector */}
+        {/* Row 1: Asset type + Token selector button */}
         <div className="grid grid-cols-[110px_1fr] gap-2">
           <div>
             <Label htmlFor={`asset-type-${index}`} className="sr-only">Asset type</Label>
@@ -97,24 +106,67 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
             </Select>
           </div>
 
+          {/* Token selector trigger button */}
           <div>
             <Label htmlFor={`token-select-${index}`} className="sr-only">Token</Label>
-            <Select
-              value={selectedKey}
-              onValueChange={handleTokenSelect}
+            <button
+              type="button"
+              id={`token-select-${index}`}
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-2 w-full h-9 px-3 rounded-xl bg-surface border border-edge text-sm transition-colors hover:bg-elevated hover:border-edge-bright focus-visible:border-star focus-visible:ring-1 focus-visible:ring-star/30 outline-none"
             >
-              <SelectTrigger id={`token-select-${index}`} className="w-full bg-surface border-edge text-chalk text-sm h-9">
-                <SelectValue placeholder="Select token" />
-              </SelectTrigger>
-              <SelectContent>
-                {networkTokens.map((t) => (
-                  <SelectItem key={t.symbol} value={t.symbol}>
-                    {t.symbol} — {t.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value={CUSTOM_TOKEN_KEY}>Custom token</SelectItem>
-              </SelectContent>
-            </Select>
+              {selectedToken ? (
+                <>
+                  {/* Token avatar */}
+                  {selectedToken.logoUrl ? (
+                    <img
+                      src={selectedToken.logoUrl}
+                      alt={selectedToken.symbol}
+                      width={20}
+                      height={20}
+                      className="rounded-full shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-semibold"
+                      style={{ backgroundColor: stringToColor(selectedToken.symbol) }}
+                    >
+                      {selectedToken.symbol.charAt(0)}
+                    </div>
+                  )}
+                  <span className="text-chalk font-medium truncate">
+                    {selectedToken.symbol}
+                  </span>
+                  <span className="text-ash text-xs font-mono ml-auto hidden sm:block">
+                    {truncateAddress(selectedToken.addresses[NETWORK] ?? '')}
+                  </span>
+                </>
+              ) : isCustom && value.asset ? (
+                <>
+                  <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center bg-edge-bright text-dust text-[10px]">
+                    ?
+                  </div>
+                  <span className="text-chalk font-mono text-xs truncate">
+                    {truncateAddress(value.asset)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-dust">Select token</span>
+              )}
+
+              {/* Chevron */}
+              <svg
+                className="ml-auto shrink-0 text-ash"
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -185,6 +237,16 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
           <path d="M4 4l8 8M12 4l-8 8" />
         </svg>
       </Button>
+
+      {/* Token Selector Modal */}
+      <TokenSelectorModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onSelect={handleTokenSelect}
+        selectedAddress={value.asset}
+        showCustomOption={true}
+        onCustomSelect={handleCustomSelect}
+      />
     </div>
   )
 }
