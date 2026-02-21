@@ -1,15 +1,8 @@
 'use client'
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { formatAddress, normalizeAddress } from "@/lib/address"
+import { formatAddress, normalizeAddress, toHex } from "@/lib/address"
 import { cn } from "@/lib/utils"
-
-function toHex(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (typeof value === 'bigint') return '0x' + value.toString(16)
-  if (typeof value === 'number') return '0x' + value.toString(16)
-  return String(value)
-}
 
 export function AddressDisplay({ address, className }: { address: unknown; className?: string }) {
   const hex = toHex(address)

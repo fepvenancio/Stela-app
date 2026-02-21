@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import type { TokenInfo } from '@stela/core'
 import { getTokensForNetwork } from '@stela/core'
 import { NETWORK } from '@/lib/config'
+import { truncateAddress } from '@/lib/format'
+import { TokenAvatar } from '@/components/TokenAvatar'
 import {
   Dialog,
   DialogContent,
@@ -17,68 +19,6 @@ const networkTokens = getTokensForNetwork(NETWORK)
 
 /** Popular tokens shown as quick-select chips */
 const POPULAR_SYMBOLS = ['ETH', 'STRK', 'USDC', 'USDT', 'WBTC']
-
-/** Truncate an address to 0x1a2b...3c4d format */
-function truncateAddress(addr: string): string {
-  if (!addr || addr.length < 12) return addr
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-}
-
-/** Generate a deterministic color from a string (for avatar fallback) */
-function stringToColor(str: string): string {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash % 360)
-  return `hsl(${hue}, 55%, 45%)`
-}
-
-/* ── Token Avatar ───────────────────────────────────────── */
-
-function TokenAvatar({
-  token,
-  size = 36,
-}: {
-  token: TokenInfo
-  size?: number
-}) {
-  const [imgError, setImgError] = useState(false)
-  const bgColor = stringToColor(token.symbol)
-
-  if (token.logoUrl && !imgError) {
-    return (
-      <div
-        className="relative shrink-0 rounded-full overflow-hidden bg-surface"
-        style={{ width: size, height: size }}
-      >
-        <img
-          src={token.logoUrl}
-          alt={token.symbol}
-          width={size}
-          height={size}
-          className="rounded-full object-cover"
-          onError={() => setImgError(true)}
-        />
-      </div>
-    )
-  }
-
-  // Fallback: colored circle with first letter
-  return (
-    <div
-      className="relative shrink-0 rounded-full flex items-center justify-center font-semibold text-white"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: bgColor,
-        fontSize: size * 0.4,
-      }}
-    >
-      {token.symbol.charAt(0).toUpperCase()}
-    </div>
-  )
-}
 
 /* ── Custom Token Avatar ────────────────────────────────── */
 

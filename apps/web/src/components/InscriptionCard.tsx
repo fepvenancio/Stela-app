@@ -1,8 +1,10 @@
 import Link from 'next/link'
-import { findTokenByAddress } from '@stela/core'
+import { findTokenByAddress, STATUS_LABELS } from '@stela/core'
 import { formatAddress } from '@/lib/address'
+import { formatTokenValue, formatDuration } from '@/lib/format'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import type { AssetRow } from '@/hooks/useInscriptions'
 
 interface InscriptionCardProps {
@@ -14,52 +16,34 @@ interface InscriptionCardProps {
   assets: AssetRow[]
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  open: 'Open',
-  partial: 'Partial',
-  filled: 'Filled',
-  repaid: 'Repaid',
-  liquidated: 'Liquidated',
-  expired: 'Expired',
-  cancelled: 'Cancelled',
-}
-
-function formatDuration(seconds: string): string {
-  const h = Math.floor(Number(seconds) / 3600)
-  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`
-  return `${h}h`
-}
-
-/** Format a raw token value given its decimals */
-function formatValue(raw: string | null, decimals: number): string {
-  if (!raw || raw === '0') return '0'
-  const n = BigInt(raw)
-  if (decimals === 0) return n.toString()
-  const divisor = 10n ** BigInt(decimals)
-  const whole = n / divisor
-  const frac = n % divisor
-  if (frac === 0n) return whole.toString()
-  const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '')
-  return `${whole}.${fracStr}`
-}
-
-/** Summarize assets of a given role into a compact display string */
-function summarizeAssets(assets: AssetRow[], role: string): string {
+/** Render assets of a given role as token chips with avatars */
+function AssetSummary({ assets, role }: { assets: AssetRow[]; role: string }) {
   const roleAssets = assets.filter((a) => a.asset_role === role)
-  if (roleAssets.length === 0) return '--'
+  if (roleAssets.length === 0) return <span className="text-ash">--</span>
 
-  return roleAssets
-    .map((a) => {
-      const token = findTokenByAddress(a.asset_address)
-      const symbol = token?.symbol ?? formatAddress(a.asset_address)
-      const decimals = token?.decimals ?? 18
-      if (a.asset_type === 'ERC721') {
-        const tid = a.token_id && a.token_id !== '0' ? `#${a.token_id}` : ''
-        return `${symbol}${tid}`
-      }
-      return `${formatValue(a.value, decimals)} ${symbol}`
-    })
-    .join(', ')
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 justify-end">
+      {roleAssets.map((a) => {
+        const token = findTokenByAddress(a.asset_address)
+        const symbol = token?.symbol ?? formatAddress(a.asset_address)
+        const decimals = token?.decimals ?? 18
+        const isNFT = a.asset_type === 'ERC721'
+        const display = isNFT
+          ? `${symbol}${a.token_id && a.token_id !== '0' ? ` #${a.token_id}` : ''}`
+          : `${formatTokenValue(a.value, decimals)} ${symbol}`
+
+        return (
+          <span
+            key={`${a.asset_role}-${a.asset_index}`}
+            className="inline-flex items-center gap-1 text-chalk font-medium"
+          >
+            <TokenAvatarByAddress address={a.asset_address} size={14} />
+            {display}
+          </span>
+        )
+      })}
+    </div>
+  )
 }
 
 type BadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'cancelled'
@@ -72,8 +56,8 @@ export function InscriptionCard({
   duration,
   assets,
 }: InscriptionCardProps) {
-  const label = STATUS_LABELS[status] ?? 'Open'
-  const variant = (status in STATUS_LABELS ? status : 'open') as BadgeVariant
+  const statusKey = (status in STATUS_LABELS ? status : 'open') as BadgeVariant
+  const label = STATUS_LABELS[statusKey]
   const hasAssets = assets.length > 0
 
   return (
@@ -87,26 +71,30 @@ export function InscriptionCard({
             <span className="font-mono text-[11px] text-ash tracking-wide">
               {formatAddress(id)}
             </span>
-            <Badge variant={variant}>{label}</Badge>
+            <Badge variant={statusKey}>{label}</Badge>
           </div>
         </CardHeader>
 
         <CardContent className="p-0 space-y-2.5 pt-4 text-sm">
           <div className="flex justify-between gap-2">
             <span className="text-dust shrink-0">Debt</span>
-            <span className="text-chalk font-medium truncate text-right">
-              {hasAssets ? summarizeAssets(assets, 'debt') : '--'}
-            </span>
+            {hasAssets ? (
+              <AssetSummary assets={assets} role="debt" />
+            ) : (
+              <span className="text-ash">--</span>
+            )}
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-dust shrink-0">Collateral</span>
-            <span className="text-chalk truncate text-right">
-              {hasAssets ? summarizeAssets(assets, 'collateral') : '--'}
-            </span>
+            {hasAssets ? (
+              <AssetSummary assets={assets} role="collateral" />
+            ) : (
+              <span className="text-ash">--</span>
+            )}
           </div>
           <div className="flex justify-between">
             <span className="text-dust">Duration</span>
-            <span className="text-chalk font-medium">{formatDuration(duration)}</span>
+            <span className="text-chalk font-medium">{formatDuration(Number(duration))}</span>
           </div>
         </CardContent>
 

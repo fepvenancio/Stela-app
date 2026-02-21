@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
+import { TokenAvatar } from '@/components/TokenAvatar'
+import { truncateAddress } from '@/lib/format'
 
 export interface AssetInputValue {
   asset: string
@@ -37,22 +39,6 @@ function getSelectedToken(address: string): TokenInfo | undefined {
 
 function getTokenSymbol(address: string): string {
   return getSelectedToken(address)?.symbol ?? ''
-}
-
-/** Truncate address for display */
-function truncateAddress(addr: string): string {
-  if (!addr || addr.length < 12) return addr
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-}
-
-/** Generate a deterministic color from a string */
-function stringToColor(str: string): string {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash % 360)
-  return `hsl(${hue}, 55%, 45%)`
 }
 
 export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps) {
@@ -117,23 +103,7 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
             >
               {selectedToken ? (
                 <>
-                  {/* Token avatar */}
-                  {selectedToken.logoUrl ? (
-                    <img
-                      src={selectedToken.logoUrl}
-                      alt={selectedToken.symbol}
-                      width={20}
-                      height={20}
-                      className="rounded-full shrink-0"
-                    />
-                  ) : (
-                    <div
-                      className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-semibold"
-                      style={{ backgroundColor: stringToColor(selectedToken.symbol) }}
-                    >
-                      {selectedToken.symbol.charAt(0)}
-                    </div>
-                  )}
+                  <TokenAvatar token={selectedToken} size={20} />
                   <span className="text-chalk font-medium truncate">
                     {selectedToken.symbol}
                   </span>

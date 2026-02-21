@@ -45,3 +45,22 @@ export interface InscriptionEvent {
 export const VALID_STATUSES: readonly InscriptionStatus[] = [
   'open', 'partial', 'filled', 'repaid', 'liquidated', 'expired', 'cancelled',
 ] as const
+
+/** Human-readable labels for each inscription status */
+export const STATUS_LABELS: Record<InscriptionStatus, string> = {
+  open: 'Open',
+  partial: 'Partial',
+  filled: 'Filled',
+  repaid: 'Repaid',
+  liquidated: 'Liquidated',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
+}
+
+/** Numeric enum values for asset types (matches Cairo contract) */
+export const ASSET_TYPE_ENUM: Record<AssetType, number> = {
+  ERC20: 0,
+  ERC721: 1,
+  ERC1155: 2,
+  ERC4626: 3,
+}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
-import { toU256 } from '@stela/core'
+import { toU256, ASSET_TYPE_ENUM } from '@stela/core'
 import type { AssetType } from '@stela/core'
 import { CONTRACT_ADDRESS } from '@/lib/config'
 import { AssetInput } from '@/components/AssetInput'
@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/tx'
 
 const emptyAsset = (): AssetInputValue => ({
   asset: '',
@@ -21,13 +22,6 @@ const emptyAsset = (): AssetInputValue => ({
   token_id: '0',
   decimals: 18,
 })
-
-const ASSET_TYPE_ENUM: Record<AssetType, number> = {
-  ERC20: 0,
-  ERC721: 1,
-  ERC1155: 2,
-  ERC4626: 3,
-}
 
 function serializeAssets(assets: AssetInputValue[]): string[] {
   const valid = assets.filter((a) => a.asset)
@@ -147,7 +141,7 @@ export default function CreatePage() {
       ])
       toast.success('Inscription created', { description: result.transaction_hash })
     } catch (err: unknown) {
-      toast.error('Failed to create inscription', { description: err instanceof Error ? err.message : String(err) })
+      toast.error('Failed to create inscription', { description: getErrorMessage(err) })
     }
   }
 

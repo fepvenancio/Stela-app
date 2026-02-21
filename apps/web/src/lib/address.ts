@@ -1,7 +1,7 @@
 import { addAddressPadding, validateAndParseAddress } from 'starknet'
 
 /** Convert any address-like value (string, bigint, number) to a hex string */
-function toHex(value: unknown): string {
+export function toHex(value: unknown): string {
   if (typeof value === 'string') return value
   if (typeof value === 'bigint') return '0x' + value.toString(16)
   if (typeof value === 'number') return '0x' + value.toString(16)

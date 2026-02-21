@@ -4,6 +4,7 @@ import { findTokenByAddress } from '@stela/core'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatAddress, normalizeAddress } from '@/lib/address'
+import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 
 interface AssetBadgeProps {
   address: string
@@ -27,8 +28,9 @@ export function AssetBadge({ address, assetType, value, tokenId }: AssetBadgePro
     <Badge variant="outline" className="gap-2 px-3 py-1.5">
       <span className="font-medium text-star">{assetType}</span>
       <Tooltip>
-        <TooltipTrigger className="font-mono text-chalk cursor-default">
-          {displayName}
+        <TooltipTrigger className="flex items-center gap-1.5 cursor-default">
+          <TokenAvatarByAddress address={address} size={16} />
+          <span className="text-chalk font-medium">{displayName}</span>
         </TooltipTrigger>
         <TooltipContent>
           <p className="font-mono text-xs">{fullAddress}</p>

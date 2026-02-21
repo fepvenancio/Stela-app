@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/tx'
+import { TokenAvatarByAddress } from '@/components/TokenAvatar'
+import { truncateAddress } from '@/lib/format'
 
 const MOCK_TOKENS = [
   {
@@ -80,7 +83,7 @@ function MintCard({
         setTokenId(String(Math.floor(Math.random() * 1_000_000)))
       }
     } catch (err: unknown) {
-      toast.error(`Failed to mint ${token.symbol}`, { description: err instanceof Error ? err.message : String(err) })
+      toast.error(`Failed to mint ${token.symbol}`, { description: getErrorMessage(err) })
     }
   }
 
@@ -88,9 +91,12 @@ function MintCard({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base">{token.symbol}</CardTitle>
-            <CardDescription className="text-xs mt-0.5">{token.name}</CardDescription>
+          <div className="flex items-center gap-3">
+            <TokenAvatarByAddress address={token.address} size={32} />
+            <div>
+              <CardTitle className="text-base">{token.symbol}</CardTitle>
+              <CardDescription className="text-xs mt-0.5">{token.name}</CardDescription>
+            </div>
           </div>
           <span className="text-[10px] font-mono text-dust bg-abyss px-2 py-1 rounded-md">
             {token.type}
@@ -99,7 +105,7 @@ function MintCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-[11px] font-mono text-dust break-all leading-relaxed">
-          {token.address}
+          {truncateAddress(token.address)}
         </p>
 
         <div className="flex gap-3 items-end">

@@ -10,8 +10,9 @@ import { InscriptionActions } from '@/components/InscriptionActions'
 import { AssetBadge } from '@/components/AssetBadge'
 import { computeStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
-import { findTokenByAddress } from '@stela/core'
+import { findTokenByAddress, STATUS_LABELS } from '@stela/core'
 import type { InscriptionStatus } from '@stela/core'
+import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -21,39 +22,7 @@ interface InscriptionPageProps {
   params: Promise<{ id: string }>
 }
 
-const STATUS_LABELS: Record<InscriptionStatus, string> = {
-  open: 'Open',
-  partial: 'Partial',
-  filled: 'Filled',
-  repaid: 'Repaid',
-  liquidated: 'Liquidated',
-  expired: 'Expired',
-  cancelled: 'Cancelled',
-}
 
-function formatDuration(seconds: bigint): string {
-  const s = Number(seconds)
-  if (s < 3600) return `${Math.floor(s / 60)}m`
-  if (s < 86400) return `${Math.floor(s / 3600)}h`
-  return `${Math.floor(s / 86400)}d`
-}
-
-function formatTimestamp(ts: bigint): string {
-  if (ts === 0n) return '--'
-  return new Date(Number(ts) * 1000).toLocaleString()
-}
-
-function formatTokenValue(raw: string | null, decimals: number): string {
-  if (!raw || raw === '0') return '0'
-  const n = BigInt(raw)
-  if (decimals === 0) return n.toString()
-  const divisor = 10n ** BigInt(decimals)
-  const whole = n / divisor
-  const frac = n % divisor
-  if (frac === 0n) return whole.toString()
-  const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '')
-  return `${whole}.${fracStr}`
-}
 
 export default function InscriptionPage({ params }: InscriptionPageProps) {
   const { id } = use(params)

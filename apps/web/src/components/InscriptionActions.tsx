@@ -5,10 +5,10 @@ import { useSendTransaction, useAccount } from '@starknet-react/core'
 import { toU256 } from '@stela/core'
 import type { InscriptionStatus } from '@stela/core'
 import { CONTRACT_ADDRESS } from '@/lib/config'
+import { sendTxWithToast } from '@/lib/tx'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { toast } from 'sonner'
 
 interface InscriptionActionsProps {
   inscriptionId: string
@@ -20,83 +20,12 @@ interface InscriptionActionsProps {
 export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [percentage, setPercentage] = useState('')
-
   const { sendAsync, isPending } = useSendTransaction({})
 
-  async function handleSign() {
-    if (!percentage) return
-    try {
-      const result = await sendAsync([
-        {
-          contractAddress: CONTRACT_ADDRESS,
-          entrypoint: 'sign_inscription',
-          calldata: [...toU256(BigInt(inscriptionId)), ...toU256(BigInt(percentage))],
-        },
-      ])
-      toast.success("Transaction submitted", { description: result.transaction_hash })
-    } catch (err: unknown) {
-      toast.error("Transaction failed", { description: err instanceof Error ? err.message : String(err) })
-    }
-  }
+  const idCalldata = [...toU256(BigInt(inscriptionId))]
 
-  async function handleRepay() {
-    try {
-      const result = await sendAsync([
-        {
-          contractAddress: CONTRACT_ADDRESS,
-          entrypoint: 'repay',
-          calldata: [...toU256(BigInt(inscriptionId))],
-        },
-      ])
-      toast.success("Transaction submitted", { description: result.transaction_hash })
-    } catch (err: unknown) {
-      toast.error("Transaction failed", { description: err instanceof Error ? err.message : String(err) })
-    }
-  }
-
-  async function handleLiquidate() {
-    try {
-      const result = await sendAsync([
-        {
-          contractAddress: CONTRACT_ADDRESS,
-          entrypoint: 'liquidate',
-          calldata: [...toU256(BigInt(inscriptionId))],
-        },
-      ])
-      toast.success("Transaction submitted", { description: result.transaction_hash })
-    } catch (err: unknown) {
-      toast.error("Transaction failed", { description: err instanceof Error ? err.message : String(err) })
-    }
-  }
-
-  async function handleRedeem() {
-    try {
-      const result = await sendAsync([
-        {
-          contractAddress: CONTRACT_ADDRESS,
-          entrypoint: 'redeem',
-          calldata: [...toU256(BigInt(inscriptionId))],
-        },
-      ])
-      toast.success("Transaction submitted", { description: result.transaction_hash })
-    } catch (err: unknown) {
-      toast.error("Transaction failed", { description: err instanceof Error ? err.message : String(err) })
-    }
-  }
-
-  async function handleCancel() {
-    try {
-      const result = await sendAsync([
-        {
-          contractAddress: CONTRACT_ADDRESS,
-          entrypoint: 'cancel_inscription',
-          calldata: [...toU256(BigInt(inscriptionId))],
-        },
-      ])
-      toast.success("Transaction submitted", { description: result.transaction_hash })
-    } catch (err: unknown) {
-      toast.error("Transaction failed", { description: err instanceof Error ? err.message : String(err) })
-    }
+  async function call(entrypoint: string, calldata: string[] = idCalldata): Promise<void> {
+    await sendTxWithToast(sendAsync, [{ contractAddress: CONTRACT_ADDRESS, entrypoint, calldata }], 'Transaction submitted')
   }
 
   if (!address) {
@@ -110,7 +39,7 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            handleSign()
+            if (percentage) call('sign_inscription', [...idCalldata, ...toU256(BigInt(percentage))])
           }}
           className="flex gap-3"
         >
@@ -142,7 +71,7 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
             description="Are you sure you want to cancel this inscription? This action cannot be undone."
             confirmLabel="Cancel Inscription"
             confirmVariant="nova"
-            onConfirm={handleCancel}
+            onConfirm={() => call('cancel_inscription')}
             isPending={isPending}
           />
         )}
@@ -154,7 +83,7 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
     return (
       <div className="space-y-3">
         <p className="text-sm text-dust">This inscription is fully signed. Repay to release your collateral.</p>
-        <Button variant="aurora" onClick={handleRepay} disabled={isPending}>
+        <Button variant="aurora" onClick={() => call('repay')} disabled={isPending}>
           {isPending ? 'Repaying...' : 'Repay Inscription'}
         </Button>
       </div>
@@ -175,7 +104,7 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
           description="Are you sure you want to liquidate this inscription? This will claim the collateral and cannot be undone."
           confirmLabel="Liquidate"
           confirmVariant="nova"
-          onConfirm={handleLiquidate}
+          onConfirm={() => call('liquidate')}
           isPending={isPending}
         />
       </div>
@@ -188,7 +117,7 @@ export function InscriptionActions({ inscriptionId, status, isOwner, hasShares }
         <p className="text-sm text-dust">
           {status === 'repaid' ? 'Inscription repaid. Redeem your shares for the interest.' : 'Inscription liquidated. Redeem your shares for the collateral.'}
         </p>
-        <Button variant="cosmic" onClick={handleRedeem} disabled={isPending}>
+        <Button variant="cosmic" onClick={() => call('redeem')} disabled={isPending}>
           {isPending ? 'Redeeming...' : 'Redeem Shares'}
         </Button>
       </div>
