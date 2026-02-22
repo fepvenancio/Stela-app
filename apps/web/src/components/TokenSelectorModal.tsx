@@ -158,36 +158,67 @@ export function TokenSelectorModal({
     }
   }, [open])
 
-  // Filter tokens by search, sort by balance (highest first)
+  const walletConnected = balances !== undefined && balances.size > 0
+
+  // Filter tokens: when wallet connected, only show tokens with balance > 0
+  // When searching, also search all tokens (so user can find tokens to use custom address)
   const filteredTokens = useMemo(() => {
     let tokens = networkTokens
+
+    // When wallet is connected and not searching, only show held tokens
+    if (walletConnected && !search.trim()) {
+      tokens = tokens.filter((t) => {
+        const addr = (t.addresses[NETWORK] ?? '').toLowerCase()
+        const bal = balances.get(addr) ?? 0n
+        return bal > 0n
+      })
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase().trim()
-      tokens = networkTokens.filter(
+      tokens = tokens.filter(
         (t) =>
           t.symbol.toLowerCase().includes(q) ||
           t.name.toLowerCase().includes(q) ||
           (t.addresses[NETWORK] ?? '').toLowerCase().includes(q),
       )
-    }
-    if (balances && balances.size > 0) {
-      return [...tokens].sort((a, b) => {
+      // When searching with wallet, still prioritize held tokens
+      if (walletConnected) {
+        tokens = [...tokens].sort((a, b) => {
+          const balA = balances.get((a.addresses[NETWORK] ?? '').toLowerCase()) ?? 0n
+          const balB = balances.get((b.addresses[NETWORK] ?? '').toLowerCase()) ?? 0n
+          if (balA > 0n && balB === 0n) return -1
+          if (balA === 0n && balB > 0n) return 1
+          if (balA > balB) return -1
+          if (balA < balB) return 1
+          return 0
+        })
+      }
+    } else if (walletConnected) {
+      // Sort held tokens by balance (highest first)
+      tokens = [...tokens].sort((a, b) => {
         const balA = balances.get((a.addresses[NETWORK] ?? '').toLowerCase()) ?? 0n
         const balB = balances.get((b.addresses[NETWORK] ?? '').toLowerCase()) ?? 0n
-        if (balA > 0n && balB === 0n) return -1
-        if (balA === 0n && balB > 0n) return 1
         if (balA > balB) return -1
         if (balA < balB) return 1
         return 0
       })
     }
-    return tokens
-  }, [search, balances])
 
-  // Popular tokens for quick chips
+    return tokens
+  }, [search, balances, walletConnected])
+
+  // Popular tokens for quick chips — only show ones the user holds when connected
   const popularTokens = useMemo(
-    () => networkTokens.filter((t) => POPULAR_SYMBOLS.includes(t.symbol)),
-    [],
+    () => {
+      const popular = networkTokens.filter((t) => POPULAR_SYMBOLS.includes(t.symbol))
+      if (!walletConnected) return popular
+      return popular.filter((t) => {
+        const addr = (t.addresses[NETWORK] ?? '').toLowerCase()
+        return (balances.get(addr) ?? 0n) > 0n
+      })
+    },
+    [walletConnected, balances],
   )
 
   const handleSelect = useCallback(
@@ -212,7 +243,7 @@ export function TokenSelectorModal({
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="text-chalk text-lg font-semibold">
-            Select a token
+            {walletConnected ? 'Your tokens' : 'Select a token'}
           </DialogTitle>
         </DialogHeader>
 
@@ -263,7 +294,11 @@ export function TokenSelectorModal({
         <div className="overflow-y-auto max-h-[340px] px-2 py-2 space-y-0.5">
           {filteredTokens.length === 0 && (
             <div className="text-center py-8 text-ash text-sm">
-              No tokens found for &ldquo;{search}&rdquo;
+              {search.trim()
+                ? <>No tokens found for &ldquo;{search}&rdquo;</>
+                : walletConnected
+                  ? 'No tokens in your wallet. Use custom token below.'
+                  : 'No tokens available'}
             </div>
           )}
 
