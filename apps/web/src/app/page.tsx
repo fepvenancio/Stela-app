@@ -20,7 +20,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-10 h-14 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(232,168,37,0.4)] text-lg">
-              <Link href="/browse">Enter the Library</Link>
+              <Link href="/browse">Explore Stelas</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="border-edge hover:bg-surface text-chalk px-10 h-14 rounded-full transition-all text-lg">
               <Link href="/create">Inscribe Now</Link>
@@ -165,7 +165,7 @@ export default function LandingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-star/10 rounded-full blur-[100px] -z-10" />
         <h2 className="font-display text-4xl md:text-5xl text-chalk mb-10 italic">Ready to make your mark?</h2>
         <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-14 h-16 rounded-full text-xl shadow-[0_0_40px_rgba(232,168,37,0.5)] transition-all hover:scale-105 active:scale-95">
-          <Link href="/browse">Begin the Journey</Link>
+          <Link href="/browse">Explore the Stelas</Link>
         </Button>
       </section>
     </div>

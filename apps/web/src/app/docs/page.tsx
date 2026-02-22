@@ -367,7 +367,7 @@ export default function DocsPage() {
               href="/browse"
               className="bg-star hover:bg-star-bright text-void font-bold px-12 py-4 rounded-full text-lg shadow-[0_0_40px_rgba(232,168,37,0.4)] transition-all hover:scale-105"
             >
-              Explore Library
+              Explore Stelas
             </Link>
             <Link
               href="/create"

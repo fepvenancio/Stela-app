@@ -53,11 +53,11 @@ export default function BrowsePage() {
     <div className="animate-fade-up">
       {/* Hero */}
       <div className="mb-10">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-wide text-chalk mb-3">
-          Discover Inscriptions
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
+          The <span className="text-star">Stela</span> Library
         </h1>
         <p className="text-dust max-w-lg leading-relaxed">
-          Browse open lending inscriptions on StarkNet. Sign as a lender to earn interest, or create your own.
+          Explore active lending inscriptions on StarkNet. Sign as a lender to earn interest, or inscribe your own.
         </p>
       </div>
 
