@@ -62,21 +62,22 @@ function InfoCard({ label, children, mono }: { label: string; children: React.Re
   )
 }
 
-function StatusNode({ label, description, color = 'star' }: { label: string; description?: string; color?: string }) {
+function StatusNode({ label, description, color = 'star', icon }: { label: string; description?: string; color?: string; icon?: React.ReactNode }) {
   const colorMap: Record<string, string> = {
-    star: 'text-star border-star/30',
-    aurora: 'text-aurora border-aurora/30',
-    nova: 'text-nova border-nova/30',
-    ash: 'text-ash border-edge/50',
-    chalk: 'text-chalk border-edge/50'
+    star: 'text-star border-star/20',
+    aurora: 'text-aurora border-aurora/20',
+    nova: 'text-nova border-nova/20',
+    ash: 'text-ash border-edge/40',
+    chalk: 'text-chalk border-edge/40'
   }
   
   return (
-    <div className="flex flex-col items-center gap-2 group min-w-[120px]">
-      <div className={`w-full px-4 py-3 rounded-2xl border bg-surface/20 granite-noise shadow-xl shadow-black/40 group-hover:scale-105 transition-all duration-300 text-center ${colorMap[color] || colorMap.star}`}>
-        <span className="font-display text-[11px] sm:text-xs tracking-[0.2em] uppercase font-bold">{label}</span>
+    <div className="flex flex-col items-center gap-1.5 group">
+      <div className={`px-4 py-2 rounded-xl border bg-abyss/40 granite-noise transition-all duration-300 flex items-center gap-2 min-w-[100px] justify-center ${colorMap[color] || colorMap.star}`}>
+        {icon && <div className="opacity-70">{icon}</div>}
+        <span className="font-display text-[10px] tracking-[0.15em] uppercase font-bold">{label}</span>
       </div>
-      {description && <span className="text-[9px] text-ash uppercase tracking-widest font-medium text-center">{description}</span>}
+      {description && <span className="text-[8px] text-ash uppercase tracking-widest font-bold opacity-60">{description}</span>}
     </div>
   )
 }
@@ -84,18 +85,18 @@ function StatusNode({ label, description, color = 'star' }: { label: string; des
 function FlowArrow({ label, vertical = false, className = '' }: { label?: string; vertical?: boolean; className?: string }) {
   if (vertical) {
      return (
-       <div className={`flex flex-col items-center gap-2 ${className}`}>
-          <div className="w-px h-12 bg-gradient-to-b from-edge/20 via-star/40 to-edge/20" />
-          {label && <span className="text-[8px] text-star/50 uppercase tracking-[0.2em] font-bold transform -rotate-90 origin-center whitespace-nowrap">{label}</span>}
-          <div className="w-px h-12 bg-gradient-to-b from-edge/20 via-star/40 to-edge/20" />
+       <div className={`flex flex-col items-center py-2 ${className}`}>
+          <div className="w-[1px] h-8 bg-gradient-to-b from-edge/40 via-star/20 to-edge/40" />
+          {label && <span className="text-[7px] text-star/40 uppercase tracking-widest font-bold my-1">{label}</span>}
+          <div className="w-[1px] h-8 bg-gradient-to-b from-edge/40 via-star/20 to-edge/40" />
        </div>
      )
   }
   return (
-    <div className={`flex items-center gap-2 px-2 sm:px-4 ${className}`}>
-      <div className="h-px w-4 sm:w-12 bg-gradient-to-r from-edge/10 via-star/30 to-edge/10" />
-      {label && <span className="text-[8px] text-star/50 uppercase tracking-[0.2em] font-bold whitespace-nowrap">{label}</span>}
-      <div className="h-px w-4 sm:w-12 bg-gradient-to-r from-edge/10 via-star/30 to-edge/10" />
+    <div className={`flex items-center gap-1 px-2 ${className}`}>
+      <div className="h-[1px] w-6 sm:w-8 bg-gradient-to-r from-edge/20 via-star/30 to-edge/20" />
+      {label && <span className="text-[7px] text-star/40 uppercase tracking-widest font-bold whitespace-nowrap">{label}</span>}
+      <div className="h-[1px] w-6 sm:w-8 bg-gradient-to-r from-edge/20 via-star/30 to-edge/10" />
     </div>
   )
 }
@@ -281,37 +282,41 @@ export default function DocsPage() {
         {/* Status Diagram */}
         <section>
           <SectionHeading>Status Flow</SectionHeading>
-          <div className="bg-void/60 border border-edge/20 rounded-[40px] p-8 sm:p-16 overflow-hidden relative shadow-2xl shadow-black/60">
-             <div className="absolute top-0 right-0 p-8 opacity-5">
-                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-star">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-             </div>
-
-             <div className="flex flex-col items-center gap-8 relative z-10">
+          <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-20 overflow-hidden relative shadow-2xl">
+             <div className="flex flex-col items-center gap-12 relative z-10">
                 {/* Primary Path */}
                 <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 w-full">
-                   <StatusNode label="Open" description="Inscription Created" />
+                   <StatusNode label="Open" description="Inscription" />
                    <FlowArrow label="Sign" className="hidden lg:flex" />
-                   <div className="lg:hidden h-8 w-px bg-star/20" />
-                   <StatusNode label="Filled" description="Assets Locked" />
+                   <div className="lg:hidden h-6 w-px bg-star/20" />
+                   <StatusNode label="Filled" description="Sealed" />
                    <FlowArrow label="Repay" className="hidden lg:flex" />
-                   <div className="lg:hidden h-8 w-px bg-star/20" />
-                   <StatusNode label="Repaid" description="Debt Settled" color="aurora" />
+                   <div className="lg:hidden h-6 w-px bg-star/20" />
+                   <StatusNode 
+                    label="Repaid" 
+                    description="Settled" 
+                    color="aurora" 
+                    icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                   />
                    <FlowArrow label="Redeem" className="hidden lg:flex" />
-                   <div className="lg:hidden h-8 w-px bg-star/20" />
-                   <StatusNode label="Assets" description="Funds Claimed" color="chalk" />
+                   <div className="lg:hidden h-6 w-px bg-star/20" />
+                   <StatusNode 
+                    label="Redeemed" 
+                    description="Success" 
+                    color="chalk" 
+                    icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" /></svg>}
+                   />
                 </div>
 
                 {/* Secondary Paths */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 sm:gap-32 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-40">
                    <div className="flex flex-col items-center">
                       <FlowArrow label="Cancel" vertical />
-                      <StatusNode label="Cancelled" description="Locker Released" color="ash" />
+                      <StatusNode label="Cancelled" description="Released" color="ash" />
                    </div>
                    <div className="flex flex-col items-center">
-                      <FlowArrow label="Expiry" vertical />
-                      <StatusNode label="Liquidated" description="Claim Collateral" color="nova" />
+                      <FlowArrow label="Default" vertical />
+                      <StatusNode label="Liquidated" description="Forfeit" color="nova" />
                    </div>
                 </div>
              </div>
