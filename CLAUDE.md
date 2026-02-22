@@ -219,7 +219,7 @@ Variables are set in `wrangler.jsonc` for production:
 "vars": {
   "NEXT_PUBLIC_NETWORK": "sepolia",
   "NEXT_PUBLIC_STELA_ADDRESS": "0x031f...",
-  "NEXT_PUBLIC_RPC_URL": "https://starknet-sepolia.public.blastapi.io"
+  "NEXT_PUBLIC_RPC_URL": "https://rpc.starknet-testnet.lava.build"
 }
 ```
 

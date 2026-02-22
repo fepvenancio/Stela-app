@@ -8,7 +8,7 @@ import { CONTRACT_ADDRESS } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
 
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://starknet-sepolia.public.blastapi.io'
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.starknet-testnet.lava.build'
 
 function useInscriptionClient() {
   return useMemo(

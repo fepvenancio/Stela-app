@@ -7,7 +7,7 @@ import { getTokensForNetwork } from '@stela/core'
 import type { TokenInfo } from '@stela/core'
 import { NETWORK } from '@/lib/config'
 
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://starknet-sepolia.public.blastapi.io'
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.starknet-testnet.lava.build'
 
 const networkTokens = getTokensForNetwork(NETWORK)
 
@@ -47,11 +47,21 @@ export function useTokenBalances() {
         if (!tokenAddr) return
 
         try {
-          const res = await provider.callContract({
-            contractAddress: tokenAddr,
-            entrypoint: 'balanceOf',
-            calldata: [address!],
-          })
+          // Try snake_case first (Cairo standard), fall back to camelCase
+          let res: string[]
+          try {
+            res = await provider.callContract({
+              contractAddress: tokenAddr,
+              entrypoint: 'balance_of',
+              calldata: [address!],
+            })
+          } catch {
+            res = await provider.callContract({
+              contractAddress: tokenAddr,
+              entrypoint: 'balanceOf',
+              calldata: [address!],
+            })
+          }
           // ERC20 balanceOf returns u256 = [low, high]
           const low = BigInt(res[0] ?? '0')
           const high = BigInt(res[1] ?? '0')
@@ -60,7 +70,7 @@ export function useTokenBalances() {
             result.set(tokenAddr.toLowerCase(), balance)
           }
         } catch {
-          // Token may not implement balanceOf (e.g. NFTs) — skip silently
+          // Token contract not deployed or doesn't implement balance query — skip
         }
       })
 
