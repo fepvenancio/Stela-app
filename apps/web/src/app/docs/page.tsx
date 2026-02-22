@@ -62,6 +62,44 @@ function InfoCard({ label, children, mono }: { label: string; children: React.Re
   )
 }
 
+function StatusNode({ label, description, color = 'star' }: { label: string; description?: string; color?: string }) {
+  const colorMap: Record<string, string> = {
+    star: 'text-star border-star/30',
+    aurora: 'text-aurora border-aurora/30',
+    nova: 'text-nova border-nova/30',
+    ash: 'text-ash border-edge/50',
+    chalk: 'text-chalk border-edge/50'
+  }
+  
+  return (
+    <div className="flex flex-col items-center gap-2 group min-w-[120px]">
+      <div className={`w-full px-4 py-3 rounded-2xl border bg-surface/20 granite-noise shadow-xl shadow-black/40 group-hover:scale-105 transition-all duration-300 text-center ${colorMap[color] || colorMap.star}`}>
+        <span className="font-display text-[11px] sm:text-xs tracking-[0.2em] uppercase font-bold">{label}</span>
+      </div>
+      {description && <span className="text-[9px] text-ash uppercase tracking-widest font-medium text-center">{description}</span>}
+    </div>
+  )
+}
+
+function FlowArrow({ label, vertical = false, className = '' }: { label?: string; vertical?: boolean; className?: string }) {
+  if (vertical) {
+     return (
+       <div className={`flex flex-col items-center gap-2 ${className}`}>
+          <div className="w-px h-12 bg-gradient-to-b from-edge/20 via-star/40 to-edge/20" />
+          {label && <span className="text-[8px] text-star/50 uppercase tracking-[0.2em] font-bold transform -rotate-90 origin-center whitespace-nowrap">{label}</span>}
+          <div className="w-px h-12 bg-gradient-to-b from-edge/20 via-star/40 to-edge/20" />
+       </div>
+     )
+  }
+  return (
+    <div className={`flex items-center gap-2 px-2 sm:px-4 ${className}`}>
+      <div className="h-px w-4 sm:w-12 bg-gradient-to-r from-edge/10 via-star/30 to-edge/10" />
+      {label && <span className="text-[8px] text-star/50 uppercase tracking-[0.2em] font-bold whitespace-nowrap">{label}</span>}
+      <div className="h-px w-4 sm:w-12 bg-gradient-to-r from-edge/10 via-star/30 to-edge/10" />
+    </div>
+  )
+}
+
 export default function DocsPage() {
   return (
     <div className="animate-fade-in max-w-5xl mx-auto pb-32">
@@ -145,7 +183,7 @@ export default function DocsPage() {
             <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
               <h4 className="font-display text-star text-lg mb-3">Deadline</h4>
               <p className="text-dust text-sm leading-relaxed">
-                The <span className="text-chalk font-medium">Discovery Period</span>. A unix timestamp defining when the inscription stops accepting lenders. If unsigned by this time, it expires and collateral can be reclaimed.
+                The <span className="text-chalk font-medium">Discovery Period</span>. A unix timestamp defining when the inscription stops accepting lenders. If reached without a signature, the inscription expires and collateral can be reclaimed.
               </p>
             </div>
           </div>
@@ -243,22 +281,40 @@ export default function DocsPage() {
         {/* Status Diagram */}
         <section>
           <SectionHeading>Status Flow</SectionHeading>
-          <div className="bg-void/80 border border-edge/30 rounded-[40px] p-8 sm:p-12 font-mono text-xs sm:text-sm overflow-x-auto shadow-inner shadow-black/60 relative">
-             <div className="absolute top-0 right-0 p-6 text-[10px] text-ash uppercase tracking-widest font-bold opacity-20">Protocol State Machine</div>
-            <pre className="text-star/80 leading-loose whitespace-pre">
-{`  ┌──────────┐      Sign      ┌──────────┐      Repay      ┌──────────┐
-  │   OPEN   ├───────────────►│  FILLED  ├────────────────►│  REPAID  │
-  └────┬─────┘                └────┬─────┘                └────┬─────┘
-       │                           │                           │
-       │ Cancel                    │ Expiry                    │ Redeem
-       ▼                           ▼                           ▼
-  ┌──────────┐                ┌──────────┐                ┌──────────┐
-  │CANCELLED │                │LIQUIDATED│◄───────────────┤  ASSETS  │
-  └──────────┘                └──────────┘                └──────────┘
-       ▲                           ▲
-       │                           │
-       └── Deadline passes ────────┘ (EXPIRED)`}
-            </pre>
+          <div className="bg-void/60 border border-edge/20 rounded-[40px] p-8 sm:p-16 overflow-hidden relative shadow-2xl shadow-black/60">
+             <div className="absolute top-0 right-0 p-8 opacity-5">
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-star">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+             </div>
+
+             <div className="flex flex-col items-center gap-8 relative z-10">
+                {/* Primary Path */}
+                <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 w-full">
+                   <StatusNode label="Open" description="Inscription Created" />
+                   <FlowArrow label="Sign" className="hidden lg:flex" />
+                   <div className="lg:hidden h-8 w-px bg-star/20" />
+                   <StatusNode label="Filled" description="Assets Locked" />
+                   <FlowArrow label="Repay" className="hidden lg:flex" />
+                   <div className="lg:hidden h-8 w-px bg-star/20" />
+                   <StatusNode label="Repaid" description="Debt Settled" color="aurora" />
+                   <FlowArrow label="Redeem" className="hidden lg:flex" />
+                   <div className="lg:hidden h-8 w-px bg-star/20" />
+                   <StatusNode label="Assets" description="Funds Claimed" color="chalk" />
+                </div>
+
+                {/* Secondary Paths */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 sm:gap-32 mt-8">
+                   <div className="flex flex-col items-center">
+                      <FlowArrow label="Cancel" vertical />
+                      <StatusNode label="Cancelled" description="Locker Released" color="ash" />
+                   </div>
+                   <div className="flex flex-col items-center">
+                      <FlowArrow label="Expiry" vertical />
+                      <StatusNode label="Liquidated" description="Claim Collateral" color="nova" />
+                   </div>
+                </div>
+             </div>
           </div>
         </section>
 
@@ -385,6 +441,82 @@ export default function DocsPage() {
                 <h4 className="font-display text-chalk text-sm tracking-widest uppercase mb-4">{q}</h4>
                 <p className="text-dust text-sm leading-relaxed">{a}</p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Architecture */}
+        <section>
+          <SectionHeading>Architecture</SectionHeading>
+          <p className="text-dust mb-8 leading-relaxed">
+            Stela is a fully on-chain protocol with off-chain indexing for discovery.
+            All state transitions happen through direct smart contract interactions — the backend
+            never proxies writes.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <InfoCard label="Smart Contracts (Cairo)">
+              <p className="text-dust text-sm">Core protocol logic, inscription state machine, locker deployment, share minting. Written in Cairo for StarkNet.</p>
+            </InfoCard>
+            <InfoCard label="Indexer (Cloudflare Worker)">
+              <p className="text-dust text-sm">Polls StarkNet RPC for contract events and writes to D1 (SQLite). Enables browsing and discovery of inscriptions.</p>
+            </InfoCard>
+            <InfoCard label="Frontend (Next.js)">
+              <p className="text-dust text-sm">Server-rendered UI deployed on Cloudflare. Reads from D1 for listing, connects directly to StarkNet for writes via user wallet.</p>
+            </InfoCard>
+            <InfoCard label="Liquidation Bot (Cloudflare Worker)">
+              <p className="text-dust text-sm">Automated cron job that monitors for expired inscriptions and executes liquidations on-chain.</p>
+            </InfoCard>
+          </div>
+        </section>
+
+        {/* SDK */}
+        <section>
+          <SectionHeading>SDK &amp; Developer Tools</SectionHeading>
+          <p className="text-dust mb-6 leading-relaxed">
+            The <span className="text-chalk">@fepvenancio/stela-sdk</span> TypeScript SDK provides
+            everything needed to interact with the Stela protocol programmatically.
+          </p>
+
+          <div className="bg-abyss/40 border border-edge/20 rounded-3xl p-6 space-y-4">
+            <div className="font-mono text-sm">
+              <span className="text-ash">$</span>{' '}
+              <span className="text-chalk">npm install @fepvenancio/stela-sdk</span>
+            </div>
+            <div className="text-dust text-sm space-y-2">
+              <p><span className="text-chalk font-mono">InscriptionClient</span> — Build transaction calldata for create, sign, repay, cancel, liquidate</p>
+              <p><span className="text-chalk font-mono">ShareClient</span> — Query ERC1155 share balances and build redeem calls</p>
+              <p><span className="text-chalk font-mono">LockerClient</span> — Query locker addresses and locked assets</p>
+              <p><span className="text-chalk font-mono">ApiClient</span> — Fetch indexed inscription data from the API</p>
+              <p><span className="text-chalk font-mono">computeStatus()</span> — Canonical status computation for any inscription</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Links */}
+        <section>
+          <SectionHeading>Source Code &amp; Links</SectionHeading>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {[
+              { label: 'Protocol (Contracts)', href: GITHUB_LINKS.protocol, desc: 'Cairo smart contracts' },
+              { label: 'Application (Frontend)', href: GITHUB_LINKS.app, desc: 'Next.js app, indexer, bot' },
+              { label: 'TypeScript SDK', href: GITHUB_LINKS.sdk, desc: 'npm: @fepvenancio/stela-sdk' },
+            ].map(({ label, href, desc }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group bg-surface/20 border border-edge/20 hover:border-star/30 rounded-2xl p-5 transition-all"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-4 h-4 text-ash group-hover:text-star transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  </svg>
+                  <span className="text-chalk text-sm font-semibold group-hover:text-star transition-colors">{label}</span>
+                </div>
+                <p className="text-ash text-xs">{desc}</p>
+              </a>
             ))}
           </div>
         </section>
