@@ -2,47 +2,35 @@
 
 import { useMemo } from 'react'
 import { useFetchApi, buildApiUrl } from './api'
-import { computeStatus } from '@/lib/status'
-import { addressesEqual } from '@/lib/address'
 import { findTokenByAddress } from '@stela/core'
+import { addressesEqual } from '@/lib/address'
+import { computeStatus } from '@/lib/status'
 import type { InscriptionRow, AssetRow, ApiListResponse } from '@/types/api'
 
-// -----------------------------------------------------------------------
-// API response types for shares / treasury
-// -----------------------------------------------------------------------
-
-interface ShareBalance {
-  inscription_id: string
-  balance: string
-}
-
+// API response types
 interface SharesResponse {
-  data: { address: string; balances: ShareBalance[] }
-}
-
-interface LockedAsset {
-  token_address: string
-  token_symbol: string
-  total_locked: string
-  inscriptions: { inscription_id: string; value: string; status: string }[]
+  data: {
+    address: string
+    balances: { inscription_id: string; balance: string }[]
+  }
 }
 
 interface TreasuryResponse {
-  data: { address: string; locked_assets: LockedAsset[] }
+  data: {
+    address: string
+    locked_assets: {
+      token_address: string
+      token_symbol: string
+      total_locked: string
+      inscriptions: { inscription_id: string; value: string; status: string }[]
+    }[]
+  }
 }
 
-// -----------------------------------------------------------------------
-// Enriched inscription with client-side status
-// -----------------------------------------------------------------------
-
+// Exported types
 export interface EnrichedInscription extends InscriptionRow {
-  /** Client-side recomputed status (handles deadline expiry) */
   computedStatus: string
 }
-
-// -----------------------------------------------------------------------
-// Token amount aggregation
-// -----------------------------------------------------------------------
 
 export interface TokenAmount {
   address: string
@@ -51,20 +39,12 @@ export interface TokenAmount {
   total: bigint
 }
 
-// -----------------------------------------------------------------------
-// Summary metrics
-// -----------------------------------------------------------------------
-
 export interface PortfolioSummary {
   totalLent: TokenAmount[]
   collateralLocked: TokenAmount[]
   redeemableCount: number
   activeCount: number
 }
-
-// -----------------------------------------------------------------------
-// Hook return type
-// -----------------------------------------------------------------------
 
 export interface PortfolioData {
   lending: EnrichedInscription[]
@@ -74,10 +54,6 @@ export interface PortfolioData {
   isLoading: boolean
   error: Error | null
 }
-
-// -----------------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------------
 
 const ACTIVE_STATUSES = new Set(['open', 'partial', 'filled'])
 
@@ -98,41 +74,30 @@ function aggregateDebtAssets(inscriptions: EnrichedInscription[]): TokenAmount[]
   for (const ins of inscriptions) {
     const debtAssets = (ins.assets ?? []).filter((a: AssetRow) => a.asset_role === 'debt')
     for (const asset of debtAssets) {
-      const key = asset.asset_address.toLowerCase()
-      if (!map.has(key)) {
+      const existing = map.get(asset.asset_address)
+      const value = BigInt(asset.value ?? '0')
+      if (existing) {
+        existing.total += value
+      } else {
         const token = findTokenByAddress(asset.asset_address)
-        map.set(key, {
+        map.set(asset.asset_address, {
           address: asset.asset_address,
-          symbol: token?.symbol ?? 'UNKNOWN',
+          symbol: token?.symbol ?? asset.asset_address.slice(0, 8),
           decimals: token?.decimals ?? 18,
-          total: 0n,
+          total: value,
         })
       }
-      const entry = map.get(key)!
-      entry.total += BigInt(asset.value ?? '0')
     }
   }
-  return Array.from(map.values()).filter((t) => t.total > 0n)
+  return Array.from(map.values())
 }
 
-// -----------------------------------------------------------------------
-// Main hook
-// -----------------------------------------------------------------------
-
 export function usePortfolio(address: string | undefined): PortfolioData {
-  // Fetch all three APIs in parallel
-  const inscriptionsUrl = useMemo(
-    () => (address ? buildApiUrl('/api/inscriptions', { address, limit: 100 }) : null),
-    [address],
-  )
-  const sharesUrl = useMemo(
-    () => (address ? `/api/shares/${address}` : null),
-    [address],
-  )
-  const treasuryUrl = useMemo(
-    () => (address ? `/api/treasury/${address}` : null),
-    [address],
-  )
+  const inscriptionsUrl = address
+    ? buildApiUrl('/api/inscriptions', { address, limit: 100 })
+    : null
+  const sharesUrl = address ? `/api/shares/${address}` : null
+  const treasuryUrl = address ? `/api/treasury/${address}` : null
 
   const {
     data: inscriptionsRaw,
@@ -183,9 +148,16 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       if (address && ins.borrower && addressesEqual(ins.borrower, address)) {
         borrowing.push(ins)
       }
-      // Creator of open inscriptions is the borrower
-      if (address && !ins.borrower && addressesEqual(ins.creator, address)) {
-        borrowing.push(ins)
+      // Creator is the borrower when status is active (open/partial/filled)
+      if (
+        address &&
+        addressesEqual(ins.creator, address) &&
+        ACTIVE_STATUSES.has(ins.computedStatus)
+      ) {
+        // Avoid duplicates if creator === borrower
+        if (!ins.borrower || !addressesEqual(ins.borrower, address)) {
+          borrowing.push(ins)
+        }
       }
     }
 
@@ -193,12 +165,12 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     const redeemable = enriched
       .filter((ins) => {
         const balance = shareMap.get(ins.id)
-        if (!balance || balance === '0') return false
+        if (!balance || BigInt(balance) <= 0n) return false
         return ins.computedStatus === 'repaid' || ins.computedStatus === 'liquidated'
       })
       .map((ins) => ({
         ...ins,
-        shareBalance: shareMap.get(ins.id) ?? '0',
+        shareBalance: shareMap.get(ins.id)!,
       }))
 
     // Summary metrics
@@ -208,11 +180,11 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       const token = findTokenByAddress(la.token_address)
       return {
         address: la.token_address,
-        symbol: la.token_symbol,
+        symbol: token?.symbol ?? la.token_symbol,
         decimals: token?.decimals ?? 18,
         total: BigInt(la.total_locked),
       }
-    }).filter((t) => t.total > 0n)
+    })
 
     const redeemableCount = redeemable.length
     const activeCount = enriched.filter((ins) => ACTIVE_STATUSES.has(ins.computedStatus)).length
