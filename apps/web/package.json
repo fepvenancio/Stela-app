@@ -17,7 +17,6 @@
     "@starknet-react/chains": "^3.1.0",
     "@starknet-react/core": "^3.7.0",
     "@stela/core": "workspace:*",
-    "@types/ws": "^8.18.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "get-starknet-core": "^4.0.0",
@@ -31,7 +30,6 @@
     "starknet": "^6.23.1",
     "starknetkit": "^3.4.3",
     "tailwind-merge": "^3.5.0",
-    "ws": "^8.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

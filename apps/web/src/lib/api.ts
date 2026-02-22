@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { createD1Queries } from '@stela/core'
 import type { D1Database } from '@stela/core'
+import { isRateLimited } from '@/lib/rate-limit'
 
 /** Allowed origins for CORS */
 const ALLOWED_ORIGINS = new Set([
@@ -40,4 +41,27 @@ export function jsonResponse(data: unknown, request?: Request, status = 200): Ne
 /** Return a JSON error response with CORS headers */
 export function errorResponse(error: string, status: number, request?: Request): NextResponse {
   return NextResponse.json({ error }, { status, headers: corsHeaders(request) })
+}
+
+/** Check rate limit for a request; returns a 429 response if limited, or null if allowed */
+export function rateLimit(request: NextRequest): NextResponse | null {
+  const ip =
+    request.headers.get('cf-connecting-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    'unknown'
+
+  const result = isRateLimited(ip)
+  if (!result.limited) return null
+
+  const retryAfter = Math.ceil(result.retryAfterMs / 1000)
+  return NextResponse.json(
+    { error: 'too many requests' },
+    {
+      status: 429,
+      headers: {
+        ...corsHeaders(request),
+        'Retry-After': String(retryAfter),
+      },
+    },
+  )
 }

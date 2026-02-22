@@ -2,13 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-/** Centralized query keys to prevent typos and enable easy search */
-export enum QueryKey {
-  Inscriptions = 'inscriptions',
-  InscriptionDetail = 'inscriptionDetail',
-  InscriptionAssets = 'inscriptionAssets',
-}
-
 interface FetchState<T> {
   data: T | undefined
   isLoading: boolean

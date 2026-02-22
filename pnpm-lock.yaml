@@ -32,9 +32,6 @@ importers:
       '@stela/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -74,9 +71,6 @@ importers:
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
-      ws:
-        specifier: ^8.19.0
-        version: 8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -10622,6 +10616,7 @@ snapshots:
   '@types/ws@8.18.1':
     dependencies:
       '@types/node': 22.19.11
+    optional: true
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -14378,6 +14373,7 @@ snapshots:
     optionalDependencies:
       bufferutil: 4.1.0
       utf-8-validate: 5.0.10
+    optional: true
 
   wsl-utils@0.1.0:
     dependencies:

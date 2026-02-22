@@ -1,10 +1,14 @@
-import { getD1, jsonResponse, errorResponse, handleOptions } from '@/lib/api'
+import { NextRequest } from 'next/server'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
 
 export function OPTIONS() {
   return handleOptions()
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = rateLimit(request)
+  if (limited) return limited
+
   try {
     const db = getD1()
     // Quick connectivity check — no internal state exposed

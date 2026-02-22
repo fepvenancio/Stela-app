@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getD1, jsonResponse, errorResponse, handleOptions } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
 import { addressSchema } from '@/lib/schemas'
 
 export function OPTIONS(request: NextRequest) {
@@ -10,6 +10,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ address: string }> }
 ) {
+  const limited = rateLimit(request)
+  if (limited) return limited
+
   const raw = await params
   const parsed = addressSchema.safeParse(raw)
 

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getD1, jsonResponse, errorResponse, handleOptions } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
 import { inscriptionListSchema } from '@/lib/schemas'
 
 export function OPTIONS(request: NextRequest) {
@@ -7,6 +7,9 @@ export function OPTIONS(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const limited = rateLimit(request)
+  if (limited) return limited
+
   const raw = Object.fromEntries(request.nextUrl.searchParams.entries())
   const parsed = inscriptionListSchema.safeParse(raw)
 
