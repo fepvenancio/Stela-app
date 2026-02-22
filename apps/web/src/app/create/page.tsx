@@ -8,6 +8,7 @@ import { CONTRACT_ADDRESS } from '@/lib/config'
 import { parseAmount } from '@/lib/amount'
 import { AssetInput } from '@/components/AssetInput'
 import type { AssetInputValue } from '@/components/AssetInput'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -51,12 +52,14 @@ function AssetSection({
   setAssets,
   required,
   showErrors,
+  balances,
 }: {
   title: string
   assets: AssetInputValue[]
   setAssets: (val: AssetInputValue[]) => void
   required?: boolean
   showErrors?: boolean
+  balances?: Map<string, bigint>
 }) {
   const hasValid = assets.some((a) => a.asset)
   const missing = required && showErrors && !hasValid
@@ -100,6 +103,7 @@ function AssetSection({
               setAssets(next)
             }}
             onRemove={() => setAssets(assets.filter((_, j) => j !== i))}
+            balances={balances}
           />
         ))}
         {assets.length === 0 && (
@@ -125,6 +129,7 @@ export default function CreatePage() {
   const [duration, setDuration] = useState('')
   const [deadline, setDeadline] = useState('')
   const [showErrors, setShowErrors] = useState(false)
+  const { balances } = useTokenBalances()
 
   const hasDebt = debtAssets.some((a) => a.asset)
   const hasCollateral = collateralAssets.some((a) => a.asset)
@@ -200,9 +205,9 @@ export default function CreatePage() {
         <Separator />
 
         {/* Asset sections */}
-        <AssetSection title="Debt Assets" assets={debtAssets} setAssets={setDebtAssets} required showErrors={showErrors} />
-        <AssetSection title="Interest Assets" assets={interestAssets} setAssets={setInterestAssets} />
-        <AssetSection title="Collateral Assets" assets={collateralAssets} setAssets={setCollateralAssets} required showErrors={showErrors} />
+        <AssetSection title="Debt Assets" assets={debtAssets} setAssets={setDebtAssets} required showErrors={showErrors} balances={balances} />
+        <AssetSection title="Interest Assets" assets={interestAssets} setAssets={setInterestAssets} balances={balances} />
+        <AssetSection title="Collateral Assets" assets={collateralAssets} setAssets={setCollateralAssets} required showErrors={showErrors} balances={balances} />
 
         <Separator />
 

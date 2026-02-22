@@ -25,6 +25,8 @@ interface AssetInputProps {
   value: AssetInputValue
   onChange: (val: AssetInputValue) => void
   onRemove: () => void
+  /** Token balances from connected wallet (tokenAddress lowercase → bigint) */
+  balances?: Map<string, bigint>
 }
 
 const ASSET_TYPES: AssetType[] = ['ERC20', 'ERC721', 'ERC1155', 'ERC4626']
@@ -41,7 +43,7 @@ function getTokenSymbol(address: string): string {
   return getSelectedToken(address)?.symbol ?? ''
 }
 
-export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps) {
+export function AssetInput({ index, value, onChange, onRemove, balances }: AssetInputProps) {
   const [isCustom, setIsCustom] = useState(() => {
     if (!value.asset) return false
     return !getSelectedToken(value.asset)
@@ -216,6 +218,7 @@ export function AssetInput({ index, value, onChange, onRemove }: AssetInputProps
         selectedAddress={value.asset}
         showCustomOption={true}
         onCustomSelect={handleCustomSelect}
+        balances={balances}
       />
     </div>
   )

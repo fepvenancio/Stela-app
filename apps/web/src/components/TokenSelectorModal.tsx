@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import type { TokenInfo } from '@stela/core'
 import { getTokensForNetwork } from '@stela/core'
 import { NETWORK } from '@/lib/config'
-import { truncateAddress } from '@/lib/format'
+import { truncateAddress, formatTokenValue } from '@/lib/format'
 import { TokenAvatar } from '@/components/TokenAvatar'
 import {
   Dialog,
@@ -39,9 +39,11 @@ function CustomTokenAvatar({ size = 36 }: { size?: number }) {
 
 function QuickChip({
   token,
+  balance,
   onClick,
 }: {
   token: TokenInfo
+  balance?: bigint
   onClick: () => void
 }) {
   return (
@@ -52,6 +54,11 @@ function QuickChip({
     >
       <TokenAvatar token={token} size={20} />
       <span className="font-medium">{token.symbol}</span>
+      {balance !== undefined && balance > 0n && (
+        <span className="text-[10px] text-star font-mono">
+          {formatTokenValue(balance.toString(), token.decimals)}
+        </span>
+      )}
     </button>
   )
 }
@@ -62,11 +69,13 @@ function TokenRow({
   token,
   address,
   isSelected,
+  balance,
   onClick,
 }: {
   token: TokenInfo
   address: string
   isSelected: boolean
+  balance?: bigint
   onClick: () => void
 }) {
   return (
@@ -88,8 +97,25 @@ function TokenRow({
         <div className="text-xs text-dust">{token.symbol}</div>
       </div>
 
-      <div className="text-xs text-ash font-mono shrink-0">
-        {truncateAddress(address)}
+      <div className="text-right shrink-0">
+        {balance !== undefined && balance > 0n ? (
+          <>
+            <div className="text-sm text-chalk font-mono">
+              {formatTokenValue(balance.toString(), token.decimals)}
+            </div>
+            <div className="text-[10px] text-ash font-mono">
+              {truncateAddress(address)}
+            </div>
+          </>
+        ) : (
+          <div className="text-xs text-ash font-mono">
+            {balance !== undefined && balance === 0n ? (
+              <span className="text-ash/50">0</span>
+            ) : (
+              truncateAddress(address)
+            )}
+          </div>
+        )}
       </div>
     </button>
   )
@@ -106,6 +132,8 @@ export interface TokenSelectorModalProps {
   /** Also show a "Custom token" option */
   showCustomOption?: boolean
   onCustomSelect?: () => void
+  /** Token balances from the connected wallet (tokenAddress lowercase → bigint) */
+  balances?: Map<string, bigint>
 }
 
 export function TokenSelectorModal({
@@ -115,6 +143,7 @@ export function TokenSelectorModal({
   selectedAddress = '',
   showCustomOption = true,
   onCustomSelect,
+  balances,
 }: TokenSelectorModalProps) {
   const [search, setSearch] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -129,17 +158,31 @@ export function TokenSelectorModal({
     }
   }, [open])
 
-  // Filter tokens by search
+  // Filter tokens by search, sort by balance (highest first)
   const filteredTokens = useMemo(() => {
-    if (!search.trim()) return networkTokens
-    const q = search.toLowerCase().trim()
-    return networkTokens.filter(
-      (t) =>
-        t.symbol.toLowerCase().includes(q) ||
-        t.name.toLowerCase().includes(q) ||
-        (t.addresses[NETWORK] ?? '').toLowerCase().includes(q),
-    )
-  }, [search])
+    let tokens = networkTokens
+    if (search.trim()) {
+      const q = search.toLowerCase().trim()
+      tokens = networkTokens.filter(
+        (t) =>
+          t.symbol.toLowerCase().includes(q) ||
+          t.name.toLowerCase().includes(q) ||
+          (t.addresses[NETWORK] ?? '').toLowerCase().includes(q),
+      )
+    }
+    if (balances && balances.size > 0) {
+      return [...tokens].sort((a, b) => {
+        const balA = balances.get((a.addresses[NETWORK] ?? '').toLowerCase()) ?? 0n
+        const balB = balances.get((b.addresses[NETWORK] ?? '').toLowerCase()) ?? 0n
+        if (balA > 0n && balB === 0n) return -1
+        if (balA === 0n && balB > 0n) return 1
+        if (balA > balB) return -1
+        if (balA < balB) return 1
+        return 0
+      })
+    }
+    return tokens
+  }, [search, balances])
 
   // Popular tokens for quick chips
   const popularTokens = useMemo(
@@ -206,6 +249,7 @@ export function TokenSelectorModal({
               <QuickChip
                 key={t.symbol}
                 token={t}
+                balance={balances?.get((t.addresses[NETWORK] ?? '').toLowerCase())}
                 onClick={() => handleSelect(t)}
               />
             ))}
@@ -231,6 +275,7 @@ export function TokenSelectorModal({
                 token={t}
                 address={addr}
                 isSelected={addr.toLowerCase() === selectedAddress.toLowerCase()}
+                balance={balances?.get(addr.toLowerCase())}
                 onClick={() => handleSelect(t)}
               />
             )

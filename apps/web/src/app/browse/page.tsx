@@ -6,6 +6,10 @@ import { InscriptionCard } from '@/components/InscriptionCard'
 import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { computeStatus } from '@/lib/status'
+import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
+import { BatchLendBar } from '@/components/BatchLendBar'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 const FILTERS = [
   { key: 'open', label: 'Open' },
@@ -28,8 +32,11 @@ function enrichStatus(row: { status: string; signed_at: string | null; duration:
   })
 }
 
-export default function BrowsePage() {
+const MAX_SELECTIONS = 10
+
+function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
+  const { selectionMode, setSelectionMode, toggle, isSelected, count } = useBatchSelection()
 
   // 'expired' is never stored in D1 — fetch all and filter client-side
   const isClientFilter = statusFilter === 'expired'
@@ -62,17 +69,26 @@ export default function BrowsePage() {
       </div>
 
       {/* Filters */}
-      <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2 mb-8">
-        {FILTERS.map(({ key, label }) => (
-          <ToggleGroupItem
-            key={key}
-            value={key}
-            className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
-          >
-            {label}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      <div className="flex items-center gap-3 mb-8 flex-wrap">
+        <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2">
+          {FILTERS.map(({ key, label }) => (
+            <ToggleGroupItem
+              key={key}
+              value={key}
+              className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
+            >
+              {label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+        <Button
+          variant={selectionMode ? 'gold' : 'outline'}
+          size="sm"
+          onClick={() => setSelectionMode(!selectionMode)}
+        >
+          {selectionMode ? 'Cancel' : 'Select'}
+        </Button>
+      </div>
 
       {/* Loading */}
       {isLoading && (
@@ -93,18 +109,31 @@ export default function BrowsePage() {
       {/* Grid */}
       {!isLoading && !error && data.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.map((a, i) => (
-            <div key={a.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-              <InscriptionCard
-                id={a.id}
-                status={a.status}
-                creator={a.creator}
-                multiLender={a.multi_lender}
-                duration={a.duration}
-                assets={a.assets ?? []}
-              />
-            </div>
-          ))}
+          {data.map((a, i) => {
+            const enrichedStatus = a.status
+            const canSelect = selectionMode && enrichedStatus === 'open' && !a.multi_lender
+            return (
+              <div key={a.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
+                <InscriptionCard
+                  id={a.id}
+                  status={enrichedStatus}
+                  creator={a.creator}
+                  multiLender={a.multi_lender}
+                  duration={a.duration}
+                  assets={a.assets ?? []}
+                  selectable={canSelect}
+                  selected={canSelect && isSelected(a.id)}
+                  onSelect={canSelect ? () => {
+                    if (!isSelected(a.id) && count >= MAX_SELECTIONS) {
+                      toast.warning(`Maximum ${MAX_SELECTIONS} inscriptions per batch`)
+                      return
+                    }
+                    toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
+                  } : undefined}
+                />
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -120,6 +149,16 @@ export default function BrowsePage() {
           <p className="text-ash text-xs mt-1">Try a different filter or create a new inscription</p>
         </div>
       )}
+
+      <BatchLendBar />
     </div>
+  )
+}
+
+export default function BrowsePage() {
+  return (
+    <BatchSelectionProvider>
+      <BrowseContent />
+    </BatchSelectionProvider>
   )
 }
