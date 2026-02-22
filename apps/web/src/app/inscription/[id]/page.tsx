@@ -14,16 +14,13 @@ import { findTokenByAddress, STATUS_LABELS } from '@stela/core'
 import type { InscriptionStatus } from '@stela/core'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CopyButton } from '@/components/CopyButton'
 
 interface InscriptionPageProps {
   params: Promise<{ id: string }>
 }
-
-
 
 const VALID_HEX_ID = /^0x[0-9a-fA-F]{1,64}$/
 
@@ -52,121 +49,126 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
     return BigInt(sharesRaw as string | bigint)
   }, [sharesRaw])
 
-  const statusLabel = STATUS_LABELS[status]
-
-  // Build info fields from live data
   const a = inscription as Record<string, unknown> | undefined
-  const infoFields = [
-    { label: 'Status', value: statusLabel },
-    { label: 'Duration', value: a?.duration ? formatDuration(BigInt(a.duration as string | bigint)) : '--' },
-    { label: 'Borrower', value: a?.borrower ? formatAddress(a.borrower as string) : '--', mono: true },
-    { label: 'Lender', value: a?.lender && a.lender !== '0x0' ? formatAddress(a.lender as string) : '--', mono: true },
-    { label: 'Debt Issued', value: a?.issued_debt_percentage ? `${Number(BigInt(a.issued_debt_percentage as string | bigint)) / 100}%` : '--' },
-    { label: 'Signed At', value: a?.signed_at ? formatTimestamp(BigInt(a.signed_at as string | bigint)) : '--' },
-  ]
+
+  // ROI Math
+  const roiInfo = useMemo(() => {
+    if (!assets) return null
+    const debt = assets.filter(a => a.asset_role === 'debt')
+    const interest = assets.filter(a => a.asset_role === 'interest')
+    
+    // Only simple math for single-asset ERC20 for now to keep it clean
+    if (debt.length === 1 && interest.length === 1 && debt[0].asset_type === 'ERC20' && interest[0].asset_type === 'ERC20') {
+        const debtToken = findTokenByAddress(debt[0].asset_address)
+        const intToken = findTokenByAddress(interest[0].asset_address)
+        
+        if (debtToken && intToken && debtToken.symbol === intToken.symbol) {
+            const dVal = BigInt(debt[0].value || '0')
+            const iVal = BigInt(interest[0].value || '0')
+            if (dVal > 0n) {
+                const yieldPct = (Number(iVal) * 100) / Number(dVal)
+                return { yieldPct: yieldPct.toFixed(2), symbol: debtToken.symbol }
+            }
+        }
+    }
+    return null
+  }, [assets])
+
+  if (!isValidId) return <div className="py-24 text-center text-nova">Invalid ID</div>
+  if (error) return <div className="py-24 text-center text-nova">Failed to load inscription</div>
 
   return (
-    <div className="animate-fade-up max-w-3xl">
-      {/* Back link */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm text-dust hover:text-chalk transition-colors mb-8 group"
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="transition-transform group-hover:-translate-x-0.5">
-          <path d="M10 4l-4 4 4 4" />
-        </svg>
-        Back to inscriptions
-      </Link>
-
-      {/* Invalid ID */}
-      {!isValidId && (
-        <div className="text-center py-24">
-          <p className="text-nova text-sm">Invalid inscription ID</p>
+    <div className="animate-fade-in max-w-6xl mx-auto">
+      {/* Breadcrumb */}
+      <div className="flex items-center justify-between mb-8">
+        <Link href="/browse" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back to Library
+        </Link>
+        <div className="flex items-center gap-2 bg-surface/50 px-3 py-1.5 rounded-full border border-edge/30">
+          <span className="text-[10px] font-mono text-ash uppercase tracking-widest">ID: {id.slice(0,10)}...</span>
+          <CopyButton value={id} />
         </div>
-      )}
+      </div>
 
-      {/* Loading */}
-      {isValidId && isLoading && (
-        <div className="space-y-6 py-4">
-          <div className="space-y-3">
-            <Skeleton className="h-9 w-64 bg-surface" />
-            <Skeleton className="h-5 w-full max-w-md bg-surface" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 rounded-xl bg-surface" />
-            ))}
-          </div>
-          <Skeleton className="h-32 rounded-xl bg-surface" />
-          <Skeleton className="h-24 rounded-xl bg-surface" />
-        </div>
-      )}
+      <div className="grid lg:grid-cols-3 gap-8 items-start">
+        {/* Main Column */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Hero Data */}
+          <section className="bg-surface/20 border border-edge/30 rounded-[32px] p-8 relative overflow-hidden granite-noise">
+             <div className="absolute top-0 right-0 p-8">
+                <Badge variant={status} className="rounded-full px-4 py-1 uppercase tracking-widest text-[10px] font-bold">
+                  {STATUS_LABELS[status]}
+                </Badge>
+             </div>
 
-      {/* Error */}
-      {isValidId && error && (
-        <div className="text-center py-24">
-          <p className="text-nova text-sm">Failed to load inscription</p>
-        </div>
-      )}
-
-      {/* Content */}
-      {isValidId && !isLoading && inscription && (
-        <>
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="font-display text-2xl sm:text-3xl tracking-wide text-chalk">
-                Inscription
-              </h1>
-              <Badge variant={status as "open" | "partial" | "filled" | "repaid" | "liquidated" | "expired" | "cancelled"}>
-                {statusLabel}
-              </Badge>
-            </div>
-            <p className="font-mono text-xs sm:text-sm text-ash break-all leading-relaxed inline-flex items-center gap-2">
-              {id}
-              <CopyButton value={id} label="Inscription ID" />
-            </p>
-          </div>
-
-          {/* Info grid */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
-            {infoFields.map(({ label, value, mono }) => (
-              <div key={label} className="p-4 rounded-xl bg-surface/40 border border-edge">
-                <div className="text-[11px] text-ash uppercase tracking-wider mb-1.5">{label}</div>
-                <div className={`text-sm text-chalk ${mono ? 'font-mono' : 'font-medium'}`}>
-                  {value}
+             <div className="grid sm:grid-cols-2 gap-12">
+                <div className="space-y-1">
+                   <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
+                   {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
+                     <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-display text-star">
+                          {roiInfo ? `+${roiInfo.yieldPct}%` : 'Variable'}
+                        </span>
+                        {roiInfo && <span className="text-dust text-sm">in {roiInfo.symbol}</span>}
+                     </div>
+                   )}
+                   <p className="text-xs text-ash leading-relaxed max-w-[200px] pt-2">
+                     Calculated based on the debt vs interest inscription.
+                   </p>
                 </div>
-              </div>
-            ))}
-          </div>
 
-          <Separator className="mb-6" />
-
-          {/* Assets */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-sm">Assets</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {assetsLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-48 bg-surface" />
-                  <Skeleton className="h-8 w-40 bg-surface" />
+                <div className="space-y-1">
+                   <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Time to Unlock</span>
+                   {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
+                     <div className="flex flex-col">
+                        <span className="text-4xl font-display text-chalk">
+                          {a?.duration ? formatDuration(BigInt(a.duration as string)) : '--'}
+                        </span>
+                        <span className="text-[10px] text-ash uppercase tracking-widest mt-1">
+                          From moment of signing
+                        </span>
+                     </div>
+                   )}
                 </div>
-              ) : assets.length > 0 ? (
-                <>
-                  {(['debt', 'interest', 'collateral'] as const).map((role) => {
-                    const roleAssets = assets.filter((r) => r.asset_role === role)
-                    if (roleAssets.length === 0) return null
-                    return (
-                      <div key={role}>
-                        <div className="text-[11px] text-ash uppercase tracking-wider mb-2">{role}</div>
-                        <div className="flex flex-wrap gap-2">
-                          {roleAssets.map((ra) => {
+             </div>
+          </section>
+
+          {/* Specifications Grid */}
+          <section className="grid sm:grid-cols-3 gap-4">
+             {[
+               { label: 'Borrower', value: a?.borrower ? formatAddress(a.borrower as string) : '--', mono: true },
+               { label: 'Lender', value: a?.lender && a.lender !== '0x0' ? formatAddress(a.lender as string) : (a?.multi_lender ? 'Multi-Lender' : 'Waiting...'), mono: true },
+               { label: 'Issued Debt', value: a?.issued_debt_percentage ? `${Number(BigInt(a.issued_debt_percentage as string)) / 100}%` : '0%', mono: false },
+             ].map((field, i) => (
+               <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-5">
+                  <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">{field.label}</span>
+                  <span className={`text-sm text-chalk ${field.mono ? 'font-mono' : 'font-display'}`}>{field.value}</span>
+               </div>
+             ))}
+          </section>
+
+          {/* Assets Table-style view */}
+          <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
+             <div className="px-6 py-4 border-b border-edge/20 bg-surface/30">
+                <h3 className="text-xs uppercase tracking-widest text-dust font-bold">Inscription Assets</h3>
+             </div>
+             <div className="p-6 space-y-8">
+                {(['debt', 'interest', 'collateral'] as const).map((role) => {
+                  const roleAssets = assets?.filter((r) => r.asset_role === role) ?? []
+                  return (
+                    <div key={role} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 shrink-0 w-32">
+                         <div className={`w-2 h-2 rounded-full ${role === 'debt' ? 'bg-star' : role === 'interest' ? 'bg-aurora' : 'bg-nebula'}`} />
+                         <span className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold">{role}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 sm:justify-end flex-1">
+                        {assetsLoading ? <Skeleton className="h-8 w-24 bg-edge/20" /> : roleAssets.length > 0 ? (
+                          roleAssets.map((ra) => {
                             const token = findTokenByAddress(ra.asset_address)
-                            const formattedValue = ra.asset_type === 'ERC721'
-                              ? undefined
-                              : formatTokenValue(ra.value, token?.decimals ?? 18)
+                            const formattedValue = ra.asset_type === 'ERC721' ? undefined : formatTokenValue(ra.value, token?.decimals ?? 18)
                             return (
                               <AssetBadge
                                 key={`${ra.asset_role}-${ra.asset_index}`}
@@ -176,53 +178,66 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                                 tokenId={ra.token_id ?? undefined}
                               />
                             )
-                          })}
-                        </div>
+                          })
+                        ) : <span className="text-xs text-ash italic">None</span>}
                       </div>
-                    )
-                  })}
-                </>
-              ) : (
-                <p className="text-sm text-ash leading-relaxed">
-                  {Number(a?.debt_asset_count ?? 0)} debt, {Number(a?.interest_asset_count ?? 0)} interest, {Number(a?.collateral_asset_count ?? 0)} collateral assets
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InscriptionActions
-                inscriptionId={id}
-                status={status}
-                isOwner={isOwner}
-                shares={shares}
-                multiLender={Boolean(a?.multi_lender)}
-                debtAssets={assets
-                  .filter((r) => r.asset_role === 'debt')
-                  .map((r) => ({ address: r.asset_address, value: r.value ?? '0' }))}
-                debtDecimals={(() => {
-                  const da = assets.filter((r) => r.asset_role === 'debt')
-                  const token = da[0] ? findTokenByAddress(da[0].asset_address) : undefined
-                  return token?.decimals ?? 18
-                })()}
-                wasSigned={Number(a?.signed_at ?? 0) > 0}
-              />
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {/* Not found */}
-      {isValidId && !isLoading && !error && !inscription && (
-        <div className="text-center py-24">
-          <p className="text-dust text-sm">Inscription not found on-chain</p>
+                    </div>
+                  )
+                })}
+             </div>
+          </section>
         </div>
-      )}
+
+        {/* Sidebar Actions */}
+        <aside className="space-y-6">
+          <Card className="border-star/20 bg-star/[0.02] rounded-[32px] overflow-hidden">
+             <div className="p-8 space-y-6">
+                <div className="space-y-2">
+                   <h3 className="font-display text-lg text-star uppercase tracking-widest">Vault Actions</h3>
+                   <p className="text-xs text-dust leading-relaxed">
+                     Interact with this inscription. Lenders provide liquidity, Borrowers repay to reclaim collateral.
+                   </p>
+                </div>
+                
+                <div className="pt-4 border-t border-star/10">
+                   {isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
+                     <InscriptionActions
+                       inscriptionId={id}
+                       status={status}
+                       isOwner={isOwner}
+                       shares={shares}
+                       multiLender={Boolean(a?.multi_lender)}
+                       debtAssets={assets
+                         ?.filter((r) => r.asset_role === 'debt')
+                         .map((r) => ({ address: r.asset_address, value: r.value ?? '0' })) ?? []}
+                       debtDecimals={(() => {
+                         const da = assets?.filter((r) => r.asset_role === 'debt')
+                         const token = da?.[0] ? findTokenByAddress(da[0].asset_address) : undefined
+                         return token?.decimals ?? 18
+                       })()}
+                       wasSigned={Number(a?.signed_at ?? 0) > 0}
+                     />
+                   )}
+                </div>
+             </div>
+          </Card>
+
+          {/* Detailed Timestamps */}
+          <section className="bg-surface/20 border border-edge/20 rounded-3xl p-6 space-y-4">
+             <h4 className="text-[10px] uppercase tracking-widest text-ash font-bold">Timeline</h4>
+             <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                   <span className="text-[10px] text-dust uppercase">Signed At</span>
+                   <span className="text-xs text-chalk font-mono">{a?.signed_at && a.signed_at !== '0' ? formatTimestamp(BigInt(a.signed_at as string)) : 'Unsigned'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                   <span className="text-[10px] text-dust uppercase">Deadline</span>
+                   <span className="text-xs text-chalk font-mono">{a?.deadline ? formatTimestamp(BigInt(a.deadline as string)) : '--'}</span>
+                </div>
+             </div>
+          </section>
+        </aside>
+      </div>
     </div>
   )
 }
