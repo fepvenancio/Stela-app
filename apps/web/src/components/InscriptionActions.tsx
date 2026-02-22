@@ -26,11 +26,12 @@ interface InscriptionActionsProps {
   multiLender: boolean
   debtAssets: DebtAssetInfo[]
   debtDecimals?: number
+  wasSigned: boolean
 }
 
 export function InscriptionActions({
   inscriptionId, status, isOwner, shares,
-  multiLender, debtAssets, debtDecimals = 18,
+  multiLender, debtAssets, debtDecimals = 18, wasSigned,
 }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [lendAmount, setLendAmount] = useState('')
@@ -158,6 +159,16 @@ export function InscriptionActions({
   }
 
   if (status === 'expired') {
+    // Expired but never signed — no assets locked, nothing to liquidate
+    if (!wasSigned) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-dust">This inscription expired without any lender signing. No assets are locked.</p>
+        </div>
+      )
+    }
+
+    // Expired after being signed — assets are locked, can be liquidated
     return (
       <div className="space-y-3">
         <p className="text-sm text-dust">This inscription has expired without repayment. Liquidate to claim collateral.</p>

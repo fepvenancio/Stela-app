@@ -236,6 +236,24 @@ export function createD1Queries(db: D1Database) {
     },
 
     // -----------------------------------------------------------------------
+    // Expire open inscriptions past their deadline (no lender signed)
+    // -----------------------------------------------------------------------
+
+    async expireOpenInscriptions(nowSeconds: number): Promise<number> {
+      const result = await db
+        .prepare(
+          `UPDATE inscriptions
+           SET status = 'expired', updated_at_ts = ?
+           WHERE status = 'open'
+             AND deadline > 0
+             AND deadline < ?`
+        )
+        .bind(nowSeconds, nowSeconds)
+        .run()
+      return (result.meta?.changes as number) ?? 0
+    },
+
+    // -----------------------------------------------------------------------
     // Bot: find liquidatable inscriptions
     // -----------------------------------------------------------------------
 

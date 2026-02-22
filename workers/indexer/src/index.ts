@@ -46,6 +46,13 @@ async function pollEvents(env: Env): Promise<void> {
   const queries = createD1Queries(env.DB)
   const provider = new RpcProvider({ nodeUrl: env.RPC_URL })
 
+  // Mark open inscriptions past their deadline as expired (no assets locked)
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const expired = await queries.expireOpenInscriptions(nowSeconds)
+  if (expired > 0) {
+    console.log(`Expired ${expired} open inscription(s) past deadline`)
+  }
+
   const lastBlock = await queries.getLastBlock()
   const fromBlock = lastBlock + 1
 

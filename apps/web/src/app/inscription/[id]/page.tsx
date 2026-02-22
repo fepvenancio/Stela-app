@@ -210,6 +210,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                   const token = da[0] ? findTokenByAddress(da[0].asset_address) : undefined
                   return token?.decimals ?? 18
                 })()}
+                wasSigned={Number(a?.signed_at ?? 0) > 0}
               />
             </CardContent>
           </Card>
