@@ -61,13 +61,22 @@ function AssetSection({
   const hasValid = assets.some((a) => a.asset)
   const missing = required && showErrors && !hasValid
 
+  const descriptions: Record<string, string> = {
+    'Debt Assets': 'The principal assets the borrower wishes to receive.',
+    'Interest Assets': 'The reward assets paid to the lender upon repayment.',
+    'Collateral Assets': 'The guarantee assets locked to secure the loan.',
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-chalk">
-          {title}
-          {required && <span className="text-star ml-1">*</span>}
-        </h3>
+        <div className="space-y-0.5">
+          <h3 className="text-sm font-display uppercase tracking-widest text-chalk">
+            {title}
+            {required && <span className="text-star ml-1">*</span>}
+          </h3>
+          <p className="text-[10px] text-ash uppercase tracking-wider">{descriptions[title]}</p>
+        </div>
         <button
           type="button"
           onClick={() => setAssets([...assets, emptyAsset()])}
@@ -198,11 +207,14 @@ export default function CreatePage() {
         <Separator />
 
         {/* Duration & deadline */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="duration" className="text-dust">
-              Duration (seconds) <span className="text-star">*</span>
-            </Label>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="duration" className="text-[10px] text-ash uppercase tracking-widest font-bold">
+                Duration (seconds) <span className="text-star">*</span>
+              </Label>
+              <p className="text-[10px] text-ash/60 uppercase tracking-tight">The repayment window once signed.</p>
+            </div>
             <Input
               id="duration"
               type="number"
@@ -216,8 +228,11 @@ export default function CreatePage() {
               <p className="text-xs text-nova">Duration is required.</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="deadline" className="text-dust">Deadline (unix timestamp)</Label>
+          <div className="space-y-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="deadline" className="text-[10px] text-ash uppercase tracking-widest font-bold">Deadline (unix timestamp)</Label>
+              <p className="text-[10px] text-ash/60 uppercase tracking-tight">When the discovery period expires.</p>
+            </div>
             <Input
               id="deadline"
               type="number"

@@ -120,6 +120,37 @@ export default function DocsPage() {
           </div>
         </section>
 
+        {/* Terminology */}
+        <section>
+          <SectionHeading>Core Terminology</SectionHeading>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+              <h4 className="font-display text-star text-lg mb-3">Collateral</h4>
+              <p className="text-dust text-sm leading-relaxed">
+                The <span className="text-chalk font-medium">Guarantee</span>. Assets provided by the borrower and locked in a secure per-inscription Locker contract. If the borrower defaults, these assets are forfeit to the lender.
+              </p>
+            </div>
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+              <h4 className="font-display text-star text-lg mb-3">Debt</h4>
+              <p className="text-dust text-sm leading-relaxed">
+                The <span className="text-chalk font-medium">Principal</span>. The exact assets and amounts the borrower wishes to receive. Lenders provide these assets to "seal" the inscription.
+              </p>
+            </div>
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+              <h4 className="font-display text-star text-lg mb-3">Interest</h4>
+              <p className="text-dust text-sm leading-relaxed">
+                The <span className="text-chalk font-medium">Reward</span>. The additional assets the borrower agrees to pay the lender on top of the debt principal upon repayment.
+              </p>
+            </div>
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+              <h4 className="font-display text-star text-lg mb-3">Deadline</h4>
+              <p className="text-dust text-sm leading-relaxed">
+                The <span className="text-chalk font-medium">Discovery Period</span>. A unix timestamp defining when the inscription stops accepting lenders. If unsigned by this time, it expires and collateral can be reclaimed.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Lifecycle */}
         <section>
           <SectionHeading>Inscription Lifecycle</SectionHeading>
