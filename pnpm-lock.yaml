@@ -159,6 +159,9 @@ importers:
       '@stela/core':
         specifier: workspace:*
         version: link:../../packages/core
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250214.0

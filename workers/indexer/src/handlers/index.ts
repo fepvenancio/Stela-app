@@ -1,4 +1,13 @@
 import type { D1Queries, WebhookEvent } from '@stela/core'
+import {
+  createdDataSchema,
+  signedDataSchema,
+  cancelledDataSchema,
+  repaidDataSchema,
+  liquidatedDataSchema,
+  redeemedDataSchema,
+  transferSingleDataSchema,
+} from '../schemas.js'
 
 export async function processWebhookEvent(event: WebhookEvent, queries: D1Queries): Promise<void> {
   switch (event.event_type) {
@@ -22,22 +31,7 @@ export async function processWebhookEvent(event: WebhookEvent, queries: D1Querie
 }
 
 async function handleCreated(event: WebhookEvent, queries: D1Queries): Promise<void> {
-  const d = event.data as {
-    inscription_id: string
-    creator: string
-    status: 'open'
-    multi_lender: number
-    duration: number
-    deadline: number
-    debt_asset_count: number
-    interest_asset_count: number
-    collateral_asset_count: number
-    assets: {
-      debt: { asset_address: string; asset_type: string; value: string; token_id: string }[]
-      interest: { asset_address: string; asset_type: string; value: string; token_id: string }[]
-      collateral: { asset_address: string; asset_type: string; value: string; token_id: string }[]
-    }
-  }
+  const d = createdDataSchema.parse(event.data)
 
   await queries.upsertInscription({
     id: d.inscription_id,
@@ -81,14 +75,7 @@ async function handleCreated(event: WebhookEvent, queries: D1Queries): Promise<v
 }
 
 async function handleSigned(event: WebhookEvent, queries: D1Queries): Promise<void> {
-  const d = event.data as {
-    inscription_id: string
-    borrower: string
-    lender: string
-    status: 'filled' | 'partial'
-    issued_debt_percentage: number
-    locker_address: string | null
-  }
+  const d = signedDataSchema.parse(event.data)
 
   await queries.upsertInscription({
     id: d.inscription_id,
@@ -119,7 +106,7 @@ async function handleSigned(event: WebhookEvent, queries: D1Queries): Promise<vo
 }
 
 async function handleCancelled(event: WebhookEvent, queries: D1Queries): Promise<void> {
-  const d = event.data as { inscription_id: string; creator: string }
+  const d = cancelledDataSchema.parse(event.data)
 
   await queries.updateInscriptionStatus(d.inscription_id, 'cancelled', event.timestamp)
 
@@ -134,7 +121,7 @@ async function handleCancelled(event: WebhookEvent, queries: D1Queries): Promise
 }
 
 async function handleRepaid(event: WebhookEvent, queries: D1Queries): Promise<void> {
-  const d = event.data as { inscription_id: string; repayer: string }
+  const d = repaidDataSchema.parse(event.data)
 
   await queries.updateInscriptionStatus(d.inscription_id, 'repaid', event.timestamp)
 
@@ -149,7 +136,7 @@ async function handleRepaid(event: WebhookEvent, queries: D1Queries): Promise<vo
 }
 
 async function handleLiquidated(event: WebhookEvent, queries: D1Queries): Promise<void> {
-  const d = event.data as { inscription_id: string; liquidator: string }
+  const d = liquidatedDataSchema.parse(event.data)
 
   await queries.updateInscriptionStatus(d.inscription_id, 'liquidated', event.timestamp)
 
@@ -164,7 +151,7 @@ async function handleLiquidated(event: WebhookEvent, queries: D1Queries): Promis
 }
 
 async function handleRedeemed(event: WebhookEvent, queries: D1Queries): Promise<void> {
-  const d = event.data as { inscription_id: string; redeemer: string; shares: string }
+  const d = redeemedDataSchema.parse(event.data)
 
   await queries.insertEvent({
     inscription_id: d.inscription_id,
@@ -177,12 +164,7 @@ async function handleRedeemed(event: WebhookEvent, queries: D1Queries): Promise<
 }
 
 async function handleTransferSingle(event: WebhookEvent, queries: D1Queries): Promise<void> {
-  const d = event.data as {
-    inscription_id: string
-    from: string
-    to: string
-    value: string
-  }
+  const d = transferSingleDataSchema.parse(event.data)
 
   // Insert dedup event first — if this tx was already processed, INSERT OR IGNORE
   // makes this a no-op and we skip the balance mutations to prevent double-counting

@@ -1,7 +1,7 @@
 import { createD1Queries } from '@stela/core'
-import type { WebhookPayload } from '@stela/core'
 import type { Env } from './types.js'
 import { processWebhookEvent } from './handlers/index.js'
+import { webhookPayloadSchema } from './schemas.js'
 
 // ---------------------------------------------------------------------------
 // Security helpers
@@ -43,11 +43,12 @@ export default {
       }
 
       try {
-        const payload = (await request.json()) as WebhookPayload
-
-        if (!payload.events || !Array.isArray(payload.events) || payload.events.length > 500) {
-          return Response.json({ ok: false, error: 'Invalid payload' }, { status: 400 })
+        const raw = await request.json()
+        const result = webhookPayloadSchema.safeParse(raw)
+        if (!result.success) {
+          return Response.json({ ok: false, error: 'Invalid payload', details: result.error.issues }, { status: 400 })
         }
+        const payload = result.data
 
         const lastBlock = await queries.getLastBlock()
         if (payload.block_number <= lastBlock) {
