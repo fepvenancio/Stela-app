@@ -46,18 +46,19 @@ export function useSignInscription(inscriptionId: string) {
 
       // Build ERC20 approval calls for each debt asset
       const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-      if (debtAssets) {
-        for (const asset of debtAssets) {
-          const totalValue = BigInt(asset.value || '0')
-          if (totalValue <= 0n) continue
-          // Calculate proportional amount with ceiling: ceil(value * bps / 10000)
-          const amount = (totalValue * BigInt(bps) + 9999n) / 10000n
-          approvals.push({
-            contractAddress: asset.address,
-            entrypoint: 'approve',
-            calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
-          })
-        }
+      if (!debtAssets || debtAssets.length === 0) {
+        throw new Error('No debt asset data available — the inscription may still be indexing. Please wait a moment and refresh.')
+      }
+      for (const asset of debtAssets) {
+        const totalValue = BigInt(asset.value || '0')
+        if (totalValue <= 0n) continue
+        // Calculate proportional amount with ceiling: ceil(value * bps / 10000)
+        const amount = (totalValue * BigInt(bps) + 9999n) / 10000n
+        approvals.push({
+          contractAddress: asset.address,
+          entrypoint: 'approve',
+          calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+        })
       }
 
       const signCall = client.buildSignInscription(BigInt(inscriptionId), BigInt(bps))
