@@ -14,6 +14,8 @@ interface InscriptionCardProps {
   multiLender: boolean
   duration: string
   assets: AssetRow[]
+  lender?: string | null
+  shareBalance?: string
   selectable?: boolean
   selected?: boolean
   onSelect?: () => void
@@ -58,6 +60,8 @@ export function InscriptionCard({
   multiLender,
   duration,
   assets,
+  lender,
+  shareBalance,
   selectable = false,
   selected = false,
   onSelect,
@@ -132,22 +136,36 @@ export function InscriptionCard({
         </div>
       </CardContent>
 
-      <CardFooter className="p-0 pt-5 border-t border-edge/10 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-1.5 group/creator">
-           <div className="w-4 h-4 rounded-full bg-void flex items-center justify-center text-[8px] text-star border border-star/20">
-              S
-           </div>
-           <span className="text-[11px] text-ash font-mono group-hover/creator:text-dust transition-colors">
-             {formatAddress(creator)}
-           </span>
+      <CardFooter className="p-0 pt-5 border-t border-edge/10 flex flex-col gap-2 relative z-10">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-1.5 group/creator">
+             <div className="w-4 h-4 rounded-full bg-void flex items-center justify-center text-[8px] text-star border border-star/20">
+                S
+             </div>
+             <span className="text-[11px] text-ash font-mono group-hover/creator:text-dust transition-colors">
+               {formatAddress(creator)}
+             </span>
+          </div>
+          {multiLender && (
+            <span className="flex items-center gap-1.5 text-[10px] text-star/80 font-display uppercase tracking-wider">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-pulse">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+              Shared
+            </span>
+          )}
         </div>
-        {multiLender && (
-          <span className="flex items-center gap-1.5 text-[10px] text-star/80 font-display uppercase tracking-wider">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-pulse">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            Shared
-          </span>
+        {lender && (
+          <div className="flex items-center gap-1.5 w-full">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Lender</span>
+            <span className="text-[11px] text-ash font-mono">{formatAddress(lender)}</span>
+          </div>
+        )}
+        {shareBalance && (
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Shares</span>
+            <span className="text-chalk font-display text-sm">{shareBalance}</span>
+          </div>
         )}
       </CardFooter>
     </Card>

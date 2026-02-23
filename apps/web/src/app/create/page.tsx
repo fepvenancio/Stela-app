@@ -121,7 +121,6 @@ export default function CreatePage() {
   const { address } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
 
-  const [isBorrow, setIsBorrow] = useState(true)
   const [multiLender, setMultiLender] = useState(false)
   const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([emptyAsset()])
   const [interestAssets, setInterestAssets] = useState<AssetInputValue[]>([emptyAsset()])
@@ -141,10 +140,9 @@ export default function CreatePage() {
     setShowErrors(true)
     if (!isValid) return
 
-    // Build ERC20 approval calls for assets the creator is committing.
-    // Borrower (is_borrow=true) commits collateral; Lender (is_borrow=false) commits debt.
+    // Build ERC20 approval calls for collateral assets the borrower is committing.
     const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-    const assetsToApprove = isBorrow ? collateralAssets : debtAssets
+    const assetsToApprove = collateralAssets
 
     for (const asset of assetsToApprove) {
       if (!asset.asset) continue
@@ -159,7 +157,7 @@ export default function CreatePage() {
     }
 
     const calldata = [
-      isBorrow ? '1' : '0',
+      '1', // is_borrow = true (borrower flow only)
       ...serializeAssets(debtAssets),
       ...serializeAssets(interestAssets),
       ...serializeAssets(collateralAssets),
@@ -196,32 +194,6 @@ export default function CreatePage() {
       </div>
 
       <div className="space-y-8">
-        {/* Role selector */}
-        <div className="grid grid-cols-2 gap-3">
-          {([
-            { val: true, label: 'Borrower', desc: 'Inscribe a debt to receive liquidity' },
-            { val: false, label: 'Lender', desc: 'Prepare a stela for signing' },
-          ] as const).map(({ val, label, desc }) => (
-            <button
-              key={String(val)}
-              type="button"
-              onClick={() => setIsBorrow(val)}
-              className={`p-5 rounded-2xl border text-left transition-all duration-300 stela-focus ${
-                isBorrow === val
-                  ? 'border-star/50 bg-abyss shadow-[0_0_25px_rgba(232,168,37,0.15),inset_0_0_15px_rgba(0,0,0,0.6)]'
-                  : 'border-edge bg-surface/30 hover:border-edge-bright opacity-60 hover:opacity-100'
-              }`}
-            >
-              <div className={`text-sm font-display uppercase tracking-widest ${isBorrow === val ? 'text-star' : 'text-dust'}`}>
-                {label}
-              </div>
-              <div className="text-xs text-ash mt-2 leading-relaxed">{desc}</div>
-            </button>
-          ))}
-        </div>
-
-        <Separator />
-
         {/* Asset sections */}
         <AssetSection title="Debt Assets" assets={debtAssets} setAssets={setDebtAssets} required showErrors={showErrors} balances={balances} />
         <AssetSection title="Interest Assets" assets={interestAssets} setAssets={setInterestAssets} balances={balances} />

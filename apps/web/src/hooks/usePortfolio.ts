@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useFetchApi, buildApiUrl } from './api'
 import { findTokenByAddress } from '@stela/core'
 import { addressesEqual } from '@/lib/address'
-import { computeStatus } from '@/lib/status'
+import { enrichStatus } from '@/lib/status'
 import type { InscriptionRow, AssetRow, ApiListResponse } from '@/types/api'
 
 // API response types
@@ -56,18 +56,6 @@ export interface PortfolioData {
 }
 
 const ACTIVE_STATUSES = new Set(['open', 'partial', 'filled'])
-
-function enrichStatus(row: InscriptionRow): string {
-  return computeStatus({
-    signed_at: BigInt(row.signed_at ?? '0'),
-    duration: BigInt(row.duration),
-    issued_debt_percentage: BigInt(row.issued_debt_percentage),
-    is_repaid: row.status === 'repaid',
-    liquidated: row.status === 'liquidated',
-    deadline: BigInt(row.deadline ?? '0'),
-    status: row.status,
-  })
-}
 
 function aggregateDebtAssets(inscriptions: EnrichedInscription[]): TokenAmount[] {
   const map = new Map<string, TokenAmount>()

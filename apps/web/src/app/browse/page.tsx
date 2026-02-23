@@ -5,7 +5,7 @@ import { useInscriptions } from '@/hooks/useInscriptions'
 import { InscriptionCard } from '@/components/InscriptionCard'
 import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { computeStatus } from '@/lib/status'
+import { enrichStatus } from '@/lib/status'
 import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
 import { BatchLendBar } from '@/components/BatchLendBar'
 import { Button } from '@/components/ui/button'
@@ -18,19 +18,6 @@ const FILTERS = [
   { key: 'expired', label: 'Expired' },
   { key: '', label: 'All' },
 ]
-
-/** Recompute status client-side using the SDK logic (handles deadline expiry) */
-function enrichStatus(row: { status: string; signed_at: string | null; duration: string; issued_debt_percentage: string; deadline: string }): string {
-  return computeStatus({
-    signed_at: BigInt(row.signed_at ?? '0'),
-    duration: BigInt(row.duration),
-    issued_debt_percentage: BigInt(row.issued_debt_percentage),
-    is_repaid: row.status === 'repaid',
-    liquidated: row.status === 'liquidated',
-    deadline: BigInt(row.deadline ?? '0'),
-    status: row.status,
-  })
-}
 
 const MAX_SELECTIONS = 10
 

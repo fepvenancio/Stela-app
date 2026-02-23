@@ -5,8 +5,8 @@ import { normalizeAddress } from '@/lib/address'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { SummaryBar } from '@/components/portfolio/SummaryBar'
-import { PositionCard } from '@/components/portfolio/PositionCard'
-import { PositionCardSkeleton } from '@/components/portfolio/PositionCardSkeleton'
+import { InscriptionCard } from '@/components/InscriptionCard'
+import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -28,7 +28,7 @@ function LoadingGrid() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <PositionCardSkeleton key={i} />
+        <InscriptionCardSkeleton key={i} />
       ))}
     </div>
   )
@@ -96,7 +96,15 @@ export default function PortfolioPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {lending.map((ins, i) => (
                       <div key={ins.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-                        <PositionCard inscription={ins} role="lender" />
+                        <InscriptionCard
+                          id={ins.id}
+                          status={ins.computedStatus}
+                          creator={ins.creator}
+                          multiLender={ins.multi_lender}
+                          duration={ins.duration}
+                          assets={ins.assets ?? []}
+                          lender={ins.lender}
+                        />
                       </div>
                     ))}
                   </div>
@@ -110,7 +118,15 @@ export default function PortfolioPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {borrowing.map((ins, i) => (
                       <div key={ins.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-                        <PositionCard inscription={ins} role="borrower" />
+                        <InscriptionCard
+                          id={ins.id}
+                          status={ins.computedStatus}
+                          creator={ins.creator}
+                          multiLender={ins.multi_lender}
+                          duration={ins.duration}
+                          assets={ins.assets ?? []}
+                          lender={ins.lender}
+                        />
                       </div>
                     ))}
                   </div>
@@ -124,7 +140,16 @@ export default function PortfolioPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {redeemable.map((ins, i) => (
                       <div key={ins.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-                        <PositionCard inscription={ins} role="redeemable" shareBalance={ins.shareBalance} />
+                        <InscriptionCard
+                          id={ins.id}
+                          status={ins.computedStatus}
+                          creator={ins.creator}
+                          multiLender={ins.multi_lender}
+                          duration={ins.duration}
+                          assets={ins.assets ?? []}
+                          lender={ins.lender}
+                          shareBalance={ins.shareBalance}
+                        />
                       </div>
                     ))}
                   </div>
