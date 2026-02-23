@@ -1,9 +1,6 @@
 'use client'
 
 import { useAccount, useConnect, useDisconnect, useNetwork } from '@starknet-react/core'
-import { useStarknetkitConnectModal } from 'starknetkit'
-import type { StarknetkitConnector } from 'starknetkit'
-import { connectors as sharedConnectors } from '@/lib/connectors'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AddressDisplay } from '@/components/AddressDisplay'
@@ -49,21 +46,19 @@ export function WalletButton() {
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
 
-  // Use the same shared connectors for the starknetkit modal
-  const { starknetkitConnectModal } = useStarknetkitConnectModal({
-    connectors: sharedConnectors as unknown as StarknetkitConnector[],
-    modalTheme: 'dark',
-    dappName: 'Stela Protocol',
-  })
-
   const connectWallet = async () => {
-    const { connector } = await starknetkitConnectModal()
-    if (connector) {
-      // Match against the @starknet-react/core connectors (which are now the same instances)
-      const match = connectors.find((c) => c.id === connector.id)
-      if (match) {
-        connect({ connector: match })
+    // Try each connector in order (Argent X, then Braavos) — connect the first available
+    for (const c of connectors) {
+      const available = await c.available()
+      if (available) {
+        connect({ connector: c })
+        return
       }
+    }
+    // If no wallet extension is installed, try the first connector anyway
+    // (it will prompt the user to install)
+    if (connectors.length > 0) {
+      connect({ connector: connectors[0] })
     }
   }
 

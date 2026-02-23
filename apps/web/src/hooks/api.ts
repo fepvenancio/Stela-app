@@ -18,6 +18,7 @@ interface FetchState<T> {
 export function useFetchApi<T>(
   url: string | null | undefined,
   options?: RequestInit,
+  refreshInterval?: number,
 ): FetchState<T> & { refetch: () => void } {
   const [state, setState] = useState<FetchState<T>>({
     data: undefined,
@@ -35,7 +36,7 @@ export function useFetchApi<T>(
       return
     }
 
-    setState((prev) => ({ ...prev, isLoading: true, error: null }))
+    setState((prev) => ({ ...prev, isLoading: !prev.data, error: null }))
 
     try {
       const res = await fetch(url, options)
@@ -55,6 +56,12 @@ export function useFetchApi<T>(
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useEffect(() => {
+    if (!refreshInterval || !url) return
+    const id = setInterval(fetchData, refreshInterval)
+    return () => clearInterval(id)
+  }, [refreshInterval, url, fetchData])
 
   return { ...state, refetch: fetchData }
 }

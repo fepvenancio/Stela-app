@@ -1,7 +1,6 @@
 'use client'
 
 import { StarknetConfig, jsonRpcProvider } from '@starknet-react/core'
-import type { Connector } from '@starknet-react/core'
 import { sepolia, mainnet } from '@starknet-react/chains'
 import { NETWORK } from '@/lib/config'
 import { connectors } from '@/lib/connectors'
@@ -19,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <StarknetConfig
       chains={chains}
       provider={provider}
-      connectors={connectors as unknown as Connector[]}
+      connectors={connectors}
       autoConnect
     >
       {children}

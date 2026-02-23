@@ -18,7 +18,7 @@ export function useInscriptions(params?: InscriptionListParams) {
     [params?.status, params?.address, params?.page],
   )
 
-  const { data: raw, isLoading, error, refetch } = useFetchApi<ApiListResponse<InscriptionRow>>(url)
+  const { data: raw, isLoading, error, refetch } = useFetchApi<ApiListResponse<InscriptionRow>>(url, undefined, 15_000)
   const data = raw?.data ?? []
 
   return { data, isLoading, error, refetch }
