@@ -70,31 +70,32 @@ export function parseCreateInscriptionCalldata(innerCalldata: string[]): {
 
 /**
  * Extract inner calldata from the account's __execute__ transaction calldata.
- * Handles both SNIP-6 (new) and legacy (old) account formats.
+ * Supports multicall transactions (e.g. [approve, ..., create_inscription]).
+ *
+ * SNIP-6 multicall layout:
+ *   [num_calls, to_1, selector_1, calldata_len_1, ...cd_1, to_2, selector_2, calldata_len_2, ...cd_2, ...]
  */
 export function extractInnerCalldata(calldata: string[], createSelector: string): string[] | null {
-  if (!calldata || calldata.length < 5) return null
+  if (!calldata || calldata.length < 4) return null
 
-  // Verify this is a single call to create_inscription
-  if (Number(BigInt(calldata[0])) !== 1) return null
-  if (BigInt(calldata[2]) !== BigInt(createSelector)) return null
+  const numCalls = Number(BigInt(calldata[0]))
+  if (numCalls < 1 || numCalls > 20) return null
 
-  // SNIP-6 format: [1, to, selector, calldata_len, ...inner_calldata]
-  // Legacy format: [1, to, selector, data_offset(0), data_len, total_calldata_len, ...inner_calldata]
-  const field3 = BigInt(calldata[3])
+  let offset = 1
+  for (let i = 0; i < numCalls; i++) {
+    if (offset + 3 > calldata.length) return null
 
-  if (field3 === 0n) {
-    // Legacy format — data_offset is 0 for single call
-    const dataLen = Number(BigInt(calldata[4]))
-    if (calldata.length >= 6 + dataLen) {
-      return calldata.slice(6, 6 + dataLen)
+    const selector = calldata[offset + 1]
+    const calldataLen = Number(BigInt(calldata[offset + 2]))
+
+    if (offset + 3 + calldataLen > calldata.length) return null
+
+    if (BigInt(selector) === BigInt(createSelector)) {
+      return calldata.slice(offset + 3, offset + 3 + calldataLen)
     }
-  } else {
-    // SNIP-6 format — field3 is calldata_len
-    const calldataLen = Number(field3)
-    if (calldata.length >= 4 + calldataLen) {
-      return calldata.slice(4, 4 + calldataLen)
-    }
+
+    // Skip to next call: to + selector + calldata_len + calldata
+    offset += 3 + calldataLen
   }
 
   return null
