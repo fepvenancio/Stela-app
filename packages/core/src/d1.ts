@@ -140,6 +140,21 @@ export function createD1Queries(db: D1Database) {
 
       if (keys.length === 0 || !keys.includes('id')) return
 
+      // SQLite checks NOT NULL constraints before ON CONFLICT resolution.
+      // When 'creator' (NOT NULL) is missing, the row must already exist —
+      // fall back to a plain UPDATE to avoid constraint violations.
+      if (!keys.includes('creator')) {
+        const updateKeys = keys.filter((k) => k !== 'id')
+        if (updateKeys.length === 0) return
+        const setClauses = updateKeys.map((k) => `"${k}" = ?`).join(', ')
+        const updateValues = updateKeys.map((k) => values[keys.indexOf(k)])
+        await db
+          .prepare(`UPDATE inscriptions SET ${setClauses} WHERE id = ?`)
+          .bind(...updateValues, values[keys.indexOf('id')])
+          .run()
+        return
+      }
+
       const placeholders = keys.map(() => '?').join(', ')
       const updates = keys
         .filter((k) => k !== 'id')
@@ -235,6 +250,21 @@ export function createD1Queries(db: D1Database) {
         .run()
     },
 
+    async setMeta(key: string, value: string) {
+      await db
+        .prepare('INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)')
+        .bind(key, value)
+        .run()
+    },
+
+    async getMeta(key: string): Promise<string | null> {
+      const row = await db
+        .prepare('SELECT value FROM _meta WHERE key = ?')
+        .bind(key)
+        .first<{ value: string }>()
+      return row ? row.value : null
+    },
+
     // -----------------------------------------------------------------------
     // Expire open inscriptions past their deadline (no lender signed)
     // -----------------------------------------------------------------------
@@ -312,25 +342,37 @@ export function createD1Queries(db: D1Database) {
     // -----------------------------------------------------------------------
 
     async incrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
+      // Use BigInt in JS — CAST(AS INTEGER) overflows for u256-scale share values
+      const row = await db
+        .prepare('SELECT balance FROM share_balances WHERE account = ? AND inscription_id = ?')
+        .bind(account, inscriptionId)
+        .first<{ balance: string }>()
+      let current = 0n
+      if (row) {
+        try { current = BigInt(row.balance) } catch { current = 0n }
+      }
+      const newBalance = (current + amount).toString()
       await db
         .prepare(
-          `INSERT INTO share_balances (account, inscription_id, balance)
-           VALUES (?, ?, ?)
-           ON CONFLICT (account, inscription_id) DO UPDATE
-           SET balance = CAST((CAST(balance AS INTEGER) + CAST(excluded.balance AS INTEGER)) AS TEXT)`
+          `INSERT OR REPLACE INTO share_balances (account, inscription_id, balance) VALUES (?, ?, ?)`
         )
-        .bind(account, inscriptionId, amount.toString())
+        .bind(account, inscriptionId, newBalance)
         .run()
     },
 
     async decrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
+      // Use BigInt in JS — CAST(AS INTEGER) overflows for u256-scale share values
+      const row = await db
+        .prepare('SELECT balance FROM share_balances WHERE account = ? AND inscription_id = ?')
+        .bind(account, inscriptionId)
+        .first<{ balance: string }>()
+      if (!row) return
+      let current = 0n
+      try { current = BigInt(row.balance) } catch { current = 0n }
+      const newBalance = (current > amount ? current - amount : 0n).toString()
       await db
-        .prepare(
-          `UPDATE share_balances
-           SET balance = CAST(MAX(0, CAST(balance AS INTEGER) - ?) AS TEXT)
-           WHERE account = ? AND inscription_id = ?`
-        )
-        .bind(amount.toString(), account, inscriptionId)
+        .prepare('UPDATE share_balances SET balance = ? WHERE account = ? AND inscription_id = ?')
+        .bind(newBalance, account, inscriptionId)
         .run()
     },
 

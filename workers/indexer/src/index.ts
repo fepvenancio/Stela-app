@@ -111,10 +111,23 @@ async function pollEvents(env: Env): Promise<void> {
       lastSuccessBlock = raw.block_number
     } catch (err) {
       failedCount++
+      const errMsg = err instanceof Error ? `${err.name}: ${err.message}\n${err.stack}` : String(err)
       console.error(
         `Error handling event ${selector} in tx ${raw.transaction_hash}:`,
         err
       )
+      // Store error details in _meta for remote debugging
+      try {
+        await queries.setMeta('last_error', JSON.stringify({
+          selector,
+          tx_hash: raw.transaction_hash,
+          block_number: raw.block_number,
+          error: errMsg,
+          keys: raw.keys,
+          data: raw.data,
+          timestamp: new Date().toISOString(),
+        }))
+      } catch { /* ignore meta write errors */ }
       // Stop processing further events — we cannot advance past a failed block
       break
     }
