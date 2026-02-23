@@ -141,6 +141,23 @@ export default function CreatePage() {
     setShowErrors(true)
     if (!isValid) return
 
+    // Build ERC20 approval calls for assets the creator is committing.
+    // Borrower (is_borrow=true) commits collateral; Lender (is_borrow=false) commits debt.
+    const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+    const assetsToApprove = isBorrow ? collateralAssets : debtAssets
+
+    for (const asset of assetsToApprove) {
+      if (!asset.asset) continue
+      if (asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155') continue
+      const rawValue = asset.value ? parseAmount(asset.value, asset.decimals) : 0n
+      if (rawValue <= 0n) continue
+      approvals.push({
+        contractAddress: asset.asset,
+        entrypoint: 'approve',
+        calldata: [CONTRACT_ADDRESS, ...toU256(rawValue)],
+      })
+    }
+
     const calldata = [
       isBorrow ? '1' : '0',
       ...serializeAssets(debtAssets),
@@ -153,6 +170,7 @@ export default function CreatePage() {
 
     try {
       const result = await sendAsync([
+        ...approvals,
         {
           contractAddress: CONTRACT_ADDRESS,
           entrypoint: 'create_inscription',
