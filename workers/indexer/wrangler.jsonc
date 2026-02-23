@@ -12,10 +12,9 @@
     }
   ],
   "vars": {
-    "STELA_ADDRESS": "0x031f738a405157f85e1f20156f3301d15cdaae363d302f4e1f44c49dbc83d437",
-    "RPC_URL": "https://rpc.starknet-testnet.lava.build"
+    "STELA_ADDRESS": "0x031f738a405157f85e1f20156f3301d15cdaae363d302f4e1f44c49dbc83d437"
   },
   "triggers": {
-    "crons": ["*/1 * * * *"]
+    "crons": ["*/5 * * * *"]
   }
 }

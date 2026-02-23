@@ -1,0 +1,23 @@
+{
+  "name": "stela-apibara-indexer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx --watch src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@apibara/indexer": "^2.0.0-beta.0",
+    "@apibara/protocol": "^2.0.0-beta.0",
+    "@apibara/starknet": "^2.0.0-beta.0",
+    "@stela/core": "workspace:*",
+    "nice-grpc-common": "^2.0.2",
+    "starknet": "^6.23.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

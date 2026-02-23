@@ -4,6 +4,9 @@ export type {
   Asset,
   Inscription,
   InscriptionEvent,
+  WebhookEventType,
+  WebhookEvent,
+  WebhookPayload,
 } from './types.js'
 
 export {
@@ -15,7 +18,6 @@ export {
 
 export {
   MAX_BPS,
-  VIRTUAL_SHARE_OFFSET,
   STELA_ADDRESS,
   resolveNetwork,
 } from './constants.js'

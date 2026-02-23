@@ -181,7 +181,7 @@ export function createD1Queries(db: D1Database) {
     }) {
       await db
         .prepare(
-          `INSERT INTO inscription_events (inscription_id, event_type, tx_hash, block_number, timestamp, data)
+          `INSERT OR IGNORE INTO inscription_events (inscription_id, event_type, tx_hash, block_number, timestamp, data)
            VALUES (?, ?, ?, ?, ?, ?)`
         )
         .bind(
@@ -193,6 +193,35 @@ export function createD1Queries(db: D1Database) {
           event.data ? JSON.stringify(event.data) : null
         )
         .run()
+    },
+
+    /**
+     * Insert an event and return whether the row was actually inserted.
+     * Returns false if the event was already present (dedup via unique index).
+     */
+    async insertEventReturning(event: {
+      inscription_id: string
+      event_type: string
+      tx_hash: string
+      block_number: number
+      timestamp?: number
+      data?: Record<string, unknown>
+    }): Promise<boolean> {
+      const result = await db
+        .prepare(
+          `INSERT OR IGNORE INTO inscription_events (inscription_id, event_type, tx_hash, block_number, timestamp, data)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        )
+        .bind(
+          event.inscription_id,
+          event.event_type,
+          event.tx_hash,
+          event.block_number,
+          event.timestamp ?? null,
+          event.data ? JSON.stringify(event.data) : null
+        )
+        .run()
+      return ((result.meta?.changes as number) ?? 0) > 0
     },
 
     async updateInscriptionStatus(id: string, status: string, updatedAt: number) {
@@ -380,7 +409,7 @@ export function createD1Queries(db: D1Database) {
       const result = await db
         .prepare(
           `SELECT inscription_id, balance FROM share_balances
-           WHERE account = ? AND CAST(balance AS INTEGER) > 0
+           WHERE account = ? AND balance != '0' AND length(balance) > 0
            ORDER BY inscription_id`
         )
         .bind(account)

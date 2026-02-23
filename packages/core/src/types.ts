@@ -72,3 +72,30 @@ export const ASSET_TYPE_NAMES: Record<number, AssetType> = {
   2: 'ERC1155',
   3: 'ERC4626',
 }
+
+// ---------------------------------------------------------------------------
+// Webhook types (Apibara indexer → CF Worker)
+// ---------------------------------------------------------------------------
+
+export type WebhookEventType =
+  | 'created'
+  | 'signed'
+  | 'cancelled'
+  | 'repaid'
+  | 'liquidated'
+  | 'redeemed'
+  | 'transfer_single'
+
+export interface WebhookEvent {
+  event_type: WebhookEventType
+  tx_hash: string
+  block_number: number
+  timestamp: number
+  data: Record<string, unknown>
+}
+
+export interface WebhookPayload {
+  block_number: number
+  events: WebhookEvent[]
+  cursor: string
+}

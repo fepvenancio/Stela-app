@@ -19,8 +19,10 @@ stela/                              ← this repo
 │   └── core/                      ← shared types, ABI, constants, D1 queries
 ├── apps/
 │   └── web/                       ← Next.js frontend (OpenNext → Cloudflare Workers)
+├── services/
+│   └── indexer/                   ← Apibara DNA streaming → webhook POST (Node.js)
 ├── workers/
-│   ├── indexer/                   ← RPC polling cron Worker → D1
+│   ├── indexer/                   ← Webhook receiver → D1 + cron expiry
 │   └── bot/                       ← liquidation cron Worker → StarkNet
 ├── package.json                   ← pnpm workspace root
 ├── pnpm-workspace.yaml
@@ -50,6 +52,7 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'workers/*'
+  - 'services/*'
 ```
 
 ```json
@@ -225,43 +228,84 @@ Variables are set in `wrangler.jsonc` for production:
 
 ---
 
-## Worker: indexer (RPC Polling)
+## Service: indexer (Apibara DNA Streaming)
 
 ### Purpose
-Poll StarkNet RPC for Stela contract events and write to D1.
-This is the only way to enumerate inscriptions for browsing/discovery.
+Stream StarkNet events from Apibara DNA via gRPC, transform and enrich them,
+then POST to the CF Worker webhook for D1 persistence.
+
+### Architecture
+```
+Apibara DNA (Sepolia gRPC) → [services/indexer] Node.js → HTTP POST → [workers/indexer] CF Worker → D1
+```
 
 ### Stack
 ```
-Cloudflare Worker + Cron Trigger (*/1 * * * *)
-starknet.js v6 (RpcProvider.getEvents)
+Node.js 22
+@apibara/indexer + @apibara/starknet + @apibara/protocol (v2 beta)
+starknet.js v6 (RPC enrichment: get_inscription, get_locker)
+```
+
+### Key Files
+```
+services/indexer/
+├── package.json
+├── tsconfig.json
+├── Dockerfile
+├── .env.example
+└── src/
+    ├── index.ts          ← entry point: gRPC client + defineIndexer
+    ├── transform.ts      ← event parsing + RPC enrichment → WebhookEvent[]
+    ├── rpc.ts            ← SELECTORS, fetchInscriptionFromContract, fetchLockerAddress
+    └── webhook.ts        ← POST webhook with retry + backoff
+```
+
+### Deployment
+Deploy to Railway/Fly.io. Env vars: `DNA_TOKEN`, `WEBHOOK_URL`, `WEBHOOK_SECRET`, `RPC_URL`, `STELA_ADDRESS`.
+
+## Worker: indexer (Webhook Receiver)
+
+### Purpose
+Receive pre-parsed events from the Apibara service via webhook and write to D1.
+Also runs a cron to expire open inscriptions past their deadline.
+
+### Stack
+```
+Cloudflare Worker + Cron Trigger (*/5 * * * *)
 D1 via @stela/core createD1Queries
 ```
 
 ### How It Works
 ```
-scheduled() handler:
-1. Read last_block from D1 _meta table
-2. Cap range to MAX_BLOCK_RANGE (500) to avoid Worker timeout
-3. provider.getEvents({ from_block, to_block, address, keys, chunk_size: 100 })
-4. Handle pagination via continuation_token
-5. For each event → route by selector to handler
-6. Write to D1 via shared query module
-7. Update last_block in _meta
+POST /webhook/events:
+1. Authenticate with timing-safe Bearer token comparison
+2. Validate payload (events array, block_number)
+3. Idempotency: skip if block_number <= last_block
+4. Process each event via handler dispatch (insert/update D1)
+5. Advance cursor (setLastBlock)
+
+GET /health:
+Returns { ok: true, last_block } for Apibara service startup
+
+scheduled():
+Expire open inscriptions past deadline
 ```
 
 ### Key Files
 ```
 workers/indexer/
-├── wrangler.jsonc      ← D1 binding, cron trigger, nodejs_compat
+├── wrangler.jsonc           ← D1 binding, cron trigger, WEBHOOK_SECRET
 ├── package.json
 ├── tsconfig.json
-└── src/index.ts        ← all logic in one file
+└── src/
+    ├── index.ts             ← fetch + scheduled handlers
+    ├── types.ts             ← Env interface
+    └── handlers/index.ts    ← processWebhookEvent dispatcher
 ```
 
 ### Deployment
 ```bash
-cd workers/indexer && pnpm deploy
+cd workers/indexer && pnpm wrangler deploy
 ```
 
 ---
@@ -351,7 +395,7 @@ Event fields are split between `keys[]` and `data[]` based on `kind` in the ABI:
 | Portfolio / history | Next.js API route → D1 |
 | Create, sign, repay, liquidate, redeem, cancel | Direct contract write via user wallet |
 | Auto-liquidate expired inscriptions | Bot Worker wallet |
-| Index events from chain | Indexer Worker → D1 |
+| Index events from chain | Apibara service → webhook → Indexer Worker → D1 |
 
 Never proxy writes through the backend. Users sign directly with their wallet.
 

@@ -8,8 +8,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@stela/core": "workspace:*",
-    "starknet": "^6.23.1"
+    "@stela/core": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",

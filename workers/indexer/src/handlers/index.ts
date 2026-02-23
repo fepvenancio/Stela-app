@@ -1,182 +1,204 @@
-import type { RpcProvider } from 'starknet'
-import { inscriptionIdToHex, fromU256, MAX_BPS } from '@stela/core'
-import type { D1Queries } from '@stela/core'
-import type { IndexerEvent, Env } from '../types.js'
-import { fetchInscriptionFromContract, fetchLockerAddress } from '../rpc.js'
-import { fetchAndStoreAssets, parseInscriptionId } from '../parsers.js'
+import type { D1Queries, WebhookEvent } from '@stela/core'
 
-export async function handleCreated(
-  event: IndexerEvent,
-  queries: D1Queries,
-  provider: RpcProvider,
-  stelaAddress: string
-): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256), keys[3] = creator
-  const inscriptionId = parseInscriptionId(event)
-  const creator = event.keys[3]
+export async function processWebhookEvent(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  switch (event.event_type) {
+    case 'created':
+      return handleCreated(event, queries)
+    case 'signed':
+      return handleSigned(event, queries)
+    case 'cancelled':
+      return handleCancelled(event, queries)
+    case 'repaid':
+      return handleRepaid(event, queries)
+    case 'liquidated':
+      return handleLiquidated(event, queries)
+    case 'redeemed':
+      return handleRedeemed(event, queries)
+    case 'transfer_single':
+      return handleTransferSingle(event, queries)
+  }
+}
 
-  const onChain = await fetchInscriptionFromContract(provider, stelaAddress, inscriptionId)
+async function handleCreated(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = event.data as {
+    inscription_id: string
+    creator: string
+    status: 'open'
+    multi_lender: number
+    duration: number
+    deadline: number
+    debt_asset_count: number
+    interest_asset_count: number
+    collateral_asset_count: number
+    assets: {
+      debt: { asset_address: string; asset_type: string; value: string; token_id: string }[]
+      interest: { asset_address: string; asset_type: string; value: string; token_id: string }[]
+      collateral: { asset_address: string; asset_type: string; value: string; token_id: string }[]
+    }
+  }
 
   await queries.upsertInscription({
-    id: inscriptionId,
-    creator,
-    status: 'open',
+    id: d.inscription_id,
+    creator: d.creator,
+    status: d.status,
     issued_debt_percentage: 0,
-    multi_lender: onChain?.multi_lender ? 1 : 0,
-    duration: onChain?.duration ?? 0,
-    deadline: onChain?.deadline ?? 0,
-    debt_asset_count: onChain?.debt_asset_count ?? 0,
-    interest_asset_count: onChain?.interest_asset_count ?? 0,
-    collateral_asset_count: onChain?.collateral_asset_count ?? 0,
+    multi_lender: d.multi_lender,
+    duration: d.duration,
+    deadline: d.deadline,
+    debt_asset_count: d.debt_asset_count,
+    interest_asset_count: d.interest_asset_count,
+    collateral_asset_count: d.collateral_asset_count,
     created_at_block: event.block_number,
     created_at_ts: event.timestamp,
     updated_at_ts: event.timestamp,
   })
 
-  // Parse transaction calldata to extract and store asset details
-  await fetchAndStoreAssets(provider, event.transaction_hash, inscriptionId, queries)
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'created',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-  })
-}
-
-export async function handleSigned(event: IndexerEvent, queries: D1Queries, env?: Env): Promise<void> {
-  // keys[0] = selector, keys[1..2] = id (u256), keys[3] = borrower, keys[4] = lender
-  const inscriptionId = parseInscriptionId(event)
-  const borrower = event.keys[3]
-  const lender = event.keys[4]
-
-  // data[0..1] = issued_debt_percentage (u256), data[2..3] = shares_minted (u256)
-  const issuedPercentage = fromU256({
-    low: BigInt(event.data[0]),
-    high: BigInt(event.data[1]),
-  })
-
-  const status = issuedPercentage >= MAX_BPS ? 'filled' : 'partial'
-
-  await queries.upsertInscription({
-    id: inscriptionId,
-    borrower,
-    lender,
-    status,
-    issued_debt_percentage: Number(issuedPercentage),
-    signed_at: event.timestamp,
-    updated_at_ts: event.timestamp,
-  })
-
-  // Fetch and store the locker TBA address when inscription gets signed
-  if (env) {
-    try {
-      const lockerResult = await fetchLockerAddress(env, inscriptionId)
-      if (lockerResult) {
-        await queries.upsertLocker(inscriptionId, lockerResult, event.timestamp)
-      }
-    } catch (err) {
-      console.error(`Failed to fetch locker for ${inscriptionId}:`, err)
+  const roles = ['debt', 'interest', 'collateral'] as const
+  for (const role of roles) {
+    const assets = d.assets[role]
+    for (let i = 0; i < assets.length; i++) {
+      await queries.insertAsset({
+        inscription_id: d.inscription_id,
+        asset_role: role,
+        asset_index: i,
+        asset_address: assets[i].asset_address,
+        asset_type: assets[i].asset_type,
+        value: assets[i].value,
+        token_id: assets[i].token_id,
+      })
     }
   }
 
   await queries.insertEvent({
-    inscription_id: inscriptionId,
+    inscription_id: d.inscription_id,
+    event_type: 'created',
+    tx_hash: event.tx_hash,
+    block_number: event.block_number,
+    timestamp: event.timestamp,
+  })
+}
+
+async function handleSigned(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = event.data as {
+    inscription_id: string
+    borrower: string
+    lender: string
+    status: 'filled' | 'partial'
+    issued_debt_percentage: number
+    locker_address: string | null
+  }
+
+  await queries.upsertInscription({
+    id: d.inscription_id,
+    borrower: d.borrower,
+    lender: d.lender,
+    status: d.status,
+    issued_debt_percentage: d.issued_debt_percentage,
+    signed_at: event.timestamp,
+    updated_at_ts: event.timestamp,
+  })
+
+  if (d.locker_address) {
+    await queries.upsertLocker(d.inscription_id, d.locker_address, event.timestamp)
+  }
+
+  await queries.insertEvent({
+    inscription_id: d.inscription_id,
     event_type: 'signed',
-    tx_hash: event.transaction_hash,
+    tx_hash: event.tx_hash,
     block_number: event.block_number,
     timestamp: event.timestamp,
     data: {
-      borrower,
-      lender,
-      issued_debt_percentage: issuedPercentage.toString(),
+      borrower: d.borrower,
+      lender: d.lender,
+      issued_debt_percentage: d.issued_debt_percentage,
     },
   })
 }
 
-export async function handleRepaid(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  const inscriptionId = parseInscriptionId(event)
-  const repayer = event.data[0]
+async function handleCancelled(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = event.data as { inscription_id: string; creator: string }
 
-  await queries.updateInscriptionStatus(inscriptionId, 'repaid', event.timestamp)
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'repaid',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-    data: { repayer },
-  })
-}
-
-export async function handleLiquidated(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  const inscriptionId = parseInscriptionId(event)
-  const liquidator = event.data[0]
-
-  await queries.updateInscriptionStatus(inscriptionId, 'liquidated', event.timestamp)
+  await queries.updateInscriptionStatus(d.inscription_id, 'cancelled', event.timestamp)
 
   await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'liquidated',
-    tx_hash: event.transaction_hash,
-    block_number: event.block_number,
-    timestamp: event.timestamp,
-    data: { liquidator },
-  })
-}
-
-export async function handleCancelled(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  const inscriptionId = parseInscriptionId(event)
-  const creator = event.data[0]
-
-  await queries.updateInscriptionStatus(inscriptionId, 'cancelled', event.timestamp)
-
-  await queries.insertEvent({
-    inscription_id: inscriptionId,
+    inscription_id: d.inscription_id,
     event_type: 'cancelled',
-    tx_hash: event.transaction_hash,
+    tx_hash: event.tx_hash,
     block_number: event.block_number,
     timestamp: event.timestamp,
-    data: { creator },
+    data: { creator: d.creator },
   })
 }
 
-export async function handleRedeemed(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  const inscriptionId = parseInscriptionId(event)
-  const redeemer = event.keys[3]
+async function handleRepaid(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = event.data as { inscription_id: string; repayer: string }
 
-  // data[0..1] = shares (u256)
-  const shares = fromU256({
-    low: BigInt(event.data[0]),
-    high: BigInt(event.data[1]),
-  })
+  await queries.updateInscriptionStatus(d.inscription_id, 'repaid', event.timestamp)
 
   await queries.insertEvent({
-    inscription_id: inscriptionId,
-    event_type: 'redeemed',
-    tx_hash: event.transaction_hash,
+    inscription_id: d.inscription_id,
+    event_type: 'repaid',
+    tx_hash: event.tx_hash,
     block_number: event.block_number,
     timestamp: event.timestamp,
-    data: { redeemer, shares: shares.toString() },
+    data: { repayer: d.repayer },
   })
 }
 
-export async function handleTransferSingle(event: IndexerEvent, queries: D1Queries): Promise<void> {
-  // TransferSingle keys: [selector, operator, from, to]
-  // TransferSingle data: [id_low, id_high, value_low, value_high]
-  const from = event.keys[2]
-  const to = event.keys[3]
-  const inscriptionId = inscriptionIdToHex({ low: BigInt(event.data[0]), high: BigInt(event.data[1]) })
-  const value = fromU256({ low: BigInt(event.data[2]), high: BigInt(event.data[3]) })
+async function handleLiquidated(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = event.data as { inscription_id: string; liquidator: string }
 
-  // Decrement from (unless mint: from = 0x0)
-  if (BigInt(from) !== 0n) {
-    await queries.decrementShareBalance(from, inscriptionId, value)
+  await queries.updateInscriptionStatus(d.inscription_id, 'liquidated', event.timestamp)
+
+  await queries.insertEvent({
+    inscription_id: d.inscription_id,
+    event_type: 'liquidated',
+    tx_hash: event.tx_hash,
+    block_number: event.block_number,
+    timestamp: event.timestamp,
+    data: { liquidator: d.liquidator },
+  })
+}
+
+async function handleRedeemed(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = event.data as { inscription_id: string; redeemer: string; shares: string }
+
+  await queries.insertEvent({
+    inscription_id: d.inscription_id,
+    event_type: 'redeemed',
+    tx_hash: event.tx_hash,
+    block_number: event.block_number,
+    timestamp: event.timestamp,
+    data: { redeemer: d.redeemer, shares: d.shares },
+  })
+}
+
+async function handleTransferSingle(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = event.data as {
+    inscription_id: string
+    from: string
+    to: string
+    value: string
   }
-  // Increment to (unless burn: to = 0x0)
-  if (BigInt(to) !== 0n) {
-    await queries.incrementShareBalance(to, inscriptionId, value)
+
+  // Insert dedup event first — if this tx was already processed, INSERT OR IGNORE
+  // makes this a no-op and we skip the balance mutations to prevent double-counting
+  const inserted = await queries.insertEventReturning({
+    inscription_id: d.inscription_id,
+    event_type: 'transfer_single',
+    tx_hash: event.tx_hash,
+    block_number: event.block_number,
+    timestamp: event.timestamp,
+    data: { from: d.from, to: d.to, value: d.value },
+  })
+  if (!inserted) return // Already processed — skip balance mutations
+
+  if (BigInt(d.from) !== 0n) {
+    await queries.decrementShareBalance(d.from, d.inscription_id, BigInt(d.value))
+  }
+
+  if (BigInt(d.to) !== 0n) {
+    await queries.incrementShareBalance(d.to, d.inscription_id, BigInt(d.value))
   }
 }
