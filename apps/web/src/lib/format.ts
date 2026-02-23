@@ -25,9 +25,3 @@ export function formatTimestamp(ts: bigint): string {
   if (ts === 0n) return '--'
   return new Date(Number(ts) * 1000).toLocaleString()
 }
-
-/** Truncate an address for display: 0x1a2b...3c4d */
-export function truncateAddress(addr: string): string {
-  if (!addr || addr.length < 12) return addr
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-}

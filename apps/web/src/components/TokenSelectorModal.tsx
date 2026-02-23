@@ -4,7 +4,8 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import type { TokenInfo } from '@stela/core'
 import { getTokensForNetwork } from '@stela/core'
 import { NETWORK } from '@/lib/config'
-import { truncateAddress, formatTokenValue } from '@/lib/format'
+import { formatTokenValue } from '@/lib/format'
+import { formatAddress } from '@/lib/address'
 import { TokenAvatar } from '@/components/TokenAvatar'
 import {
   Dialog,
@@ -104,7 +105,7 @@ function TokenRow({
               {formatTokenValue(balance.toString(), token.decimals)}
             </div>
             <div className="text-[10px] text-ash font-mono">
-              {truncateAddress(address)}
+              {formatAddress(address)}
             </div>
           </>
         ) : (
@@ -112,7 +113,7 @@ function TokenRow({
             {balance !== undefined && balance === 0n ? (
               <span className="text-ash/50">0</span>
             ) : (
-              truncateAddress(address)
+              formatAddress(address)
             )}
           </div>
         )}

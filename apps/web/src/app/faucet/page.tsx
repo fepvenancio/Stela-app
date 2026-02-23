@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { TokenAvatarByAddress } from '@/components/TokenAvatar'
-import { truncateAddress } from '@/lib/format'
+import { formatAddress } from '@/lib/address'
 
 const MOCK_TOKENS = [
   {
@@ -107,7 +107,7 @@ function MintCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-[11px] font-mono text-dust break-all leading-relaxed">
-          {truncateAddress(token.address)}
+          {formatAddress(token.address)}
         </p>
 
         <div className="flex gap-3 items-end">

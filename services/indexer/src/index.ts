@@ -24,7 +24,15 @@ const DNA_TOKEN = requireEnv('DNA_TOKEN')
 const WEBHOOK_URL = requireEnv('WEBHOOK_URL')
 const WEBHOOK_SECRET = requireEnv('WEBHOOK_SECRET')
 const RPC_URL = requireEnv('RPC_URL')
-const STELA_ADDRESS = requireEnv('STELA_ADDRESS') as `0x${string}`
+const STELA_ADDRESS = requireHexAddress('STELA_ADDRESS')
+
+function requireHexAddress(name: string): `0x${string}` {
+  const value = requireEnv(name)
+  if (!/^0x[0-9a-fA-F]{1,64}$/.test(value)) {
+    throw new Error(`Env var ${name} is not a valid hex address: ${value}`)
+  }
+  return value as `0x${string}`
+}
 
 const DNA_STREAM_URL = 'https://sepolia.starknet.a5a.ch'
 

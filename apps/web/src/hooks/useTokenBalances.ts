@@ -5,9 +5,7 @@ import { useAccount } from '@starknet-react/core'
 import { RpcProvider, uint256 } from 'starknet'
 import { getTokensForNetwork } from '@stela/core'
 import type { TokenInfo } from '@stela/core'
-import { NETWORK } from '@/lib/config'
-
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.starknet-testnet.lava.build'
+import { NETWORK, RPC_URL } from '@/lib/config'
 
 const networkTokens = getTokensForNetwork(NETWORK)
 

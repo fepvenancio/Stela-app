@@ -54,20 +54,33 @@ export default {
           return Response.json({ ok: true, skipped: true })
         }
 
+        let processedCount = 0
+        const errors: string[] = []
+
         for (const event of payload.events) {
-          await processWebhookEvent(event, queries)
+          try {
+            await processWebhookEvent(event, queries)
+            processedCount++
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            console.error(`Failed to process ${event.event_type} (tx: ${event.tx_hash}):`, msg)
+            errors.push(`${event.event_type}:${msg}`)
+          }
+        }
+
+        if (errors.length > 0) {
+          return Response.json({ ok: false, processed: processedCount, failed: errors.length }, { status: 500 })
         }
 
         await queries.setLastBlock(payload.block_number)
-
-        return Response.json({ ok: true, processed: payload.events.length })
+        return Response.json({ ok: true, processed: processedCount })
       } catch (err) {
         console.error('Webhook processing error:', err instanceof Error ? err.message : String(err))
         return Response.json({ ok: false, error: 'Internal processing error' }, { status: 500 })
       }
     }
 
-    return new Response('stela-indexer', { status: 200 })
+    return new Response('Not Found', { status: 404 })
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {

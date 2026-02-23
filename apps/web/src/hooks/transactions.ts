@@ -4,11 +4,9 @@ import { useCallback, useMemo } from 'react'
 import { useSendTransaction, useAccount } from '@starknet-react/core'
 import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
 import { RpcProvider } from 'starknet'
-import { CONTRACT_ADDRESS } from '@/lib/config'
+import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
-
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.starknet-testnet.lava.build'
 
 function useInscriptionClient() {
   return useMemo(

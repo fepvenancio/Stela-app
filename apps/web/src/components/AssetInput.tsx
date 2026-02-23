@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 import { TokenAvatar } from '@/components/TokenAvatar'
-import { truncateAddress } from '@/lib/format'
+import { formatAddress } from '@/lib/address'
 
 export interface AssetInputValue {
   asset: string
@@ -110,7 +110,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
                     {selectedToken.symbol}
                   </span>
                   <span className="text-ash text-xs font-mono ml-auto hidden sm:block">
-                    {truncateAddress(selectedToken.addresses[NETWORK] ?? '')}
+                    {formatAddress(selectedToken.addresses[NETWORK] ?? '')}
                   </span>
                 </>
               ) : isCustom && value.asset ? (
@@ -119,7 +119,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
                     ?
                   </div>
                   <span className="text-chalk font-mono text-xs truncate">
-                    {truncateAddress(value.asset)}
+                    {formatAddress(value.asset)}
                   </span>
                 </>
               ) : (

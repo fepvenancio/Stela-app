@@ -16,6 +16,8 @@ export async function processWebhookEvent(event: WebhookEvent, queries: D1Querie
       return handleRedeemed(event, queries)
     case 'transfer_single':
       return handleTransferSingle(event, queries)
+    default:
+      console.warn(`Unknown event type: ${event.event_type}`)
   }
 }
 
