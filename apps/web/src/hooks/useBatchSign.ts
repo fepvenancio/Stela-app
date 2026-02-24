@@ -61,13 +61,16 @@ export function useBatchSign() {
         }
       }
 
-      // Build one approve call per unique token
+      // Build one approve call per unique token.
+      // Use u128::MAX so the approve doesn't overwrite any existing collateral
+      // allowance the user may have as a borrower (ERC20 approve is a SET, not additive).
+      const U128_MAX = (1n << 128n) - 1n
       const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-      for (const [tokenAddress, totalAmount] of approvalMap) {
+      for (const [tokenAddress] of approvalMap) {
         approvals.push({
           contractAddress: tokenAddress,
           entrypoint: 'approve',
-          calldata: [CONTRACT_ADDRESS, ...toU256(totalAmount)],
+          calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
         })
       }
 
