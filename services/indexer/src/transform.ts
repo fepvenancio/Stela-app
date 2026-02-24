@@ -1,4 +1,4 @@
-import { RpcProvider, hash } from 'starknet'
+import { RpcProvider, hash, addAddressPadding } from 'starknet'
 import {
   inscriptionIdToHex,
   fromU256,
@@ -32,7 +32,7 @@ export function parseAssetArray(
   const assets: ParsedAsset[] = []
 
   for (let i = 0; i < count; i++) {
-    const address = calldata[pos]
+    const address = addAddressPadding(calldata[pos])
     const typeEnum = Number(BigInt(calldata[pos + 1]))
     const valueLow = BigInt(calldata[pos + 2])
     const valueHigh = BigInt(calldata[pos + 3])

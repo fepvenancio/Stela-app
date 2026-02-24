@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from 'react'
 import { useSendTransaction, useAccount } from '@starknet-react/core'
 import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
-import { RpcProvider } from 'starknet'
+import { RpcProvider, addAddressPadding } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
@@ -53,8 +53,11 @@ export function useBatchSign() {
           if (totalValue <= 0n) continue
           // Ceiling division: ceil(value * bps / 10000)
           const amount = (totalValue * BigInt(item.bps) + 9999n) / 10000n
-          const existing = approvalMap.get(asset.address) ?? 0n
-          approvalMap.set(asset.address, existing + amount)
+          // Normalize address to avoid duplicate approves for the same token
+          // (D1 may store addresses with inconsistent zero-padding)
+          const addr = addAddressPadding(asset.address)
+          const existing = approvalMap.get(addr) ?? 0n
+          approvalMap.set(addr, existing + amount)
         }
       }
 

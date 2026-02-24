@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { RpcProvider } from 'starknet'
+import { RpcProvider, addAddressPadding } from 'starknet'
 import { InscriptionClient, parseEvents } from '@fepvenancio/stela-sdk'
 import type { RawEvent, StelaEvent } from '@fepvenancio/stela-sdk'
 import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
@@ -184,7 +184,7 @@ async function handleCreated(
           inscription_id: idHex,
           asset_role: role,
           asset_index: i,
-          asset_address: items[i].asset_address,
+          asset_address: addAddressPadding(items[i].asset_address),
           asset_type: items[i].asset_type,
           value: items[i].value,
           token_id: items[i].token_id ?? '0',
