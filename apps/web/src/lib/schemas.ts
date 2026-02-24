@@ -22,3 +22,21 @@ export const inscriptionIdSchema = z.object({
 export const addressSchema = z.object({
   address: hex,
 })
+
+/** Asset shape for create-inscription sync */
+const syncAsset = z.object({
+  asset_address: z.string(),
+  asset_type: z.string(),
+  value: z.string(),
+  token_id: z.string().optional().default('0'),
+})
+
+/** POST /api/sync request body */
+export const syncRequestSchema = z.object({
+  tx_hash: hex,
+  assets: z.object({
+    debt: z.array(syncAsset),
+    interest: z.array(syncAsset),
+    collateral: z.array(syncAsset),
+  }).optional(),
+})

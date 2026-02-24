@@ -7,6 +7,7 @@ import { RpcProvider } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
+import { useSync } from './useSync'
 
 function useInscriptionClient() {
   return useMemo(
@@ -33,6 +34,7 @@ export function useSignInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
   const client = useInscriptionClient()
+  const { sync } = useSync()
 
   const sign = useCallback(
     async (bps: number, debtAssets?: DebtAssetInfo[]) => {
@@ -60,9 +62,9 @@ export function useSignInscription(inscriptionId: string) {
       }
 
       const signCall = client.buildSignInscription(BigInt(inscriptionId), BigInt(bps))
-      await sendTxWithToast(sendAsync, [...approvals, signCall], 'Inscription signed')
+      await sendTxWithToast(sendAsync, [...approvals, signCall], 'Inscription signed', (txHash) => sync(txHash))
     },
-    [address, status, inscriptionId, sendAsync, client],
+    [address, status, inscriptionId, sendAsync, client, sync],
   )
 
   return { sign, isPending }
@@ -76,6 +78,7 @@ export function useRepayInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
   const client = useInscriptionClient()
+  const { sync } = useSync()
 
   const repay = useCallback(async (debtAssets?: DebtAssetInfo[], interestAssets?: DebtAssetInfo[]) => {
     ensureStarknetContext({ address, status })
@@ -95,8 +98,8 @@ export function useRepayInscription(inscriptionId: string) {
     }
 
     const repayCall = client.buildRepay(BigInt(inscriptionId))
-    await sendTxWithToast(sendAsync, [...approvals, repayCall], 'Inscription repaid')
-  }, [address, status, inscriptionId, sendAsync, client])
+    await sendTxWithToast(sendAsync, [...approvals, repayCall], 'Inscription repaid', (txHash) => sync(txHash))
+  }, [address, status, inscriptionId, sendAsync, client, sync])
 
   return { repay, isPending }
 }
@@ -108,12 +111,13 @@ export function useCancelInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
   const client = useInscriptionClient()
+  const { sync } = useSync()
 
   const cancel = useCallback(async () => {
     ensureStarknetContext({ address, status })
     const call = client.buildCancelInscription(BigInt(inscriptionId))
-    await sendTxWithToast(sendAsync, [call], 'Inscription cancelled')
-  }, [address, status, inscriptionId, sendAsync, client])
+    await sendTxWithToast(sendAsync, [call], 'Inscription cancelled', (txHash) => sync(txHash))
+  }, [address, status, inscriptionId, sendAsync, client, sync])
 
   return { cancel, isPending }
 }
@@ -125,12 +129,13 @@ export function useLiquidateInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
   const client = useInscriptionClient()
+  const { sync } = useSync()
 
   const liquidate = useCallback(async () => {
     ensureStarknetContext({ address, status })
     const call = client.buildLiquidate(BigInt(inscriptionId))
-    await sendTxWithToast(sendAsync, [call], 'Inscription liquidated')
-  }, [address, status, inscriptionId, sendAsync, client])
+    await sendTxWithToast(sendAsync, [call], 'Inscription liquidated', (txHash) => sync(txHash))
+  }, [address, status, inscriptionId, sendAsync, client, sync])
 
   return { liquidate, isPending }
 }
@@ -142,12 +147,13 @@ export function useRedeemShares(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
   const client = useInscriptionClient()
+  const { sync } = useSync()
 
   const redeem = useCallback(async (shares: bigint) => {
     ensureStarknetContext({ address, status })
     const call = client.buildRedeem(BigInt(inscriptionId), shares)
-    await sendTxWithToast(sendAsync, [call], 'Shares redeemed')
-  }, [address, status, inscriptionId, sendAsync, client])
+    await sendTxWithToast(sendAsync, [call], 'Shares redeemed', (txHash) => sync(txHash))
+  }, [address, status, inscriptionId, sendAsync, client, sync])
 
   return { redeem, isPending }
 }

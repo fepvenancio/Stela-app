@@ -63,6 +63,12 @@ export function useFetchApi<T>(
     return () => clearInterval(id)
   }, [refreshInterval, url, fetchData])
 
+  useEffect(() => {
+    const onSync = () => { fetchData() }
+    window.addEventListener('stela:sync', onSync)
+    return () => window.removeEventListener('stela:sync', onSync)
+  }, [fetchData])
+
   return { ...state, refetch: fetchData }
 }
 

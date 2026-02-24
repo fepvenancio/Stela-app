@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTimestamp } from '@/lib/format'
+import { useSync } from '@/hooks/useSync'
 
 const emptyAsset = (): AssetInputValue => ({
   asset: '',
@@ -153,6 +154,7 @@ export default function CreatePage() {
 
   const [showErrors, setShowErrors] = useState(false)
   const { balances } = useTokenBalances()
+  const { sync } = useSync()
 
   const hasDebt = debtAssets.some((a) => a.asset)
   const hasCollateral = collateralAssets.some((a) => a.asset)
@@ -239,6 +241,23 @@ export default function CreatePage() {
     try {
       const result = await sendAsync([...approvals, createCall])
       toast.success('Inscription created', { description: result.transaction_hash })
+
+      // Sync D1 immediately — fire-and-forget
+      const toSyncAssets = (inputs: AssetInputValue[]) =>
+        inputs
+          .filter((a) => a.asset)
+          .map((a) => ({
+            asset_address: a.asset,
+            asset_type: a.asset_type,
+            value: a.value ? parseAmount(a.value, a.decimals).toString() : '0',
+            token_id: a.token_id || '0',
+          }))
+
+      sync(result.transaction_hash, {
+        debt: toSyncAssets(debtAssets),
+        interest: toSyncAssets(interestAssets),
+        collateral: toSyncAssets(collateralAssets),
+      }).catch(() => {})
     } catch (err: unknown) {
       toast.error('Failed to create inscription', { description: getErrorMessage(err) })
     }
