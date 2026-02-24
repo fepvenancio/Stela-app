@@ -193,7 +193,10 @@ export default function CreatePage() {
     setShowErrors(true)
     if (!isValid) return
 
-    // Build ERC20 approval calls for collateral assets the borrower is committing.
+    // Approve collateral tokens to the Stela contract. Use u128::MAX so the
+    // borrower's allowance isn't consumed by a single inscription — subsequent
+    // inscriptions (and batch-sign by lenders) reuse the same approval.
+    const U128_MAX = (1n << 128n) - 1n
     const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
     const assetsToApprove = collateralAssets
 
@@ -205,7 +208,7 @@ export default function CreatePage() {
       approvals.push({
         contractAddress: asset.asset,
         entrypoint: 'approve',
-        calldata: [CONTRACT_ADDRESS, ...toU256(rawValue)],
+        calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
       })
     }
 
