@@ -161,7 +161,7 @@ export default function CreatePage() {
   const hasDuration = Boolean(duration && Number(duration) > 0)
   const isValid = hasDebt && hasCollateral && hasDuration
 
-  // ROI Math
+  // ROI Math — only meaningful when debt and interest are the same token
   const roiInfo = useMemo(() => {
     const debt = debtAssets.filter((a) => a.asset && a.asset_type === 'ERC20')
     const interest = interestAssets.filter((a) => a.asset && a.asset_type === 'ERC20')
@@ -169,6 +169,9 @@ export default function CreatePage() {
     if (debt.length === 1 && interest.length === 1) {
       const debtToken = findTokenByAddress(debt[0].asset)
       const intToken = findTokenByAddress(interest[0].asset)
+
+      // Skip yield calculation for different tokens — no price oracle
+      if (!debtToken || !intToken || debtToken.symbol !== intToken.symbol) return null
 
       const dVal = debt[0].value ? parseAmount(debt[0].value, debt[0].decimals) : 0n
       const iVal = interest[0].value ? parseAmount(interest[0].value, interest[0].decimals) : 0n
@@ -178,9 +181,7 @@ export default function CreatePage() {
         const yieldPct = Number(yieldPctBig) / 100
         return {
           yieldPct: yieldPct.toFixed(2),
-          symbol: debtToken?.symbol || '?',
-          intSymbol: intToken?.symbol || '?',
-          isSameToken: debtToken?.symbol === intToken?.symbol,
+          symbol: debtToken.symbol,
         }
       }
     }
@@ -415,13 +416,8 @@ export default function CreatePage() {
                     <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Projected Yield for Lender</span>
                     <div className="flex items-baseline gap-2">
                       <span className="text-4xl font-display text-star">+{roiInfo.yieldPct}%</span>
-                      <span className="text-dust text-sm">in {roiInfo.intSymbol}</span>
+                      <span className="text-dust text-sm">in {roiInfo.symbol}</span>
                     </div>
-                    {!roiInfo.isSameToken && (
-                      <p className="text-[10px] text-ash uppercase tracking-tight pt-1">
-                        Note: Interest paid in {roiInfo.intSymbol} for {roiInfo.symbol} debt.
-                      </p>
-                    )}
                   </div>
                   <div className="flex flex-col gap-2 min-w-[140px]">
                     <div className="bg-star/10 px-4 py-2 rounded-full border border-star/20 text-center">
