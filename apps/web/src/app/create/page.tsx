@@ -259,6 +259,18 @@ export default function CreatePage() {
         interest: toSyncAssets(interestAssets),
         collateral: toSyncAssets(collateralAssets),
       }).catch(() => {})
+
+      // Reset form after successful creation
+      setDebtAssets([emptyAsset()])
+      setInterestAssets([emptyAsset()])
+      setCollateralAssets([emptyAsset()])
+      setDurationValue('1')
+      setDurationUnit('86400')
+      setDeadlinePreset('86400')
+      setCustomDeadline('')
+      setUseCustomDeadline(false)
+      setMultiLender(false)
+      setShowErrors(false)
     } catch (err: unknown) {
       toast.error('Failed to create inscription', { description: getErrorMessage(err) })
     }

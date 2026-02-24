@@ -2,16 +2,22 @@
 
 import { useBatchSelection } from '@/hooks/useBatchSelection'
 import { useBatchSign, type BatchSignItem } from '@/hooks/useBatchSign'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 export function BatchLendBar() {
   const { selected, clearAll, count } = useBatchSelection()
   const { batchSign, isPending } = useBatchSign()
+  const { balances } = useTokenBalances()
 
   if (count === 0) return null
 
   const handleLend = async () => {
     const items: BatchSignItem[] = []
+    // Aggregate required amounts per token to check balances
+    const requiredMap = new Map<string, bigint>()
+
     for (const [, inscription] of selected) {
       const debtAssets = inscription.assets
         .filter((a) => a.asset_role === 'debt')
@@ -21,7 +27,25 @@ export function BatchLendBar() {
         bps: 10000,
         debtAssets,
       })
+      for (const asset of debtAssets) {
+        const amount = BigInt(asset.value || '0')
+        if (amount <= 0n) continue
+        const key = asset.address.toLowerCase()
+        requiredMap.set(key, (requiredMap.get(key) ?? 0n) + amount)
+      }
     }
+
+    // Check if user has enough of each token
+    for (const [tokenAddr, required] of requiredMap) {
+      const available = balances.get(tokenAddr) ?? 0n
+      if (available < required) {
+        toast.error('Insufficient balance', {
+          description: `You need more tokens to fund all ${count} selected inscriptions. Try selecting fewer.`,
+        })
+        return
+      }
+    }
+
     await batchSign(items)
     clearAll()
   }

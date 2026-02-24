@@ -7,6 +7,7 @@ import { RpcProvider } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { sendTxWithToast } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
+import { useSync } from './useSync'
 
 export interface BatchSignItem {
   inscriptionId: string
@@ -21,6 +22,7 @@ export interface BatchSignItem {
 export function useBatchSign() {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
+  const { sync } = useSync()
 
   const client = useMemo(
     () =>
@@ -75,9 +77,10 @@ export function useBatchSign() {
         sendAsync,
         [...approvals, ...signCalls],
         `${items.length} inscription${items.length > 1 ? 's' : ''} signed`,
+        (txHash) => sync(txHash),
       )
     },
-    [address, status, sendAsync, client],
+    [address, status, sendAsync, client, sync],
   )
 
   return { batchSign, isPending }
