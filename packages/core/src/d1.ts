@@ -70,7 +70,13 @@ export function createD1Queries(db: D1Database) {
       const conditions: string[] = []
       const params: unknown[] = []
 
-      if (status && isValidStatus(status)) {
+      if (status === 'expired') {
+        const nowSeconds = Math.floor(Date.now() / 1000)
+        conditions.push(
+          '((status = ? AND CAST(deadline AS INTEGER) < ?) OR (status = ? AND (CAST(signed_at AS INTEGER) + CAST(duration AS INTEGER)) < ?))'
+        )
+        params.push('open', nowSeconds, 'filled', nowSeconds)
+      } else if (status && isValidStatus(status)) {
         conditions.push('status = ?')
         params.push(status)
       }

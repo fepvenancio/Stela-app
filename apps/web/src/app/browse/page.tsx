@@ -25,23 +25,15 @@ function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
   const { selectionMode, setSelectionMode, toggle, isSelected, count } = useBatchSelection()
 
-  // 'expired' is never stored in D1 — fetch all and filter client-side
-  const isClientFilter = statusFilter === 'expired'
-  const apiStatus = isClientFilter ? '' : statusFilter
-
-  const { data: rawData, isLoading, error } = useInscriptions({ status: apiStatus })
+  const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
 
   // Enrich all rows with client-side computed status (handles deadline expiry)
   const data = useMemo(() => {
-    const enriched = rawData.map((row) => ({
+    return rawData.map((row) => ({
       ...row,
       status: enrichStatus(row),
     }))
-    if (isClientFilter) {
-      return enriched.filter((row) => row.status === 'expired')
-    }
-    return enriched
-  }, [rawData, isClientFilter])
+  }, [rawData])
 
   return (
     <div className="animate-fade-up">

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { findTokenByAddress, STATUS_LABELS } from '@stela/core'
+import { findTokenByAddress, STATUS_LABELS } from '@fepvenancio/stela-sdk'
 import { formatAddress } from '@/lib/address'
 import { formatTokenValue, formatDuration } from '@/lib/format'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'

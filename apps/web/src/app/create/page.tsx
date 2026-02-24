@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
-import { toU256, ASSET_TYPE_ENUM, findTokenByAddress } from '@stela/core'
-import type { AssetType } from '@stela/core'
-import { CONTRACT_ADDRESS } from '@/lib/config'
+import { InscriptionClient, toU256, findTokenByAddress } from '@fepvenancio/stela-sdk'
+import type { Asset, AssetType } from '@fepvenancio/stela-sdk'
+import { RpcProvider } from 'starknet'
+import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { parseAmount } from '@/lib/amount'
 import { AssetInput } from '@/components/AssetInput'
 import type { AssetInputValue } from '@/components/AssetInput'
@@ -41,26 +42,6 @@ const DEADLINE_PRESETS = [
   { label: '3d', value: '259200' },
   { label: '7d', value: '604800' },
 ]
-
-function serializeAssets(assets: AssetInputValue[]): string[] {
-  const valid = assets.filter((a) => {
-    if (!a.asset) return false
-    // NFTs use token_id, fungibles must have a non-zero value
-    if (a.asset_type === 'ERC721' || a.asset_type === 'ERC1155') return true
-    const raw = a.value ? parseAmount(a.value, a.decimals) : 0n
-    return raw > 0n
-  })
-  const calldata: string[] = [String(valid.length)]
-  for (const a of valid) {
-    calldata.push(a.asset)
-    calldata.push(String(ASSET_TYPE_ENUM[a.asset_type]))
-    // Convert human-readable amount to raw value using decimals
-    const rawValue = a.value ? parseAmount(a.value, a.decimals) : 0n
-    calldata.push(...toU256(rawValue))
-    calldata.push(...toU256(BigInt(a.token_id || '0')))
-  }
-  return calldata
-}
 
 function AssetSection({
   title,
@@ -137,6 +118,15 @@ export default function CreatePage() {
   const { address } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
 
+  const client = useMemo(
+    () =>
+      new InscriptionClient({
+        stelaAddress: CONTRACT_ADDRESS,
+        provider: new RpcProvider({ nodeUrl: RPC_URL }),
+      }),
+    [],
+  )
+
   const [multiLender, setMultiLender] = useState(false)
   const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([emptyAsset()])
   const [interestAssets, setInterestAssets] = useState<AssetInputValue[]>([emptyAsset()])
@@ -182,7 +172,8 @@ export default function CreatePage() {
       const iVal = interest[0].value ? parseAmount(interest[0].value, interest[0].decimals) : 0n
 
       if (dVal > 0n) {
-        const yieldPct = (Number(iVal) * 100) / Number(dVal)
+        const yieldPctBig = (iVal * 10000n) / dVal
+        const yieldPct = Number(yieldPctBig) / 100
         return {
           yieldPct: yieldPct.toFixed(2),
           symbol: debtToken?.symbol || '?',
@@ -215,25 +206,38 @@ export default function CreatePage() {
       })
     }
 
-    const calldata = [
-      '1', // is_borrow = true (borrower flow only)
-      ...serializeAssets(debtAssets),
-      ...serializeAssets(interestAssets),
-      ...serializeAssets(collateralAssets),
-      String(duration || '0'),
-      String(deadline || '0'),
-      multiLender ? '1' : '0',
-    ]
+    const toSdkAssets = (inputs: AssetInputValue[]): Asset[] =>
+      inputs
+        .filter((a) => {
+          if (!a.asset) return false
+          if (a.asset_type === 'ERC721' || a.asset_type === 'ERC1155') return true
+          const raw = a.value ? parseAmount(a.value, a.decimals) : 0n
+          return raw > 0n
+        })
+        .map((a) => ({
+          asset_address: a.asset,
+          asset_type: a.asset_type as AssetType,
+          value:
+            a.asset_type === 'ERC721'
+              ? 0n
+              : a.value
+                ? parseAmount(a.value, a.decimals)
+                : 0n,
+          token_id: BigInt(a.token_id || '0'),
+        }))
+
+    const createCall = client.buildCreateInscription({
+      is_borrow: true,
+      debt_assets: toSdkAssets(debtAssets),
+      interest_assets: toSdkAssets(interestAssets),
+      collateral_assets: toSdkAssets(collateralAssets),
+      duration: BigInt(duration || '0'),
+      deadline: BigInt(deadline || '0'),
+      multi_lender: multiLender,
+    })
 
     try {
-      const result = await sendAsync([
-        ...approvals,
-        {
-          contractAddress: CONTRACT_ADDRESS,
-          entrypoint: 'create_inscription',
-          calldata,
-        },
-      ])
+      const result = await sendAsync([...approvals, createCall])
       toast.success('Inscription created', { description: result.transaction_hash })
     } catch (err: unknown) {
       toast.error('Failed to create inscription', { description: getErrorMessage(err) })

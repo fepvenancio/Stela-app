@@ -1,4 +1,4 @@
-import type { InscriptionStatus } from '@stela/core'
+import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 
 /** Row shape returned by the /api/inscriptions list endpoint */
 export interface InscriptionRow {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAccount } from '@starknet-react/core'
-import type { InscriptionStatus } from '@stela/core'
+import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 import {
   useSignInscription,
   useRepayInscription,
@@ -17,6 +17,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTokenValue } from '@/lib/format'
+import { parseAmount } from '@/lib/amount'
 
 interface InscriptionActionsProps {
   inscriptionId: string
@@ -109,17 +110,17 @@ export function InscriptionActions({
         <form
           onSubmit={async (e) => {
             e.preventDefault()
-            const amount = Number(lendAmount)
-            if (!amount || amount <= 0) {
-              toast.error('Invalid amount', { description: 'Enter a positive number' })
-              return
-            }
-            const total = totalDebtFormatted ? Number(totalDebtFormatted) : 0
-            if (total <= 0) {
+            const totalRaw = BigInt(debtAssets[0]?.value || '0')
+            if (totalRaw <= 0n) {
               toast.error('Cannot determine debt total')
               return
             }
-            const bps = Math.floor((amount * 10000) / total)
+            const lendRaw = parseAmount(lendAmount, debtDecimals)
+            if (lendRaw <= 0n) {
+              toast.error('Invalid amount', { description: 'Enter a positive number' })
+              return
+            }
+            const bps = Number((lendRaw * 10000n) / totalRaw)
             if (bps < 1) {
               toast.error('Amount too small', { description: 'Must represent at least 0.01% of total debt' })
               return

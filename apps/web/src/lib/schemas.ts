@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { VALID_STATUSES } from '@stela/core'
-import type { InscriptionStatus } from '@stela/core'
+import { VALID_STATUSES } from '@fepvenancio/stela-sdk'
+import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 
 /** Hex string pattern matching StarkNet addresses and IDs */
 const hex = z.string().regex(/^0x[0-9a-fA-F]{1,64}$/, 'Invalid hex string')

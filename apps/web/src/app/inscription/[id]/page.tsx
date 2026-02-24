@@ -10,8 +10,8 @@ import { InscriptionActions } from '@/components/InscriptionActions'
 import { AssetBadge } from '@/components/AssetBadge'
 import { computeStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
-import { findTokenByAddress, STATUS_LABELS } from '@stela/core'
-import type { InscriptionStatus } from '@stela/core'
+import { findTokenByAddress, STATUS_LABELS } from '@fepvenancio/stela-sdk'
+import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -66,7 +66,8 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
             const dVal = BigInt(debt[0].value || '0')
             const iVal = BigInt(interest[0].value || '0')
             if (dVal > 0n) {
-                const yieldPct = (Number(iVal) * 100) / Number(dVal)
+                const yieldBps = (iVal * 10000n) / dVal
+                const yieldPct = Number(yieldBps) / 100
                 return { yieldPct: yieldPct.toFixed(2), symbol: debtToken.symbol }
             }
         }

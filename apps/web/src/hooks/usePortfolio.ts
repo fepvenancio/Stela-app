@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useFetchApi, buildApiUrl } from './api'
-import { findTokenByAddress } from '@stela/core'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { addressesEqual } from '@/lib/address'
 import { enrichStatus } from '@/lib/status'
 import type { InscriptionRow, AssetRow, ApiListResponse } from '@/types/api'

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import type { TokenInfo } from '@stela/core'
-import { getTokensForNetwork } from '@stela/core'
+import type { TokenInfo } from '@fepvenancio/stela-sdk'
+import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
 import { formatTokenValue } from '@/lib/format'
 import { formatAddress } from '@/lib/address'

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { findTokenByAddress } from '@stela/core'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
 import { addressSchema } from '@/lib/schemas'
 

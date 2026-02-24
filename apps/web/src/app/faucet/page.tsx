@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
-import { toU256 } from '@stela/core'
+import { toU256 } from '@fepvenancio/stela-sdk'
 import { parseAmount } from '@/lib/amount'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'

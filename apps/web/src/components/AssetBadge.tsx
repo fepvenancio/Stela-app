@@ -1,6 +1,6 @@
 'use client'
 
-import { findTokenByAddress } from '@stela/core'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatAddress, normalizeAddress } from '@/lib/address'

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import type { TokenInfo } from '@stela/core'
-import { findTokenByAddress } from '@stela/core'
+import type { TokenInfo } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 
 /** Generate a deterministic color from a string */
 export function stringToColor(str: string): string {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import type { AssetType, TokenInfo } from '@stela/core'
-import { getTokensForNetwork } from '@stela/core'
+import type { AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
+import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'

@@ -1,6 +1,6 @@
 import { computeStatus as sdkComputeStatus } from '@fepvenancio/stela-sdk'
 import type { StatusInput } from '@fepvenancio/stela-sdk'
-import type { InscriptionStatus } from '@stela/core'
+import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 
 export type { StatusInput }
 
