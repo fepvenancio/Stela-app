@@ -210,6 +210,9 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                        debtAssets={assets
                          ?.filter((r) => r.asset_role === 'debt')
                          .map((r) => ({ address: r.asset_address, value: r.value ?? '0' })) ?? []}
+                       interestAssets={assets
+                         ?.filter((r) => r.asset_role === 'interest')
+                         .map((r) => ({ address: r.asset_address, value: r.value ?? '0' })) ?? []}
                        debtDecimals={(() => {
                          const da = assets?.filter((r) => r.asset_role === 'debt')
                          const token = da?.[0] ? findTokenByAddress(da[0].asset_address) : undefined

@@ -25,13 +25,14 @@ interface InscriptionActionsProps {
   shares: bigint
   multiLender: boolean
   debtAssets: DebtAssetInfo[]
+  interestAssets?: DebtAssetInfo[]
   debtDecimals?: number
   wasSigned: boolean
 }
 
 export function InscriptionActions({
   inscriptionId, status, isOwner, shares,
-  multiLender, debtAssets, debtDecimals = 18, wasSigned,
+  multiLender, debtAssets, interestAssets, debtDecimals = 18, wasSigned,
 }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [lendAmount, setLendAmount] = useState('')
@@ -165,7 +166,7 @@ export function InscriptionActions({
            <span className="text-[10px] text-aurora uppercase tracking-widest font-bold">Repayment Required</span>
            <p className="text-xs text-dust mt-1 text-balance">To release your collateral, you must repay the total debt with interest.</p>
         </div>
-        <Button variant="aurora" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(16,185,129,0.15)]" onClick={repay} disabled={isPending}>
+        <Button variant="aurora" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(16,185,129,0.15)]" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
           {repayPending ? 'Repaying...' : 'Repay Inscription'}
         </Button>
       </div>

@@ -69,17 +69,33 @@ export function useSignInscription(inscriptionId: string) {
 }
 
 /**
- * useRepayInscription - sends repay tx, shows toast.
+ * useRepayInscription - builds ERC20 approvals for debt + interest tokens,
+ * then sends [approve..., repay] as an atomic multicall.
  */
 export function useRepayInscription(inscriptionId: string) {
   const { address, status } = useAccount()
   const { sendAsync, isPending } = useSendTransaction({})
   const client = useInscriptionClient()
 
-  const repay = useCallback(async () => {
+  const repay = useCallback(async (debtAssets?: DebtAssetInfo[], interestAssets?: DebtAssetInfo[]) => {
     ensureStarknetContext({ address, status })
-    const call = client.buildRepay(BigInt(inscriptionId))
-    await sendTxWithToast(sendAsync, [call], 'Inscription repaid')
+
+    // Build ERC20 approval calls for debt + interest tokens the borrower must return
+    const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+    const allAssets = [...(debtAssets ?? []), ...(interestAssets ?? [])]
+
+    for (const asset of allAssets) {
+      const amount = BigInt(asset.value || '0')
+      if (amount <= 0n) continue
+      approvals.push({
+        contractAddress: asset.address,
+        entrypoint: 'approve',
+        calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+      })
+    }
+
+    const repayCall = client.buildRepay(BigInt(inscriptionId))
+    await sendTxWithToast(sendAsync, [...approvals, repayCall], 'Inscription repaid')
   }, [address, status, inscriptionId, sendAsync, client])
 
   return { repay, isPending }
