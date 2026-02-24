@@ -2,19 +2,15 @@
 
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { LayoutGrid, List, Search, ArrowUpDown } from 'lucide-react'
+import { Search, ArrowUpDown } from 'lucide-react'
 
 export type SortOption = 'newest' | 'apy' | 'duration' | 'debt_asc' | 'debt_desc'
-export type ViewMode = 'grid' | 'list'
 
 interface BrowseControlsProps {
   search: string
   onSearchChange: (v: string) => void
   sortBy: SortOption
   onSortChange: (v: SortOption) => void
-  viewMode: ViewMode
-  onViewModeChange: (v: ViewMode) => void
 }
 
 export function BrowseControls({
@@ -22,8 +18,6 @@ export function BrowseControls({
   onSearchChange,
   sortBy,
   onSortChange,
-  viewMode,
-  onViewModeChange,
 }: BrowseControlsProps) {
   return (
     <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
@@ -53,20 +47,6 @@ export function BrowseControls({
             </SelectContent>
           </Select>
         </div>
-
-        <ToggleGroup 
-          type="single" 
-          value={viewMode} 
-          onValueChange={(v) => v && onViewModeChange(v as ViewMode)}
-          className="bg-surface/40 border border-edge/50 p-1 rounded-xl"
-        >
-          <ToggleGroupItem value="grid" className="rounded-lg data-[state=on]:bg-star/10 data-[state=on]:text-star px-2.5 h-8">
-            <LayoutGrid className="w-4 h-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="list" className="rounded-lg data-[state=on]:bg-star/10 data-[state=on]:text-star px-2.5 h-8">
-            <List className="w-4 h-4" />
-          </ToggleGroupItem>
-        </ToggleGroup>
       </div>
     </div>
   )

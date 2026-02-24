@@ -3,16 +3,14 @@
 import { useState, useMemo } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
-import { InscriptionCard } from '@/components/InscriptionCard'
-import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
-import { BrowseControls, type SortOption, type ViewMode } from '@/components/BrowseControls'
+import { BrowseControls, type SortOption } from '@/components/BrowseControls'
+import { SelectionActionBar } from '@/components/SelectionActionBar'
+import { LendReviewModal } from '@/components/LendReviewModal'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { enrichStatus } from '@/lib/status'
 import { addressesEqual } from '@/lib/address'
 import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
-import { BatchLendBar } from '@/components/BatchLendBar'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 
@@ -30,10 +28,10 @@ function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
-  
+  const [reviewOpen, setReviewOpen] = useState(false)
+
   const { address } = useAccount()
-  const { selectionMode, setSelectionMode, toggle, isSelected, count } = useBatchSelection()
+  const { toggle, isSelected, count } = useBatchSelection()
 
   const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
 
@@ -48,11 +46,8 @@ function BrowseContent() {
     if (search.trim()) {
       const q = search.toLowerCase()
       results = results.filter((item) => {
-        // Check ID
         if (item.id.toLowerCase().includes(q)) return true
-        // Check Creator
         if (item.creator.toLowerCase().includes(q)) return true
-        // Check Assets (Symbol or Address)
         return item.assets?.some((a) => {
           const token = findTokenByAddress(a.asset_address)
           return (
@@ -101,44 +96,48 @@ function BrowseContent() {
 
       {/* Filters & Controls */}
       <div className="space-y-6 mb-8">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2">
-            {FILTERS.map(({ key, label }) => (
-              <ToggleGroupItem
-                key={key}
-                value={key}
-                className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
-              >
-                {label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-          
-          <Button
-            variant={selectionMode ? 'gold' : 'outline'}
-            size="sm"
-            onClick={() => setSelectionMode(!selectionMode)}
-            className="rounded-xl"
-          >
-            {selectionMode ? 'Cancel Selection' : 'Batch Select'}
-          </Button>
-        </div>
+        <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2">
+          {FILTERS.map(({ key, label }) => (
+            <ToggleGroupItem
+              key={key}
+              value={key}
+              className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
+            >
+              {label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
 
-        <BrowseControls 
+        <BrowseControls
           search={search}
           onSearchChange={setSearch}
           sortBy={sortBy}
           onSortChange={setSortBy}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
         />
       </div>
 
+      {/* Selection Action Bar */}
+      <SelectionActionBar onReview={() => setReviewOpen(true)} />
+
+      {/* Table Header (hidden on mobile) */}
+      {!isLoading && !error && data.length > 0 && (
+        <div className="hidden md:flex items-center gap-4 px-3 pb-2 text-[9px] text-dust uppercase tracking-widest font-semibold">
+          <div className="shrink-0 w-5" />
+          <div className="grid grid-cols-12 gap-4 flex-1">
+            <div className="col-span-2">Status</div>
+            <div className="col-span-3">Debt</div>
+            <div className="col-span-2">Interest</div>
+            <div className="col-span-3">Collateral</div>
+            <div className="col-span-2 text-right">Duration</div>
+          </div>
+        </div>
+      )}
+
       {/* Loading */}
       {isLoading && (
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
+        <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            viewMode === 'grid' ? <InscriptionCardSkeleton key={i} /> : <div key={i} className="h-20 w-full bg-surface/20 animate-pulse rounded-xl" />
+            <div key={i} className="h-20 w-full bg-surface/20 animate-pulse rounded-xl" />
           ))}
         </div>
       )}
@@ -152,37 +151,31 @@ function BrowseContent() {
 
       {/* Content */}
       {!isLoading && !error && data.length > 0 && (
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+        <div className="flex flex-col gap-3">
           {data.map((a, i) => {
             const enrichedStatus = a.status
             const isOwn = address && a.creator && addressesEqual(address, a.creator)
-            const canSelect = selectionMode && enrichedStatus === 'open' && !a.multi_lender && !isOwn
-            
-            const commonProps = {
-              id: a.id,
-              status: enrichedStatus,
-              creator: a.creator,
-              multiLender: a.multi_lender,
-              duration: a.duration,
-              assets: a.assets ?? [],
-              selectable: canSelect,
-              selected: canSelect && isSelected(a.id),
-              onSelect: canSelect ? () => {
-                if (!isSelected(a.id) && count >= MAX_SELECTIONS) {
-                  toast.warning(`Maximum ${MAX_SELECTIONS} inscriptions per batch`)
-                  return
-                }
-                toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
-              } : undefined
-            }
+            const canSelect = enrichedStatus === 'open' && !a.multi_lender && !isOwn
 
             return (
               <div key={a.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
-                {viewMode === 'grid' ? (
-                  <InscriptionCard {...commonProps} />
-                ) : (
-                  <InscriptionListRow {...commonProps} />
-                )}
+                <InscriptionListRow
+                  id={a.id}
+                  status={enrichedStatus}
+                  creator={a.creator}
+                  multiLender={a.multi_lender}
+                  duration={a.duration}
+                  assets={a.assets ?? []}
+                  selectable={canSelect}
+                  selected={canSelect && isSelected(a.id)}
+                  onSelect={canSelect ? () => {
+                    if (!isSelected(a.id) && count >= MAX_SELECTIONS) {
+                      toast.warning(`Maximum ${MAX_SELECTIONS} inscriptions per batch`)
+                      return
+                    }
+                    toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
+                  } : undefined}
+                />
               </div>
             )
           })}
@@ -202,7 +195,8 @@ function BrowseContent() {
         </div>
       )}
 
-      <BatchLendBar />
+      {/* Lend Review Modal */}
+      <LendReviewModal open={reviewOpen} onOpenChange={setReviewOpen} />
     </div>
   )
 }

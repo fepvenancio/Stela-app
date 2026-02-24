@@ -10,8 +10,6 @@ export interface SelectedInscription {
 }
 
 interface BatchSelectionContextValue {
-  selectionMode: boolean
-  setSelectionMode: (v: boolean) => void
   selected: Map<string, SelectedInscription>
   toggle: (item: SelectedInscription) => void
   isSelected: (id: string) => boolean
@@ -24,7 +22,6 @@ const BatchSelectionContext = createContext<BatchSelectionContextValue | null>(n
 const MAX_SELECTIONS = 10
 
 export function BatchSelectionProvider({ children }: { children: ReactNode }) {
-  const [selectionMode, setSelectionMode] = useState(false)
   const [selected, setSelected] = useState<Map<string, SelectedInscription>>(new Map())
 
   const toggle = useCallback((item: SelectedInscription) => {
@@ -46,16 +43,11 @@ export function BatchSelectionProvider({ children }: { children: ReactNode }) {
     setSelected(new Map())
   }, [])
 
-  const handleSetSelectionMode = useCallback((v: boolean) => {
-    setSelectionMode(v)
-    if (!v) setSelected(new Map())
-  }, [])
-
   const count = selected.size
 
   const value = useMemo(
-    () => ({ selectionMode, setSelectionMode: handleSetSelectionMode, selected, toggle, isSelected, clearAll, count }),
-    [selectionMode, handleSetSelectionMode, selected, toggle, isSelected, clearAll, count],
+    () => ({ selected, toggle, isSelected, clearAll, count }),
+    [selected, toggle, isSelected, clearAll, count],
   )
 
   return <BatchSelectionContext.Provider value={value}>{children}</BatchSelectionContext.Provider>

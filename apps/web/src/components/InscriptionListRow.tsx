@@ -62,72 +62,84 @@ export function InscriptionListRow({
   const statusKey = (status in STATUS_LABELS ? status : 'open') as BadgeVariant
   const label = STATUS_LABELS[statusKey]
 
-  const content = (
-    <div className={`group flex items-center gap-4 p-3 rounded-xl border transition-all duration-200 ${selected ? 'bg-star/5 border-star/30' : 'bg-surface/20 border-edge/50 hover:border-edge hover:bg-surface/40'}`}>
-      {selectable && (
-        <div 
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect?.(); }}
-          className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors cursor-pointer ${selected ? 'bg-star border-star' : 'border-dust/40 bg-surface/60 hover:border-star/50'}`}
-        >
-          {selected && (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-void">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
-        </div>
-      )}
+  const row = (
+    <div
+      onClick={selectable ? () => onSelect?.() : undefined}
+      className={`group flex items-center gap-4 p-3 rounded-xl border transition-all duration-200 ${
+        selectable ? 'cursor-pointer' : ''
+      } ${
+        selected
+          ? 'bg-star/5 border-star/30'
+          : 'bg-surface/20 border-edge/50 hover:border-edge hover:bg-surface/40'
+      } ${!selectable ? 'opacity-70' : ''}`}
+    >
+      {/* Checkbox column — always rendered for alignment */}
+      <div className="shrink-0 w-5 h-5 flex items-center justify-center">
+        {selectable ? (
+          <div
+            onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors cursor-pointer ${
+              selected ? 'bg-star border-star' : 'border-dust/40 bg-surface/60 hover:border-star/50'
+            }`}
+          >
+            {selected && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-void">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+        ) : (
+          <div className="w-5 h-5" />
+        )}
+      </div>
 
       <div className="grid grid-cols-12 gap-4 flex-1 items-center">
-        {/* ID & Status */}
+        {/* Status & ID */}
         <div className="col-span-2 flex flex-col gap-1">
-          <span className="font-mono text-[10px] text-ash tracking-wider uppercase">#{id.slice(2, 8)}</span>
           <Badge variant={statusKey} className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
             {label}
           </Badge>
+          <Link
+            href={`/inscription/${id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
+          >
+            #{id.slice(2, 8)}
+          </Link>
         </div>
 
         {/* Debt */}
         <div className="col-span-3 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Debt</span>
           <CompactAssetSummary assets={assets} role="debt" />
         </div>
 
         {/* Interest */}
         <div className="col-span-2 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Interest</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Interest</span>
           <CompactAssetSummary assets={assets} role="interest" />
         </div>
 
         {/* Collateral */}
         <div className="col-span-3 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Collateral</span>
           <CompactAssetSummary assets={assets} role="collateral" />
         </div>
 
         {/* Duration */}
         <div className="col-span-2 flex flex-col items-end gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Duration</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Duration</span>
           <span className="text-chalk text-xs font-medium">{formatDuration(Number(duration))}</span>
         </div>
-      </div>
-
-      <div className="shrink-0">
-        {!selectable && (
-           <div className="p-2 rounded-lg bg-surface/50 text-dust group-hover:text-star transition-colors">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-           </div>
-        )}
       </div>
     </div>
   )
 
-  if (selectable) return content
+  if (selectable) return row
 
   return (
     <Link href={`/inscription/${id}`} className="block">
-      {content}
+      {row}
     </Link>
   )
 }
