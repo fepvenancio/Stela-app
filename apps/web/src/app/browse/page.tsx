@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { InscriptionCard } from '@/components/InscriptionCard'
 import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { enrichStatus } from '@/lib/status'
+import { addressesEqual } from '@/lib/address'
 import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
 import { BatchLendBar } from '@/components/BatchLendBar'
 import { Button } from '@/components/ui/button'
@@ -23,6 +25,7 @@ const MAX_SELECTIONS = 10
 
 function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
+  const { address } = useAccount()
   const { selectionMode, setSelectionMode, toggle, isSelected, count } = useBatchSelection()
 
   const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
@@ -90,7 +93,8 @@ function BrowseContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {data.map((a, i) => {
             const enrichedStatus = a.status
-            const canSelect = selectionMode && enrichedStatus === 'open' && !a.multi_lender
+            const isOwn = address && a.creator && addressesEqual(address, a.creator)
+            const canSelect = selectionMode && enrichedStatus === 'open' && !a.multi_lender && !isOwn
             return (
               <div key={a.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
                 <InscriptionCard
