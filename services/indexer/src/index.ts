@@ -58,14 +58,22 @@ async function fetchLastBlock(): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
-// Main
+// Retry configuration
 // ---------------------------------------------------------------------------
 
-async function main() {
-  console.log('Starting Stela Apibara indexer...')
-  console.log(`Contract: ${STELA_ADDRESS}`)
-  console.log(`Webhook:  ${WEBHOOK_URL}`)
+const MAX_RETRIES = Infinity // Keep retrying forever
+const INITIAL_BACKOFF_MS = 5_000 // 5 seconds
+const MAX_BACKOFF_MS = 300_000 // 5 minutes
 
+function backoff(attempt: number): number {
+  return Math.min(INITIAL_BACKOFF_MS * Math.pow(2, attempt), MAX_BACKOFF_MS)
+}
+
+// ---------------------------------------------------------------------------
+// Main — single run attempt
+// ---------------------------------------------------------------------------
+
+async function runOnce(): Promise<void> {
   const lastBlock = await fetchLastBlock()
   const startingBlock = lastBlock + 1
   console.log(`Starting from block ${startingBlock}`)
@@ -160,6 +168,34 @@ async function main() {
 
   const indexer = createIndexer(indexerDef)
   await run(client, indexer)
+}
+
+// ---------------------------------------------------------------------------
+// Retry loop — reconnects automatically on stream failures
+// ---------------------------------------------------------------------------
+
+async function main() {
+  console.log('Starting Stela Apibara indexer...')
+  console.log(`Contract: ${STELA_ADDRESS}`)
+  console.log(`Webhook:  ${WEBHOOK_URL}`)
+
+  let attempt = 0
+
+  while (true) {
+    try {
+      await runOnce()
+      // run() resolved normally — stream ended cleanly, reconnect
+      console.warn('Stream ended, reconnecting...')
+      attempt = 0
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      const delay = backoff(attempt)
+      console.error(`Stream error (attempt ${attempt + 1}): ${msg}`)
+      console.log(`Retrying in ${Math.round(delay / 1000)}s...`)
+      await new Promise((r) => setTimeout(r, delay))
+      attempt++
+    }
+  }
 }
 
 main().catch((err) => {
