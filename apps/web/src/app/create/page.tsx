@@ -268,15 +268,20 @@ export default function CreatePage() {
         <Separator />
 
         {/* Configuration Section */}
-        <div className="bg-surface/20 border border-edge/30 rounded-3xl p-6 space-y-8">
-          <div className="grid sm:grid-cols-2 gap-8">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap">Time Specifications</span>
+            <div className="h-px w-full bg-edge/20" />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
             {/* Duration */}
-            <div className="space-y-4">
+            <div className="bg-abyss/40 border border-edge/20 rounded-2xl p-5 space-y-4">
               <div className="space-y-1">
                 <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
                   Loan Duration <span className="text-star">*</span>
                 </Label>
-                <p className="text-[10px] text-ash/60 uppercase tracking-tight">Time to repay after signing</p>
+                <p className="text-[10px] text-ash/60 uppercase tracking-tight">Repayment window</p>
               </div>
               
               <div className="flex gap-2">
@@ -284,7 +289,7 @@ export default function CreatePage() {
                   type="number"
                   value={durationValue}
                   onChange={(e) => setDurationValue(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 bg-surface/50 border-edge/50 focus:border-star"
                   placeholder="Value"
                 />
                 <ToggleGroup 
@@ -293,10 +298,10 @@ export default function CreatePage() {
                   onValueChange={(v) => v && setDurationUnit(v)}
                   variant="outline"
                   size="sm"
-                  className="bg-abyss/50 rounded-xl"
+                  className="bg-surface/50 rounded-xl border border-edge/30"
                 >
                   {DURATION_UNITS.map(u => (
-                    <ToggleGroupItem key={u.value} value={u.value} className="text-[10px] uppercase px-2">
+                    <ToggleGroupItem key={u.value} value={u.value} className="text-[10px] uppercase px-2 data-[state=on]:bg-star/20">
                       {u.label.charAt(0)}
                     </ToggleGroupItem>
                   ))}
@@ -305,12 +310,12 @@ export default function CreatePage() {
             </div>
 
             {/* Deadline */}
-            <div className="space-y-4">
+            <div className="bg-abyss/40 border border-edge/20 rounded-2xl p-5 space-y-4">
               <div className="space-y-1">
                 <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
                   Discovery Deadline
                 </Label>
-                <p className="text-[10px] text-ash/60 uppercase tracking-tight">When this offer expires</p>
+                <p className="text-[10px] text-ash/60 uppercase tracking-tight">Offer expiration</p>
               </div>
 
               {useCustomDeadline ? (
@@ -319,10 +324,10 @@ export default function CreatePage() {
                     type="number"
                     value={customDeadline}
                     onChange={(e) => setCustomDeadline(e.target.value)}
-                    className="flex-1"
+                    className="flex-1 bg-surface/50 border-edge/50 focus:border-star"
                     placeholder="Unix timestamp"
                   />
-                  <Button variant="ghost" size="sm" onClick={() => setUseCustomDeadline(false)} className="text-[10px] uppercase">Presets</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setUseCustomDeadline(false)} className="text-[10px] uppercase h-9">Presets</Button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -332,17 +337,17 @@ export default function CreatePage() {
                     onValueChange={(v) => v && setDeadlinePreset(v)}
                     variant="outline"
                     size="sm"
-                    className="bg-abyss/50 rounded-xl w-full justify-start"
+                    className="bg-surface/50 rounded-xl w-full justify-start border border-edge/30"
                   >
                     {DEADLINE_PRESETS.map(p => (
-                      <ToggleGroupItem key={p.value} value={p.value} className="text-[10px] uppercase flex-1">
+                      <ToggleGroupItem key={p.value} value={p.value} className="text-[10px] uppercase flex-1 data-[state=on]:bg-star/20">
                         {p.label}
                       </ToggleGroupItem>
                     ))}
                   </ToggleGroup>
                   <button 
                     onClick={() => setUseCustomDeadline(true)}
-                    className="text-[10px] text-ash hover:text-star text-left uppercase tracking-widest pl-1"
+                    className="text-[10px] text-ash hover:text-star text-left uppercase tracking-widest pl-1 transition-colors"
                   >
                     Set custom timestamp
                   </button>
@@ -351,7 +356,7 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-edge/20">
+          <div className="flex items-center justify-between p-5 bg-surface/20 border border-edge/20 rounded-2xl">
              <div className="flex items-start gap-3">
               <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
               <Label htmlFor="multi-lender" className="cursor-pointer">
@@ -361,8 +366,8 @@ export default function CreatePage() {
             </div>
 
             <div className="text-right">
-               <span className="text-[10px] text-ash uppercase tracking-widest block">Calculated Deadline</span>
-               <span className="text-xs text-dust font-mono">{formatTimestamp(BigInt(deadline))}</span>
+               <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Calculated Deadline</span>
+               <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(deadline))}</span>
             </div>
           </div>
         </div>
@@ -375,8 +380,13 @@ export default function CreatePage() {
               <div className="h-px w-full bg-edge/20" />
             </div>
             
-            <Card className="border-star/20 bg-star/[0.02] rounded-[32px] overflow-hidden">
-              <CardContent className="p-8">
+            <Card className="border-star/20 bg-star/[0.02] rounded-[32px] overflow-hidden granite-noise relative">
+              <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-star">
+                  <path d="M12 2v20M2 12h20M12 2l4.5 4.5M12 2L7.5 6.5M12 22l4.5-4.5M12 22l-4.5 4.5" />
+                </svg>
+              </div>
+              <CardContent className="p-8 relative z-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                   <div className="space-y-1">
                     <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Projected Yield for Lender</span>
@@ -385,24 +395,38 @@ export default function CreatePage() {
                       <span className="text-dust text-sm">in {roiInfo.intSymbol}</span>
                     </div>
                     {!roiInfo.isSameToken && (
-                      <p className="text-[10px] text-ash uppercase tracking-tight">
+                      <p className="text-[10px] text-ash uppercase tracking-tight pt-1">
                         Note: Interest paid in {roiInfo.intSymbol} for {roiInfo.symbol} debt.
                       </p>
                     )}
                   </div>
                   <div className="flex flex-col gap-2 min-w-[140px]">
-                    <div className="bg-star/10 px-4 py-2 rounded-2xl border border-star/20 text-center">
+                    <div className="bg-star/10 px-4 py-2 rounded-full border border-star/20 text-center">
                       <span className="text-[10px] text-star uppercase tracking-widest font-bold block">Status</span>
-                      <span className="text-xs text-chalk font-display uppercase">Open Draft</span>
+                      <span className="text-[10px] text-chalk font-bold uppercase tracking-widest">Open Draft</span>
                     </div>
-                    <div className="bg-surface/40 px-4 py-2 rounded-2xl border border-edge/20 text-center">
+                    <div className="bg-surface/60 px-4 py-2 rounded-full border border-edge/30 text-center">
                       <span className="text-[10px] text-ash uppercase tracking-widest font-bold block">Type</span>
-                      <span className="text-xs text-dust font-display uppercase">{multiLender ? 'Multi-Lender' : 'Single-Lender'}</span>
+                      <span className="text-[10px] text-dust font-bold uppercase tracking-widest">{multiLender ? 'Multi-Lender' : 'Single-Lender'}</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+               {[
+                 { label: 'Duration', value: `${durationValue} ${DURATION_UNITS.find(u => u.value === durationUnit)?.label}`, mono: false },
+                 { label: 'Discovery', value: useCustomDeadline ? 'Custom' : deadlinePreset === '3600' ? '1 Hour' : deadlinePreset === '86400' ? '1 Day' : deadlinePreset === '259200' ? '3 Days' : '7 Days', mono: false },
+                 { label: 'Debt Assets', value: debtAssets.filter(a => a.asset).length, mono: true },
+                 { label: 'Collateral', value: collateralAssets.filter(a => a.asset).length, mono: true },
+               ].map((field, i) => (
+                 <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-4">
+                    <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">{field.label}</span>
+                    <span className={`text-xs text-chalk font-bold ${field.mono ? 'font-mono' : 'font-display'}`}>{field.value}</span>
+                 </div>
+               ))}
+            </div>
           </div>
         )}
 
