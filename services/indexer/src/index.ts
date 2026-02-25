@@ -3,12 +3,22 @@ import { createIndexer, run, defineIndexer } from '@apibara/indexer'
 import { StarknetStream } from '@apibara/starknet'
 import { Metadata } from 'nice-grpc-common'
 import { RpcProvider } from 'starknet'
-import type { WebhookPayload } from '@stela/core'
+import type { WebhookPayload, WebhookEvent } from '@stela/core'
 import stelaAbi from '@stela/core/abi/stela.json' with { type: 'json' }
 import { ALL_SELECTORS } from './rpc.js'
 import { transformEvent } from './transform.js'
-import type { RawStreamEvent } from './transform.js'
-import { postWebhook } from './webhook.js'
+import type { RawStreamEvent, OrderWebhookEvent } from './transform.js'
+import { postWebhook, postMatchingEngineWebhook } from './webhook.js'
+
+// ---------------------------------------------------------------------------
+// Order event types used for routing
+// ---------------------------------------------------------------------------
+
+const ORDER_EVENT_TYPES = new Set([
+  'order_filled',
+  'order_cancelled',
+  'orders_bulk_cancelled',
+])
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -25,6 +35,7 @@ const WEBHOOK_URL = requireEnv('WEBHOOK_URL')
 const WEBHOOK_SECRET = requireEnv('WEBHOOK_SECRET')
 const RPC_URL = requireEnv('RPC_URL')
 const STELA_ADDRESS = requireHexAddress('STELA_ADDRESS')
+const MATCHING_ENGINE_WEBHOOK_URL = process.env.MATCHING_ENGINE_WEBHOOK_URL
 
 function requireHexAddress(name: string): `0x${string}` {
   const value = requireEnv(name)
@@ -32,6 +43,10 @@ function requireHexAddress(name: string): `0x${string}` {
     throw new Error(`Env var ${name} is not a valid hex address: ${value}`)
   }
   return value as `0x${string}`
+}
+
+if (!MATCHING_ENGINE_WEBHOOK_URL) {
+  console.warn('MATCHING_ENGINE_WEBHOOK_URL not set — order events will not be forwarded to matching engine')
 }
 
 const DNA_STREAM_URL = 'https://sepolia.starknet.a5a.ch'
@@ -115,7 +130,8 @@ async function runOnce(): Promise<void> {
 
       console.log(`Block ${blockNumber}: processing ${events.length} event(s)`)
 
-      const webhookEvents = []
+      const inscriptionEvents: WebhookEvent[] = []
+      const orderEvents: OrderWebhookEvent[] = []
 
       for (const streamEvent of events) {
         const rawEvent: RawStreamEvent = {
@@ -148,20 +164,32 @@ async function runOnce(): Promise<void> {
           stelaAbi as unknown[]
         )
 
-        if (webhookEvent) {
-          webhookEvents.push(webhookEvent)
+        if (!webhookEvent) continue
+
+        // Route based on event_type
+        if (ORDER_EVENT_TYPES.has(webhookEvent.event_type)) {
+          orderEvents.push(webhookEvent as OrderWebhookEvent)
+        } else {
+          inscriptionEvents.push(webhookEvent as WebhookEvent)
         }
       }
 
-      if (webhookEvents.length > 0) {
+      // Inscription events → CF worker (unchanged behavior)
+      if (inscriptionEvents.length > 0) {
         const payload: WebhookPayload = {
           block_number: blockNumber,
-          events: webhookEvents,
+          events: inscriptionEvents,
           cursor: `${blockNumber}`,
         }
 
-        console.log(`Posting ${webhookEvents.length} event(s) from block ${blockNumber}`)
+        console.log(`Posting ${inscriptionEvents.length} inscription event(s) from block ${blockNumber}`)
         await postWebhook(WEBHOOK_URL, WEBHOOK_SECRET, payload)
+      }
+
+      // Order events → matching engine
+      if (orderEvents.length > 0 && MATCHING_ENGINE_WEBHOOK_URL) {
+        console.log(`Posting ${orderEvents.length} order event(s) from block ${blockNumber} to matching engine`)
+        await postMatchingEngineWebhook(MATCHING_ENGINE_WEBHOOK_URL, WEBHOOK_SECRET, { events: orderEvents })
       }
     },
   })
@@ -178,6 +206,7 @@ async function main() {
   console.log('Starting Stela Apibara indexer...')
   console.log(`Contract: ${STELA_ADDRESS}`)
   console.log(`Webhook:  ${WEBHOOK_URL}`)
+  console.log(`Matching: ${MATCHING_ENGINE_WEBHOOK_URL ?? '(not configured)'}`)
 
   let attempt = 0
 
