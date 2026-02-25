@@ -1,4 +1,5 @@
 pub mod health;
+pub mod orders;
 
 use axum::{
     http::StatusCode,
@@ -14,10 +15,11 @@ use crate::state::AppState;
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health::health))
-        // Stubs for routes implemented in Plans 03 and 04
-        .route("/orders", post(stub_not_implemented))
-        .route("/orders/{id}", get(stub_not_implemented))
-        .route("/orders/{id}/cancel", post(stub_not_implemented))
+        // Order routes (Plan 03)
+        .route("/orders", post(orders::submit_order))
+        .route("/orders/{id}", get(orders::get_order))
+        .route("/orders/{id}/cancel", post(orders::soft_cancel_order))
+        // Stubs for routes implemented in Plan 04
         .route("/match", post(stub_not_implemented))
         .route("/webhooks/events", post(stub_not_implemented))
         .layer(TraceLayer::new_for_http())
