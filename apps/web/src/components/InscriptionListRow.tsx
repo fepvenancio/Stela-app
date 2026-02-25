@@ -71,7 +71,7 @@ export function InscriptionListRow({
         selected
           ? 'bg-star/5 border-star/30'
           : 'bg-surface/20 border-edge/50 hover:border-edge hover:bg-surface/40'
-      } ${!selectable ? 'opacity-70' : ''}`}
+      }`}
     >
       {/* Checkbox column — always rendered for alignment */}
       <div className="shrink-0 w-5 h-5 flex items-center justify-center">

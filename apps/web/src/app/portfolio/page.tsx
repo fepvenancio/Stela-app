@@ -5,10 +5,10 @@ import { normalizeAddress } from '@/lib/address'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { SummaryBar } from '@/components/portfolio/SummaryBar'
-import { InscriptionCard } from '@/components/InscriptionCard'
-import { InscriptionCardSkeleton } from '@/components/InscriptionCardSkeleton'
+import { InscriptionListRow } from '@/components/InscriptionListRow'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
+import type { EnrichedInscription } from '@/hooks/usePortfolio'
 import Link from 'next/link'
 
 function EmptyTab({ message }: { message: string }) {
@@ -24,13 +24,40 @@ function EmptyTab({ message }: { message: string }) {
   )
 }
 
-function LoadingGrid() {
+function TableHeader() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <InscriptionCardSkeleton key={i} />
-      ))}
+    <div className="hidden md:flex items-center gap-4 px-3 pb-2 text-[9px] text-dust uppercase tracking-widest font-semibold">
+      <div className="shrink-0 w-5" />
+      <div className="grid grid-cols-12 gap-4 flex-1">
+        <div className="col-span-2">Status</div>
+        <div className="col-span-3">Debt</div>
+        <div className="col-span-2">Interest</div>
+        <div className="col-span-3">Collateral</div>
+        <div className="col-span-2 text-right">Duration</div>
+      </div>
     </div>
+  )
+}
+
+function InscriptionList({ items }: { items: EnrichedInscription[] }) {
+  return (
+    <>
+      {items.length > 0 && <TableHeader />}
+      <div className="flex flex-col gap-3">
+        {items.map((ins, i) => (
+          <div key={ins.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
+            <InscriptionListRow
+              id={ins.id}
+              status={ins.computedStatus}
+              creator={ins.creator}
+              multiLender={ins.multi_lender}
+              duration={ins.duration}
+              assets={ins.assets ?? []}
+            />
+          </div>
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -43,10 +70,10 @@ export default function PortfolioPage() {
     <div className="animate-fade-up">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-wide text-chalk mb-3 uppercase">
-          Vaults
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
+          Dashboard
         </h1>
-        <p className="text-dust leading-relaxed">
+        <p className="text-dust max-w-lg leading-relaxed">
           Your lending positions and borrowing history on StarkNet.
         </p>
       </div>
@@ -67,7 +94,11 @@ export default function PortfolioPage() {
                 <div key={i} className="h-24 rounded-2xl bg-surface/20 border border-edge/20 animate-pulse" />
               ))}
             </div>
-            <LoadingGrid />
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-20 w-full bg-surface/20 animate-pulse rounded-xl" />
+              ))}
+            </div>
           </>
         )}
 
@@ -93,21 +124,7 @@ export default function PortfolioPage() {
                 {lending.length === 0 ? (
                   <EmptyTab message="No lending positions yet. Browse open inscriptions to start lending." />
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {lending.map((ins, i) => (
-                      <div key={ins.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-                        <InscriptionCard
-                          id={ins.id}
-                          status={ins.computedStatus}
-                          creator={ins.creator}
-                          multiLender={ins.multi_lender}
-                          duration={ins.duration}
-                          assets={ins.assets ?? []}
-                          lender={ins.lender}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <InscriptionList items={lending} />
                 )}
               </TabsContent>
 
@@ -115,21 +132,7 @@ export default function PortfolioPage() {
                 {borrowing.length === 0 ? (
                   <EmptyTab message="No borrowing positions yet. Create an inscription to start borrowing." />
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {borrowing.map((ins, i) => (
-                      <div key={ins.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-                        <InscriptionCard
-                          id={ins.id}
-                          status={ins.computedStatus}
-                          creator={ins.creator}
-                          multiLender={ins.multi_lender}
-                          duration={ins.duration}
-                          assets={ins.assets ?? []}
-                          lender={ins.lender}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <InscriptionList items={borrowing} />
                 )}
               </TabsContent>
 
@@ -137,22 +140,7 @@ export default function PortfolioPage() {
                 {redeemable.length === 0 ? (
                   <EmptyTab message="No redeemable positions. Positions appear here after repayment or liquidation." />
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {redeemable.map((ins, i) => (
-                      <div key={ins.id} style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
-                        <InscriptionCard
-                          id={ins.id}
-                          status={ins.computedStatus}
-                          creator={ins.creator}
-                          multiLender={ins.multi_lender}
-                          duration={ins.duration}
-                          assets={ins.assets ?? []}
-                          lender={ins.lender}
-                          shareBalance={ins.shareBalance}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <InscriptionList items={redeemable} />
                 )}
               </TabsContent>
             </Tabs>
