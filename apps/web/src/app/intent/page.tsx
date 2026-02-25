@@ -7,9 +7,11 @@ import { MatchingEngineBanner } from '@/components/MatchingEngineBanner'
 import { IntentForm } from '@/components/IntentForm'
 import { MatchResultList } from '@/components/MatchResultList'
 import { FillConfirmDialog } from '@/components/FillConfirmDialog'
+import { MakerOrderForm } from '@/components/MakerOrderForm'
 import { Button } from '@/components/ui/button'
 
 type Step = 'form' | 'results' | 'confirm' | 'success' | 'maker'
+type SuccessType = 'fill' | 'maker' | null
 
 export default function IntentPage() {
   const { isOnline, isChecking } = useEngineHealth()
@@ -17,6 +19,7 @@ export default function IntentPage() {
   const [step, setStep] = useState<Step>('form')
   const [intent, setIntent] = useState<TakerIntent | null>(null)
   const [matchResult, setMatchResult] = useState<MatchResponse | null>(null)
+  const [successType, setSuccessType] = useState<SuccessType>(null)
 
   // Loading state
   if (isChecking) {
@@ -94,7 +97,7 @@ export default function IntentPage() {
         <FillConfirmDialog
           result={matchResult}
           intent={intent}
-          onSuccess={() => setStep('success')}
+          onSuccess={() => { setSuccessType('fill'); setStep('success') }}
           onBack={() => setStep('results')}
         />
       )}
@@ -102,10 +105,14 @@ export default function IntentPage() {
       {step === 'success' && (
         <div className="rounded-2xl border border-star/30 bg-star/5 p-8 text-center space-y-4">
           <h3 className="text-lg font-display uppercase tracking-widest text-star">
-            Order filled successfully!
+            {successType === 'maker'
+              ? 'Maker order created!'
+              : 'Order filled successfully!'}
           </h3>
           <p className="text-xs text-dust">
-            Your transaction has been submitted. Check your portfolio for status updates.
+            {successType === 'maker'
+              ? 'Your signed order is now available for takers.'
+              : 'Your transaction has been submitted. Check your portfolio for status updates.'}
           </p>
           <Button
             variant="gold"
@@ -113,6 +120,7 @@ export default function IntentPage() {
               setStep('form')
               setIntent(null)
               setMatchResult(null)
+              setSuccessType(null)
             }}
             className="uppercase tracking-widest"
           >
@@ -122,21 +130,11 @@ export default function IntentPage() {
       )}
 
       {step === 'maker' && (
-        <div className="rounded-2xl border border-edge/30 bg-surface/20 p-8 text-center space-y-4">
-          <h3 className="text-sm font-display uppercase tracking-widest text-chalk">
-            Maker Order Form
-          </h3>
-          <p className="text-xs text-dust">
-            Maker order form coming in next plan.
-          </p>
-          <Button
-            variant="ghost"
-            onClick={() => setStep('form')}
-            className="uppercase tracking-widest text-ash hover:text-chalk"
-          >
-            Back to Form
-          </Button>
-        </div>
+        <MakerOrderForm
+          intent={intent}
+          onSuccess={() => { setSuccessType('maker'); setStep('success') }}
+          onBack={() => setStep('form')}
+        />
       )}
     </div>
   )
