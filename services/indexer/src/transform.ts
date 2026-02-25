@@ -107,6 +107,15 @@ export function extractInnerCalldata(
   }
 }
 
+export interface OrderWebhookEvent {
+  event_type: 'order_filled' | 'order_cancelled' | 'orders_bulk_cancelled'
+  order_hash?: string
+  maker?: string
+  fill_bps?: string
+  total_filled?: string
+  min_nonce?: string
+}
+
 export interface RawStreamEvent {
   keys: string[]
   data: string[]
@@ -125,7 +134,7 @@ export async function transformEvent(
   provider: RpcProvider,
   stelaAddress: string,
   abi: unknown[]
-): Promise<WebhookEvent | null> {
+): Promise<WebhookEvent | OrderWebhookEvent | null> {
   const selector = event.keys[0]
 
   try {
@@ -310,6 +319,36 @@ export async function transformEvent(
             value: value.toString(),
           },
         }
+      }
+
+      case SELECTORS.OrderFilled: {
+        const orderHash = event.keys[1]
+        const fillBps = fromU256({ low: BigInt(event.data[0]), high: BigInt(event.data[1]) })
+        const totalFilled = fromU256({ low: BigInt(event.data[2]), high: BigInt(event.data[3]) })
+        return {
+          event_type: 'order_filled',
+          order_hash: orderHash,
+          fill_bps: fillBps.toString(),
+          total_filled: totalFilled.toString(),
+        } as OrderWebhookEvent
+      }
+
+      case SELECTORS.OrderCancelled: {
+        const orderHash = event.keys[1]
+        return {
+          event_type: 'order_cancelled',
+          order_hash: orderHash,
+        } as OrderWebhookEvent
+      }
+
+      case SELECTORS.OrdersBulkCancelled: {
+        const maker = event.keys[1]
+        const minNonce = event.data[0]
+        return {
+          event_type: 'orders_bulk_cancelled',
+          maker,
+          min_nonce: minNonce,
+        } as OrderWebhookEvent
       }
 
       default:
