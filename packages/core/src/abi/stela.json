@@ -557,6 +557,26 @@
         "inputs": [],
         "outputs": [],
         "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_locker_allowed_selector",
+        "inputs": [
+          {
+            "name": "locker",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "selector",
+            "type": "core::felt252"
+          },
+          {
+            "name": "allowed",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
       }
     ]
   },
