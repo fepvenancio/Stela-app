@@ -7,7 +7,7 @@ import { connectors } from '@/lib/connectors'
 
 const chains = NETWORK === 'mainnet' ? [mainnet] : [sepolia]
 
-const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.starknet-testnet.lava.build'
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.cartridge.gg/x/starknet/sepolia'
 
 const provider = jsonRpcProvider({
   rpc: () => ({ nodeUrl: rpcUrl }),
