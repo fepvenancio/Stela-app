@@ -10,3 +10,6 @@ dist/
 .open-next/
 .wrangler/
 .dev.vars
+
+# Rust
+target/
