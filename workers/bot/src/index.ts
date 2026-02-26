@@ -233,7 +233,11 @@ export default {
 
     const queries = createD1Queries(env.DB)
     const provider = new RpcProvider({ nodeUrl: env.RPC_URL })
-    const account = new Account(provider, env.BOT_ADDRESS, env.BOT_PRIVATE_KEY)
+    const account = new Account({
+      provider,
+      address: env.BOT_ADDRESS,
+      signer: env.BOT_PRIVATE_KEY,
+    })
 
     // Serialize all operations to avoid StarkNet nonce conflicts
     const work = async () => {

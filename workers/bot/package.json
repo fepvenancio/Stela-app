@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@stela/core": "workspace:*",
-    "starknet": "^6.23.1"
+    "starknet": "^9.2.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
