@@ -175,7 +175,7 @@ stela-indexer (workers/indexer)
 
 stela-bot (workers/bot)
 ├── @stela/core (workspace)
-└── starknet ^9.2.1
+└── starknet ^9.2.1   (v9, not v6 like other packages)
 
 stela-apibara-indexer (services/indexer)
 ├── @stela/core (workspace)
@@ -192,7 +192,7 @@ stela-apibara-indexer (services/indexer)
 - **`@stela/core`** -- Internal workspace package. Contains D1 query module (`createD1Queries`), shared types, ABI JSON, constants, u256 helpers, and token registry. Consumed by all workers and the frontend API routes.
 - **`@opennextjs/cloudflare`** -- Adapter that compiles Next.js output into a Cloudflare Worker with D1 bindings and static asset serving.
 - **`@apibara/indexer` / `@apibara/starknet`** -- Apibara v2 beta SDK for gRPC-based StarkNet event streaming.
-- **`starknet`** -- StarkNet.js v6 for RPC calls, account execution, typed data hashing, and address utilities.
+- **`starknet`** -- StarkNet.js for RPC calls, account execution, typed data hashing, and address utilities (v6 for frontend and services, v9 for the bot worker).
 
 ---
 

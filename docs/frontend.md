@@ -230,3 +230,4 @@ All write transactions follow this pattern:
 | `lib/schemas.ts` | `inscriptionListSchema`, `inscriptionIdSchema`, `addressSchema`, `syncRequestSchema` | Zod validation schemas for API route parameters |
 | `lib/api.ts` | `getD1()`, `jsonResponse()`, `errorResponse()`, `handleOptions()`, `rateLimit()` | Shared API route utilities: D1 access, CORS, rate limiting |
 | `lib/rate-limit.ts` | `isRateLimited()` | Sliding-window IP-based rate limiter (60 req/min, in-memory) |
+| `lib/utils.ts` | `cn()` | Tailwind CSS class merging utility (clsx + tailwind-merge) |

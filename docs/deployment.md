@@ -129,8 +129,9 @@ Under the hood, this runs `opennextjs-cloudflare build && opennextjs-cloudflare 
 
 ### Configuration (`workers/indexer/wrangler.jsonc`)
 
-```json
+```jsonc
 {
+  // account_id: set via CLOUDFLARE_ACCOUNT_ID env var
   "name": "stela-indexer",
   "main": "src/index.ts",
   "compatibility_date": "2025-04-01",
@@ -184,8 +185,9 @@ The `*/5 * * * *` cron trigger runs `expireOpenInscriptions(nowSeconds)` to mark
 
 ### Configuration (`workers/bot/wrangler.jsonc`)
 
-```json
+```jsonc
 {
+  // account_id: set via CLOUDFLARE_ACCOUNT_ID env var
   "name": "stela-bot",
   "main": "src/index.ts",
   "compatibility_date": "2025-04-01",

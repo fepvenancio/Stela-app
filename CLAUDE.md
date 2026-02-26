@@ -14,7 +14,7 @@ Read this entire file before writing any code.
 ## Repo Structure
 
 ```
-stela/                              ← this repo
+stela-app/                          ← this repo
 ├── packages/
 │   └── core/                      ← shared types, ABI, constants, D1 queries
 ├── apps/
@@ -151,11 +151,20 @@ SQLite database shared by all Workers and the frontend API routes. Tables:
 - `inscriptions` — main inscription state (status, participants, timestamps)
 - `inscription_assets` — per-inscription asset details (debt/interest/collateral)
 - `inscription_events` — event log for history/auditing
+- `lockers` — mapping of inscription_id to locker TBA contract address
+- `share_balances` — ERC1155 share balances per account per inscription
+- `orders` — off-chain SNIP-12 signed orders (borrower signatures, order data JSON)
+- `order_offers` — lender offers against orders (lender signatures, BPS amounts)
 - `_meta` — key/value store for indexer block cursor
 
-Schema is in `packages/core/src/schema.sql`. Apply via:
+Schema files:
+- `packages/core/src/schema.sql` — main tables
+- `packages/core/src/schema-orders.sql` — order/offer tables
+
+Apply via:
 ```bash
 wrangler d1 execute stela-db --file=packages/core/src/schema.sql
+wrangler d1 execute stela-db --file=packages/core/src/schema-orders.sql
 ```
 
 ---
@@ -183,10 +192,26 @@ apps/web/
 └── src/
     ├── app/
     │   ├── layout.tsx, page.tsx, providers.tsx
+    │   ├── browse/page.tsx
     │   ├── create/page.tsx
+    │   ├── docs/page.tsx
+    │   ├── faucet/page.tsx
     │   ├── inscription/[id]/page.tsx
+    │   ├── order/[id]/page.tsx
     │   ├── portfolio/page.tsx
-    │   └── api/inscriptions/     ← D1 queries (server-side)
+    │   └── api/
+    │       ├── health/route.ts
+    │       ├── inscriptions/route.ts
+    │       ├── inscriptions/[id]/route.ts
+    │       ├── inscriptions/[id]/events/route.ts
+    │       ├── inscriptions/[id]/locker/route.ts
+    │       ├── lockers/[address]/route.ts
+    │       ├── orders/route.ts
+    │       ├── orders/[id]/route.ts
+    │       ├── orders/[id]/offer/route.ts
+    │       ├── shares/[address]/route.ts
+    │       ├── sync/route.ts
+    │       └── treasury/[address]/route.ts
     ├── components/
     ├── hooks/
     └── lib/
@@ -221,8 +246,8 @@ Variables are set in `wrangler.jsonc` for production:
 ```json
 "vars": {
   "NEXT_PUBLIC_NETWORK": "sepolia",
-  "NEXT_PUBLIC_STELA_ADDRESS": "0x031f...",
-  "NEXT_PUBLIC_RPC_URL": "https://rpc.starknet-testnet.lava.build"
+  "NEXT_PUBLIC_STELA_ADDRESS": "0x006885f85de0e79efc7826e2ca19ef8a13e5e4516897ad52dc505723f8ce6b90",
+  "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia"
 }
 ```
 
@@ -300,6 +325,7 @@ workers/indexer/
 └── src/
     ├── index.ts             ← fetch + scheduled handlers
     ├── types.ts             ← Env interface
+    ├── schemas.ts           ← Zod validation schemas for webhook payloads
     └── handlers/index.ts    ← processWebhookEvent dispatcher
 ```
 
@@ -318,7 +344,7 @@ Call `liquidate()` on inscriptions that have expired without repayment.
 ### Stack
 ```
 Cloudflare Worker + Cron Trigger (*/2 * * * *)
-starknet.js v6 (Account.execute)
+starknet.js v9 (Account.execute)
 D1 via @stela/core createD1Queries
 ```
 
@@ -336,6 +362,7 @@ Set via `wrangler secret put` (NOT in wrangler.jsonc):
 cd workers/bot
 wrangler secret put BOT_PRIVATE_KEY
 wrangler secret put BOT_ADDRESS
+wrangler secret put RPC_URL
 ```
 
 ### Deployment
