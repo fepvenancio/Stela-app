@@ -452,6 +452,28 @@
       },
       {
         "type": "function",
+        "name": "get_treasury",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "is_paused",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "set_inscription_fee",
         "inputs": [
           {
@@ -507,6 +529,32 @@
             "type": "core::integer::u256"
           }
         ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_implementation_hash",
+        "inputs": [
+          {
+            "name": "implementation_hash",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "pause",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "unpause",
+        "inputs": [],
         "outputs": [],
         "state_mutability": "external"
       }
@@ -936,10 +984,6 @@
         "type": "core::starknet::contract_address::ContractAddress"
       },
       {
-        "name": "treasury",
-        "type": "core::starknet::contract_address::ContractAddress"
-      },
-      {
         "name": "inscriptions_nft",
         "type": "core::starknet::contract_address::ContractAddress"
       },
@@ -1148,6 +1192,47 @@
   },
   {
     "type": "event",
+    "name": "openzeppelin_security::pausable::PausableComponent::Paused",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "account",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_security::pausable::PausableComponent::Unpaused",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "account",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_security::pausable::PausableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "Paused",
+        "type": "openzeppelin_security::pausable::PausableComponent::Paused",
+        "kind": "nested"
+      },
+      {
+        "name": "Unpaused",
+        "type": "openzeppelin_security::pausable::PausableComponent::Unpaused",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
     "name": "openzeppelin_utils::cryptography::nonces::NoncesComponent::Event",
     "kind": "enum",
     "variants": []
@@ -1334,6 +1419,11 @@
       {
         "name": "ReentrancyGuardEvent",
         "type": "openzeppelin_security::reentrancyguard::ReentrancyGuardComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "PausableEvent",
+        "type": "openzeppelin_security::pausable::PausableComponent::Event",
         "kind": "flat"
       },
       {

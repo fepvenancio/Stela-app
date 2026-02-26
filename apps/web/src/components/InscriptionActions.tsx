@@ -23,6 +23,7 @@ interface InscriptionActionsProps {
   inscriptionId: string
   status: InscriptionStatus
   isOwner: boolean
+  isBorrower: boolean
   shares: bigint
   multiLender: boolean
   debtAssets: DebtAssetInfo[]
@@ -32,7 +33,7 @@ interface InscriptionActionsProps {
 }
 
 export function InscriptionActions({
-  inscriptionId, status, isOwner, shares,
+  inscriptionId, status, isOwner, isBorrower, shares,
   multiLender, debtAssets, interestAssets, debtDecimals = 18, wasSigned,
 }: InscriptionActionsProps) {
   const { address } = useAccount()
@@ -160,7 +161,7 @@ export function InscriptionActions({
     )
   }
 
-  if (status === 'filled' && isOwner) {
+  if (status === 'filled' && isBorrower) {
     return (
       <div className="space-y-6">
         <div className="p-4 rounded-2xl bg-aurora/5 border border-aurora/10 text-center">

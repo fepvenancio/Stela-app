@@ -40,6 +40,13 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
   const isOwner = useMemo(() => {
     if (!address || !inscription) return false
     const a = inscription as Record<string, unknown>
+    const creator = a.creator as string | undefined
+    return creator ? addressesEqual(address, creator) : false
+  }, [address, inscription])
+
+  const isBorrower = useMemo(() => {
+    if (!address || !inscription) return false
+    const a = inscription as Record<string, unknown>
     const borrower = a.borrower as string | undefined
     return borrower ? addressesEqual(address, borrower) : false
   }, [address, inscription])
@@ -206,6 +213,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                        inscriptionId={id}
                        status={status}
                        isOwner={isOwner}
+                       isBorrower={isBorrower}
                        shares={shares}
                        multiLender={Boolean(a?.multi_lender)}
                        debtAssets={assets
