@@ -16,12 +16,34 @@ interface SerializedAsset {
   token_id: string
 }
 
-interface ParsedOrderData {
+interface RawOrderData {
+  debt_assets?: SerializedAsset[]
+  interest_assets?: SerializedAsset[]
+  collateral_assets?: SerializedAsset[]
   debtAssets?: SerializedAsset[]
   interestAssets?: SerializedAsset[]
   collateralAssets?: SerializedAsset[]
-  duration?: string
+  multi_lender?: boolean
   multiLender?: boolean
+  duration?: string
+}
+
+interface ParsedOrderData {
+  debtAssets: SerializedAsset[]
+  interestAssets: SerializedAsset[]
+  collateralAssets: SerializedAsset[]
+  duration: string
+  multiLender: boolean
+}
+
+function normalizeOrderData(raw: RawOrderData): ParsedOrderData {
+  return {
+    debtAssets: raw.debt_assets ?? raw.debtAssets ?? [],
+    interestAssets: raw.interest_assets ?? raw.interestAssets ?? [],
+    collateralAssets: raw.collateral_assets ?? raw.collateralAssets ?? [],
+    duration: raw.duration ?? '0',
+    multiLender: raw.multi_lender ?? raw.multiLender ?? false,
+  }
 }
 
 function CompactOrderAssetSummary({ assets }: { assets: SerializedAsset[] }) {
@@ -55,21 +77,14 @@ interface OrderListRowProps {
 
 export function OrderListRow({ order }: OrderListRowProps) {
   const orderData = useMemo<ParsedOrderData>(() => {
-    if (!order.order_data) return {}
-    if (typeof order.order_data === 'string') {
-      try {
-        return JSON.parse(order.order_data) as ParsedOrderData
-      } catch {
-        return {}
-      }
-    }
-    return order.order_data as unknown as ParsedOrderData
+    if (!order.order_data) return normalizeOrderData({})
+    const raw: RawOrderData = typeof order.order_data === 'string'
+      ? (() => { try { return JSON.parse(order.order_data) } catch { return {} } })()
+      : order.order_data as unknown as RawOrderData
+    return normalizeOrderData(raw)
   }, [order.order_data])
 
-  const debtAssets = orderData.debtAssets ?? []
-  const interestAssets = orderData.interestAssets ?? []
-  const collateralAssets = orderData.collateralAssets ?? []
-  const duration = orderData.duration ?? '0'
+  const { debtAssets, interestAssets, collateralAssets, duration } = orderData
 
   return (
     <Link href={`/order/${order.id}`} className="block">

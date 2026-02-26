@@ -5,6 +5,33 @@ export function OPTIONS(request: NextRequest) {
   return handleOptions(request)
 }
 
+/** Parse order_data TEXT column into a proper object with normalized keys */
+function parseOrderRow(row: Record<string, unknown>): Record<string, unknown> {
+  let parsed: Record<string, unknown> = {}
+  const raw = row.order_data
+  if (typeof raw === 'string') {
+    try { parsed = JSON.parse(raw) } catch { parsed = {} }
+  } else if (raw && typeof raw === 'object') {
+    parsed = raw as Record<string, unknown>
+  }
+
+  return {
+    ...row,
+    order_data: {
+      borrower: parsed.borrower ?? '',
+      debt_assets: parsed.debt_assets ?? parsed.debtAssets ?? [],
+      interest_assets: parsed.interest_assets ?? parsed.interestAssets ?? [],
+      collateral_assets: parsed.collateral_assets ?? parsed.collateralAssets ?? [],
+      debt_count: parsed.debt_count ?? parsed.debtCount ?? 0,
+      interest_count: parsed.interest_count ?? parsed.interestCount ?? 0,
+      collateral_count: parsed.collateral_count ?? parsed.collateralCount ?? 0,
+      duration: String(parsed.duration ?? '0'),
+      deadline: String(parsed.deadline ?? '0'),
+      multi_lender: parsed.multi_lender ?? parsed.multiLender ?? false,
+    },
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -23,7 +50,8 @@ export async function GET(
     }
 
     const offers = await db.getOrderOffers(id)
-    return jsonResponse({ data: { ...order as Record<string, unknown>, offers } }, request)
+    const parsed = parseOrderRow(order as Record<string, unknown>)
+    return jsonResponse({ data: { ...parsed, offers } }, request)
   } catch (err) {
     console.error('D1 query error:', err instanceof Error ? err.message : String(err))
     return errorResponse('service unavailable', 502, request)

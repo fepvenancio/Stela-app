@@ -31,14 +31,40 @@ interface SerializedAsset {
   token_id: string
 }
 
-interface ParsedOrderData {
+interface RawOrderData {
   borrower?: string
+  debt_assets?: SerializedAsset[]
+  interest_assets?: SerializedAsset[]
+  collateral_assets?: SerializedAsset[]
   debtAssets?: SerializedAsset[]
   interestAssets?: SerializedAsset[]
   collateralAssets?: SerializedAsset[]
+  multi_lender?: boolean
+  multiLender?: boolean
   duration?: string
   deadline?: string
-  multiLender?: boolean
+}
+
+interface ParsedOrderData {
+  borrower: string
+  debtAssets: SerializedAsset[]
+  interestAssets: SerializedAsset[]
+  collateralAssets: SerializedAsset[]
+  duration: string
+  deadline: string
+  multiLender: boolean
+}
+
+function normalizeOrderData(raw: RawOrderData): ParsedOrderData {
+  return {
+    borrower: raw.borrower ?? '',
+    debtAssets: raw.debt_assets ?? raw.debtAssets ?? [],
+    interestAssets: raw.interest_assets ?? raw.interestAssets ?? [],
+    collateralAssets: raw.collateral_assets ?? raw.collateralAssets ?? [],
+    duration: raw.duration ?? '0',
+    deadline: raw.deadline ?? '0',
+    multiLender: raw.multi_lender ?? raw.multiLender ?? false,
+  }
 }
 
 export default function OrderPage({ params }: OrderPageProps) {
@@ -49,15 +75,11 @@ export default function OrderPage({ params }: OrderPageProps) {
   const [lendAmount, setLendAmount] = useState('')
 
   const orderData = useMemo<ParsedOrderData>(() => {
-    if (!order?.order_data) return {}
-    if (typeof order.order_data === 'string') {
-      try {
-        return JSON.parse(order.order_data) as ParsedOrderData
-      } catch {
-        return {}
-      }
-    }
-    return order.order_data as unknown as ParsedOrderData
+    if (!order?.order_data) return normalizeOrderData({})
+    const raw: RawOrderData = typeof order.order_data === 'string'
+      ? (() => { try { return JSON.parse(order.order_data) } catch { return {} } })()
+      : order.order_data as unknown as RawOrderData
+    return normalizeOrderData(raw)
   }, [order?.order_data])
 
   const isOwner = useMemo(() => {
@@ -65,11 +87,7 @@ export default function OrderPage({ params }: OrderPageProps) {
     return addressesEqual(address, order.borrower)
   }, [address, order?.borrower])
 
-  const debtAssets = orderData.debtAssets ?? []
-  const interestAssets = orderData.interestAssets ?? []
-  const collateralAssets = orderData.collateralAssets ?? []
-  const duration = orderData.duration ?? '0'
-  const isMultiLender = orderData.multiLender ?? false
+  const { debtAssets, interestAssets, collateralAssets, duration, multiLender: isMultiLender } = orderData
 
   // ROI Math
   const roiInfo = useMemo(() => {
