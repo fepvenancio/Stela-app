@@ -184,6 +184,40 @@
   },
   {
     "type": "struct",
+    "name": "stela::types::signed_order::SignedOrder",
+    "members": [
+      {
+        "name": "maker",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "allowed_taker",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "inscription_id",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "bps",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "deadline",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "nonce",
+        "type": "core::felt252"
+      },
+      {
+        "name": "min_fill_bps",
+        "type": "core::integer::u256"
+      }
+    ]
+  },
+  {
+    "type": "struct",
     "name": "stela::types::inscription::StoredInscription",
     "members": [
       {
@@ -362,6 +396,50 @@
       },
       {
         "type": "function",
+        "name": "fill_signed_order",
+        "inputs": [
+          {
+            "name": "order",
+            "type": "stela::types::signed_order::SignedOrder"
+          },
+          {
+            "name": "signature",
+            "type": "core::array::Array::<core::felt252>"
+          },
+          {
+            "name": "fill_bps",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "cancel_order",
+        "inputs": [
+          {
+            "name": "order",
+            "type": "stela::types::signed_order::SignedOrder"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "cancel_orders_by_nonce",
+        "inputs": [
+          {
+            "name": "min_nonce",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
         "name": "get_inscription",
         "inputs": [
           {
@@ -468,6 +546,70 @@
         "outputs": [
           {
             "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "is_order_registered",
+        "inputs": [
+          {
+            "name": "order_hash",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "is_order_cancelled",
+        "inputs": [
+          {
+            "name": "order_hash",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_filled_bps",
+        "inputs": [
+          {
+            "name": "order_hash",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_maker_min_nonce",
+        "inputs": [
+          {
+            "name": "maker",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::felt252"
           }
         ],
         "state_mutability": "view"
@@ -1418,6 +1560,72 @@
   },
   {
     "type": "event",
+    "name": "stela::stela::StelaProtocol::OrderFilled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "inscription_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "order_hash",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "taker",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "fill_bps",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "total_filled_bps",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::OrderCancelled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "order_hash",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "maker",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::OrdersBulkCancelled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "maker",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_min_nonce",
+        "type": "core::felt252",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
     "name": "stela::stela::StelaProtocol::Event",
     "kind": "enum",
     "variants": [
@@ -1484,6 +1692,21 @@
       {
         "name": "OrderSettled",
         "type": "stela::stela::StelaProtocol::OrderSettled",
+        "kind": "nested"
+      },
+      {
+        "name": "OrderFilled",
+        "type": "stela::stela::StelaProtocol::OrderFilled",
+        "kind": "nested"
+      },
+      {
+        "name": "OrderCancelled",
+        "type": "stela::stela::StelaProtocol::OrderCancelled",
+        "kind": "nested"
+      },
+      {
+        "name": "OrdersBulkCancelled",
+        "type": "stela::stela::StelaProtocol::OrdersBulkCancelled",
         "kind": "nested"
       }
     ]
