@@ -4,9 +4,12 @@ dist/
 .turbo/
 .env
 .env.local
+.env*.secret
 .DS_Store
 *.tsbuildinfo
 .vercel
 .open-next/
 .wrangler/
 .dev.vars
+*.secret
+*.private.key
