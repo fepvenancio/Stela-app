@@ -7,6 +7,7 @@ import {
   liquidatedDataSchema,
   redeemedDataSchema,
   transferSingleDataSchema,
+  orderSettledDataSchema,
 } from '../schemas.js'
 
 export async function processWebhookEvent(event: WebhookEvent, queries: D1Queries): Promise<void> {
@@ -25,6 +26,8 @@ export async function processWebhookEvent(event: WebhookEvent, queries: D1Querie
       return handleRedeemed(event, queries)
     case 'transfer_single':
       return handleTransferSingle(event, queries)
+    case 'order_settled':
+      return handleOrderSettled(event, queries)
     default:
       console.warn(`Unknown event type: ${event.event_type}`)
   }
@@ -185,4 +188,13 @@ async function handleTransferSingle(event: WebhookEvent, queries: D1Queries): Pr
   if (BigInt(d.to) !== 0n) {
     await queries.incrementShareBalance(d.to, d.inscription_id, BigInt(d.value))
   }
+}
+
+async function handleOrderSettled(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = orderSettledDataSchema.parse(event.data)
+
+  // Update the off-chain order status to 'settled' (if it exists in D1)
+  await queries.updateOrderStatus(d.order_id, 'settled')
+
+  console.log(`OrderSettled: order=${d.order_id} borrower=${d.borrower} lender=${d.lender} tx=${event.tx_hash}`)
 }

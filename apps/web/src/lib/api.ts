@@ -15,7 +15,7 @@ function corsHeaders(request?: Request): Record<string, string> {
   const origin = request?.headers.get('Origin') ?? ''
   return {
     ...(ALLOWED_ORIGINS.has(origin) ? { 'Access-Control-Allow-Origin': origin } : {}),
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   }
 }

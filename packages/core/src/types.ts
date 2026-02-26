@@ -85,6 +85,7 @@ export type WebhookEventType =
   | 'liquidated'
   | 'redeemed'
   | 'transfer_single'
+  | 'order_settled'
 
 export interface WebhookEvent {
   event_type: WebhookEventType

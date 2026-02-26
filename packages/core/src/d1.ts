@@ -473,6 +473,132 @@ export function createD1Queries(db: D1Database) {
         .all()
       return result.results
     },
+
+    // -----------------------------------------------------------------------
+    // Off-chain orders
+    // -----------------------------------------------------------------------
+
+    async createOrder(order: {
+      id: string
+      borrower: string
+      order_data: string
+      borrower_signature: string
+      nonce: string
+      deadline: number
+      created_at: number
+    }) {
+      await db
+        .prepare(
+          `INSERT INTO orders (id, borrower, order_data, borrower_signature, nonce, status, deadline, created_at)
+           VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`
+        )
+        .bind(order.id, order.borrower, order.order_data, order.borrower_signature, order.nonce, order.deadline, order.created_at)
+        .run()
+    },
+
+    async getOrder(id: string) {
+      return db
+        .prepare('SELECT * FROM orders WHERE id = ?')
+        .bind(id)
+        .first()
+    },
+
+    async getOrders({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
+      const limit = Math.min(rawLimit, 100)
+      const conditions: string[] = []
+      const params: unknown[] = []
+
+      if (status && status !== 'all') {
+        conditions.push('status = ?')
+        params.push(status)
+      }
+
+      if (address) {
+        const stripped = address.replace(/^0x/i, '').toLowerCase()
+        const padded = '0x' + stripped.padStart(64, '0')
+        const unpadded = '0x' + (stripped.replace(/^0+/, '') || '0')
+        conditions.push('(LOWER(borrower) IN (?, ?))')
+        params.push(padded, unpadded)
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      const offset = (page - 1) * limit
+
+      const result = await db
+        .prepare(`SELECT * FROM orders ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+        .bind(...params, limit, offset)
+        .all()
+
+      return result.results
+    },
+
+    async updateOrderStatus(id: string, status: string) {
+      await db
+        .prepare('UPDATE orders SET status = ? WHERE id = ?')
+        .bind(status, id)
+        .run()
+    },
+
+    async updateOfferStatus(id: string, status: string) {
+      await db
+        .prepare('UPDATE order_offers SET status = ? WHERE id = ?')
+        .bind(status, id)
+        .run()
+    },
+
+    async createOrderOffer(offer: {
+      id: string
+      order_id: string
+      lender: string
+      bps: number
+      lender_signature: string
+      nonce: string
+      created_at: number
+    }) {
+      await db
+        .prepare(
+          `INSERT INTO order_offers (id, order_id, lender, bps, lender_signature, nonce, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`
+        )
+        .bind(offer.id, offer.order_id, offer.lender, offer.bps, offer.lender_signature, offer.nonce, offer.created_at)
+        .run()
+    },
+
+    async getOrderOffers(orderId: string) {
+      const result = await db
+        .prepare('SELECT * FROM order_offers WHERE order_id = ? ORDER BY created_at DESC')
+        .bind(orderId)
+        .all()
+      return result.results
+    },
+
+    async getMatchedOrders(): Promise<{ order_id: string; offer_id: string }[]> {
+      const result = await db
+        .prepare(
+          `SELECT o.id as order_id, oo.id as offer_id
+           FROM orders o
+           JOIN order_offers oo ON oo.order_id = o.id
+           WHERE o.status = 'matched'
+             AND oo.status = 'pending'
+             AND o.deadline > ?
+           ORDER BY o.created_at ASC
+           LIMIT 20`
+        )
+        .bind(Math.floor(Date.now() / 1000))
+        .all<{ order_id: string; offer_id: string }>()
+      return result.results
+    },
+
+    async expireOrders(nowSeconds: number): Promise<number> {
+      const result = await db
+        .prepare(
+          `UPDATE orders SET status = 'expired'
+           WHERE status = 'pending' AND deadline > 0 AND deadline < ?`
+        )
+        .bind(nowSeconds)
+        .run()
+      return (result.meta?.changes as number) ?? 0
+    },
   }
 }
 

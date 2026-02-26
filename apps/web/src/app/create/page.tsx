@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useAccount, useSendTransaction } from '@starknet-react/core'
-import { InscriptionClient, toU256, findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { useAccount } from '@starknet-react/core'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType } from '@fepvenancio/stela-sdk'
-import { RpcProvider } from 'starknet'
+import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
+import { getInscriptionOrderTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
 import { AssetInput } from '@/components/AssetInput'
 import type { AssetInputValue } from '@/components/AssetInput'
@@ -21,7 +22,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTimestamp } from '@/lib/format'
-import { useSync } from '@/hooks/useSync'
 
 const emptyAsset = (): AssetInputValue => ({
   asset: '',
@@ -116,17 +116,10 @@ function AssetSection({
 }
 
 export default function CreatePage() {
-  const { address } = useAccount()
-  const { sendAsync, isPending } = useSendTransaction({})
+  const { address, account } = useAccount()
+  const [isPending, setIsPending] = useState(false)
 
-  const client = useMemo(
-    () =>
-      new InscriptionClient({
-        stelaAddress: CONTRACT_ADDRESS,
-        provider: new RpcProvider({ nodeUrl: RPC_URL }),
-      }),
-    [],
-  )
+  const provider = useMemo(() => new RpcProvider({ nodeUrl: RPC_URL }), [])
 
   const [multiLender, setMultiLender] = useState(false)
   const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([emptyAsset()])
@@ -154,7 +147,6 @@ export default function CreatePage() {
 
   const [showErrors, setShowErrors] = useState(false)
   const { balances } = useTokenBalances()
-  const { sync } = useSync()
 
   const hasDebt = debtAssets.some((a) => a.asset)
   const hasCollateral = collateralAssets.some((a) => a.asset)
@@ -189,28 +181,9 @@ export default function CreatePage() {
   }, [debtAssets, interestAssets])
 
   async function handleSubmit() {
-    if (!address) return
+    if (!address || !account) return
     setShowErrors(true)
     if (!isValid) return
-
-    // Approve collateral tokens to the Stela contract. Use u128::MAX so the
-    // borrower's allowance isn't consumed by a single inscription — subsequent
-    // inscriptions (and batch-sign by lenders) reuse the same approval.
-    const U128_MAX = (1n << 128n) - 1n
-    const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-    const assetsToApprove = collateralAssets
-
-    for (const asset of assetsToApprove) {
-      if (!asset.asset) continue
-      if (asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155') continue
-      const rawValue = asset.value ? parseAmount(asset.value, asset.decimals) : 0n
-      if (rawValue <= 0n) continue
-      approvals.push({
-        contractAddress: asset.asset,
-        entrypoint: 'approve',
-        calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
-      })
-    }
 
     const toSdkAssets = (inputs: AssetInputValue[]): Asset[] =>
       inputs
@@ -232,38 +205,96 @@ export default function CreatePage() {
           token_id: BigInt(a.token_id || '0'),
         }))
 
-    const createCall = client.buildCreateInscription({
-      is_borrow: true,
-      debt_assets: toSdkAssets(debtAssets),
-      interest_assets: toSdkAssets(interestAssets),
-      collateral_assets: toSdkAssets(collateralAssets),
-      duration: BigInt(duration || '0'),
-      deadline: BigInt(deadline || '0'),
-      multi_lender: multiLender,
-    })
+    // Build SDK asset arrays
+    const sdkDebtAssets = toSdkAssets(debtAssets)
+    const sdkInterestAssets = toSdkAssets(interestAssets)
+    const sdkCollateralAssets = toSdkAssets(collateralAssets)
 
+    setIsPending(true)
     try {
-      const result = await sendAsync([...approvals, createCall])
-      toast.success('Inscription created', { description: result.transaction_hash })
+      // Get nonce from contract
+      const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
 
-      // Sync D1 immediately — fire-and-forget
-      const toSyncAssets = (inputs: AssetInputValue[]) =>
-        inputs
-          .filter((a) => a.asset)
-          .map((a) => ({
-            asset_address: a.asset,
-            asset_type: a.asset_type,
-            value: a.value ? parseAmount(a.value, a.decimals).toString() : '0',
-            token_id: a.token_id || '0',
-          }))
+      // Build SNIP-12 typed data
+      const typedData = getInscriptionOrderTypedData({
+        borrower: address,
+        debtAssets: sdkDebtAssets,
+        interestAssets: sdkInterestAssets,
+        collateralAssets: sdkCollateralAssets,
+        debtCount: sdkDebtAssets.length,
+        interestCount: sdkInterestAssets.length,
+        collateralCount: sdkCollateralAssets.length,
+        duration: BigInt(duration || '0'),
+        deadline: BigInt(deadline || '0'),
+        multiLender: multiLender,
+        nonce,
+        chainId: 'SN_SEPOLIA',
+      })
 
-      sync(result.transaction_hash, {
-        debt: toSyncAssets(debtAssets),
-        interest: toSyncAssets(interestAssets),
-        collateral: toSyncAssets(collateralAssets),
-      }).catch(() => {})
+      // Compute the SNIP-12 message hash (the true order identity)
+      const orderMessageHash = starknetTypedData.getMessageHash(typedData, address)
 
-      // Reset form after successful creation
+      // Sign off-chain (no gas!)
+      const signature = await account.signMessage(typedData)
+
+      // Generate order ID
+      const orderId = crypto.randomUUID()
+
+      // Compute asset hashes and build order data for the backend
+      const orderData = {
+        borrower: address,
+        debtAssets: sdkDebtAssets.map(a => ({
+          asset_address: a.asset_address,
+          asset_type: a.asset_type,
+          value: a.value.toString(),
+          token_id: a.token_id.toString(),
+        })),
+        interestAssets: sdkInterestAssets.map(a => ({
+          asset_address: a.asset_address,
+          asset_type: a.asset_type,
+          value: a.value.toString(),
+          token_id: a.token_id.toString(),
+        })),
+        collateralAssets: sdkCollateralAssets.map(a => ({
+          asset_address: a.asset_address,
+          asset_type: a.asset_type,
+          value: a.value.toString(),
+          token_id: a.token_id.toString(),
+        })),
+        duration: duration,
+        deadline: deadline,
+        multiLender: multiLender,
+        nonce: nonce.toString(),
+        orderHash: orderMessageHash,
+        debtHash: hashAssets(sdkDebtAssets),
+        interestHash: hashAssets(sdkInterestAssets),
+        collateralHash: hashAssets(sdkCollateralAssets),
+      }
+
+      // POST to backend
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: orderId,
+          borrower: address,
+          order_data: orderData,
+          borrower_signature: Array.isArray(signature) ? signature : [signature.r, signature.s],
+          nonce: nonce.toString(),
+          deadline: Number(deadline),
+        }),
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error((err as Record<string, string>).error || 'Failed to create order')
+      }
+
+      toast.success('Order signed & submitted', {
+        description: 'Your inscription order is now live. No gas was spent!',
+      })
+
+      // Reset form after successful submission
       setDebtAssets([emptyAsset()])
       setInterestAssets([emptyAsset()])
       setCollateralAssets([emptyAsset()])
@@ -275,7 +306,9 @@ export default function CreatePage() {
       setMultiLender(false)
       setShowErrors(false)
     } catch (err: unknown) {
-      toast.error('Failed to create inscription', { description: getErrorMessage(err) })
+      toast.error('Failed to sign order', { description: getErrorMessage(err) })
+    } finally {
+      setIsPending(false)
     }
   }
 
@@ -475,7 +508,7 @@ export default function CreatePage() {
             onClick={handleSubmit}
             disabled={isPending}
           >
-            {isPending ? 'Creating Inscription...' : 'Create Inscription'}
+            {isPending ? 'Signing...' : 'Sign & Submit Order'}
           </Button>
         </Web3ActionWrapper>
       </div>

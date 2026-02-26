@@ -3,7 +3,9 @@
 import { useState, useMemo } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
+import { useOrders } from '@/hooks/useOrders'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
+import { OrderListRow } from '@/components/OrderListRow'
 import { BrowseControls, type SortOption } from '@/components/BrowseControls'
 import { SelectionActionBar } from '@/components/SelectionActionBar'
 import { LendReviewModal } from '@/components/LendReviewModal'
@@ -34,6 +36,7 @@ function BrowseContent() {
   const { toggle, isSelected, count } = useBatchSelection()
 
   const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
+  const { data: orders, isLoading: ordersLoading } = useOrders({ status: 'pending' })
 
   // Enrich, Filter, and Sort
   const data = useMemo(() => {
@@ -182,8 +185,25 @@ function BrowseContent() {
         </div>
       )}
 
+      {/* Off-chain Orders Section */}
+      {statusFilter === 'open' && !ordersLoading && orders.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap">Off-chain Orders (Pending Settlement)</span>
+            <div className="h-px w-full bg-edge/20" />
+          </div>
+          <div className="flex flex-col gap-3">
+            {orders.map((order, i) => (
+              <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
+                <OrderListRow order={order} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Empty */}
-      {!isLoading && !error && data.length === 0 && (
+      {!isLoading && !error && data.length === 0 && (!statusFilter || statusFilter !== 'open' || orders.length === 0) && (
         <div className="text-center py-24">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">

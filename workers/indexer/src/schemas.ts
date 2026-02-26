@@ -72,6 +72,12 @@ export const transferSingleDataSchema = z.object({
   value: numericStr,
 })
 
+export const orderSettledDataSchema = z.object({
+  order_id: hex,
+  borrower: hex,
+  lender: hex,
+})
+
 // ---------------------------------------------------------------------------
 // Envelope schemas
 // ---------------------------------------------------------------------------
@@ -90,6 +96,7 @@ const webhookEventSchema = z.discriminatedUnion('event_type', [
   z.object({ event_type: z.literal('liquidated'), ...baseEvent, data: liquidatedDataSchema }),
   z.object({ event_type: z.literal('redeemed'), ...baseEvent, data: redeemedDataSchema }),
   z.object({ event_type: z.literal('transfer_single'), ...baseEvent, data: transferSingleDataSchema }),
+  z.object({ event_type: z.literal('order_settled'), ...baseEvent, data: orderSettledDataSchema }),
 ])
 
 export const webhookPayloadSchema = z.object({

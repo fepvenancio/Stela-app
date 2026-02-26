@@ -74,7 +74,7 @@ For `create_inscription`, verify:
 
 | Contract | Address |
 |----------|---------|
-| StelaProtocol | `0x031f738a405157f85e1f20156f3301d15cdaae363d302f4e1f44c49dbc83d437` |
+| StelaProtocol | `0x076ca0af65ad05398076ddc067dc856a43dc1c665dc2898aea6b78dd3e120822` |
 | MockERC20 mUSDC (6 dec) | `0x034a0cf09c79e7f20fb2136212f27b7dd88e91f9a24b2ac50c5c41ff6b30c59d` |
 | MockERC20 mWETH (18 dec) | `0x07e86764396d61d2179cd1a48033fa4f30897cb172464961a80649aff4da9bdd` |
 | MockERC20 mDAI (18 dec) | `0x0479f31a23241b1337375b083099bd1672716edbf908b1b30148a648657a1cee` |
