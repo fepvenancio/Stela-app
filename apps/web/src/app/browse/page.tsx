@@ -18,6 +18,7 @@ import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelec
 import { toast } from 'sonner'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { ListingTableHeader } from '@/components/ListingTableHeader'
+import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import {
@@ -193,17 +194,26 @@ function BrowseContent() {
 
       {/* Filters & Controls */}
       <div className="space-y-6 mb-8">
-        <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2" aria-label="Filter by status">
-          {FILTERS.map(({ key, label }) => (
-            <ToggleGroupItem
-              key={key}
-              value={key}
-              className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
-            >
-              {label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <div className="flex items-center justify-between gap-4">
+          <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2" aria-label="Filter by status">
+            {FILTERS.map(({ key, label }) => (
+              <ToggleGroupItem
+                key={key}
+                value={key}
+                className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
+              >
+                {label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+
+          <Link
+            href="/create"
+            className="px-4 py-2 rounded-xl text-sm text-dust border border-transparent hover:text-chalk hover:bg-surface/50 transition-colors shrink-0"
+          >
+            Inscribe
+          </Link>
+        </div>
 
         <BrowseControls
           search={search}
