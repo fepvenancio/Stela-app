@@ -8,6 +8,7 @@ import { useSignOrder } from '@/hooks/useSignOrder'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { formatAddress, addressesEqual } from '@/lib/address'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
+import { getCancelOrderTypedData } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -69,7 +70,7 @@ function normalizeOrderData(raw: RawOrderData): ParsedOrderData {
 
 export default function OrderPage({ params }: OrderPageProps) {
   const { id } = use(params)
-  const { address } = useAccount()
+  const { address, account } = useAccount()
   const { data: order, isLoading, error } = useOrder(id)
   const { signOrder, isPending: signPending } = useSignOrder(id)
   const [lendAmount, setLendAmount] = useState('')
@@ -126,7 +127,7 @@ export default function OrderPage({ params }: OrderPageProps) {
       {/* Breadcrumb */}
       <div className="flex items-center justify-between mb-8">
         <Link href="/browse" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back to Library
@@ -306,8 +307,9 @@ export default function OrderPage({ params }: OrderPageProps) {
                           className="space-y-4"
                         >
                           <div className="space-y-2">
-                            <label className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
+                            <label htmlFor="order-lend-amount" className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
                             <Input
+                              id="order-lend-amount"
                               type="number"
                               value={lendAmount}
                               onChange={(e) => setLendAmount(e.target.value)}
@@ -353,13 +355,25 @@ export default function OrderPage({ params }: OrderPageProps) {
                           className="hover:text-nova hover:border-nova/30"
                           disabled={signPending}
                           onClick={async () => {
+                            if (!account || !address) return
                             try {
+                              // Sign a cancellation typed data to prove ownership
+                              const cancelTypedData = getCancelOrderTypedData(id)
+                              const sig = await account.signMessage(cancelTypedData)
+                              const sigArray = Array.isArray(sig) ? sig : [sig.r, sig.s]
+
                               const res = await fetch(`/api/orders/${id}`, {
                                 method: 'DELETE',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ borrower: address }),
+                                body: JSON.stringify({
+                                  borrower: address,
+                                  signature: sigArray,
+                                }),
                               })
-                              if (!res.ok) throw new Error('Failed to cancel')
+                              if (!res.ok) {
+                                const err = await res.json()
+                                throw new Error((err as Record<string, string>).error || 'Failed to cancel')
+                              }
                               toast.success('Order cancelled')
                             } catch (err) {
                               toast.error('Failed to cancel', { description: getErrorMessage(err) })

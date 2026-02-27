@@ -15,14 +15,15 @@ function NetworkIndicator() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="p-2 rounded-full hover:bg-surface/50 transition-colors cursor-help group">
+        <div className="p-2 rounded-full hover:bg-surface/50 transition-colors cursor-help group" aria-label={`Network: ${name}`}>
           <div className="relative">
-            <svg 
-              width="18" 
-              height="18" 
-              viewBox="0 0 24 24" 
-              fill="none" 
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
               className={`${isTestnet ? 'text-star/60' : 'text-star'} transition-all group-hover:scale-110`}
+              aria-hidden="true"
             >
               <path 
                 d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" 
@@ -70,6 +71,7 @@ export function WalletButton() {
           variant="outline"
           onClick={() => disconnect()}
           className="group gap-2.5 h-10 border-edge/50 hover:border-star/30 rounded-2xl bg-surface/20"
+          aria-label="Disconnect wallet"
         >
           <div className="relative flex items-center justify-center">
             <span

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
 import { addressSchema } from '@/lib/schemas'
 
 export function OPTIONS(request: NextRequest) {
@@ -30,7 +30,7 @@ export async function GET(
       data: { address, balances },
     }, request)
   } catch (err) {
-    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    logError('shares/[address]', err)
     return errorResponse('service unavailable', 502, request)
   }
 }

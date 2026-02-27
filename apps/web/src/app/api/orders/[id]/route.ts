@@ -1,5 +1,9 @@
 import { NextRequest } from 'next/server'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
+import { typedData as starknetTypedData } from 'starknet'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
+import { getCancelOrderTypedData } from '@/lib/offchain'
+import { verifyStarknetSignature } from '@/lib/verify-signature'
+import { cancelOrderSchema } from '@/lib/validation'
 
 export function OPTIONS(request: NextRequest) {
   return handleOptions(request)
@@ -53,7 +57,7 @@ export async function GET(
     const parsed = parseOrderRow(order as Record<string, unknown>)
     return jsonResponse({ data: { ...parsed, offers } }, request)
   } catch (err) {
-    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    logError('orders/[id]', err)
     return errorResponse('service unavailable', 502, request)
   }
 }
@@ -62,12 +66,31 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const limited = rateLimit(request)
-  if (limited) return limited
-
   const { id } = await params
 
   try {
+    // Parse and validate body
+    const rawBody = await request.text()
+
+    let body: unknown
+    try {
+      body = JSON.parse(rawBody)
+    } catch {
+      return errorResponse('Invalid JSON', 400, request)
+    }
+
+    const parsed = cancelOrderSchema.safeParse(body)
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`)
+      return errorResponse(`Validation failed: ${messages.join('; ')}`, 400, request)
+    }
+
+    const { borrower: callerAddress, signature } = parsed.data
+
+    // Rate limit by IP + borrower address
+    const limited = rateLimit(request, callerAddress)
+    if (limited) return limited
+
     const db = getD1()
     const order = await db.getOrder(id)
 
@@ -81,9 +104,6 @@ export async function DELETE(
     }
 
     // Verify the caller is the borrower who created this order
-    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
-    const callerAddress = (body.borrower as string) ?? ''
-
     const normalizeAddr = (a: string) =>
       '0x' + a.replace(/^0x/i, '').toLowerCase().padStart(64, '0')
 
@@ -94,10 +114,21 @@ export async function DELETE(
       return errorResponse('Not authorized to cancel this order', 403, request)
     }
 
+    // ── Signature Verification ──────────────────────────────────────────
+    // Reconstruct the CancelOrder typed data and compute the SNIP-12 message hash.
+    // This must match what the frontend signs via account.signMessage().
+    const cancelTypedData = getCancelOrderTypedData(id)
+    const cancelHash = starknetTypedData.getMessageHash(cancelTypedData, callerAddress)
+
+    const sigValid = await verifyStarknetSignature(callerAddress, cancelHash, signature)
+    if (!sigValid) {
+      return errorResponse('Invalid cancellation signature', 401, request)
+    }
+
     await db.updateOrderStatus(id, 'cancelled')
     return jsonResponse({ ok: true }, request)
   } catch (err) {
-    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    logError('orders/[id]', err)
     return errorResponse('service unavailable', 502, request)
   }
 }

@@ -132,8 +132,9 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
                 onClick={() => toggle(item)}
                 disabled={isPending}
                 className="h-7 w-7 p-0 text-ash hover:text-nova hover:bg-nova/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                aria-label={`Remove inscription ${id.slice(2, 8)} from selection`}
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
               </Button>
             </div>
           ))}

@@ -10,7 +10,7 @@ export const inscriptionListSchema = z.object({
   status: z.enum(VALID_STATUSES as unknown as [InscriptionStatus, ...InscriptionStatus[]]).optional(),
   address: hex.optional(),
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
 })
 
 /** Inscription ID path param */

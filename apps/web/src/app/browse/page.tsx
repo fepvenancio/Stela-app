@@ -15,6 +15,7 @@ import { addressesEqual } from '@/lib/address'
 import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
 import { toast } from 'sonner'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const FILTERS = [
   { key: 'open', label: 'Open' },
@@ -99,7 +100,7 @@ function BrowseContent() {
 
       {/* Filters & Controls */}
       <div className="space-y-6 mb-8">
-        <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2">
+        <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)} className="flex flex-wrap gap-2" aria-label="Filter by status">
           {FILTERS.map(({ key, label }) => (
             <ToggleGroupItem
               key={key}
@@ -138,10 +139,11 @@ function BrowseContent() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="space-y-3">
+        <div className="space-y-3" role="status" aria-busy="true" aria-label="Loading inscriptions">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-20 w-full bg-surface/20 animate-pulse rounded-xl" />
+            <Skeleton key={i} className="h-20 w-full bg-surface/20 rounded-xl" />
           ))}
+          <span className="sr-only">Loading inscriptions...</span>
         </div>
       )}
 
@@ -206,7 +208,7 @@ function BrowseContent() {
       {!isLoading && !error && data.length === 0 && (!statusFilter || statusFilter !== 'open' || orders.length === 0) && (
         <div className="text-center py-24">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
               <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
             </svg>
           </div>

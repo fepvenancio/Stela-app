@@ -7,15 +7,11 @@ import { webhookPayloadSchema } from './schemas.js'
 // Security helpers
 // ---------------------------------------------------------------------------
 
-/** Constant-time string comparison to prevent timing attacks on secret tokens.
- *  Hashes both inputs to fixed-length to avoid leaking length via early return. */
-async function timingSafeEqual(a: string, b: string): Promise<boolean> {
+/** Constant-time string comparison to prevent timing attacks on secret tokens. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
   const encoder = new TextEncoder()
-  const [hashA, hashB] = await Promise.all([
-    crypto.subtle.digest('SHA-256', encoder.encode(a)),
-    crypto.subtle.digest('SHA-256', encoder.encode(b)),
-  ])
-  return crypto.subtle.timingSafeEqual(hashA, hashB)
+  return crypto.subtle.timingSafeEqual(encoder.encode(a), encoder.encode(b))
 }
 
 // ---------------------------------------------------------------------------
@@ -38,7 +34,7 @@ export default {
         ? authHeader.slice(7).trim()
         : null
 
-      if (!token || !(await timingSafeEqual(token, env.WEBHOOK_SECRET))) {
+      if (!token || !timingSafeEqual(token, env.WEBHOOK_SECRET)) {
         return new Response('Forbidden', { status: 403 })
       }
 

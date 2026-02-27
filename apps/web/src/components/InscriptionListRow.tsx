@@ -77,13 +77,18 @@ export function InscriptionListRow({
       <div className="shrink-0 w-5 h-5 flex items-center justify-center">
         {selectable ? (
           <div
+            role="checkbox"
+            aria-checked={selected}
+            aria-label={`Select inscription ${id.slice(2, 8)}`}
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect?.(); } }}
             onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
             className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors cursor-pointer ${
               selected ? 'bg-star border-star' : 'border-dust/40 bg-surface/60 hover:border-star/50'
             }`}
           >
             {selected && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-void">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-void" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -93,7 +98,8 @@ export function InscriptionListRow({
         )}
       </div>
 
-      <div className="grid grid-cols-12 gap-4 flex-1 items-center">
+      {/* Desktop: 12-column grid */}
+      <div className="hidden md:grid grid-cols-12 gap-4 flex-1 items-center">
         {/* Status & ID */}
         <div className="col-span-2 flex flex-col gap-1">
           <Badge variant={statusKey} className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
@@ -110,26 +116,55 @@ export function InscriptionListRow({
 
         {/* Debt */}
         <div className="col-span-3 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Debt</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
           <CompactAssetSummary assets={assets} role="debt" />
         </div>
 
         {/* Interest */}
         <div className="col-span-2 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Interest</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Interest</span>
           <CompactAssetSummary assets={assets} role="interest" />
         </div>
 
         {/* Collateral */}
         <div className="col-span-3 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Collateral</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
           <CompactAssetSummary assets={assets} role="collateral" />
         </div>
 
         {/* Duration */}
         <div className="col-span-2 flex flex-col items-end gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Duration</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Duration</span>
           <span className="text-chalk text-xs font-medium">{formatDuration(Number(duration))}</span>
+        </div>
+      </div>
+
+      {/* Mobile: card-style stacked layout */}
+      <div className="flex md:hidden flex-col gap-2 flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Badge variant={statusKey} className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
+              {label}
+            </Badge>
+            <Link
+              href={`/inscription/${id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
+            >
+              #{id.slice(2, 8)}
+            </Link>
+          </div>
+          <span className="text-chalk text-xs font-medium shrink-0">{formatDuration(Number(duration))}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
+            <CompactAssetSummary assets={assets} role="debt" />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
+            <CompactAssetSummary assets={assets} role="collateral" />
+          </div>
         </div>
       </div>
     </div>
@@ -138,7 +173,7 @@ export function InscriptionListRow({
   if (selectable) return row
 
   return (
-    <Link href={`/inscription/${id}`} className="block">
+    <Link href={`/inscription/${id}`} className="block" aria-label={`View inscription ${id.slice(2, 8)}`}>
       {row}
     </Link>
   )

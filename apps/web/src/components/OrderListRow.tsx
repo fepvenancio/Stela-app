@@ -87,12 +87,13 @@ export function OrderListRow({ order }: OrderListRowProps) {
   const { debtAssets, interestAssets, collateralAssets, duration } = orderData
 
   return (
-    <Link href={`/order/${order.id}`} className="block">
+    <Link href={`/order/${order.id}`} className="block" aria-label={`View order ${order.id.slice(0, 8)}`}>
       <div className="group flex items-center gap-4 p-3 rounded-xl border transition-all duration-200 bg-surface/20 border-edge/50 hover:border-edge hover:bg-surface/40">
         {/* Spacer for alignment with inscription rows */}
         <div className="shrink-0 w-5 h-5" />
 
-        <div className="grid grid-cols-12 gap-4 flex-1 items-center">
+        {/* Desktop: 12-column grid */}
+        <div className="hidden md:grid grid-cols-12 gap-4 flex-1 items-center">
           {/* Status & ID */}
           <div className="col-span-2 flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
@@ -107,26 +108,51 @@ export function OrderListRow({ order }: OrderListRowProps) {
 
           {/* Debt */}
           <div className="col-span-3 flex flex-col gap-0.5">
-            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Debt</span>
+            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
             <CompactOrderAssetSummary assets={debtAssets} />
           </div>
 
           {/* Interest */}
           <div className="col-span-2 flex flex-col gap-0.5">
-            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Interest</span>
+            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Interest</span>
             <CompactOrderAssetSummary assets={interestAssets} />
           </div>
 
           {/* Collateral */}
           <div className="col-span-3 flex flex-col gap-0.5">
-            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Collateral</span>
+            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
             <CompactOrderAssetSummary assets={collateralAssets} />
           </div>
 
           {/* Duration */}
           <div className="col-span-2 flex flex-col items-end gap-0.5">
-            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold hidden md:block">Duration</span>
+            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Duration</span>
             <span className="text-chalk text-xs font-medium">{formatDuration(Number(duration))}</span>
+          </div>
+        </div>
+
+        {/* Mobile: card-style stacked layout */}
+        <div className="flex md:hidden flex-col gap-2 flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Badge variant="default" className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
+                Off-chain
+              </Badge>
+              <span className="font-mono text-[10px] text-ash tracking-wider uppercase">
+                #{order.id.slice(0, 8)}
+              </span>
+            </div>
+            <span className="text-chalk text-xs font-medium shrink-0">{formatDuration(Number(duration))}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
+              <CompactOrderAssetSummary assets={debtAssets} />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
+              <CompactOrderAssetSummary assets={collateralAssets} />
+            </div>
           </div>
         </div>
       </div>

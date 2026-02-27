@@ -82,8 +82,9 @@ function AssetSection({
           type="button"
           onClick={() => setAssets([...assets, emptyAsset()])}
           className="text-xs text-star hover:text-star-bright transition-colors flex items-center gap-1"
+          aria-label={`Add ${title.toLowerCase().replace(' assets', '')} asset`}
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
             <path d="M6 2v8M2 6h8" />
           </svg>
           Add asset
@@ -417,7 +418,8 @@ export default function CreatePage() {
                       </ToggleGroupItem>
                     ))}
                   </ToggleGroup>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setUseCustomDeadline(true)}
                     className="text-[10px] text-ash hover:text-star text-left uppercase tracking-widest pl-1 transition-colors"
                   >

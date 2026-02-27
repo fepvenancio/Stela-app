@@ -139,8 +139,9 @@ export function InscriptionActions({
           className="space-y-4"
         >
           <div className="space-y-2">
-            <label className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
+            <label htmlFor={`lend-amount-${inscriptionId}`} className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
             <Input
+              id={`lend-amount-${inscriptionId}`}
               type="number"
               value={lendAmount}
               onChange={(e) => setLendAmount(e.target.value)}

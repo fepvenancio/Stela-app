@@ -8,6 +8,7 @@ import { SummaryBar } from '@/components/portfolio/SummaryBar'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { EnrichedInscription } from '@/hooks/usePortfolio'
 import Link from 'next/link'
 
@@ -15,7 +16,7 @@ function EmptyTab({ message }: { message: string }) {
   return (
     <div className="text-center py-20">
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface border border-edge/30 mb-5">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
           <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
         </svg>
       </div>
@@ -88,18 +89,19 @@ export default function PortfolioPage() {
 
         {/* Loading */}
         {isLoading && !error && (
-          <>
+          <div role="status" aria-busy="true" aria-label="Loading portfolio">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-24 rounded-2xl bg-surface/20 border border-edge/20 animate-pulse" />
+                <Skeleton key={i} className="h-24 rounded-2xl bg-surface/20 border border-edge/20" />
               ))}
             </div>
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-20 w-full bg-surface/20 animate-pulse rounded-xl" />
+                <Skeleton key={i} className="h-20 w-full bg-surface/20 rounded-xl" />
               ))}
             </div>
-          </>
+            <span className="sr-only">Loading portfolio...</span>
+          </div>
         )}
 
         {/* Loaded content */}

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
 import { inscriptionIdSchema } from '@/lib/schemas'
 
 export function OPTIONS(request: NextRequest) {
@@ -36,7 +36,7 @@ export async function GET(
       data: { ...inscription as Record<string, unknown>, assets },
     }, request)
   } catch (err) {
-    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    logError('inscriptions/[id]', err)
     return errorResponse('service unavailable', 502, request)
   }
 }

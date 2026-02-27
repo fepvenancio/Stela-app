@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { WalletButton } from './WalletButton'
+import { NetworkMismatchBanner } from './NetworkMismatchBanner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
@@ -93,7 +94,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-1" aria-label="Main navigation">
         {NAV_LINKS.map((link) => (
           <NavLink
             key={link.href}
@@ -153,6 +154,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main column */}
       <div className="lg:ml-64 min-h-dvh flex flex-col">
+        {/* Network mismatch warning */}
+        <NetworkMismatchBanner />
+
         {/* Header */}
         <header className="sticky top-0 z-30 h-20 flex items-center justify-between px-4 sm:px-12 bg-transparent pointer-events-none">
           <div className="flex items-center gap-4 pointer-events-auto">

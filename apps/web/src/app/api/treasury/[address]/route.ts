@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
 import { addressSchema } from '@/lib/schemas'
 
 export function OPTIONS(request: NextRequest) {
@@ -67,7 +67,7 @@ export async function GET(
       data: { address, locked_assets },
     }, request)
   } catch (err) {
-    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    logError('treasury/[address]', err)
     return errorResponse('service unavailable', 502, request)
   }
 }

@@ -1,5 +1,10 @@
 import { NextRequest } from 'next/server'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
+import { typedData as starknetTypedData } from 'starknet'
+import type { AssetType } from '@fepvenancio/stela-sdk'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
+import { getInscriptionOrderTypedData, getLendOfferTypedData } from '@/lib/offchain'
+import { verifyStarknetSignature } from '@/lib/verify-signature'
+import { createOfferSchema } from '@/lib/validation'
 
 export function OPTIONS(request: NextRequest) {
   return handleOptions(request)
@@ -9,12 +14,31 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const limited = rateLimit(request)
-  if (limited) return limited
-
   const { id: orderId } = await params
 
   try {
+    const rawBody = await request.text()
+
+    let body: unknown
+    try {
+      body = JSON.parse(rawBody)
+    } catch {
+      return errorResponse('Invalid JSON', 400, request)
+    }
+
+    // Validate input structure with Zod
+    const parsed = createOfferSchema.safeParse(body)
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`)
+      return errorResponse(`Validation failed: ${messages.join('; ')}`, 400, request)
+    }
+
+    const { id, lender, bps, lender_signature, nonce } = parsed.data
+
+    // Rate limit by IP + lender address
+    const limited = rateLimit(request, lender)
+    if (limited) return limited
+
     const db = getD1()
 
     // Verify order exists and is pending
@@ -34,15 +58,68 @@ export async function POST(
       return errorResponse('Order deadline has passed', 400, request)
     }
 
-    const body = await request.json() as Record<string, unknown>
-    const { id, lender, bps, lender_signature, nonce } = body
-
-    if (!id || !lender || !bps || !lender_signature || !nonce) {
-      return errorResponse('Missing required fields', 400, request)
+    // ── Signature Verification ──────────────────────────────────────────
+    // Reconstruct the InscriptionOrder typed data to get the order hash,
+    // then build the LendOffer typed data and verify the lender's signature.
+    let orderDataParsed: Record<string, unknown> = {}
+    const rawOrderData = orderRecord.order_data
+    if (typeof rawOrderData === 'string') {
+      try { orderDataParsed = JSON.parse(rawOrderData) } catch { /* empty */ }
+    } else if (rawOrderData && typeof rawOrderData === 'object') {
+      orderDataParsed = rawOrderData as Record<string, unknown>
     }
 
-    if (Number(bps) < 1 || Number(bps) > 10000) {
-      return errorResponse('BPS must be between 1 and 10000', 400, request)
+    // Try to use the stored orderHash first; otherwise recompute from order data
+    let orderHash = orderDataParsed.orderHash as string | undefined
+    if (!orderHash) {
+      const toSdkAssets = (arr: unknown) => {
+        if (!Array.isArray(arr)) return []
+        return (arr as Array<Record<string, string>>).map((a) => ({
+          asset_address: a.asset_address,
+          asset_type: a.asset_type as AssetType,
+          value: BigInt(a.value),
+          token_id: BigInt(a.token_id ?? '0'),
+        }))
+      }
+
+      const sdkDebtAssets = toSdkAssets(orderDataParsed.debtAssets ?? orderDataParsed.debt_assets)
+      const sdkInterestAssets = toSdkAssets(orderDataParsed.interestAssets ?? orderDataParsed.interest_assets)
+      const sdkCollateralAssets = toSdkAssets(orderDataParsed.collateralAssets ?? orderDataParsed.collateral_assets)
+
+      const orderTypedData = getInscriptionOrderTypedData({
+        borrower: (orderDataParsed.borrower as string) ?? (orderRecord.borrower as string),
+        debtAssets: sdkDebtAssets,
+        interestAssets: sdkInterestAssets,
+        collateralAssets: sdkCollateralAssets,
+        debtCount: sdkDebtAssets.length,
+        interestCount: sdkInterestAssets.length,
+        collateralCount: sdkCollateralAssets.length,
+        duration: BigInt(String(orderDataParsed.duration ?? '0')),
+        deadline: BigInt(String(orderDataParsed.deadline ?? '0')),
+        multiLender: Boolean(orderDataParsed.multiLender ?? orderDataParsed.multi_lender),
+        nonce: BigInt(String(orderDataParsed.nonce ?? orderRecord.nonce ?? '0')),
+        chainId: 'SN_SEPOLIA',
+      })
+
+      const borrowerAddr = (orderDataParsed.borrower as string) ?? (orderRecord.borrower as string)
+      orderHash = starknetTypedData.getMessageHash(orderTypedData, borrowerAddr)
+    }
+
+    // Build the LendOffer typed data and compute the message hash
+    const lendOfferTypedData = getLendOfferTypedData({
+      orderHash,
+      lender,
+      issuedDebtPercentage: BigInt(bps),
+      nonce: BigInt(nonce),
+      chainId: 'SN_SEPOLIA',
+    })
+
+    const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, lender)
+
+    // Verify the lender's signature on-chain via their account contract
+    const sigValid = await verifyStarknetSignature(lender, offerMessageHash, lender_signature)
+    if (!sigValid) {
+      return errorResponse('Invalid lender signature', 401, request)
     }
 
     await db.createOrderOffer({
@@ -50,7 +127,7 @@ export async function POST(
       order_id: orderId,
       lender: String(lender),
       bps: Number(bps),
-      lender_signature: typeof lender_signature === 'string' ? lender_signature : JSON.stringify(lender_signature),
+      lender_signature: JSON.stringify(lender_signature),
       nonce: String(nonce),
       created_at: now,
     })
@@ -60,7 +137,7 @@ export async function POST(
 
     return jsonResponse({ ok: true, id }, request)
   } catch (err) {
-    console.error('D1 query error:', err instanceof Error ? err.message : String(err))
+    logError('orders/[id]/offer', err)
     return errorResponse('service unavailable', 502, request)
   }
 }

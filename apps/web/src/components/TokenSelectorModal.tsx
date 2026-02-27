@@ -52,6 +52,7 @@ function QuickChip({
       type="button"
       onClick={onClick}
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-edge bg-surface hover:bg-elevated hover:border-edge-bright transition-colors text-sm text-chalk"
+      aria-label={`Select ${token.symbol}`}
     >
       <TokenAvatar token={token} size={20} />
       <span className="font-medium">{token.symbol}</span>
@@ -83,6 +84,8 @@ function TokenRow({
     <button
       type="button"
       onClick={onClick}
+      aria-label={`Select ${token.name} (${token.symbol})`}
+      aria-selected={isSelected}
       className={`
         w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left
         ${isSelected
@@ -270,6 +273,7 @@ export function TokenSelectorModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full h-10 pl-10 pr-4 rounded-xl bg-surface border border-edge text-chalk text-sm placeholder:text-ash outline-none focus:border-star focus:ring-1 focus:ring-star/30 transition-colors"
+              aria-label="Search tokens"
             />
           </div>
         </div>

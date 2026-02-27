@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { RpcProvider, addAddressPadding } from 'starknet'
 import { InscriptionClient, parseEvents } from '@fepvenancio/stela-sdk'
 import type { RawEvent, StelaEvent } from '@fepvenancio/stela-sdk'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
 import type { D1Queries } from '@stela/core'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { syncRequestSchema } from '@/lib/schemas'
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     try {
       await processEvent(event, db, client, now, blockNumber, tx_hash, assets as SyncAssets | undefined)
     } catch (err) {
-      console.error(`Sync: failed to process ${event.type}:`, err)
+      logError(`sync/${event.type}`, err)
     }
   }
 

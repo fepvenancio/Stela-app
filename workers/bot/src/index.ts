@@ -232,41 +232,64 @@ export default {
     console.log(`[${new Date().toISOString()}] Bot cron starting...`)
 
     const queries = createD1Queries(env.DB)
-    const provider = new RpcProvider({ nodeUrl: env.RPC_URL })
-    const account = new Account({
-      provider,
-      address: env.BOT_ADDRESS,
-      signer: env.BOT_PRIVATE_KEY,
-    })
 
     // Serialize all operations to avoid StarkNet nonce conflicts
     const work = async () => {
-      // 1. Expire stale orders
-      const expired = await queries.expireOrders(now)
-      if (expired > 0) {
-        console.log(`Expired ${expired} order(s)`)
+      // Acquire a D1-based lock to prevent overlapping cron runs
+      const LOCK_KEY = 'bot_lock'
+      const LOCK_TTL_SECONDS = 300 // 5 minutes
+      const lockValue = await queries.getMeta(LOCK_KEY)
+      if (lockValue) {
+        const lockTime = Number(lockValue)
+        if (now - lockTime < LOCK_TTL_SECONDS) {
+          console.log(`Skipping: lock held since ${new Date(lockTime * 1000).toISOString()}`)
+          return
+        }
       }
 
-      // 2. Settle matched orders
-      await settleOrders(account, provider, env.STELA_ADDRESS, queries)
+      // Set lock
+      await queries.setMeta(LOCK_KEY, String(now))
 
-      // 3. Liquidate expired inscriptions
-      console.log('Checking for liquidatable inscriptions...')
-      const candidates = await queries.findLiquidatable(now)
+      try {
+        const provider = new RpcProvider({ nodeUrl: env.RPC_URL })
+        const account = new Account({
+          provider,
+          address: env.BOT_ADDRESS,
+          signer: env.BOT_PRIVATE_KEY,
+        })
 
-      if (candidates.length === 0) {
-        console.log('No liquidatable inscriptions found')
-      } else {
-        console.log(`Found ${candidates.length} candidate(s)`)
-        for (const inscription of candidates) {
-          try {
-            const txHash = await liquidate(account, provider, env.STELA_ADDRESS, inscription.id)
-            console.log(`Liquidated ${inscription.id}: ${txHash}`)
-          } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : String(err)
-            console.error(`Failed to liquidate ${inscription.id}: ${message}`)
+        // 1. Expire stale orders
+        const expired = await queries.expireOrders(now)
+        if (expired > 0) {
+          console.log(`Expired ${expired} order(s)`)
+        }
+
+        // 2. Settle matched orders
+        await settleOrders(account, provider, env.STELA_ADDRESS, queries)
+
+        // 3. Liquidate expired inscriptions
+        console.log('Checking for liquidatable inscriptions...')
+        const candidates = await queries.findLiquidatable(now)
+
+        if (candidates.length === 0) {
+          console.log('No liquidatable inscriptions found')
+        } else {
+          console.log(`Found ${candidates.length} candidate(s)`)
+          for (const inscription of candidates) {
+            try {
+              const txHash = await liquidate(account, provider, env.STELA_ADDRESS, inscription.id)
+              console.log(`Liquidated ${inscription.id}: ${txHash}`)
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : String(err)
+              console.error(`Failed to liquidate ${inscription.id}: ${message}`)
+            }
           }
         }
+      } finally {
+        // Release lock
+        await queries.setMeta(LOCK_KEY, '0').catch(() => {
+          // Best-effort lock release; TTL ensures it expires anyway
+        })
       }
     }
 

@@ -48,6 +48,15 @@ function isValidStatus(s: string): s is InscriptionStatus {
   return (VALID_STATUSES as readonly string[]).includes(s)
 }
 
+/**
+ * Normalize a StarkNet address to a canonical lowercase 0x-padded form.
+ * This avoids needing separate padded/unpadded comparisons in SQL queries.
+ */
+function normalizeAddress(address: string): string {
+  const stripped = address.replace(/^0x/i, '').toLowerCase()
+  return '0x' + stripped.padStart(64, '0')
+}
+
 // ---------------------------------------------------------------------------
 // Query helpers
 // ---------------------------------------------------------------------------
@@ -66,7 +75,7 @@ export function createD1Queries(db: D1Database) {
     // -----------------------------------------------------------------------
 
     async getInscriptions({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
-      const limit = Math.min(rawLimit, 100)
+      const limit = Math.min(rawLimit, 50)
       const conditions: string[] = []
       const params: unknown[] = []
 
@@ -82,12 +91,10 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        // Normalize: handle both padded (0x049d3...) and unpadded (0x49d3...) StarkNet addresses
-        const stripped = address.replace(/^0x/i, '').toLowerCase()
-        const padded = '0x' + stripped.padStart(64, '0')
-        const unpadded = '0x' + (stripped.replace(/^0+/, '') || '0')
-        conditions.push('(LOWER(creator) IN (?, ?) OR LOWER(borrower) IN (?, ?) OR LOWER(lender) IN (?, ?))')
-        params.push(padded, unpadded, padded, unpadded, padded, unpadded)
+        // Normalize address once and use LOWER() for comparison
+        const normalized = normalizeAddress(address)
+        conditions.push('(LOWER(creator) = ? OR LOWER(borrower) = ? OR LOWER(lender) = ?)')
+        params.push(normalized, normalized, normalized)
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -504,7 +511,7 @@ export function createD1Queries(db: D1Database) {
     },
 
     async getOrders({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
-      const limit = Math.min(rawLimit, 100)
+      const limit = Math.min(rawLimit, 50)
       const conditions: string[] = []
       const params: unknown[] = []
 
@@ -514,11 +521,9 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        const stripped = address.replace(/^0x/i, '').toLowerCase()
-        const padded = '0x' + stripped.padStart(64, '0')
-        const unpadded = '0x' + (stripped.replace(/^0+/, '') || '0')
-        conditions.push('(LOWER(borrower) IN (?, ?))')
-        params.push(padded, unpadded)
+        const normalized = normalizeAddress(address)
+        conditions.push('(LOWER(borrower) = ?)')
+        params.push(normalized)
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''

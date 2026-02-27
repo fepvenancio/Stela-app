@@ -44,6 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
               stroke="currentColor"
               strokeWidth="1.5"
               className="text-nova"
+              aria-hidden="true"
             >
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v4" />
