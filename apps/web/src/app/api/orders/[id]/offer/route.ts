@@ -140,6 +140,11 @@ export async function POST(
     const newStatus = tx_hash ? 'settled' : 'matched'
     await db.updateOrderStatus(orderId, newStatus)
 
+    // Also update the offer status to match
+    if (tx_hash) {
+      await db.updateOfferStatus(String(id), 'settled')
+    }
+
     return jsonResponse({ ok: true, id, status: newStatus }, request)
   } catch (err) {
     logError('orders/[id]/offer', err)

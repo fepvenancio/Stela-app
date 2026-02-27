@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useDeferredValue } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { useOrders } from '@/hooks/useOrders'
@@ -10,12 +10,24 @@ import { BrowseControls, type SortOption } from '@/components/BrowseControls'
 import { SelectionActionBar } from '@/components/SelectionActionBar'
 import { LendReviewModal } from '@/components/LendReviewModal'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { enrichStatus } from '@/lib/status'
+import { enrichStatus, mapInscriptionFilterToOrderFilter } from '@/lib/status'
+import { InfoTooltip } from '@/components/InfoTooltip'
+import { CONCEPT_DESCRIPTIONS } from '@/lib/status'
 import { addressesEqual } from '@/lib/address'
 import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
 import { toast } from 'sonner'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { ListingTableHeader } from '@/components/ListingTableHeader'
 import { Skeleton } from '@/components/ui/skeleton'
+import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
+import {
+  EMPTY_FILTERS,
+  passesAdvancedFilters,
+  computeDebtDistance,
+  computeYieldPercent,
+  computeCollateralValue,
+  type FilterValues,
+} from '@/lib/filter-utils'
 
 const FILTERS = [
   { key: 'open', label: 'Open' },
@@ -32,14 +44,62 @@ function BrowseContent() {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [filters, setFilters] = useState<FilterValues>(EMPTY_FILTERS)
+  const [showFilters, setShowFilters] = useState(false)
+
+  const deferredFilters = useDeferredValue(filters)
 
   const { address } = useAccount()
   const { toggle, isSelected, count } = useBatchSelection()
 
   const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
-  const { data: orders, isLoading: ordersLoading } = useOrders({ status: 'all' })
+  const orderStatusFilter = useMemo(() => mapInscriptionFilterToOrderFilter(statusFilter), [statusFilter])
+  const { data: allOrders, isLoading: ordersLoading } = useOrders({ status: orderStatusFilter })
 
-  // Enrich, Filter, and Sort
+  // Client-side filter orders to match the active status filter
+  const filteredOrders = useMemo(() => {
+    let result = allOrders
+    if (statusFilter !== 'all') {
+      const target = mapInscriptionFilterToOrderFilter(statusFilter)
+      if (target !== 'all') {
+        result = result.filter((o) => o.status === target)
+      }
+    }
+
+    // Apply search to orders
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter((o) => {
+        if (o.id.toLowerCase().includes(q)) return true
+        if (o.borrower.toLowerCase().includes(q)) return true
+        const raw: RawOrderData = typeof o.order_data === 'string'
+          ? (() => { try { return JSON.parse(o.order_data as string) } catch { return {} } })()
+          : (o.order_data as unknown as RawOrderData) ?? {}
+        const data = normalizeOrderData(raw)
+        return [...data.debtAssets, ...data.interestAssets, ...data.collateralAssets].some((a) => {
+          const token = findTokenByAddress(a.asset_address)
+          return (
+            token?.symbol.toLowerCase().includes(q) ||
+            token?.name.toLowerCase().includes(q) ||
+            a.asset_address.toLowerCase().includes(q)
+          )
+        })
+      })
+    }
+
+    // Apply advanced filters to orders
+    result = result.filter((o) => {
+      const raw: RawOrderData = typeof o.order_data === 'string'
+        ? (() => { try { return JSON.parse(o.order_data as string) } catch { return {} } })()
+        : (o.order_data as unknown as RawOrderData) ?? {}
+      const data = normalizeOrderData(raw)
+      return passesAdvancedFilters(data.debtAssets, data.interestAssets, data.collateralAssets, deferredFilters)
+    })
+
+    return result
+  }, [allOrders, statusFilter, search, deferredFilters])
+
+  // Enrich, Filter, and Sort inscriptions
   const data = useMemo(() => {
     let results = rawData.map((row) => ({
       ...row,
@@ -63,6 +123,14 @@ function BrowseContent() {
       })
     }
 
+    // Advanced filters
+    results = results.filter((item) => {
+      const debtAssets = (item.assets ?? []).filter((a) => a.asset_role === 'debt')
+      const interestAssets = (item.assets ?? []).filter((a) => a.asset_role === 'interest')
+      const collateralAssets = (item.assets ?? []).filter((a) => a.asset_role === 'collateral')
+      return passesAdvancedFilters(debtAssets, interestAssets, collateralAssets, deferredFilters)
+    })
+
     // Sort
     results.sort((a, b) => {
       if (sortBy === 'newest') return Number(b.created_at_ts) - Number(a.created_at_ts)
@@ -72,19 +140,44 @@ function BrowseContent() {
         const valB = b.assets?.filter(as => as.asset_role === 'debt').reduce((acc, as) => acc + BigInt(as.value || '0'), 0n) ?? 0n
         return sortBy === 'debt_desc' ? (valA < valB ? 1 : -1) : (valA > valB ? 1 : -1)
       }
-      if (sortBy === 'apy') {
-        const getRatio = (item: typeof results[number]) => {
-          const debt = item.assets?.filter(as => as.asset_role === 'debt').reduce((acc, as) => acc + BigInt(as.value || '0'), 0n) ?? 1n
-          const interest = item.assets?.filter(as => as.asset_role === 'interest').reduce((acc, as) => acc + BigInt(as.value || '0'), 0n) ?? 0n
-          return Number(interest) / Number(debt === 0n ? 1n : debt)
-        }
-        return getRatio(b) - getRatio(a)
+      if (sortBy === 'apy' || sortBy === 'interest_desc') {
+        const yieldA = computeYieldPercent(
+          (a.assets ?? []).filter(as => as.asset_role === 'debt'),
+          (a.assets ?? []).filter(as => as.asset_role === 'interest'),
+        ) ?? 0
+        const yieldB = computeYieldPercent(
+          (b.assets ?? []).filter(as => as.asset_role === 'debt'),
+          (b.assets ?? []).filter(as => as.asset_role === 'interest'),
+        ) ?? 0
+        return yieldB - yieldA
+      }
+      if (sortBy === 'collateral_desc') {
+        const valA = computeCollateralValue((a.assets ?? []).filter(as => as.asset_role === 'collateral'))
+        const valB = computeCollateralValue((b.assets ?? []).filter(as => as.asset_role === 'collateral'))
+        return valB - valA
       }
       return 0
     })
 
+    // If a debt amount target is set, re-sort by closest match
+    if (deferredFilters.debtAmount) {
+      results.sort((a, b) => {
+        const distA = computeDebtDistance(
+          (a.assets ?? []).filter(as => as.asset_role === 'debt'),
+          deferredFilters.debtAmount,
+          deferredFilters.debtToken,
+        )
+        const distB = computeDebtDistance(
+          (b.assets ?? []).filter(as => as.asset_role === 'debt'),
+          deferredFilters.debtAmount,
+          deferredFilters.debtToken,
+        )
+        return Number(distA - distB)
+      })
+    }
+
     return results
-  }, [rawData, search, sortBy])
+  }, [rawData, search, sortBy, deferredFilters])
 
   return (
     <div className="animate-fade-up">
@@ -117,6 +210,10 @@ function BrowseContent() {
           onSearchChange={setSearch}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          filters={filters}
+          onFiltersChange={setFilters}
+          showFilters={showFilters}
+          onToggleFilters={() => setShowFilters((p) => !p)}
         />
       </div>
 
@@ -124,18 +221,7 @@ function BrowseContent() {
       <SelectionActionBar onReview={() => setReviewOpen(true)} />
 
       {/* Table Header (hidden on mobile) */}
-      {!isLoading && !error && data.length > 0 && (
-        <div className="hidden md:flex items-center gap-4 px-3 pb-2 text-[9px] text-dust uppercase tracking-widest font-semibold">
-          <div className="shrink-0 w-5" />
-          <div className="grid grid-cols-12 gap-4 flex-1">
-            <div className="col-span-2">Status</div>
-            <div className="col-span-3">Debt</div>
-            <div className="col-span-2">Interest</div>
-            <div className="col-span-3">Collateral</div>
-            <div className="col-span-2 text-right">Duration</div>
-          </div>
-        </div>
-      )}
+      {!isLoading && !error && data.length > 0 && <ListingTableHeader />}
 
       {/* Loading */}
       {isLoading && (
@@ -188,14 +274,17 @@ function BrowseContent() {
       )}
 
       {/* Off-chain Orders Section */}
-      {!ordersLoading && orders.length > 0 && (
+      {!ordersLoading && filteredOrders.length > 0 && (
         <div className="mt-8">
           <div className="flex items-center gap-4 mb-4">
-            <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap">Off-chain Orders (Pending Settlement)</span>
+            <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap flex items-center gap-1.5">
+              Off-chain Orders
+              <InfoTooltip content={CONCEPT_DESCRIPTIONS.offChain} side="right" />
+            </span>
             <div className="h-px w-full bg-edge/20" />
           </div>
           <div className="flex flex-col gap-3">
-            {orders.map((order, i) => (
+            {filteredOrders.map((order, i) => (
               <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
                 <OrderListRow order={order} />
               </div>
@@ -205,7 +294,7 @@ function BrowseContent() {
       )}
 
       {/* Empty */}
-      {!isLoading && !error && data.length === 0 && orders.length === 0 && (
+      {!isLoading && !error && data.length === 0 && filteredOrders.length === 0 && (
         <div className="text-center py-24">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">

@@ -10,38 +10,7 @@ export function OPTIONS(request: NextRequest) {
   return handleOptions(request)
 }
 
-/** Parse order_data TEXT column into a proper object with normalized keys */
-function parseOrderRow(row: Record<string, unknown>): Record<string, unknown> {
-  let parsed: Record<string, unknown> = {}
-  const raw = row.order_data
-  if (typeof raw === 'string') {
-    try { parsed = JSON.parse(raw) } catch { parsed = {} }
-  } else if (raw && typeof raw === 'object') {
-    parsed = raw as Record<string, unknown>
-  }
-
-  const debtAssets = parsed.debtAssets ?? parsed.debt_assets ?? []
-  const interestAssets = parsed.interestAssets ?? parsed.interest_assets ?? []
-  const collateralAssets = parsed.collateralAssets ?? parsed.collateral_assets ?? []
-
-  return {
-    ...row,
-    order_data: {
-      borrower: parsed.borrower ?? '',
-      debtAssets,
-      interestAssets,
-      collateralAssets,
-      debtCount: (debtAssets as unknown[]).length,
-      interestCount: (interestAssets as unknown[]).length,
-      collateralCount: (collateralAssets as unknown[]).length,
-      duration: String(parsed.duration ?? '0'),
-      deadline: String(parsed.deadline ?? '0'),
-      multiLender: parsed.multiLender ?? parsed.multi_lender ?? false,
-      nonce: String(parsed.nonce ?? row.nonce ?? '0'),
-      orderHash: parsed.orderHash ?? undefined,
-    },
-  }
-}
+import { parseOrderRow } from '@/lib/order-utils'
 
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request)

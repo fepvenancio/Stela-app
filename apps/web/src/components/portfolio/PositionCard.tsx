@@ -1,13 +1,12 @@
 import Link from 'next/link'
-import { findTokenByAddress, STATUS_LABELS } from '@stela/core'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { formatTokenValue, formatDuration } from '@/lib/format'
+import { getStatusBadgeVariant, getStatusLabel } from '@/lib/status'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import type { EnrichedInscription } from '@/hooks/usePortfolio'
 import type { AssetRow } from '@/types/api'
-
-type BadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'cancelled'
 
 export type PositionRole = 'lender' | 'borrower' | 'redeemable'
 
@@ -131,16 +130,14 @@ function RedeemableContent({
   inscription: EnrichedInscription
   shareBalance: string
 }) {
-  const statusKey = (inscription.computedStatus in STATUS_LABELS
-    ? inscription.computedStatus
-    : 'open') as BadgeVariant
+  const statusKey = getStatusBadgeVariant(inscription.computedStatus)
 
   return (
     <>
       <div className="flex flex-col gap-2">
         <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Status</span>
         <Badge variant={statusKey} className="rounded-full px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider w-fit">
-          {STATUS_LABELS[statusKey]}
+          {getStatusLabel(inscription.computedStatus)}
         </Badge>
       </div>
       <div className="flex items-center justify-between pt-1">
@@ -157,9 +154,7 @@ function RedeemableContent({
 }
 
 export function PositionCard({ inscription, role, shareBalance }: PositionCardProps) {
-  const statusKey = (inscription.computedStatus in STATUS_LABELS
-    ? inscription.computedStatus
-    : 'open') as BadgeVariant
+  const statusKey = getStatusBadgeVariant(inscription.computedStatus)
 
   return (
     <Link
@@ -173,7 +168,7 @@ export function PositionCard({ inscription, role, shareBalance }: PositionCardPr
               #{inscription.id.slice(2, 8)}
             </span>
             <Badge variant={statusKey} className="rounded-full px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider">
-              {STATUS_LABELS[statusKey]}
+              {getStatusLabel(inscription.computedStatus)}
             </Badge>
           </div>
         </CardHeader>

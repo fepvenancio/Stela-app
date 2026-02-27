@@ -194,7 +194,8 @@ export function usePortfolio(address: string | undefined): PortfolioData {
 
     const redeemableCount = redeemable.length
     const activeCount = enriched.filter((ins) => ACTIVE_STATUSES.has(ins.computedStatus)).length
-    const orderCount = allOrders.length
+    const activeOrderStatuses = new Set(['pending', 'matched'])
+    const orderCount = allOrders.filter((o) => activeOrderStatuses.has(o.status)).length
 
     return {
       lending,

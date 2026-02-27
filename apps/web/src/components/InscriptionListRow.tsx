@@ -1,11 +1,10 @@
 'use client'
 
-import { findTokenByAddress } from '@fepvenancio/stela-sdk'
-import { formatAddress } from '@/lib/address'
-import { formatTokenValue, formatDuration } from '@/lib/format'
-import { TokenAvatarByAddress } from '@/components/TokenAvatar'
+import { formatDuration } from '@/lib/format'
+import { getStatusBadgeVariant, getStatusLabel, STATUS_DESCRIPTIONS } from '@/lib/status'
+import { CompactAssetSummary } from '@/components/CompactAssetSummary'
+import { InfoTooltip } from '@/components/InfoTooltip'
 import { Badge } from '@/components/ui/badge'
-import { STATUS_LABELS } from '@fepvenancio/stela-sdk'
 import type { AssetRow } from '@/types/api'
 import Link from 'next/link'
 
@@ -21,30 +20,9 @@ interface InscriptionListRowProps {
   onSelect?: () => void
 }
 
-function CompactAssetSummary({ assets, role }: { assets: AssetRow[]; role: string }) {
-  const roleAssets = assets.filter((a) => a.asset_role === role)
-  if (roleAssets.length === 0) return <span className="text-ash/50 text-[10px]">None</span>
-
-  return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1">
-      {roleAssets.map((a, i) => {
-        const token = findTokenByAddress(a.asset_address)
-        const symbol = token?.symbol ?? formatAddress(a.asset_address)
-        const decimals = token?.decimals ?? 18
-        const isNFT = a.asset_type === 'ERC721'
-        const display = isNFT
-          ? `${symbol}${a.token_id && a.token_id !== '0' ? ` #${a.token_id}` : ''}`
-          : `${formatTokenValue(a.value, decimals)} ${symbol}`
-
-        return (
-          <div key={i} className="flex items-center gap-1.5">
-            <TokenAvatarByAddress address={a.asset_address} size={14} />
-            <span className="text-xs font-medium text-chalk">{display}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
+function AssetsByRole({ assets, role }: { assets: AssetRow[]; role: string }) {
+  const filtered = assets.filter((a) => a.asset_role === role)
+  return <CompactAssetSummary assets={filtered} />
 }
 
 export function InscriptionListRow({
@@ -58,9 +36,8 @@ export function InscriptionListRow({
   selected,
   onSelect,
 }: InscriptionListRowProps) {
-  type BadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'cancelled'
-  const statusKey = (status in STATUS_LABELS ? status : 'open') as BadgeVariant
-  const label = STATUS_LABELS[statusKey]
+  const statusKey = getStatusBadgeVariant(status)
+  const label = getStatusLabel(status)
 
   const row = (
     <div
@@ -102,9 +79,12 @@ export function InscriptionListRow({
       <div className="hidden md:grid grid-cols-12 gap-4 flex-1 items-center">
         {/* Status & ID */}
         <div className="col-span-2 flex flex-col gap-1">
-          <Badge variant={statusKey} className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
-            {label}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <Badge variant={statusKey} className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
+              {label}
+            </Badge>
+            <InfoTooltip content={STATUS_DESCRIPTIONS[status] ?? 'Inscription status'} side="right" />
+          </div>
           <Link
             href={`/inscription/${id}`}
             onClick={(e) => e.stopPropagation()}
@@ -117,19 +97,19 @@ export function InscriptionListRow({
         {/* Debt */}
         <div className="col-span-3 flex flex-col gap-0.5">
           <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
-          <CompactAssetSummary assets={assets} role="debt" />
+          <AssetsByRole assets={assets} role="debt" />
         </div>
 
         {/* Interest */}
         <div className="col-span-2 flex flex-col gap-0.5">
           <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Interest</span>
-          <CompactAssetSummary assets={assets} role="interest" />
+          <AssetsByRole assets={assets} role="interest" />
         </div>
 
         {/* Collateral */}
         <div className="col-span-3 flex flex-col gap-0.5">
           <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
-          <CompactAssetSummary assets={assets} role="collateral" />
+          <AssetsByRole assets={assets} role="collateral" />
         </div>
 
         {/* Duration */}
@@ -159,11 +139,11 @@ export function InscriptionListRow({
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <div className="flex flex-col gap-0.5">
             <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
-            <CompactAssetSummary assets={assets} role="debt" />
+            <AssetsByRole assets={assets} role="debt" />
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
-            <CompactAssetSummary assets={assets} role="collateral" />
+            <AssetsByRole assets={assets} role="collateral" />
           </div>
         </div>
       </div>
