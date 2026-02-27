@@ -47,7 +47,7 @@ export function useOrders(params?: OrderListParams) {
   const url = useMemo(
     () =>
       buildApiUrl('/api/orders', {
-        status: params?.status ?? 'pending',
+        status: params?.status ?? 'all',
         address: params?.address,
         page: params?.page,
         limit: params?.limit ?? 50,

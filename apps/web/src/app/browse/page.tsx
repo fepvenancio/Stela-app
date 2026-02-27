@@ -22,7 +22,7 @@ const FILTERS = [
   { key: 'partial', label: 'Partial' },
   { key: 'filled', label: 'Filled' },
   { key: 'expired', label: 'Expired' },
-  { key: '', label: 'All' },
+  { key: 'all', label: 'All' },
 ]
 
 const MAX_SELECTIONS = 10
@@ -37,7 +37,7 @@ function BrowseContent() {
   const { toggle, isSelected, count } = useBatchSelection()
 
   const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
-  const { data: orders, isLoading: ordersLoading } = useOrders({ status: 'pending' })
+  const { data: orders, isLoading: ordersLoading } = useOrders({ status: 'all' })
 
   // Enrich, Filter, and Sort
   const data = useMemo(() => {
@@ -188,7 +188,7 @@ function BrowseContent() {
       )}
 
       {/* Off-chain Orders Section */}
-      {statusFilter === 'open' && !ordersLoading && orders.length > 0 && (
+      {!ordersLoading && orders.length > 0 && (
         <div className="mt-8">
           <div className="flex items-center gap-4 mb-4">
             <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap">Off-chain Orders (Pending Settlement)</span>
@@ -205,7 +205,7 @@ function BrowseContent() {
       )}
 
       {/* Empty */}
-      {!isLoading && !error && data.length === 0 && (!statusFilter || statusFilter !== 'open' || orders.length === 0) && (
+      {!isLoading && !error && data.length === 0 && orders.length === 0 && (
         <div className="text-center py-24">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">

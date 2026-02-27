@@ -499,7 +499,7 @@ export function createD1Queries(db: D1Database) {
           `INSERT INTO orders (id, borrower, order_data, borrower_signature, nonce, status, deadline, created_at)
            VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`
         )
-        .bind(order.id, order.borrower, order.order_data, order.borrower_signature, order.nonce, order.deadline, order.created_at)
+        .bind(order.id, normalizeAddress(order.borrower), order.order_data, order.borrower_signature, order.nonce, order.deadline, order.created_at)
         .run()
     },
 
@@ -522,8 +522,9 @@ export function createD1Queries(db: D1Database) {
 
       if (address) {
         const normalized = normalizeAddress(address)
-        conditions.push('(LOWER(borrower) = ?)')
-        params.push(normalized)
+        const minimal = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
+        conditions.push('(LOWER(borrower) = ? OR LOWER(borrower) = ?)')
+        params.push(normalized, minimal)
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''

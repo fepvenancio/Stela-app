@@ -1,4 +1,4 @@
-import { Account, RpcProvider } from 'starknet'
+import { Account, RpcProvider, hash } from 'starknet'
 import { createD1Queries, toU256, ASSET_TYPE_ENUM } from '@stela/core'
 import type { D1Database, AssetType } from '@stela/core'
 
@@ -69,6 +69,20 @@ function serializeAssetCalldata(assets: StoredAsset[]): string[] {
     )
   }
   return calldata
+}
+
+/** Hash an array of assets using Poseidon — matches Cairo's hash_assets() */
+function hashAssets(assets: StoredAsset[]): string {
+  const elements: string[] = [String(assets.length)]
+  for (const asset of assets) {
+    elements.push(asset.asset_address)
+    elements.push(String(ASSET_TYPE_ENUM[asset.asset_type] ?? 0))
+    const [vLow, vHigh] = toU256(BigInt(asset.value))
+    elements.push(vLow, vHigh)
+    const [tidLow, tidHigh] = toU256(BigInt(asset.token_id))
+    elements.push(tidLow, tidHigh)
+  }
+  return hash.computePoseidonHashOnElements(elements)
 }
 
 /** Serialize a signature string "r,s" or JSON [r, s] into calldata: [len, r, s] */
@@ -142,15 +156,20 @@ async function settleOrders(
       // Parse stored order data
       const orderData: OrderData = JSON.parse(order.order_data as string)
 
+      // Compute asset hashes from asset arrays (may not be stored in order_data)
+      const debtHash = orderData.debtHash ?? hashAssets(orderData.debtAssets)
+      const interestHash = orderData.interestHash ?? hashAssets(orderData.interestAssets)
+      const collateralHash = orderData.collateralHash ?? hashAssets(orderData.collateralAssets)
+
       // Build order struct calldata (11 fields inline):
       // borrower, debt_hash, interest_hash, collateral_hash,
       // debt_count, interest_count, collateral_count,
       // duration, deadline, multi_lender (0/1), nonce
       const orderCalldata: string[] = [
         orderData.borrower,
-        orderData.debtHash,
-        orderData.interestHash,
-        orderData.collateralHash,
+        debtHash,
+        interestHash,
+        collateralHash,
         String(orderData.debtAssets.length),
         String(orderData.interestAssets.length),
         String(orderData.collateralAssets.length),

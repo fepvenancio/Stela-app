@@ -11,7 +11,7 @@ export function useInscriptions(params?: InscriptionListParams) {
   const url = useMemo(
     () =>
       buildApiUrl('/api/inscriptions', {
-        status: params?.status,
+        status: params?.status || undefined,
         address: params?.address,
         page: params?.page,
       }),
