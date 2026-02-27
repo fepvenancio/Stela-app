@@ -112,6 +112,46 @@
   },
   {
     "type": "struct",
+    "name": "stela::types::private_redeem::PrivateRedeemRequest",
+    "members": [
+      {
+        "name": "root",
+        "type": "core::felt252"
+      },
+      {
+        "name": "inscription_id",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "shares",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "nullifier",
+        "type": "core::felt252"
+      },
+      {
+        "name": "change_commitment",
+        "type": "core::felt252"
+      },
+      {
+        "name": "recipient",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::felt252>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::felt252>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
     "name": "stela::snip12::InscriptionOrder",
     "members": [
       {
@@ -178,6 +218,10 @@
       },
       {
         "name": "nonce",
+        "type": "core::felt252"
+      },
+      {
+        "name": "lender_commitment",
         "type": "core::felt252"
       }
     ]
@@ -353,6 +397,22 @@
           {
             "name": "shares",
             "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "private_redeem",
+        "inputs": [
+          {
+            "name": "request",
+            "type": "stela::types::private_redeem::PrivateRedeemRequest"
+          },
+          {
+            "name": "proof",
+            "type": "core::array::Span::<core::felt252>"
           }
         ],
         "outputs": [],
@@ -616,6 +676,17 @@
       },
       {
         "type": "function",
+        "name": "get_privacy_pool",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "set_inscription_fee",
         "inputs": [
           {
@@ -688,6 +759,18 @@
       },
       {
         "type": "function",
+        "name": "set_privacy_pool",
+        "inputs": [
+          {
+            "name": "privacy_pool",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
         "name": "pause",
         "inputs": [],
         "outputs": [],
@@ -744,16 +827,6 @@
       {
         "name": "snapshot",
         "type": "@core::array::Array::<core::integer::u256>"
-      }
-    ]
-  },
-  {
-    "type": "struct",
-    "name": "core::array::Span::<core::felt252>",
-    "members": [
-      {
-        "name": "snapshot",
-        "type": "@core::array::Array::<core::felt252>"
       }
     ]
   },
@@ -1626,6 +1699,55 @@
   },
   {
     "type": "event",
+    "name": "stela::stela::StelaProtocol::PrivateSettled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "inscription_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "lender_commitment",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "shares_committed",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "stela::stela::StelaProtocol::PrivateSharesRedeemed",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "inscription_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "nullifier",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "shares",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "recipient",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
     "name": "stela::stela::StelaProtocol::Event",
     "kind": "enum",
     "variants": [
@@ -1707,6 +1829,16 @@
       {
         "name": "OrdersBulkCancelled",
         "type": "stela::stela::StelaProtocol::OrdersBulkCancelled",
+        "kind": "nested"
+      },
+      {
+        "name": "PrivateSettled",
+        "type": "stela::stela::StelaProtocol::PrivateSettled",
+        "kind": "nested"
+      },
+      {
+        "name": "PrivateSharesRedeemed",
+        "type": "stela::stela::StelaProtocol::PrivateSharesRedeemed",
         "kind": "nested"
       }
     ]
