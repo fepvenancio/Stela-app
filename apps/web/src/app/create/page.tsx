@@ -280,7 +280,9 @@ export default function CreatePage() {
           id: orderId,
           borrower: address,
           order_data: orderData,
-          borrower_signature: Array.isArray(signature) ? signature : [signature.r, signature.s],
+          borrower_signature: Array.isArray(signature)
+            ? signature.map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s))
+            : [signature.r, signature.s].map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s)),
           nonce: nonce.toString(),
           deadline: Number(deadline),
         }),

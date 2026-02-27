@@ -360,7 +360,8 @@ export default function OrderPage({ params }: OrderPageProps) {
                               // Sign a cancellation typed data to prove ownership
                               const cancelTypedData = getCancelOrderTypedData(id)
                               const sig = await account.signMessage(cancelTypedData)
-                              const sigArray = Array.isArray(sig) ? sig : [sig.r, sig.s]
+                              const toHex = (s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s)
+                              const sigArray = Array.isArray(sig) ? sig.map(toHex) : [sig.r, sig.s].map(toHex)
 
                               const res = await fetch(`/api/orders/${id}`, {
                                 method: 'DELETE',

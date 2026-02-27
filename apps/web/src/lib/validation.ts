@@ -24,31 +24,33 @@ const starknetAddress = z
   .regex(/^0x[0-9a-fA-F]{1,64}$/i, 'Must be a valid StarkNet address')
 
 /**
- * A StarkNet ECDSA signature: exactly 2 felt252 values [r, s].
+ * A StarkNet signature: array of felt252 values.
  *
- * Accepts either:
- * - An array of 2 hex strings: ["0x...", "0x..."]
- * - A JSON string that parses to such an array
- * - An object with { r, s } fields
+ * Different wallet implementations use different formats:
+ * - OpenZeppelin/Argent: [r, s] (2 elements)
+ * - Braavos: [signer_type, r, s, ...] (variable length)
+ * - Cartridge Controller: may include additional elements
+ *
+ * The is_valid_signature contract call handles all formats natively.
  */
 const signatureArray = z
   .array(felt)
-  .length(2, 'Signature must contain exactly 2 elements [r, s]')
+  .min(2, 'Signature must contain at least 2 elements')
 
 /**
  * Flexible signature input: accepts array, JSON string, or {r, s} object.
- * Always normalizes to string[] of 2 felt values.
+ * Normalizes to string[] of felt values.
  */
 export const signatureInput = z
   .union([
-    // Direct array
+    // Direct array of felt strings
     signatureArray,
     // JSON string that parses to an array
     z.string().transform((val, ctx) => {
       try {
         const parsed = JSON.parse(val)
-        if (!Array.isArray(parsed) || parsed.length !== 2) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Signature JSON must be an array of 2 elements' })
+        if (!Array.isArray(parsed) || parsed.length < 2) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Signature JSON must be an array of at least 2 elements' })
           return z.NEVER
         }
         return parsed as string[]
@@ -57,7 +59,7 @@ export const signatureInput = z
         return z.NEVER
       }
     }),
-    // Object with r, s
+    // Object with r, s (legacy format)
     z.object({ r: felt, s: felt }).transform((val) => [val.r, val.s]),
   ])
   .pipe(signatureArray)
