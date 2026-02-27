@@ -30,25 +30,32 @@ export function useSignOrder(orderId: string) {
             : (order.order_data as Record<string, unknown>)
 
         // Get nonce from contract
-        const provider = new RpcProvider({ nodeUrl: RPC_URL })
+        const provider = new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' })
         const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
 
         // Compute the SNIP-12 message hash of the InscriptionOrder.
-        // If the create page stored it, use that; otherwise recompute from order data.
+        // If the API stored it, use that; otherwise recompute from order data.
         let orderHash = orderData.orderHash as string | undefined
         if (!orderHash) {
           // Reconstruct typed data from stored order data to compute the message hash
-          const toSdkAssets = (arr: Record<string, string>[]) =>
+          const toSdkAssets = (arr: Record<string, string>[] | undefined) =>
             (arr || []).map((a) => ({
               asset_address: a.asset_address,
               asset_type: a.asset_type as AssetType,
               value: BigInt(a.value),
-              token_id: BigInt(a.token_id),
+              token_id: BigInt(a.token_id ?? '0'),
             }))
 
-          const sdkDebtAssets = toSdkAssets(orderData.debtAssets as Record<string, string>[])
-          const sdkInterestAssets = toSdkAssets(orderData.interestAssets as Record<string, string>[])
-          const sdkCollateralAssets = toSdkAssets(orderData.collateralAssets as Record<string, string>[])
+          // Handle both camelCase and snake_case keys
+          const debtArr = (orderData.debtAssets ?? orderData.debt_assets) as Record<string, string>[] | undefined
+          const interestArr = (orderData.interestAssets ?? orderData.interest_assets) as Record<string, string>[] | undefined
+          const collateralArr = (orderData.collateralAssets ?? orderData.collateral_assets) as Record<string, string>[] | undefined
+
+          const sdkDebtAssets = toSdkAssets(debtArr)
+          const sdkInterestAssets = toSdkAssets(interestArr)
+          const sdkCollateralAssets = toSdkAssets(collateralArr)
+
+          const orderNonce = String(orderData.nonce ?? order.nonce ?? '0')
 
           const orderTypedData = getInscriptionOrderTypedData({
             borrower: orderData.borrower as string,
@@ -60,8 +67,8 @@ export function useSignOrder(orderId: string) {
             collateralCount: sdkCollateralAssets.length,
             duration: BigInt(orderData.duration as string),
             deadline: BigInt(orderData.deadline as string),
-            multiLender: orderData.multiLender as boolean,
-            nonce: BigInt(orderData.nonce as string),
+            multiLender: (orderData.multiLender ?? orderData.multi_lender) as boolean,
+            nonce: BigInt(orderNonce),
             chainId: 'SN_SEPOLIA',
           })
 

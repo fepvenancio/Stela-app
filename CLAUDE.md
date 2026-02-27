@@ -3,7 +3,7 @@
 ## Project Overview
 
 Stela is a P2P lending/inscriptions protocol on StarkNet. The contracts are in a separate repo
-(`stela-contracts/`). This repo contains everything else: frontend, indexer, and liquidation bot.
+(`stela-contracts/`). This repo contains everything else: frontend, indexer, and settlement/liquidation bot.
 
 **Everything runs on Cloudflare:** Workers, D1 (SQLite), and OpenNext for the frontend.
 
@@ -23,7 +23,7 @@ stela-app/                          ← this repo
 │   └── indexer/                   ← Apibara DNA streaming → webhook POST (Node.js)
 ├── workers/
 │   ├── indexer/                   ← Webhook receiver → D1 + cron expiry
-│   └── bot/                       ← liquidation cron Worker → StarkNet
+│   └── bot/                       ← settlement + liquidation cron Worker → StarkNet
 ├── package.json                   ← pnpm workspace root
 ├── pnpm-workspace.yaml
 └── turbo.json
@@ -155,7 +155,7 @@ SQLite database shared by all Workers and the frontend API routes. Tables:
 - `share_balances` — ERC1155 share balances per account per inscription
 - `orders` — off-chain SNIP-12 signed orders (borrower signatures, order data JSON)
 - `order_offers` — lender offers against orders (lender signatures, BPS amounts)
-- `_meta` — key/value store for indexer block cursor
+- `_meta` — key/value store for indexer block cursor and bot distributed lock
 
 Schema files:
 - `packages/core/src/schema.sql` — main tables
@@ -232,6 +232,42 @@ export async function GET(request: NextRequest) {
   const inscriptions = await db.getInscriptions({ status, page, limit })
   return NextResponse.json(inscriptions)
 }
+```
+
+### API Security
+
+**Rate Limiting** — Sliding-window, in-memory rate limiter (`src/lib/rate-limit.ts`):
+- IP-based: 60 req/min for reads (GET), 10 req/min for writes (POST/DELETE)
+- Address-based: 10 req/min per StarkNet address for write operations
+- Max request body size: 50KB (returns 413 if exceeded)
+- IP resolved from `cf-connecting-ip` or `x-forwarded-for` headers
+
+**Zod Validation** — All write API routes validate request bodies with Zod schemas (`src/lib/validation.ts`):
+- `createOrderSchema` — validates order creation (felt252 format, asset arrays, addresses, signatures)
+- `createOfferSchema` — validates lender offers (BPS range 1-10000, signature, nonce)
+- `cancelOrderSchema` — validates cancellation (borrower address, signature)
+- Signature inputs accept array `[r, s]`, JSON string, or `{r, s}` object format
+
+**Signature Verification** — Server-side SNIP-12 signature verification (`src/lib/verify-signature.ts`):
+- Reconstructs SNIP-12 typed data server-side and computes the message hash (prevents forged hashes)
+- Calls `is_valid_signature(hash, signature)` on the signer's account contract via raw `starknet_call` RPC
+- Follows SNIP-6 standard; returns the `'VALID'` shortstring (`0x56414c4944`) on success
+- Works in Cloudflare Worker environment using only `fetch()` (no starknet.js Account needed)
+
+### Off-Chain Signing Utilities
+
+Off-chain SNIP-12 typed data functions are re-exported from `@fepvenancio/stela-sdk` via `src/lib/offchain.ts`:
+
+```typescript
+// Re-exports from SDK (source of truth — never duplicate these):
+import {
+  getInscriptionOrderTypedData,  // Build InscriptionOrder SNIP-12 typed data
+  getLendOfferTypedData,          // Build LendOffer SNIP-12 typed data
+  hashAssets,                     // Poseidon hash of asset arrays
+} from '@/lib/offchain'
+
+// App-local: CancelOrder typed data (not in SDK)
+import { getCancelOrderTypedData } from '@/lib/offchain'
 ```
 
 ### Deployment
@@ -336,10 +372,13 @@ cd workers/indexer && pnpm wrangler deploy
 
 ---
 
-## Worker: bot (Liquidation)
+## Worker: bot (Settlement & Liquidation)
 
 ### Purpose
-Call `liquidate()` on inscriptions that have expired without repayment.
+Runs a cron every 2 minutes to perform three tasks in sequence:
+1. **Expire stale orders** — mark off-chain orders past their deadline as expired
+2. **Settle matched orders** — call `settle()` on-chain with both borrower + lender signatures
+3. **Liquidate expired inscriptions** — call `liquidate()` on filled inscriptions past their duration
 
 ### Stack
 ```
@@ -351,9 +390,56 @@ D1 via @stela/core createD1Queries
 ### How It Works
 ```
 scheduled() handler:
-1. Query D1: inscriptions WHERE status='filled' AND signed_at+duration < now
-2. For each → Account.execute({ entrypoint: 'liquidate', calldata: toU256(id) })
-3. Serialize liquidations to avoid StarkNet nonce conflicts
+1. Acquire D1-based distributed lock (_meta table, key='bot_lock', 5 min TTL)
+   - If lock held by another instance within the TTL window, skip this run
+   - On completion (or error), release lock by resetting to '0'
+
+2. Expire stale orders:
+   queries.expireOrders(now) → updates orders past deadline to 'expired'
+
+3. Settle matched orders:
+   a. queries.getMatchedOrders() → returns [{order_id, offer_id}]
+   b. For each matched pair:
+      - Load order (order_data JSON) and offer from D1
+      - Build settle() calldata: order struct (11 fields), serialized asset arrays
+        (debt/interest/collateral with [len, ...per-asset fields]), borrower
+        signature, offer struct (5 fields), lender signature
+      - Account.execute({ entrypoint: 'settle', calldata })
+      - On success: update both order and offer status to 'settled'
+      - On failure: leave as 'matched' for retry on next cron run
+
+4. Liquidate expired inscriptions:
+   a. queries.findLiquidatable(now) → filled inscriptions where signed_at+duration < now
+   b. For each → Account.execute({ entrypoint: 'liquidate', calldata: toU256(id) })
+
+All operations are serialized within a single run to avoid StarkNet nonce conflicts.
+```
+
+### Order Status Transitions
+
+```
+pending → matched     (lender offer accepted via POST /api/orders/:id/offer)
+matched → settled     (bot settles on-chain via settle() in cron)
+pending → expired     (deadline passed, bot cron calls expireOrders)
+pending → cancelled   (borrower signs cancellation via DELETE /api/orders/:id)
+```
+
+### D1 Distributed Lock
+
+The bot uses the `_meta` table as a simple distributed lock to prevent overlapping cron runs:
+
+```typescript
+// Acquire: read 'bot_lock', skip if held within 300s (5 min TTL)
+const lockValue = await queries.getMeta('bot_lock')
+if (lockValue && now - Number(lockValue) < 300) return // skip
+
+// Set lock with current timestamp
+await queries.setMeta('bot_lock', String(now))
+
+// ... do work ...
+
+// Release lock (best-effort; TTL ensures expiry even on crash)
+await queries.setMeta('bot_lock', '0')
 ```
 
 ### Secrets
@@ -420,11 +506,17 @@ Event fields are split between `keys[]` and `data[]` based on `kind` in the ABI:
 | Read share balance | Direct contract read (`erc1155.balance_of`) |
 | Browse/list inscriptions | Next.js API route → D1 |
 | Portfolio / history | Next.js API route → D1 |
-| Create, sign, repay, liquidate, redeem, cancel | Direct contract write via user wallet |
-| Auto-liquidate expired inscriptions | Bot Worker wallet |
+| Create, sign, repay, liquidate, redeem, cancel (on-chain) | Direct contract write via user wallet |
+| Create off-chain order | Sign SNIP-12 off-chain → POST /api/orders |
+| Submit lend offer | Sign SNIP-12 off-chain → POST /api/orders/:id/offer |
+| Cancel off-chain order | Sign SNIP-12 off-chain → DELETE /api/orders/:id |
+| Settle matched orders on-chain | Bot Worker calls `settle()` with both signatures |
+| Auto-liquidate expired inscriptions | Bot Worker calls `liquidate()` |
+| Expire stale off-chain orders | Bot Worker cron marks orders past deadline as expired |
 | Index events from chain | Apibara service → webhook → Indexer Worker → D1 |
 
-Never proxy writes through the backend. Users sign directly with their wallet.
+Never proxy on-chain writes through the backend. Users sign directly with their wallet.
+Off-chain orders use SNIP-12 typed data signatures stored in D1, settled on-chain by the bot.
 
 ---
 

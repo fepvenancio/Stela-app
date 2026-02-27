@@ -14,7 +14,7 @@ function useInscriptionClient() {
     () =>
       new InscriptionClient({
         stelaAddress: CONTRACT_ADDRESS,
-        provider: new RpcProvider({ nodeUrl: RPC_URL }),
+        provider: new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' }),
       }),
     [],
   )
