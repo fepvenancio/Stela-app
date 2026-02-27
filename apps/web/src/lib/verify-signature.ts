@@ -18,6 +18,28 @@ const IS_VALID_SIGNATURE_SELECTOR =
   '0x28420862938116cb3bbdbedee07451ccc54d4e9412dbef71142ad1980a30941'
 
 /**
+ * Normalize a value to a 0x-prefixed hex string (felt252 format for RPC calldata).
+ * Handles hex strings, decimal strings, and BigInt values.
+ */
+function toHexFelt(value: string | bigint | number): string {
+  if (typeof value === 'bigint' || typeof value === 'number') {
+    return '0x' + BigInt(value).toString(16)
+  }
+  const s = String(value).trim()
+  // Already hex
+  if (s.startsWith('0x') || s.startsWith('0X')) {
+    return s
+  }
+  // Decimal string — convert to hex
+  try {
+    return '0x' + BigInt(s).toString(16)
+  } catch {
+    // Not a number; return as-is (will likely fail at RPC level)
+    return s
+  }
+}
+
+/**
  * Verify a StarkNet SNIP-12 signature by calling the signer's account contract.
  *
  * Uses raw JSON-RPC `starknet_call` to invoke `is_valid_signature` on the
@@ -26,7 +48,7 @@ const IS_VALID_SIGNATURE_SELECTOR =
  *
  * @param accountAddress - The signer's StarkNet account address
  * @param messageHash - The SNIP-12 typed data message hash (felt252)
- * @param signature - Array of signature felt strings [r, s]
+ * @param signature - Array of signature strings (any format: hex, decimal)
  * @returns true if the signature is valid, false otherwise
  */
 export async function verifyStarknetSignature(
@@ -34,12 +56,15 @@ export async function verifyStarknetSignature(
   messageHash: string,
   signature: string[],
 ): Promise<boolean> {
+  // Normalize all signature elements to hex felt strings for RPC calldata
+  const hexSignature = signature.map(toHexFelt)
+
   // Build the calldata for is_valid_signature(hash: felt252, signature: Array<felt252>)
   // Cairo serialization: hash, then array length, then array elements
   const calldata = [
-    messageHash,
-    String(signature.length),
-    ...signature,
+    toHexFelt(messageHash),
+    toHexFelt(hexSignature.length),
+    ...hexSignature,
   ]
 
   const payload = {
@@ -48,11 +73,11 @@ export async function verifyStarknetSignature(
     method: 'starknet_call',
     params: {
       request: {
-        contract_address: accountAddress,
+        contract_address: toHexFelt(accountAddress),
         entry_point_selector: IS_VALID_SIGNATURE_SELECTOR,
         calldata,
       },
-      block_id: 'latest',
+      block_id: { tag: 'latest' } as const,
     },
   }
 
@@ -70,15 +95,16 @@ export async function verifyStarknetSignature(
 
     const result = await response.json() as {
       result?: string[]
-      error?: { code: number; message: string }
+      error?: { code: number; message: string; data?: unknown }
     }
 
     if (result.error) {
-      console.error('RPC error during signature verification:', result.error.message)
+      console.error('RPC error during signature verification:', JSON.stringify(result.error))
       return false
     }
 
     if (!result.result || result.result.length === 0) {
+      console.error('RPC returned empty result for is_valid_signature')
       return false
     }
 
@@ -93,7 +119,11 @@ export async function verifyStarknetSignature(
       return stripped || '0'
     }
 
-    return normalize(returned) === normalize(VALID_SHORTSTRING)
+    const isValid = normalize(returned) === normalize(VALID_SHORTSTRING)
+    if (!isValid) {
+      console.error(`is_valid_signature returned: ${returned} (expected ${VALID_SHORTSTRING})`)
+    }
+    return isValid
   } catch (err) {
     console.error(
       'Signature verification RPC call failed:',

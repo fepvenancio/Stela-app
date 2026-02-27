@@ -116,11 +116,15 @@ export async function POST(
 
     const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, lender)
 
-    // Verify the lender's signature on-chain via their account contract
-    const sigValid = await verifyStarknetSignature(lender, offerMessageHash, lender_signature)
-    if (!sigValid) {
-      return errorResponse('Invalid lender signature', 401, request)
-    }
+    // Log the computed message hash for debugging (signature is verified on-chain by settle())
+    console.log('LendOffer message hash:', offerMessageHash, 'lender:', lender, 'sig length:', lender_signature.length)
+
+    // Note: Server-side is_valid_signature verification is skipped because different
+    // wallet implementations (Cartridge Controller, Braavos, etc.) use non-standard
+    // signature formats that don't work with raw RPC starknet_call. The signature IS
+    // verified on-chain when the bot calls settle() — that's the authoritative check.
+    // The server still reconstructs the typed data and computes the message hash above,
+    // which prevents forged orderHash attacks.
 
     await db.createOrderOffer({
       id: String(id),

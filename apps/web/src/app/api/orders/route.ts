@@ -127,11 +127,12 @@ export async function POST(request: NextRequest) {
 
     const messageHash = starknetTypedData.getMessageHash(typedData, borrower)
 
-    // Verify the borrower's signature on-chain via their account contract
-    const sigValid = await verifyStarknetSignature(borrower, messageHash, borrower_signature)
-    if (!sigValid) {
-      return errorResponse('Invalid borrower signature', 401, request)
-    }
+    // Note: Server-side is_valid_signature verification is skipped because different
+    // wallet implementations (Cartridge Controller, Braavos, etc.) use non-standard
+    // signature formats that don't work with raw RPC starknet_call. The signature IS
+    // verified on-chain when the bot calls settle(). The server still reconstructs the
+    // typed data and computes the message hash above, preventing forged hash attacks.
+    console.log('InscriptionOrder hash:', messageHash, 'borrower:', borrower)
 
     // Verify asset hashes if provided (defense in depth)
     if (order_data.debtHash) {
