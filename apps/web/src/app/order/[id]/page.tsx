@@ -267,7 +267,7 @@ export default function OrderPage({ params }: OrderPageProps) {
               <div className="space-y-2">
                 <h3 className="font-display text-lg text-star uppercase tracking-widest">Offer Actions</h3>
                 <p className="text-xs text-dust leading-relaxed">
-                  Sign an off-chain lending offer. The settlement bot will execute it on-chain.
+                  Sign and settle on-chain in one step. You approve tokens and execute the settlement.
                 </p>
               </div>
 
@@ -320,7 +320,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                             />
                           </div>
                           <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={signPending || !lendAmount}>
-                            {signPending ? 'Signing...' : 'Sign & Lend'}
+                            {signPending ? 'Settling...' : 'Sign & Settle'}
                           </Button>
                         </form>
                       ) : (
@@ -342,7 +342,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                               }
                             }}
                           >
-                            {signPending ? 'Signing...' : 'Sign & Lend 100%'}
+                            {signPending ? 'Settling...' : 'Sign & Settle 100%'}
                           </Button>
                         </div>
                       )

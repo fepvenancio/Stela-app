@@ -120,6 +120,7 @@ export const createOfferSchema = z.object({
   bps: z.coerce.number().int().min(1, 'BPS must be at least 1').max(10000, 'BPS must be at most 10000'),
   lender_signature: signatureInput,
   nonce: z.string().min(1, 'Nonce is required'),
+  tx_hash: z.string().optional(),
 })
 
 /** DELETE /api/orders/:id request body */

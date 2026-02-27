@@ -91,10 +91,16 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        // Normalize address once and use LOWER() for comparison
-        const normalized = normalizeAddress(address)
-        conditions.push('(LOWER(creator) = ? OR LOWER(borrower) = ? OR LOWER(lender) = ?)')
-        params.push(normalized, normalized, normalized)
+        // Compare all possible address forms: padded (66 chars), original, stripped (no leading zeros)
+        const lower = address.toLowerCase()
+        const padded = normalizeAddress(address)
+        const stripped = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
+        const variants = [...new Set([padded, lower, stripped])]
+        const creatorChecks = variants.map(() => 'LOWER(creator) = ?').join(' OR ')
+        const borrowerChecks = variants.map(() => 'LOWER(borrower) = ?').join(' OR ')
+        const lenderChecks = variants.map(() => 'LOWER(lender) = ?').join(' OR ')
+        conditions.push(`(${creatorChecks} OR ${borrowerChecks} OR ${lenderChecks})`)
+        params.push(...variants, ...variants, ...variants)
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -521,10 +527,17 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        const normalized = normalizeAddress(address)
-        const minimal = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
-        conditions.push('(LOWER(borrower) = ? OR LOWER(borrower) = ?)')
-        params.push(normalized, minimal)
+        // Compare all possible address forms: padded (66 chars), original, stripped (no leading zeros)
+        const lower = address.toLowerCase()
+        const padded = normalizeAddress(address)
+        const stripped = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
+        const variants = [...new Set([padded, lower, stripped])]
+        const borrowerChecks = variants.map(() => 'LOWER(borrower) = ?').join(' OR ')
+        const lenderChecks = variants.map(() => 'LOWER(lender) = ?').join(' OR ')
+        conditions.push(
+          `(${borrowerChecks} OR id IN (SELECT order_id FROM order_offers WHERE ${lenderChecks}))`
+        )
+        params.push(...variants, ...variants)
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''

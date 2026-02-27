@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useAccount } from '@starknet-react/core'
-import { findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress, toU256 } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType } from '@fepvenancio/stela-sdk'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
@@ -213,6 +213,31 @@ export default function CreatePage() {
 
     setIsPending(true)
     try {
+      // Approve collateral tokens so settle() can transfer them later
+      const erc20Approvals = sdkCollateralAssets
+        .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
+        .map(asset => ({
+          contractAddress: asset.asset_address,
+          entrypoint: 'approve',
+          calldata: [CONTRACT_ADDRESS, ...toU256(asset.value)],
+        }))
+
+      const nftApprovals = sdkCollateralAssets
+        .filter(a => a.asset_type === 'ERC721' || a.asset_type === 'ERC1155')
+        .map(asset => ({
+          contractAddress: asset.asset_address,
+          entrypoint: 'set_approval_for_all',
+          calldata: [CONTRACT_ADDRESS, '1'],
+        }))
+
+      const allApprovals = [...erc20Approvals, ...nftApprovals]
+      if (allApprovals.length > 0) {
+        toast.info('Approve collateral in your wallet...')
+        const { transaction_hash: approvalTx } = await account.execute(allApprovals)
+        await provider.waitForTransaction(approvalTx)
+        toast.success('Collateral approved!')
+      }
+
       // Get nonce from contract
       const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
 
@@ -512,7 +537,7 @@ export default function CreatePage() {
             onClick={handleSubmit}
             disabled={isPending}
           >
-            {isPending ? 'Signing...' : 'Sign & Submit Order'}
+            {isPending ? 'Processing...' : 'Approve & Sign Order'}
           </Button>
         </Web3ActionWrapper>
       </div>

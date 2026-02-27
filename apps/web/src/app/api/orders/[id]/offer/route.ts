@@ -33,7 +33,7 @@ export async function POST(
       return errorResponse(`Validation failed: ${messages.join('; ')}`, 400, request)
     }
 
-    const { id, lender, bps, lender_signature, nonce } = parsed.data
+    const { id, lender, bps, lender_signature, nonce, tx_hash } = parsed.data
 
     // Rate limit by IP + lender address
     const limited = rateLimit(request, lender)
@@ -58,70 +58,72 @@ export async function POST(
       return errorResponse('Order deadline has passed', 400, request)
     }
 
-    // ── Signature Verification ──────────────────────────────────────────
-    // Reconstruct the InscriptionOrder typed data to get the order hash,
-    // then build the LendOffer typed data and verify the lender's signature.
-    let orderDataParsed: Record<string, unknown> = {}
-    const rawOrderData = orderRecord.order_data
-    if (typeof rawOrderData === 'string') {
-      try { orderDataParsed = JSON.parse(rawOrderData) } catch { /* empty */ }
-    } else if (rawOrderData && typeof rawOrderData === 'object') {
-      orderDataParsed = rawOrderData as Record<string, unknown>
-    }
-
-    // Try to use the stored orderHash first; otherwise recompute from order data
-    let orderHash = orderDataParsed.orderHash as string | undefined
-    if (!orderHash) {
-      const toSdkAssets = (arr: unknown) => {
-        if (!Array.isArray(arr)) return []
-        return (arr as Array<Record<string, string>>).map((a) => ({
-          asset_address: a.asset_address,
-          asset_type: a.asset_type as AssetType,
-          value: BigInt(a.value),
-          token_id: BigInt(a.token_id ?? '0'),
-        }))
+    // If tx_hash is provided, the lender already settled on-chain.
+    // Skip server-side signature verification (contract already verified both signatures).
+    if (!tx_hash) {
+      // ── Signature Verification ──────────────────────────────────────────
+      // Reconstruct the InscriptionOrder typed data to get the order hash,
+      // then build the LendOffer typed data and verify the lender's signature.
+      let orderDataParsed: Record<string, unknown> = {}
+      const rawOrderData = orderRecord.order_data
+      if (typeof rawOrderData === 'string') {
+        try { orderDataParsed = JSON.parse(rawOrderData) } catch { /* empty */ }
+      } else if (rawOrderData && typeof rawOrderData === 'object') {
+        orderDataParsed = rawOrderData as Record<string, unknown>
       }
 
-      const sdkDebtAssets = toSdkAssets(orderDataParsed.debtAssets ?? orderDataParsed.debt_assets)
-      const sdkInterestAssets = toSdkAssets(orderDataParsed.interestAssets ?? orderDataParsed.interest_assets)
-      const sdkCollateralAssets = toSdkAssets(orderDataParsed.collateralAssets ?? orderDataParsed.collateral_assets)
+      // Try to use the stored orderHash first; otherwise recompute from order data
+      let orderHash = orderDataParsed.orderHash as string | undefined
+      if (!orderHash) {
+        const toSdkAssets = (arr: unknown) => {
+          if (!Array.isArray(arr)) return []
+          return (arr as Array<Record<string, string>>).map((a) => ({
+            asset_address: a.asset_address,
+            asset_type: a.asset_type as AssetType,
+            value: BigInt(a.value),
+            token_id: BigInt(a.token_id ?? '0'),
+          }))
+        }
 
-      const orderTypedData = getInscriptionOrderTypedData({
-        borrower: (orderDataParsed.borrower as string) ?? (orderRecord.borrower as string),
-        debtAssets: sdkDebtAssets,
-        interestAssets: sdkInterestAssets,
-        collateralAssets: sdkCollateralAssets,
-        debtCount: sdkDebtAssets.length,
-        interestCount: sdkInterestAssets.length,
-        collateralCount: sdkCollateralAssets.length,
-        duration: BigInt(String(orderDataParsed.duration ?? '0')),
-        deadline: BigInt(String(orderDataParsed.deadline ?? '0')),
-        multiLender: Boolean(orderDataParsed.multiLender ?? orderDataParsed.multi_lender),
-        nonce: BigInt(String(orderDataParsed.nonce ?? orderRecord.nonce ?? '0')),
+        const sdkDebtAssets = toSdkAssets(orderDataParsed.debtAssets ?? orderDataParsed.debt_assets)
+        const sdkInterestAssets = toSdkAssets(orderDataParsed.interestAssets ?? orderDataParsed.interest_assets)
+        const sdkCollateralAssets = toSdkAssets(orderDataParsed.collateralAssets ?? orderDataParsed.collateral_assets)
+
+        const orderTypedData = getInscriptionOrderTypedData({
+          borrower: (orderDataParsed.borrower as string) ?? (orderRecord.borrower as string),
+          debtAssets: sdkDebtAssets,
+          interestAssets: sdkInterestAssets,
+          collateralAssets: sdkCollateralAssets,
+          debtCount: sdkDebtAssets.length,
+          interestCount: sdkInterestAssets.length,
+          collateralCount: sdkCollateralAssets.length,
+          duration: BigInt(String(orderDataParsed.duration ?? '0')),
+          deadline: BigInt(String(orderDataParsed.deadline ?? '0')),
+          multiLender: Boolean(orderDataParsed.multiLender ?? orderDataParsed.multi_lender),
+          nonce: BigInt(String(orderDataParsed.nonce ?? orderRecord.nonce ?? '0')),
+          chainId: 'SN_SEPOLIA',
+        })
+
+        const borrowerAddr = (orderDataParsed.borrower as string) ?? (orderRecord.borrower as string)
+        orderHash = starknetTypedData.getMessageHash(orderTypedData, borrowerAddr)
+      }
+
+      // Build the LendOffer typed data and compute the message hash
+      const lendOfferTypedData = getLendOfferTypedData({
+        orderHash,
+        lender,
+        issuedDebtPercentage: BigInt(bps),
+        nonce: BigInt(nonce),
         chainId: 'SN_SEPOLIA',
       })
 
-      const borrowerAddr = (orderDataParsed.borrower as string) ?? (orderRecord.borrower as string)
-      orderHash = starknetTypedData.getMessageHash(orderTypedData, borrowerAddr)
-    }
+      const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, lender)
 
-    // Build the LendOffer typed data and compute the message hash
-    const lendOfferTypedData = getLendOfferTypedData({
-      orderHash,
-      lender,
-      issuedDebtPercentage: BigInt(bps),
-      nonce: BigInt(nonce),
-      chainId: 'SN_SEPOLIA',
-    })
-
-    const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, lender)
-
-    // Verify the lender's signature on-chain via their account contract.
-    // Uses is_valid_signature (SNIP-6) which each account type implements natively
-    // (OZ, Argent, Braavos, Cartridge Controller all support it).
-    const sigValid = await verifyStarknetSignature(lender, offerMessageHash, lender_signature)
-    if (!sigValid) {
-      return errorResponse('Invalid lender signature', 401, request)
+      // Verify the lender's signature on-chain via their account contract.
+      const sigValid = await verifyStarknetSignature(lender, offerMessageHash, lender_signature)
+      if (!sigValid) {
+        return errorResponse('Invalid lender signature', 401, request)
+      }
     }
 
     await db.createOrderOffer({
@@ -134,10 +136,11 @@ export async function POST(
       created_at: now,
     })
 
-    // Update order status to matched
-    await db.updateOrderStatus(orderId, 'matched')
+    // If settled on-chain by the user, mark as settled; otherwise matched (bot will settle)
+    const newStatus = tx_hash ? 'settled' : 'matched'
+    await db.updateOrderStatus(orderId, newStatus)
 
-    return jsonResponse({ ok: true, id }, request)
+    return jsonResponse({ ok: true, id, status: newStatus }, request)
   } catch (err) {
     logError('orders/[id]/offer', err)
     return errorResponse('service unavailable', 502, request)

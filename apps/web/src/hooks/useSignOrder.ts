@@ -3,11 +3,42 @@
 import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import type { AssetType } from '@fepvenancio/stela-sdk'
+import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import type { AssetType, Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
-import { getInscriptionOrderTypedData, getLendOfferTypedData, getNonce } from '@/lib/offchain'
+import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
+
+function toSdkAssets(arr: Record<string, string>[] | undefined): Asset[] {
+  return (arr || []).map((a) => ({
+    asset_address: a.asset_address,
+    asset_type: a.asset_type as AssetType,
+    value: BigInt(a.value),
+    token_id: BigInt(a.token_id ?? '0'),
+  }))
+}
+
+function parseSigToArray(raw: string | string[]): string[] {
+  if (Array.isArray(raw)) return raw.map(String)
+  if (typeof raw === 'string') {
+    if (raw.startsWith('[')) return JSON.parse(raw) as string[]
+    if (raw.startsWith('{')) {
+      const obj = JSON.parse(raw) as { r: string; s: string }
+      return [obj.r, obj.s]
+    }
+    return raw.split(',')
+  }
+  throw new Error('Invalid signature format')
+}
+
+function formatSig(signature: unknown): string[] {
+  if (Array.isArray(signature)) {
+    return signature.map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s))
+  }
+  const sig = signature as { r: unknown; s: unknown }
+  return [sig.r, sig.s].map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s))
+}
 
 export function useSignOrder(orderId: string) {
   const { address, account } = useAccount()
@@ -19,7 +50,7 @@ export function useSignOrder(orderId: string) {
 
       setIsPending(true)
       try {
-        // Fetch the order to get the order data
+        // 1. Fetch order data
         const orderRes = await fetch(`/api/orders/${orderId}`)
         if (!orderRes.ok) throw new Error('Failed to fetch order')
         const orderWrapper = (await orderRes.json()) as { data: Record<string, unknown> }
@@ -29,34 +60,23 @@ export function useSignOrder(orderId: string) {
             ? (JSON.parse(order.order_data as string) as Record<string, unknown>)
             : (order.order_data as Record<string, unknown>)
 
-        // Get nonce from contract
+        // 2. Get lender nonce from contract
         const provider = new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' })
         const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
 
-        // Compute the SNIP-12 message hash of the InscriptionOrder.
-        // If the API stored it, use that; otherwise recompute from order data.
+        // 3. Parse assets
+        const debtArr = (orderData.debtAssets ?? orderData.debt_assets) as Record<string, string>[] | undefined
+        const interestArr = (orderData.interestAssets ?? orderData.interest_assets) as Record<string, string>[] | undefined
+        const collateralArr = (orderData.collateralAssets ?? orderData.collateral_assets) as Record<string, string>[] | undefined
+
+        const sdkDebtAssets = toSdkAssets(debtArr)
+        const sdkInterestAssets = toSdkAssets(interestArr)
+        const sdkCollateralAssets = toSdkAssets(collateralArr)
+
+        // 4. Compute order hash
+        const orderNonce = String(orderData.nonce ?? order.nonce ?? '0')
         let orderHash = orderData.orderHash as string | undefined
         if (!orderHash) {
-          // Reconstruct typed data from stored order data to compute the message hash
-          const toSdkAssets = (arr: Record<string, string>[] | undefined) =>
-            (arr || []).map((a) => ({
-              asset_address: a.asset_address,
-              asset_type: a.asset_type as AssetType,
-              value: BigInt(a.value),
-              token_id: BigInt(a.token_id ?? '0'),
-            }))
-
-          // Handle both camelCase and snake_case keys
-          const debtArr = (orderData.debtAssets ?? orderData.debt_assets) as Record<string, string>[] | undefined
-          const interestArr = (orderData.interestAssets ?? orderData.interest_assets) as Record<string, string>[] | undefined
-          const collateralArr = (orderData.collateralAssets ?? orderData.collateral_assets) as Record<string, string>[] | undefined
-
-          const sdkDebtAssets = toSdkAssets(debtArr)
-          const sdkInterestAssets = toSdkAssets(interestArr)
-          const sdkCollateralAssets = toSdkAssets(collateralArr)
-
-          const orderNonce = String(orderData.nonce ?? order.nonce ?? '0')
-
           const orderTypedData = getInscriptionOrderTypedData({
             borrower: orderData.borrower as string,
             debtAssets: sdkDebtAssets,
@@ -71,10 +91,10 @@ export function useSignOrder(orderId: string) {
             nonce: BigInt(orderNonce),
             chainId: 'SN_SEPOLIA',
           })
-
           orderHash = starknetTypedData.getMessageHash(orderTypedData, orderData.borrower as string)
         }
 
+        // 5. Build and sign LendOffer SNIP-12
         const typedData = getLendOfferTypedData({
           orderHash,
           lender: address,
@@ -83,35 +103,86 @@ export function useSignOrder(orderId: string) {
           chainId: 'SN_SEPOLIA',
         })
 
-        // Sign off-chain
         const signature = await account.signMessage(typedData)
+        const lenderSig = formatSig(signature)
 
-        // POST offer to backend
+        // 6. Parse borrower signature from stored order
+        const borrowerSig = parseSigToArray(order.borrower_signature as string | string[])
+
+        // 7. Compute asset hashes
+        const debtHash = (orderData.debtHash as string) || hashAssets(sdkDebtAssets)
+        const interestHash = (orderData.interestHash as string) || hashAssets(sdkInterestAssets)
+        const collateralHash = (orderData.collateralHash as string) || hashAssets(sdkCollateralAssets)
+
+        // 8. Build ERC20 approve calls for debt tokens (lender provides debt)
+        const approveCalls = sdkDebtAssets
+          .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
+          .map(asset => {
+            const amount = (asset.value * BigInt(bps)) / 10000n
+            return {
+              contractAddress: asset.asset_address,
+              entrypoint: 'approve',
+              calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+            }
+          })
+
+        // 9. Build settle call using SDK
+        const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })
+        const settleCall = client.buildSettle({
+          order: {
+            borrower: orderData.borrower as string,
+            debtHash,
+            interestHash,
+            collateralHash,
+            debtCount: sdkDebtAssets.length,
+            interestCount: sdkInterestAssets.length,
+            collateralCount: sdkCollateralAssets.length,
+            duration: BigInt(orderData.duration as string),
+            deadline: BigInt(orderData.deadline as string),
+            multiLender: Boolean(orderData.multiLender ?? orderData.multi_lender),
+            nonce: BigInt(orderNonce),
+          },
+          debtAssets: sdkDebtAssets,
+          interestAssets: sdkInterestAssets,
+          collateralAssets: sdkCollateralAssets,
+          borrowerSig,
+          offer: {
+            orderHash,
+            lender: address,
+            issuedDebtPercentage: BigInt(bps),
+            nonce,
+          },
+          lenderSig,
+        })
+
+        // 10. Execute multicall: approve debt tokens + settle
+        toast.info('Confirm the settlement transaction in your wallet...')
+        const { transaction_hash } = await account.execute([...approveCalls, settleCall])
+
+        // 11. Wait for on-chain confirmation
+        toast.info('Waiting for transaction confirmation...')
+        await provider.waitForTransaction(transaction_hash)
+
+        // 12. Store offer in backend and mark as settled
         const offerId = crypto.randomUUID()
-        const response = await fetch(`/api/orders/${orderId}/offer`, {
+        await fetch(`/api/orders/${orderId}/offer`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: offerId,
             lender: address,
             bps,
-            lender_signature: Array.isArray(signature)
-              ? signature.map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s))
-              : [signature.r, signature.s].map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s)),
+            lender_signature: lenderSig,
             nonce: nonce.toString(),
+            tx_hash: transaction_hash,
           }),
         })
 
-        if (!response.ok) {
-          const err = (await response.json()) as Record<string, string>
-          throw new Error(err.error || 'Failed to submit offer')
-        }
-
-        toast.success('Offer signed & submitted', {
-          description: 'Your lending offer has been recorded. The bot will settle it on-chain shortly.',
+        toast.success('Settlement complete!', {
+          description: `Transaction: ${transaction_hash.slice(0, 16)}...`,
         })
       } catch (err: unknown) {
-        toast.error('Failed to sign offer', { description: getErrorMessage(err) })
+        toast.error('Failed to settle', { description: getErrorMessage(err) })
         throw err
       } finally {
         setIsPending(false)
