@@ -77,7 +77,7 @@ export async function verifyStarknetSignature(
         entry_point_selector: IS_VALID_SIGNATURE_SELECTOR,
         calldata,
       },
-      block_id: { tag: 'latest' } as const,
+      block_id: 'latest',
     },
   }
 

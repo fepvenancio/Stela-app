@@ -126,11 +126,11 @@ export async function DELETE(
     const cancelTypedData = getCancelOrderTypedData(id)
     const cancelHash = starknetTypedData.getMessageHash(cancelTypedData, callerAddress)
 
-    // Note: Cancellation is authorized by the borrower address check above.
-    // Server-side is_valid_signature verification is skipped for wallet compatibility
-    // (Cartridge Controller, Braavos use non-standard signature formats).
-    // The cancellation only marks the off-chain order as cancelled in D1.
-    console.log('CancelOrder hash:', cancelHash, 'borrower:', callerAddress)
+    // Verify the borrower's cancellation signature on-chain
+    const sigValid = await verifyStarknetSignature(callerAddress, cancelHash, signature)
+    if (!sigValid) {
+      return errorResponse('Invalid cancellation signature', 401, request)
+    }
 
     await db.updateOrderStatus(id, 'cancelled')
     return jsonResponse({ ok: true }, request)
