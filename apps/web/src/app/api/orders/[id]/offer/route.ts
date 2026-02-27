@@ -33,7 +33,7 @@ export async function POST(
       return errorResponse(`Validation failed: ${messages.join('; ')}`, 400, request)
     }
 
-    const { id, lender, bps, lender_signature, nonce, tx_hash } = parsed.data
+    const { id, lender, bps, lender_signature, nonce, lender_commitment, tx_hash } = parsed.data
 
     // Rate limit by IP + lender address
     const limited = rateLimit(request, lender)
@@ -115,6 +115,7 @@ export async function POST(
         issuedDebtPercentage: BigInt(bps),
         nonce: BigInt(nonce),
         chainId: 'SN_SEPOLIA',
+        lenderCommitment: lender_commitment,
       })
 
       const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, lender)
@@ -133,6 +134,7 @@ export async function POST(
       bps: Number(bps),
       lender_signature: JSON.stringify(lender_signature),
       nonce: String(nonce),
+      lender_commitment: lender_commitment ?? '0x0',
       created_at: now,
     })
 

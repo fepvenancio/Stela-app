@@ -312,6 +312,51 @@ export async function transformEvent(
         }
       }
 
+      case SELECTORS.PrivateSettled: {
+        const inscriptionId = parseInscriptionId(event.keys)
+        const lenderCommitment = event.keys[3]
+        const shares = fromU256({
+          low: BigInt(event.data[0]),
+          high: BigInt(event.data[1]),
+        })
+
+        return {
+          event_type: 'private_settled',
+          tx_hash: event.transactionHash,
+          block_number: blockNumber,
+          timestamp,
+          data: {
+            inscription_id: inscriptionId,
+            borrower: '0x0', // borrower not in PrivateSettled event keys
+            lender_commitment: lenderCommitment,
+            shares: shares.toString(),
+          },
+        }
+      }
+
+      case SELECTORS.PrivateSharesRedeemed: {
+        const inscriptionId = parseInscriptionId(event.keys)
+        const nullifier = event.keys[3]
+        const shares = fromU256({
+          low: BigInt(event.data[0]),
+          high: BigInt(event.data[1]),
+        })
+        const recipient = event.data[2]
+
+        return {
+          event_type: 'private_redeemed',
+          tx_hash: event.transactionHash,
+          block_number: blockNumber,
+          timestamp,
+          data: {
+            inscription_id: inscriptionId,
+            nullifier,
+            recipient,
+            shares: shares.toString(),
+          },
+        }
+      }
+
       default:
         console.warn(`Unknown event selector: ${selector}`)
         return null

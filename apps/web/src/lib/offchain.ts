@@ -12,9 +12,15 @@ export {
   hashAssets,
   serializeSignature,
   deserializeSignature,
+  // Privacy utilities
+  computeCommitment,
+  computeNullifier,
+  hashPair,
+  generateSalt,
+  createPrivateNote,
 } from '@fepvenancio/stela-sdk'
 
-export type { StoredSignature } from '@fepvenancio/stela-sdk'
+export type { StoredSignature, PrivateNote, PrivateRedeemRequest } from '@fepvenancio/stela-sdk'
 
 // getNonce uses the SDK's InscriptionClient which calls the correct 'nonces' entrypoint
 import { InscriptionClient } from '@fepvenancio/stela-sdk'

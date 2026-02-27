@@ -187,16 +187,18 @@ async function settleOrders(
       // Serialize borrower signature
       const borrowerSigCalldata = serializeSignatureCalldata(order.borrower_signature as string)
 
-      // Build offer struct calldata (5 fields inline):
-      // order_hash, lender, issued_debt_percentage_low, issued_debt_percentage_high, nonce
+      // Build offer struct calldata (6 fields inline):
+      // order_hash, lender, issued_debt_percentage_low, issued_debt_percentage_high, nonce, lender_commitment
       const [bpsLow, bpsHigh] = toU256(BigInt(offer.bps as number))
       const orderHash = orderData.orderHash
+      const lenderCommitment = (offer.lender_commitment as string) ?? '0'
       const offerCalldata: string[] = [
         orderHash,
         offer.lender as string,
         bpsLow,
         bpsHigh,
         offer.nonce as string,
+        lenderCommitment,
       ]
 
       // Serialize lender signature

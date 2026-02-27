@@ -78,6 +78,20 @@ export const orderSettledDataSchema = z.object({
   lender: hex,
 })
 
+export const privateSettledDataSchema = z.object({
+  inscription_id: hex,
+  borrower: hex,
+  lender_commitment: hex,
+  shares: numericStr,
+})
+
+export const privateRedeemedDataSchema = z.object({
+  inscription_id: hex,
+  nullifier: hex,
+  recipient: hex,
+  shares: numericStr,
+})
+
 // ---------------------------------------------------------------------------
 // Envelope schemas
 // ---------------------------------------------------------------------------
@@ -97,6 +111,8 @@ const webhookEventSchema = z.discriminatedUnion('event_type', [
   z.object({ event_type: z.literal('redeemed'), ...baseEvent, data: redeemedDataSchema }),
   z.object({ event_type: z.literal('transfer_single'), ...baseEvent, data: transferSingleDataSchema }),
   z.object({ event_type: z.literal('order_settled'), ...baseEvent, data: orderSettledDataSchema }),
+  z.object({ event_type: z.literal('private_settled'), ...baseEvent, data: privateSettledDataSchema }),
+  z.object({ event_type: z.literal('private_redeemed'), ...baseEvent, data: privateRedeemedDataSchema }),
 ])
 
 export const webhookPayloadSchema = z.object({

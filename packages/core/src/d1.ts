@@ -572,14 +572,15 @@ export function createD1Queries(db: D1Database) {
       bps: number
       lender_signature: string
       nonce: string
+      lender_commitment?: string
       created_at: number
     }) {
       await db
         .prepare(
-          `INSERT INTO order_offers (id, order_id, lender, bps, lender_signature, nonce, status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`
+          `INSERT INTO order_offers (id, order_id, lender, bps, lender_signature, nonce, lender_commitment, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
         )
-        .bind(offer.id, offer.order_id, offer.lender, offer.bps, offer.lender_signature, offer.nonce, offer.created_at)
+        .bind(offer.id, offer.order_id, offer.lender, offer.bps, offer.lender_signature, offer.nonce, offer.lender_commitment ?? '0', offer.created_at)
         .run()
     },
 
@@ -591,10 +592,10 @@ export function createD1Queries(db: D1Database) {
       return result.results
     },
 
-    async getMatchedOrders(): Promise<{ order_id: string; offer_id: string }[]> {
+    async getMatchedOrders(): Promise<{ order_id: string; offer_id: string; lender_commitment: string }[]> {
       const result = await db
         .prepare(
-          `SELECT o.id as order_id, oo.id as offer_id
+          `SELECT o.id as order_id, oo.id as offer_id, oo.lender_commitment
            FROM orders o
            JOIN order_offers oo ON oo.order_id = o.id
            WHERE o.status = 'matched'
@@ -604,7 +605,7 @@ export function createD1Queries(db: D1Database) {
            LIMIT 20`
         )
         .bind(Math.floor(Date.now() / 1000))
-        .all<{ order_id: string; offer_id: string }>()
+        .all<{ order_id: string; offer_id: string; lender_commitment: string }>()
       return result.results
     },
 

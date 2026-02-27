@@ -8,6 +8,8 @@ import {
   redeemedDataSchema,
   transferSingleDataSchema,
   orderSettledDataSchema,
+  privateSettledDataSchema,
+  privateRedeemedDataSchema,
 } from '../schemas.js'
 
 export async function processWebhookEvent(event: WebhookEvent, queries: D1Queries): Promise<void> {
@@ -28,6 +30,10 @@ export async function processWebhookEvent(event: WebhookEvent, queries: D1Querie
       return handleTransferSingle(event, queries)
     case 'order_settled':
       return handleOrderSettled(event, queries)
+    case 'private_settled':
+      return handlePrivateSettled(event, queries)
+    case 'private_redeemed':
+      return handlePrivateRedeemed(event, queries)
     default:
       console.warn(`Unknown event type: ${event.event_type}`)
   }
@@ -197,4 +203,44 @@ async function handleOrderSettled(event: WebhookEvent, queries: D1Queries): Prom
   await queries.updateOrderStatus(d.order_id, 'settled')
 
   console.log(`OrderSettled: order=${d.order_id} borrower=${d.borrower} lender=${d.lender} tx=${event.tx_hash}`)
+}
+
+async function handlePrivateSettled(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = privateSettledDataSchema.parse(event.data)
+
+  await queries.insertEvent({
+    inscription_id: d.inscription_id,
+    event_type: 'signed',
+    tx_hash: event.tx_hash,
+    block_number: event.block_number,
+    timestamp: event.timestamp,
+    data: {
+      borrower: d.borrower,
+      lender_commitment: d.lender_commitment,
+      shares: d.shares,
+      private: true,
+    },
+  })
+
+  console.log(`PrivateSettled: inscription=${d.inscription_id} commitment=${d.lender_commitment} tx=${event.tx_hash}`)
+}
+
+async function handlePrivateRedeemed(event: WebhookEvent, queries: D1Queries): Promise<void> {
+  const d = privateRedeemedDataSchema.parse(event.data)
+
+  await queries.insertEvent({
+    inscription_id: d.inscription_id,
+    event_type: 'redeemed',
+    tx_hash: event.tx_hash,
+    block_number: event.block_number,
+    timestamp: event.timestamp,
+    data: {
+      nullifier: d.nullifier,
+      recipient: d.recipient,
+      shares: d.shares,
+      private: true,
+    },
+  })
+
+  console.log(`PrivateRedeemed: inscription=${d.inscription_id} nullifier=${d.nullifier} recipient=${d.recipient} tx=${event.tx_hash}`)
 }

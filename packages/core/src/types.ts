@@ -86,6 +86,8 @@ export type WebhookEventType =
   | 'redeemed'
   | 'transfer_single'
   | 'order_settled'
+  | 'private_settled'
+  | 'private_redeemed'
 
 export interface WebhookEvent {
   event_type: WebhookEventType
