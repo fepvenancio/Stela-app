@@ -6,6 +6,7 @@ import { usePortfolio } from '@/hooks/usePortfolio'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { SummaryBar } from '@/components/portfolio/SummaryBar'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
+import { OrderListRow } from '@/components/OrderListRow'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -65,14 +66,14 @@ function InscriptionList({ items }: { items: EnrichedInscription[] }) {
 export default function PortfolioPage() {
   const { address } = useAccount()
   const normalized = address ? normalizeAddress(address) : undefined
-  const { lending, borrowing, redeemable, summary, isLoading, error } = usePortfolio(normalized)
+  const { lending, borrowing, redeemable, orders, summary, isLoading, error } = usePortfolio(normalized)
 
   return (
     <div className="animate-fade-up">
       {/* Header */}
       <div className="mb-10">
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
-          Dashboard
+          Portfolio
         </h1>
         <p className="text-dust max-w-lg leading-relaxed">
           Your lending positions and borrowing history on StarkNet.
@@ -109,8 +110,11 @@ export default function PortfolioPage() {
           <>
             <SummaryBar summary={summary} />
 
-            <Tabs defaultValue="lending">
+            <Tabs defaultValue={orders.length > 0 && lending.length === 0 ? 'orders' : 'lending'}>
               <TabsList variant="line" className="mb-6">
+                <TabsTrigger value="orders" className="text-chalk data-[state=active]:text-star after:bg-star">
+                  Orders{orders.length > 0 && ` (${orders.length})`}
+                </TabsTrigger>
                 <TabsTrigger value="lending" className="text-chalk data-[state=active]:text-star after:bg-star">
                   Lending{lending.length > 0 && ` (${lending.length})`}
                 </TabsTrigger>
@@ -121,6 +125,23 @@ export default function PortfolioPage() {
                   Redeemable{redeemable.length > 0 && ` (${redeemable.length})`}
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="orders">
+                {orders.length === 0 ? (
+                  <EmptyTab message="No off-chain orders yet. Create a signed order to start borrowing gaslessly." />
+                ) : (
+                  <>
+                    <TableHeader />
+                    <div className="flex flex-col gap-3">
+                      {orders.map((order, i) => (
+                        <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
+                          <OrderListRow order={order} />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </TabsContent>
 
               <TabsContent value="lending">
                 {lending.length === 0 ? (
@@ -148,7 +169,7 @@ export default function PortfolioPage() {
             </Tabs>
 
             {/* Global empty state when user has no positions at all */}
-            {lending.length === 0 && borrowing.length === 0 && redeemable.length === 0 && (
+            {lending.length === 0 && borrowing.length === 0 && redeemable.length === 0 && orders.length === 0 && (
               <div className="text-center py-16">
                 <p className="text-ash text-sm max-w-xs mx-auto leading-relaxed">
                   Your personal library of stelas is empty. Inscribe a new agreement to begin your legacy.

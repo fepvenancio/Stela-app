@@ -56,8 +56,8 @@ export function SummaryBar({ summary }: SummaryBarProps) {
         <span className="text-chalk font-display text-lg">{summary.redeemableCount}</span>
       </MetricCard>
 
-      <MetricCard label="Active" color="bg-aurora">
-        <span className="text-chalk font-display text-lg">{summary.activeCount}</span>
+      <MetricCard label="Off-chain Orders" color="bg-aurora">
+        <span className="text-chalk font-display text-lg">{summary.orderCount}</span>
       </MetricCard>
     </div>
   )

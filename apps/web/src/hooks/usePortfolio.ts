@@ -6,6 +6,7 @@ import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { addressesEqual } from '@/lib/address'
 import { enrichStatus } from '@/lib/status'
 import type { InscriptionRow, AssetRow, ApiListResponse } from '@/types/api'
+import type { OrderRow } from './useOrders'
 
 // API response types
 interface SharesResponse {
@@ -27,6 +28,11 @@ interface TreasuryResponse {
   }
 }
 
+interface ApiOrderListResponse {
+  data: OrderRow[]
+  meta: { page: number; limit: number; total: number }
+}
+
 // Exported types
 export interface EnrichedInscription extends InscriptionRow {
   computedStatus: string
@@ -44,12 +50,14 @@ export interface PortfolioSummary {
   collateralLocked: TokenAmount[]
   redeemableCount: number
   activeCount: number
+  orderCount: number
 }
 
 export interface PortfolioData {
   lending: EnrichedInscription[]
   borrowing: EnrichedInscription[]
   redeemable: (EnrichedInscription & { shareBalance: string })[]
+  orders: OrderRow[]
   summary: PortfolioSummary
   isLoading: boolean
   error: Error | null
@@ -82,10 +90,13 @@ function aggregateDebtAssets(inscriptions: EnrichedInscription[]): TokenAmount[]
 
 export function usePortfolio(address: string | undefined): PortfolioData {
   const inscriptionsUrl = address
-    ? buildApiUrl('/api/inscriptions', { address, limit: 100 })
+    ? buildApiUrl('/api/inscriptions', { address, limit: 50 })
     : null
   const sharesUrl = address ? `/api/shares/${address}` : null
   const treasuryUrl = address ? `/api/treasury/${address}` : null
+  const ordersUrl = address
+    ? buildApiUrl('/api/orders', { address, status: 'all', limit: 50 })
+    : null
 
   const {
     data: inscriptionsRaw,
@@ -105,13 +116,20 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     error: treasuryError,
   } = useFetchApi<TreasuryResponse>(treasuryUrl)
 
-  const isLoading = insLoading || sharesLoading || treasuryLoading
-  const error = insError ?? sharesError ?? treasuryError
+  const {
+    data: ordersRaw,
+    isLoading: ordersLoading,
+    error: ordersError,
+  } = useFetchApi<ApiOrderListResponse>(ordersUrl, undefined, 10_000)
+
+  const isLoading = insLoading || sharesLoading || treasuryLoading || ordersLoading
+  const error = insError ?? sharesError ?? treasuryError ?? ordersError
 
   return useMemo(() => {
     const allInscriptions = inscriptionsRaw?.data ?? []
     const shareBalances = sharesRaw?.data?.balances ?? []
     const lockedAssets = treasuryRaw?.data?.locked_assets ?? []
+    const allOrders = ordersRaw?.data ?? []
 
     // Build share balance lookup
     const shareMap = new Map<string, string>()
@@ -176,14 +194,16 @@ export function usePortfolio(address: string | undefined): PortfolioData {
 
     const redeemableCount = redeemable.length
     const activeCount = enriched.filter((ins) => ACTIVE_STATUSES.has(ins.computedStatus)).length
+    const orderCount = allOrders.length
 
     return {
       lending,
       borrowing,
       redeemable,
-      summary: { totalLent, collateralLocked, redeemableCount, activeCount },
+      orders: allOrders,
+      summary: { totalLent, collateralLocked, redeemableCount, activeCount, orderCount },
       isLoading,
       error,
     }
-  }, [inscriptionsRaw, sharesRaw, treasuryRaw, address, isLoading, error])
+  }, [inscriptionsRaw, sharesRaw, treasuryRaw, ordersRaw, address, isLoading, error])
 }
