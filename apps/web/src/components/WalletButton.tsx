@@ -48,7 +48,7 @@ export function WalletButton() {
   const { disconnect } = useDisconnect()
 
   const connectWallet = async () => {
-    // Try browser wallets first (Argent, Braavos), fall back to Cartridge Controller
+    // Try each connector in order — connect the first available wallet
     for (const c of connectors) {
       const available = await c.available()
       if (available) {
@@ -56,9 +56,9 @@ export function WalletButton() {
         return
       }
     }
-    // No browser wallet found — use last connector (Cartridge Controller, always available)
+    // No wallet extension found — try first connector (prompts install)
     if (connectors.length > 0) {
-      connect({ connector: connectors[connectors.length - 1] })
+      connect({ connector: connectors[0] })
     }
   }
 
