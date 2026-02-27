@@ -24,43 +24,44 @@ const starknetAddress = z
   .regex(/^0x[0-9a-fA-F]{1,64}$/i, 'Must be a valid StarkNet address')
 
 /**
- * A StarkNet signature: array of felt252 values.
+ * A StarkNet signature: array of string values.
  *
  * Different wallet implementations use different formats:
  * - OpenZeppelin/Argent: [r, s] (2 elements)
  * - Braavos: [signer_type, r, s, ...] (variable length)
- * - Cartridge Controller: may include additional elements
+ * - Cartridge Controller: session keys, WebAuthn data, etc. (variable length)
  *
- * The is_valid_signature contract call handles all formats natively.
+ * We accept any string array and pass it through to the account contract's
+ * is_valid_signature, which knows how to interpret its own signature format.
  */
 const signatureArray = z
-  .array(felt)
-  .min(2, 'Signature must contain at least 2 elements')
+  .array(z.string())
+  .min(1, 'Signature must contain at least 1 element')
 
 /**
  * Flexible signature input: accepts array, JSON string, or {r, s} object.
- * Normalizes to string[] of felt values.
+ * Normalizes to string[].
  */
 export const signatureInput = z
   .union([
-    // Direct array of felt strings
+    // Direct array of strings
     signatureArray,
     // JSON string that parses to an array
     z.string().transform((val, ctx) => {
       try {
         const parsed = JSON.parse(val)
-        if (!Array.isArray(parsed) || parsed.length < 2) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Signature JSON must be an array of at least 2 elements' })
+        if (!Array.isArray(parsed) || parsed.length < 1) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Signature JSON must be a non-empty array' })
           return z.NEVER
         }
-        return parsed as string[]
+        return parsed.map(String) as string[]
       } catch {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid signature JSON' })
         return z.NEVER
       }
     }),
     // Object with r, s (legacy format)
-    z.object({ r: felt, s: felt }).transform((val) => [val.r, val.s]),
+    z.object({ r: z.string(), s: z.string() }).transform((val) => [val.r, val.s]),
   ])
   .pipe(signatureArray)
 
