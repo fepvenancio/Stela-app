@@ -4,6 +4,7 @@ import type { AssetType } from '@fepvenancio/stela-sdk'
 import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
 import { getInscriptionOrderTypedData, hashAssets } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
+import { verifyNonce } from '@/lib/verify-nonce'
 import { createOrderSchema } from '@/lib/validation'
 
 export function OPTIONS(request: NextRequest) {
@@ -102,6 +103,31 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid borrower signature', 401, request)
     }
 
+    // Verify nonce matches current on-chain nonce (prevents stale orders)
+    const nonceValid = await verifyNonce(borrower, BigInt(order_data.nonce))
+    if (!nonceValid) {
+      return errorResponse(
+        'Nonce mismatch: your order nonce does not match the on-chain nonce. Please refresh and try again.',
+        400,
+        request,
+      )
+    }
+
+    // Check no other pending order exists with the same borrower + nonce
+    const db = getD1()
+    const existingOrders = await db.getOrders({ status: 'pending', address: borrower, page: 1, limit: 100 })
+    const duplicateNonce = (existingOrders as Record<string, unknown>[]).some((o) => {
+      const od = typeof o.order_data === 'string' ? JSON.parse(o.order_data as string) : o.order_data
+      return String(od?.nonce) === String(order_data.nonce)
+    })
+    if (duplicateNonce) {
+      return errorResponse(
+        'A pending order with this nonce already exists. Cancel it first or wait for it to settle.',
+        409,
+        request,
+      )
+    }
+
     // Verify asset hashes if provided (defense in depth)
     if (order_data.debtHash) {
       const serverDebtHash = hashAssets(sdkDebtAssets)
@@ -128,7 +154,6 @@ export async function POST(request: NextRequest) {
       orderHash: messageHash,
     }
 
-    const db = getD1()
     await db.createOrder({
       id: String(id),
       borrower: String(borrower),
