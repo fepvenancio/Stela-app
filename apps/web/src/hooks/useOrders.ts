@@ -28,6 +28,7 @@ export interface OrderOfferRow {
   bps: number
   lender_signature: string
   nonce: string
+  lender_commitment?: string
   created_at: number
 }
 

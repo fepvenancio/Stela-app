@@ -33,6 +33,7 @@ export default function OrderPage({ params }: OrderPageProps) {
   const { data: order, isLoading, error } = useOrder(id)
   const { signOrder, isPending: signPending } = useSignOrder(id)
   const [lendAmount, setLendAmount] = useState('')
+  const [privateMode, setPrivateMode] = useState(true)
 
   const orderData = useMemo<ParsedOrderData>(() => {
     if (!order?.order_data) return normalizeOrderData({})
@@ -206,7 +207,17 @@ export default function OrderPage({ params }: OrderPageProps) {
                   <div key={offer.id} className="flex items-center justify-between p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
                     <div>
                       <span className="text-[10px] text-ash uppercase tracking-widest block">Lender</span>
-                      <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
+                      {offer.lender_commitment && offer.lender_commitment !== '0x0' && offer.lender_commitment !== '0' ? (
+                        <span className="text-sm text-chalk font-display flex items-center gap-1.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-star" aria-hidden="true">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0110 0v4" />
+                          </svg>
+                          Private Lender
+                        </span>
+                      ) : (
+                        <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
+                      )}
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-ash uppercase tracking-widest block">Percentage</span>
@@ -229,6 +240,39 @@ export default function OrderPage({ params }: OrderPageProps) {
                   Sign and settle on-chain in one step. You approve tokens and execute the settlement.
                 </p>
               </div>
+
+              {/* Privacy Toggle */}
+              {isPending && !isOwner && (
+                <div className="pt-4 border-t border-star/10 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setPrivateMode(!privateMode)}
+                    className="w-full flex items-center justify-between p-3 rounded-2xl border border-edge/20 bg-abyss/40 hover:border-star/30 transition-colors"
+                    aria-label="Toggle private lending"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${privateMode ? 'bg-star/20 text-star' : 'bg-surface/40 text-ash'} transition-colors`}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0110 0v4" />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <span className="text-xs text-chalk font-display block">Private Lending</span>
+                        <span className="text-[10px] text-ash">Your identity is hidden on-chain</span>
+                      </div>
+                    </div>
+                    <div className={`w-10 h-5 rounded-full relative transition-colors ${privateMode ? 'bg-star' : 'bg-edge/40'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-chalk transition-transform ${privateMode ? 'left-5' : 'left-0.5'}`} />
+                    </div>
+                  </button>
+                  {privateMode && (
+                    <p className="text-[10px] text-dust leading-relaxed px-1">
+                      A private note will be saved to your browser. Back it up to redeem your shares later.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="pt-4 border-t border-star/10">
                 {isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
@@ -258,7 +302,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                               return
                             }
                             try {
-                              await signOrder(bps)
+                              await signOrder(bps, privateMode)
                             } catch (err) {
                               // Error already toasted in hook
                             }
@@ -295,7 +339,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                             disabled={signPending}
                             onClick={async () => {
                               try {
-                                await signOrder(10000)
+                                await signOrder(10000, privateMode)
                               } catch {
                                 // Error already toasted in hook
                               }

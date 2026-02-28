@@ -148,7 +148,13 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
           <section className="grid sm:grid-cols-3 gap-4">
              {[
                { label: 'Borrower', value: a?.borrower ? formatAddress(a.borrower as string) : '--', mono: true },
-               { label: 'Lender', value: a?.lender && a.lender !== '0x0' ? formatAddress(a.lender as string) : (a?.multi_lender ? 'Multi-Lender' : 'Waiting...'), mono: true },
+               { label: 'Lender', ...(() => {
+                 const lender = a?.lender as string | undefined
+                 const isFilled = status === 'filled' || status === 'repaid' || status === 'liquidated'
+                 if (lender && lender !== '0x0') return { value: formatAddress(lender), mono: true }
+                 if (isFilled) return { value: '\u{1F512} Private Lender', mono: false }
+                 return { value: a?.multi_lender ? 'Multi-Lender' : 'Waiting...', mono: false }
+               })() },
                { label: 'Issued Debt', value: a?.issued_debt_percentage ? `${Number(BigInt(a.issued_debt_percentage as string)) / 100}%` : '0%', mono: false },
              ].map((field, i) => (
                <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-5">

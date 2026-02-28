@@ -6,7 +6,8 @@ import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
 import type { AssetType, Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
-import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce } from '@/lib/offchain'
+import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce, createPrivateNote, generateSalt } from '@/lib/offchain'
+import { savePrivateNote } from '@/lib/private-notes'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 
@@ -45,7 +46,7 @@ export function useSignOrder(orderId: string) {
   const [isPending, setIsPending] = useState(false)
 
   const signOrder = useCallback(
-    async (bps: number) => {
+    async (bps: number, privateMode = false) => {
       if (!address || !account) throw new Error('Wallet not connected')
 
       setIsPending(true)
@@ -94,13 +95,21 @@ export function useSignOrder(orderId: string) {
           orderHash = starknetTypedData.getMessageHash(orderTypedData, orderData.borrower as string)
         }
 
-        // 5. Build and sign LendOffer SNIP-12
+        // 5. Generate private commitment if privateMode is on
+        const sharesAmount = BigInt(bps) // shares proportional to BPS
+        const privateNote = privateMode
+          ? createPrivateNote(address, 0n, sharesAmount, generateSalt())
+          : null
+        const lenderCommitment = privateNote ? privateNote.commitment : undefined
+
+        // 6. Build and sign LendOffer SNIP-12
         const typedData = getLendOfferTypedData({
           orderHash,
           lender: address,
           issuedDebtPercentage: BigInt(bps),
           nonce,
           chainId: 'SN_SEPOLIA',
+          lenderCommitment,
         })
 
         const signature = await account.signMessage(typedData)
@@ -151,6 +160,7 @@ export function useSignOrder(orderId: string) {
             lender: address,
             issuedDebtPercentage: BigInt(bps),
             nonce,
+            lenderCommitment,
           },
           lenderSig,
         })
@@ -175,12 +185,21 @@ export function useSignOrder(orderId: string) {
             lender_signature: lenderSig,
             nonce: nonce.toString(),
             tx_hash: transaction_hash,
+            lender_commitment: lenderCommitment ?? '0x0',
           }),
         })
 
-        toast.success('Settlement complete!', {
-          description: `Transaction: ${transaction_hash.slice(0, 16)}...`,
-        })
+        // Save private note to localStorage
+        if (privateNote) {
+          savePrivateNote(privateNote, orderId)
+          toast.success('Private settlement complete!', {
+            description: 'Private note saved — back it up to redeem later',
+          })
+        } else {
+          toast.success('Settlement complete!', {
+            description: `Transaction: ${transaction_hash.slice(0, 16)}...`,
+          })
+        }
       } catch (err: unknown) {
         toast.error('Failed to settle', { description: getErrorMessage(err) })
         throw err
