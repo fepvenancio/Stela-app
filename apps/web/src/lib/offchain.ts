@@ -9,11 +9,13 @@
 export {
   getInscriptionOrderTypedData,
   getLendOfferTypedData,
+  getPrivateLendOfferTypedData,
   hashAssets,
   serializeSignature,
   deserializeSignature,
   // Privacy utilities
   computeCommitment,
+  computeDepositCommitment,
   computeNullifier,
   hashPair,
   generateSalt,

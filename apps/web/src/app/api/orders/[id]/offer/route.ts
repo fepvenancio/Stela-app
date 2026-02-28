@@ -33,10 +33,11 @@ export async function POST(
       return errorResponse(`Validation failed: ${messages.join('; ')}`, 400, request)
     }
 
-    const { id, lender, bps, lender_signature, nonce, lender_commitment, tx_hash } = parsed.data
+    const { id, lender, bps, lender_signature, nonce, lender_commitment, depositor, tx_hash } = parsed.data
 
-    // Rate limit by IP + lender address
-    const limited = rateLimit(request, lender)
+    // For private offers, lender is '0x0' — rate limit by depositor instead
+    const rateLimitAddress = depositor ?? lender
+    const limited = rateLimit(request, rateLimitAddress)
     if (limited) return limited
 
     const db = getD1()
@@ -61,9 +62,17 @@ export async function POST(
     // If tx_hash is provided, the lender already settled on-chain.
     // Skip server-side signature verification (contract already verified both signatures).
     if (!tx_hash) {
+      // For private offers (lender=0x0), the depositor field identifies the actual signer.
+      const isPrivateOffer = lender.replace(/^0x0*/i, '') === '0' || lender === '0x0'
+      const signerAddress = isPrivateOffer ? depositor : lender
+
+      if (isPrivateOffer && !depositor) {
+        return errorResponse('Private offers require a depositor address', 400, request)
+      }
+
       // ── Signature Verification ──────────────────────────────────────────
       // Reconstruct the InscriptionOrder typed data to get the order hash,
-      // then build the LendOffer typed data and verify the lender's signature.
+      // then build the LendOffer typed data and verify the signer's signature.
       let orderDataParsed: Record<string, unknown> = {}
       const rawOrderData = orderRecord.order_data
       if (typeof rawOrderData === 'string') {
@@ -108,7 +117,9 @@ export async function POST(
         orderHash = starknetTypedData.getMessageHash(orderTypedData, borrowerAddr)
       }
 
-      // Build the LendOffer typed data and compute the message hash
+      // Build the LendOffer typed data and compute the message hash.
+      // For private offers, the typed data has lender='0x0' but the hash is
+      // computed against the depositor address (actual signer).
       const lendOfferTypedData = getLendOfferTypedData({
         orderHash,
         lender,
@@ -118,10 +129,10 @@ export async function POST(
         lenderCommitment: lender_commitment,
       })
 
-      const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, lender)
+      const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, signerAddress!)
 
-      // Verify the lender's signature on-chain via their account contract.
-      const sigValid = await verifyStarknetSignature(lender, offerMessageHash, lender_signature)
+      // Verify the signer's signature on-chain via their account contract.
+      const sigValid = await verifyStarknetSignature(signerAddress!, offerMessageHash, lender_signature)
       if (!sigValid) {
         return errorResponse('Invalid lender signature', 401, request)
       }
@@ -135,6 +146,7 @@ export async function POST(
       lender_signature: JSON.stringify(lender_signature),
       nonce: String(nonce),
       lender_commitment: lender_commitment ?? '0x0',
+      depositor: depositor ?? undefined,
       created_at: now,
     })
 

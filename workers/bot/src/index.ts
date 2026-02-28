@@ -134,6 +134,46 @@ async function getOnChainNonce(
 }
 
 // ---------------------------------------------------------------------------
+// Stale Nonce Expiry
+// ---------------------------------------------------------------------------
+
+/**
+ * Expire pending orders whose borrower nonce no longer matches on-chain.
+ * This happens when the borrower's nonce advances (e.g., another order settled)
+ * but the old order remains pending in D1. Such orders can never be settled.
+ */
+async function expireStaleNonceOrders(
+  provider: RpcProvider,
+  contractAddress: string,
+  queries: ReturnType<typeof createD1Queries>,
+): Promise<number> {
+  const pending = await queries.getPendingOrders()
+  let expiredCount = 0
+
+  for (const order of pending) {
+    try {
+      const orderData: OrderData = JSON.parse(order.order_data as string)
+      const onChainNonce = await getOnChainNonce(provider, contractAddress, orderData.borrower)
+      const orderNonce = BigInt(orderData.nonce)
+
+      if (onChainNonce !== orderNonce) {
+        console.log(
+          `Expiring order ${order.id}: borrower nonce stale (order=${orderNonce}, on-chain=${onChainNonce})`,
+        )
+        await queries.updateOrderStatus(order.id as string, 'expired')
+        expiredCount++
+      }
+    } catch (err) {
+      // Don't let a single RPC failure block the whole batch
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn(`Failed to check nonce for order ${order.id}: ${msg}`)
+    }
+  }
+
+  return expiredCount
+}
+
+// ---------------------------------------------------------------------------
 // Settlement
 // ---------------------------------------------------------------------------
 
@@ -170,11 +210,14 @@ async function settleOrders(
       // Parse stored order data
       const orderData: OrderData = JSON.parse(order.order_data as string)
 
+      // Detect private settlement: lender_commitment is non-zero and lender is zero address
+      const lenderCommitment = (offer.lender_commitment as string) ?? '0'
+      const isPrivateSettle = lenderCommitment !== '0' && lenderCommitment !== '0x0'
+        && (offer.lender as string).replace(/^0x0*/i, '') === '0'
+
       // Pre-settle nonce check: verify both nonces are still valid on-chain
       const borrowerNonce = await getOnChainNonce(provider, contractAddress, orderData.borrower)
-      const lenderNonce = await getOnChainNonce(provider, contractAddress, offer.lender as string)
       const expectedBorrowerNonce = BigInt(orderData.nonce)
-      const expectedLenderNonce = BigInt(offer.nonce as string)
 
       if (borrowerNonce !== expectedBorrowerNonce) {
         console.warn(
@@ -184,12 +227,19 @@ async function settleOrders(
         continue
       }
 
-      if (lenderNonce !== expectedLenderNonce) {
-        console.warn(
-          `Order ${order_id}: lender nonce stale (on-chain=${lenderNonce}, offer=${expectedLenderNonce}). Expiring offer.`,
-        )
-        await queries.updateOfferStatus(offer_id, 'expired')
-        continue
+      // Skip lender nonce check for private settlements (lender is zero address,
+      // contract doesn't consume lender nonce in private path)
+      if (!isPrivateSettle) {
+        const lenderNonce = await getOnChainNonce(provider, contractAddress, offer.lender as string)
+        const expectedLenderNonce = BigInt(offer.nonce as string)
+
+        if (lenderNonce !== expectedLenderNonce) {
+          console.warn(
+            `Order ${order_id}: lender nonce stale (on-chain=${lenderNonce}, offer=${expectedLenderNonce}). Expiring offer.`,
+          )
+          await queries.updateOfferStatus(offer_id, 'expired')
+          continue
+        }
       }
 
       // Compute asset hashes from asset arrays (may not be stored in order_data)
@@ -227,7 +277,6 @@ async function settleOrders(
       // order_hash, lender, issued_debt_percentage_low, issued_debt_percentage_high, nonce, lender_commitment
       const [bpsLow, bpsHigh] = toU256(BigInt(offer.bps as number))
       const orderHash = orderData.orderHash
-      const lenderCommitment = (offer.lender_commitment as string) ?? '0'
       const offerCalldata: string[] = [
         orderHash,
         offer.lender as string,
@@ -258,7 +307,7 @@ async function settleOrders(
       })
 
       await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
-      console.log(`Settled order ${order_id} with offer ${offer_id}: ${transaction_hash}`)
+      console.log(`Settled order ${order_id} with offer ${offer_id}${isPrivateSettle ? ' (private)' : ''}: ${transaction_hash}`)
 
       // Update statuses on success
       await queries.updateOrderStatus(order_id, 'settled')
@@ -315,10 +364,16 @@ export default {
           signer: env.BOT_PRIVATE_KEY,
         })
 
-        // 1. Expire stale orders
+        // 1. Expire stale orders (past deadline)
         const expired = await queries.expireOrders(now)
         if (expired > 0) {
-          console.log(`Expired ${expired} order(s)`)
+          console.log(`Expired ${expired} order(s) past deadline`)
+        }
+
+        // 1b. Expire orders with stale borrower nonces
+        const staleExpired = await expireStaleNonceOrders(provider, env.STELA_ADDRESS, queries)
+        if (staleExpired > 0) {
+          console.log(`Expired ${staleExpired} order(s) with stale nonces`)
         }
 
         // 2. Settle matched orders

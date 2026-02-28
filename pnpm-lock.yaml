@@ -18,8 +18,8 @@ importers:
   apps/web:
     dependencies:
       '@fepvenancio/stela-sdk':
-        specifier: ^0.3.0
-        version: 0.3.0(starknet@6.24.1)
+        specifier: 0.4.0
+        version: 0.4.0(starknet@6.24.1)
       '@opennextjs/cloudflare':
         specifier: ^1.0.0
         version: 1.16.5(next@15.5.12(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.67.0(@cloudflare/workers-types@4.20260227.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
@@ -93,6 +93,9 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      workerd:
+        specifier: ^1.20260228.1
+        version: 1.20260228.1
       wrangler:
         specifier: ^4.0.0
         version: 4.67.0(@cloudflare/workers-types@4.20260227.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
@@ -469,8 +472,20 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@cloudflare/workerd-darwin-64@1.20260228.1':
+    resolution: {integrity: sha512-SPBr1/atMGkaDkLXDgHv8mF5V7vn5OMOhSmcUXAKDuMY99B+JJPkGi/NfaVLwc2Owu2xbzjanHJpv0GKBci6OQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
   '@cloudflare/workerd-darwin-arm64@1.20260219.0':
     resolution: {integrity: sha512-EyfQdsG1KcIVAf4qndT00LZly7sLFm1VxMWHBvOFB/EVYF2sE5HZ0dPbe+yrax5p3eS0oLZthR8ynhz4UulMUQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20260228.1':
+    resolution: {integrity: sha512-A4qtc0uGaJSHoZrknbSLPA937W5u+p0amIucupZr5OEF/0WP43zNavQ6S8cH15L8y8KdNrTApOige0ayE5b0Bg==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
@@ -481,14 +496,32 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-64@1.20260228.1':
+    resolution: {integrity: sha512-W1gXWtZYqJ2m+BwKbt8lcKK1khdJ51jMRlJqhM2DdlyOxDMFcprRvpVl0Fx6COuAhjfgPmjNd9Z9YjakE+VUSg==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
   '@cloudflare/workerd-linux-arm64@1.20260219.0':
     resolution: {integrity: sha512-835pjQ9uuAtwPBOAkPf+oxH3mNE5mqWuE3H7hJsul7WZsRD2FDcariyoT2AW6xyOePILrn4uMnmG1KGc9m/8Pg==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-arm64@1.20260228.1':
+    resolution: {integrity: sha512-Tz3WGvnZriDZOmeOkRKZ7vaFeudFMSOowubqAeWsneVCrdadSZxIh1NzbUxjWcYPTuVU0TV52vLHK2Vzb2w3uw==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
   '@cloudflare/workerd-windows-64@1.20260219.0':
     resolution: {integrity: sha512-i7qcuOsuAxqqn1n5Ar3Rh1dHUL9vNmpF9FcdMTT84jIrdm5UNrPZz5grJthPmpB9LTcreT9iiP6qKbzGjnCwPA==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20260228.1':
+    resolution: {integrity: sha512-hH89nX5wiSxSoav+fw8snFgbuJDQkx78JxYeQboN300LkMH3idt4SWrWMXOqAoTOJ+n4mgGdxoboYwWq815A5w==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -963,8 +996,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fepvenancio/stela-sdk@0.3.0':
-    resolution: {integrity: sha512-uqAynJ/OK/abyS+LXKUSi75yZIqfSYnrsZ0gvh+4DjYG9Db99QM3z7Dr5zOdXxjPAbZpjGBQXx+TMl64YeH0jg==}
+  '@fepvenancio/stela-sdk@0.4.0':
+    resolution: {integrity: sha512-Q20UHaqdP+xDY3OENBL8/JIW+qxrODi0mnzcULKAavwOeq2xlVuFMtYJtwQ0vGMHlvDQ/6JO0pBmUh0ag+/caw==}
     peerDependencies:
       starknet: ^6.0.0
 
@@ -4002,6 +4035,11 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  workerd@1.20260228.1:
+    resolution: {integrity: sha512-bdX57DksHea1tRc4fuS+bLesnC6+nW/hEbsdxYHi4M5p8qb/RWvMEpEHcHNMvppS9+sMTxTRdjnERY5WbKvZHA==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   wrangler@4.67.0:
     resolution: {integrity: sha512-58OoVth7bqm0nqsRgcI67gHbpp0IfR1JIBqDY0XR1FzRu9Qkjn6v2iJAdFf82QcVBFhaMBYQi88WqYGswq5wlQ==}
     engines: {node: '>=20.0.0'}
@@ -4905,16 +4943,31 @@ snapshots:
   '@cloudflare/workerd-darwin-64@1.20260219.0':
     optional: true
 
+  '@cloudflare/workerd-darwin-64@1.20260228.1':
+    optional: true
+
   '@cloudflare/workerd-darwin-arm64@1.20260219.0':
+    optional: true
+
+  '@cloudflare/workerd-darwin-arm64@1.20260228.1':
     optional: true
 
   '@cloudflare/workerd-linux-64@1.20260219.0':
     optional: true
 
+  '@cloudflare/workerd-linux-64@1.20260228.1':
+    optional: true
+
   '@cloudflare/workerd-linux-arm64@1.20260219.0':
     optional: true
 
+  '@cloudflare/workerd-linux-arm64@1.20260228.1':
+    optional: true
+
   '@cloudflare/workerd-windows-64@1.20260219.0':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20260228.1':
     optional: true
 
   '@cloudflare/workers-types@4.20260227.0': {}
@@ -5171,7 +5224,7 @@ snapshots:
   '@esbuild/win32-x64@0.27.3':
     optional: true
 
-  '@fepvenancio/stela-sdk@0.3.0(starknet@6.24.1)':
+  '@fepvenancio/stela-sdk@0.4.0(starknet@6.24.1)':
     dependencies:
       starknet: 6.24.1
 
@@ -8477,6 +8530,14 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20260219.0
       '@cloudflare/workerd-linux-arm64': 1.20260219.0
       '@cloudflare/workerd-windows-64': 1.20260219.0
+
+  workerd@1.20260228.1:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20260228.1
+      '@cloudflare/workerd-darwin-arm64': 1.20260228.1
+      '@cloudflare/workerd-linux-64': 1.20260228.1
+      '@cloudflare/workerd-linux-arm64': 1.20260228.1
+      '@cloudflare/workerd-windows-64': 1.20260228.1
 
   wrangler@4.67.0(@cloudflare/workers-types@4.20260227.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     dependencies:

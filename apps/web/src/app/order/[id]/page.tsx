@@ -10,6 +10,7 @@ import { formatAddress, addressesEqual } from '@/lib/address'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { getCancelOrderTypedData } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
+import { PRIVACY_POOL_ADDRESS } from '@/lib/config'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,12 +36,23 @@ export default function OrderPage({ params }: OrderPageProps) {
   const { data: order, isLoading, error } = useOrder(id)
   const { signOrder, isPending: signPending } = useSignOrder(id)
   const [lendAmount, setLendAmount] = useState('')
-  const [privateMode, setPrivateMode] = useState(true)
-  const settleProgress = useTransactionProgress([
-    { label: 'Approve & Settle', description: 'Confirm the transaction in your wallet' },
-    { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
-    { label: 'Saving offer', description: 'Recording settlement details' },
-  ])
+  const [privateMode, setPrivateMode] = useState(!!PRIVACY_POOL_ADDRESS)
+  const settleSteps = useMemo(() =>
+    privateMode
+      ? [
+          { label: 'Shield deposit', description: 'Approve tokens & shield to privacy pool' },
+          { label: 'Confirming shield', description: 'Waiting for block confirmation' },
+          { label: 'Signing offer', description: 'Sign the anonymous lend offer' },
+          { label: 'Submitting offer', description: 'Recording offer for bot settlement' },
+        ]
+      : [
+          { label: 'Approve & Settle', description: 'Confirm the transaction in your wallet' },
+          { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
+          { label: 'Saving offer', description: 'Recording settlement details' },
+        ],
+    [privateMode],
+  )
+  const settleProgress = useTransactionProgress(settleSteps)
 
   const orderData = useMemo<ParsedOrderData>(() => {
     if (!order?.order_data) return normalizeOrderData({})
@@ -110,7 +122,7 @@ export default function OrderPage({ params }: OrderPageProps) {
         <div className="lg:col-span-2 space-y-8">
           {/* Hero Data */}
           <section className="bg-surface/20 border border-edge/30 rounded-[32px] p-8 relative overflow-hidden granite-noise">
-            <div className="absolute top-0 right-0 p-8 flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-end mb-4">
               <Badge variant="default" className="rounded-full px-4 py-1 uppercase tracking-widest text-[10px] font-bold">
                 Off-chain
               </Badge>
@@ -244,12 +256,14 @@ export default function OrderPage({ params }: OrderPageProps) {
               <div className="space-y-2">
                 <h3 className="font-display text-lg text-star uppercase tracking-widest">Offer Actions</h3>
                 <p className="text-xs text-dust leading-relaxed">
-                  Sign and settle on-chain in one step. You approve tokens and execute the settlement.
+                  {privateMode
+                    ? 'Shield your tokens into the privacy pool. A bot will settle the loan without revealing your identity.'
+                    : 'Sign and settle on-chain in one step. You approve tokens and execute the settlement.'}
                 </p>
               </div>
 
-              {/* Privacy Toggle */}
-              {isPending && !isOwner && (
+              {/* Privacy Toggle — only when pool is deployed */}
+              {isPending && !isOwner && PRIVACY_POOL_ADDRESS && (
                 <div className="pt-4 border-t border-star/10 space-y-3">
                   <button
                     type="button"
@@ -275,7 +289,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                   </button>
                   {privateMode && (
                     <p className="text-[10px] text-dust leading-relaxed px-1">
-                      A private note will be saved to your browser. Back it up to redeem your shares later.
+                      Your tokens are shielded in the privacy pool. A bot settles the loan — your address never appears on-chain. A private note is saved to your browser for redemption.
                     </p>
                   )}
                 </div>
@@ -330,7 +344,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                             />
                           </div>
                           <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={signPending || !lendAmount}>
-                            {signPending ? 'Settling...' : 'Sign & Settle'}
+                            {signPending ? (privateMode ? 'Shielding...' : 'Settling...') : (privateMode ? 'Shield & Lend' : 'Sign & Settle')}
                           </Button>
                         </form>
                       ) : (
@@ -352,7 +366,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                               }
                             }}
                           >
-                            {signPending ? 'Settling...' : 'Sign & Settle 100%'}
+                            {signPending ? (privateMode ? 'Shielding...' : 'Settling...') : (privateMode ? 'Shield & Lend 100%' : 'Sign & Settle 100%')}
                           </Button>
                         </div>
                       )

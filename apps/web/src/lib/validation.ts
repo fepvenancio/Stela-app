@@ -121,6 +121,8 @@ export const createOfferSchema = z.object({
   lender_signature: signatureInput,
   nonce: z.string().min(1, 'Nonce is required'),
   lender_commitment: felt.optional().default('0x0'),
+  /** For private offers (lender=0x0): the actual depositor address used for signature verification */
+  depositor: starknetAddress.optional(),
   tx_hash: z.string().optional(),
 })
 

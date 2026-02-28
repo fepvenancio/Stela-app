@@ -573,14 +573,15 @@ export function createD1Queries(db: D1Database) {
       lender_signature: string
       nonce: string
       lender_commitment?: string
+      depositor?: string
       created_at: number
     }) {
       await db
         .prepare(
-          `INSERT INTO order_offers (id, order_id, lender, bps, lender_signature, nonce, lender_commitment, status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
+          `INSERT INTO order_offers (id, order_id, lender, bps, lender_signature, nonce, lender_commitment, depositor, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
         )
-        .bind(offer.id, offer.order_id, offer.lender, offer.bps, offer.lender_signature, offer.nonce, offer.lender_commitment ?? '0', offer.created_at)
+        .bind(offer.id, offer.order_id, offer.lender, offer.bps, offer.lender_signature, offer.nonce, offer.lender_commitment ?? '0', offer.depositor ?? null, offer.created_at)
         .run()
     },
 
@@ -618,6 +619,13 @@ export function createD1Queries(db: D1Database) {
         .bind(nowSeconds)
         .run()
       return (result.meta?.changes as number) ?? 0
+    },
+
+    async getPendingOrders(): Promise<Record<string, unknown>[]> {
+      const result = await db
+        .prepare(`SELECT * FROM orders WHERE status = 'pending' ORDER BY created_at ASC LIMIT 50`)
+        .all<Record<string, unknown>>()
+      return result.results
     },
   }
 }
