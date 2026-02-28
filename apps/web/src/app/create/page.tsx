@@ -22,6 +22,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTimestamp } from '@/lib/format'
+import { useTransactionProgress } from '@/hooks/useTransactionProgress'
+import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 
 const emptyAsset = (): AssetInputValue => ({
   asset: '',
@@ -148,6 +150,11 @@ export default function CreatePage() {
 
   const [showErrors, setShowErrors] = useState(false)
   const { balances } = useTokenBalances()
+  const createProgress = useTransactionProgress([
+    { label: 'Approving collateral', description: 'Confirm token approvals in your wallet' },
+    { label: 'Signing order', description: 'Sign the SNIP-12 typed data (no gas)' },
+    { label: 'Submitting order', description: 'Recording your order on the network' },
+  ])
 
   const hasDebt = debtAssets.some((a) => a.asset)
   const hasCollateral = collateralAssets.some((a) => a.asset)
@@ -212,6 +219,7 @@ export default function CreatePage() {
     const sdkCollateralAssets = toSdkAssets(collateralAssets)
 
     setIsPending(true)
+    createProgress.start()
     try {
       // Approve collateral tokens so settle() can transfer them later
       const erc20Approvals = sdkCollateralAssets
@@ -234,9 +242,11 @@ export default function CreatePage() {
       if (allApprovals.length > 0) {
         toast.info('Approve collateral in your wallet...')
         const { transaction_hash: approvalTx } = await account.execute(allApprovals)
+        createProgress.setTxHash(approvalTx)
         await provider.waitForTransaction(approvalTx)
         toast.success('Collateral approved!')
       }
+      createProgress.advance()
 
       // Get nonce from contract
       const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
@@ -298,6 +308,7 @@ export default function CreatePage() {
       }
 
       // POST to backend
+      createProgress.advance()
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -318,6 +329,7 @@ export default function CreatePage() {
         throw new Error((err as Record<string, string>).error || 'Failed to create order')
       }
 
+      createProgress.advance()
       toast.success('Order signed & submitted', {
         description: 'Your inscription order is now live. No gas was spent!',
       })
@@ -334,6 +346,7 @@ export default function CreatePage() {
       setMultiLender(false)
       setShowErrors(false)
     } catch (err: unknown) {
+      createProgress.fail(getErrorMessage(err))
       toast.error('Failed to sign order', { description: getErrorMessage(err) })
     } finally {
       setIsPending(false)
@@ -541,6 +554,13 @@ export default function CreatePage() {
           </Button>
         </Web3ActionWrapper>
       </div>
+
+      <TransactionProgressModal
+        open={createProgress.open}
+        steps={createProgress.steps}
+        txHash={createProgress.txHash}
+        onClose={createProgress.close}
+      />
     </div>
   )
 }

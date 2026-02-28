@@ -20,6 +20,8 @@ import { AssetBadge } from '@/components/AssetBadge'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
+import { useTransactionProgress } from '@/hooks/useTransactionProgress'
+import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 
 interface OrderPageProps {
   params: Promise<{ id: string }>
@@ -34,6 +36,11 @@ export default function OrderPage({ params }: OrderPageProps) {
   const { signOrder, isPending: signPending } = useSignOrder(id)
   const [lendAmount, setLendAmount] = useState('')
   const [privateMode, setPrivateMode] = useState(true)
+  const settleProgress = useTransactionProgress([
+    { label: 'Approve & Settle', description: 'Confirm the transaction in your wallet' },
+    { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
+    { label: 'Saving offer', description: 'Recording settlement details' },
+  ])
 
   const orderData = useMemo<ParsedOrderData>(() => {
     if (!order?.order_data) return normalizeOrderData({})
@@ -302,8 +309,8 @@ export default function OrderPage({ params }: OrderPageProps) {
                               return
                             }
                             try {
-                              await signOrder(bps, privateMode)
-                            } catch (err) {
+                              await signOrder(bps, privateMode, settleProgress)
+                            } catch {
                               // Error already toasted in hook
                             }
                           }}
@@ -339,7 +346,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                             disabled={signPending}
                             onClick={async () => {
                               try {
-                                await signOrder(10000, privateMode)
+                                await signOrder(10000, privateMode, settleProgress)
                               } catch {
                                 // Error already toasted in hook
                               }
@@ -419,6 +426,13 @@ export default function OrderPage({ params }: OrderPageProps) {
           </section>
         </aside>
       </div>
+
+      <TransactionProgressModal
+        open={settleProgress.open}
+        steps={settleProgress.steps}
+        txHash={settleProgress.txHash}
+        onClose={settleProgress.close}
+      />
     </div>
   )
 }

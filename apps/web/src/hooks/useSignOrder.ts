@@ -10,6 +10,7 @@ import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNon
 import { savePrivateNote } from '@/lib/private-notes'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
+import type { TransactionProgress } from '@/hooks/useTransactionProgress'
 
 function toSdkAssets(arr: Record<string, string>[] | undefined): Asset[] {
   return (arr || []).map((a) => ({
@@ -46,10 +47,11 @@ export function useSignOrder(orderId: string) {
   const [isPending, setIsPending] = useState(false)
 
   const signOrder = useCallback(
-    async (bps: number, privateMode = false) => {
+    async (bps: number, privateMode = false, progress?: TransactionProgress) => {
       if (!address || !account) throw new Error('Wallet not connected')
 
       setIsPending(true)
+      progress?.start()
       try {
         // 1. Fetch order data
         const orderRes = await fetch(`/api/orders/${orderId}`)
@@ -170,10 +172,13 @@ export function useSignOrder(orderId: string) {
         const { transaction_hash } = await account.execute([...approveCalls, settleCall])
 
         // 11. Wait for on-chain confirmation
+        progress?.advance()
+        progress?.setTxHash(transaction_hash)
         toast.info('Waiting for transaction confirmation...')
         await provider.waitForTransaction(transaction_hash)
 
         // 12. Store offer in backend and mark as settled
+        progress?.advance()
         const offerId = crypto.randomUUID()
         await fetch(`/api/orders/${orderId}/offer`, {
           method: 'POST',
@@ -200,8 +205,11 @@ export function useSignOrder(orderId: string) {
             description: `Transaction: ${transaction_hash.slice(0, 16)}...`,
           })
         }
+        progress?.advance()
       } catch (err: unknown) {
-        toast.error('Failed to settle', { description: getErrorMessage(err) })
+        const msg = getErrorMessage(err)
+        progress?.fail(msg)
+        toast.error('Failed to settle', { description: msg })
         throw err
       } finally {
         setIsPending(false)
