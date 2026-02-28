@@ -119,6 +119,20 @@ async function liquidate(
   return transaction_hash
 }
 
+/** Read the on-chain nonce for an address from the Stela contract */
+async function getOnChainNonce(
+  provider: RpcProvider,
+  contractAddress: string,
+  address: string,
+): Promise<bigint> {
+  const result = await provider.callContract({
+    contractAddress,
+    entrypoint: 'nonces',
+    calldata: [address],
+  })
+  return BigInt(result[0])
+}
+
 // ---------------------------------------------------------------------------
 // Settlement
 // ---------------------------------------------------------------------------
@@ -155,6 +169,28 @@ async function settleOrders(
 
       // Parse stored order data
       const orderData: OrderData = JSON.parse(order.order_data as string)
+
+      // Pre-settle nonce check: verify both nonces are still valid on-chain
+      const borrowerNonce = await getOnChainNonce(provider, contractAddress, orderData.borrower)
+      const lenderNonce = await getOnChainNonce(provider, contractAddress, offer.lender as string)
+      const expectedBorrowerNonce = BigInt(orderData.nonce)
+      const expectedLenderNonce = BigInt(offer.nonce as string)
+
+      if (borrowerNonce !== expectedBorrowerNonce) {
+        console.warn(
+          `Order ${order_id}: borrower nonce stale (on-chain=${borrowerNonce}, order=${expectedBorrowerNonce}). Expiring order.`,
+        )
+        await queries.updateOrderStatus(order_id, 'expired')
+        continue
+      }
+
+      if (lenderNonce !== expectedLenderNonce) {
+        console.warn(
+          `Order ${order_id}: lender nonce stale (on-chain=${lenderNonce}, offer=${expectedLenderNonce}). Expiring offer.`,
+        )
+        await queries.updateOfferStatus(offer_id, 'expired')
+        continue
+      }
 
       // Compute asset hashes from asset arrays (may not be stored in order_data)
       const debtHash = orderData.debtHash ?? hashAssets(orderData.debtAssets)

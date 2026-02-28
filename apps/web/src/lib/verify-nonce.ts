@@ -29,17 +29,23 @@ function toHexFelt(value: string | bigint | number): string {
   }
 }
 
+export interface NonceResult {
+  valid: boolean
+  onChain?: bigint
+  submitted?: bigint
+}
+
 /**
  * Verify that the provided nonce matches the current on-chain nonce for the given address.
  *
  * @param address - The StarkNet account address
  * @param expectedNonce - The nonce value to check against the contract
- * @returns true if the nonce matches, false otherwise
+ * @returns { valid, onChain, submitted } for detailed error messages
  */
 export async function verifyNonce(
   address: string,
   expectedNonce: bigint,
-): Promise<boolean> {
+): Promise<NonceResult> {
   const payload = {
     jsonrpc: '2.0',
     id: 1,
@@ -63,8 +69,7 @@ export async function verifyNonce(
 
     if (!response.ok) {
       console.error(`RPC HTTP error during nonce verification: ${response.status}`)
-      // Fail open — don't block order creation if RPC is down
-      return true
+      return { valid: true } // Fail open
     }
 
     const result = await response.json() as {
@@ -74,12 +79,12 @@ export async function verifyNonce(
 
     if (result.error) {
       console.error('RPC error during nonce verification:', JSON.stringify(result.error))
-      return true // Fail open
+      return { valid: true } // Fail open
     }
 
     if (!result.result || result.result.length === 0) {
       console.error('RPC returned empty result for nonces()')
-      return true // Fail open
+      return { valid: true } // Fail open
     }
 
     const onChainNonce = BigInt(result.result[0])
@@ -87,15 +92,15 @@ export async function verifyNonce(
       console.error(
         `Nonce mismatch for ${address}: on-chain=${onChainNonce}, submitted=${expectedNonce}`,
       )
-      return false
+      return { valid: false, onChain: onChainNonce, submitted: expectedNonce }
     }
 
-    return true
+    return { valid: true, onChain: onChainNonce, submitted: expectedNonce }
   } catch (err) {
     console.error(
       'Nonce verification RPC call failed:',
       err instanceof Error ? err.message : String(err),
     )
-    return true // Fail open — don't block if RPC unreachable
+    return { valid: true } // Fail open
   }
 }

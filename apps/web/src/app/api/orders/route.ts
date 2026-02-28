@@ -104,10 +104,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify nonce matches current on-chain nonce (prevents stale orders)
-    const nonceValid = await verifyNonce(borrower, BigInt(order_data.nonce))
-    if (!nonceValid) {
+    const nonceCheck = await verifyNonce(borrower, BigInt(order_data.nonce))
+    if (!nonceCheck.valid) {
       return errorResponse(
-        'Nonce mismatch: your order nonce does not match the on-chain nonce. Please refresh and try again.',
+        `Nonce mismatch: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain}. Please refresh and try again.`,
         400,
         request,
       )

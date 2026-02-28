@@ -63,11 +63,28 @@ export function useSignOrder(orderId: string) {
             ? (JSON.parse(order.order_data as string) as Record<string, unknown>)
             : (order.order_data as Record<string, unknown>)
 
-        // 2. Get lender nonce from contract
+        // 2. Self-lending check
+        const borrowerAddr = (orderData.borrower as string).toLowerCase()
+        if (borrowerAddr === address.toLowerCase()) {
+          throw new Error('Cannot lend to your own order — connect a different wallet')
+        }
+
+        // 3. Get lender nonce from contract
         const provider = new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' })
         const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
 
-        // 3. Parse assets
+        // 4. Verify borrower's nonce is still valid (order may be stale)
+        const orderNonceRaw = String(orderData.nonce ?? order.nonce ?? '0')
+        const borrowerOnChainNonce = await getNonce(provider, CONTRACT_ADDRESS, orderData.borrower as string)
+        if (borrowerOnChainNonce !== BigInt(orderNonceRaw)) {
+          throw new Error(
+            `This order is stale — the borrower's on-chain nonce has changed ` +
+            `(order has ${orderNonceRaw}, on-chain is ${borrowerOnChainNonce}). ` +
+            `The borrower needs to create a new order.`
+          )
+        }
+
+        // 5. Parse assets
         const debtArr = (orderData.debtAssets ?? orderData.debt_assets) as Record<string, string>[] | undefined
         const interestArr = (orderData.interestAssets ?? orderData.interest_assets) as Record<string, string>[] | undefined
         const collateralArr = (orderData.collateralAssets ?? orderData.collateral_assets) as Record<string, string>[] | undefined
@@ -76,8 +93,7 @@ export function useSignOrder(orderId: string) {
         const sdkInterestAssets = toSdkAssets(interestArr)
         const sdkCollateralAssets = toSdkAssets(collateralArr)
 
-        // 4. Compute order hash
-        const orderNonce = String(orderData.nonce ?? order.nonce ?? '0')
+        // 6. Compute order hash (reuse orderNonceRaw from step 4)
         let orderHash = orderData.orderHash as string | undefined
         if (!orderHash) {
           const orderTypedData = getInscriptionOrderTypedData({
@@ -91,20 +107,20 @@ export function useSignOrder(orderId: string) {
             duration: BigInt(orderData.duration as string),
             deadline: BigInt(orderData.deadline as string),
             multiLender: (orderData.multiLender ?? orderData.multi_lender) as boolean,
-            nonce: BigInt(orderNonce),
+            nonce: BigInt(orderNonceRaw),
             chainId: 'SN_SEPOLIA',
           })
           orderHash = starknetTypedData.getMessageHash(orderTypedData, orderData.borrower as string)
         }
 
-        // 5. Generate private commitment if privateMode is on
+        // 7. Generate private commitment if privateMode is on
         const sharesAmount = BigInt(bps) // shares proportional to BPS
         const privateNote = privateMode
           ? createPrivateNote(address, 0n, sharesAmount, generateSalt())
           : null
         const lenderCommitment = privateNote ? privateNote.commitment : undefined
 
-        // 6. Build and sign LendOffer SNIP-12
+        // 8. Build and sign LendOffer SNIP-12
         const typedData = getLendOfferTypedData({
           orderHash,
           lender: address,
@@ -117,15 +133,15 @@ export function useSignOrder(orderId: string) {
         const signature = await account.signMessage(typedData)
         const lenderSig = formatSig(signature)
 
-        // 6. Parse borrower signature from stored order
+        // 9. Parse borrower signature from stored order
         const borrowerSig = parseSigToArray(order.borrower_signature as string | string[])
 
-        // 7. Compute asset hashes
+        // 10. Compute asset hashes
         const debtHash = (orderData.debtHash as string) || hashAssets(sdkDebtAssets)
         const interestHash = (orderData.interestHash as string) || hashAssets(sdkInterestAssets)
         const collateralHash = (orderData.collateralHash as string) || hashAssets(sdkCollateralAssets)
 
-        // 8. Build ERC20 approve calls for debt tokens (lender provides debt)
+        // 11. Build ERC20 approve calls for debt tokens (lender provides debt)
         const approveCalls = sdkDebtAssets
           .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
           .map(asset => {
@@ -137,7 +153,7 @@ export function useSignOrder(orderId: string) {
             }
           })
 
-        // 9. Build settle call using SDK
+        // 12. Build settle call using SDK
         const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })
         const settleCall = client.buildSettle({
           order: {
@@ -151,7 +167,7 @@ export function useSignOrder(orderId: string) {
             duration: BigInt(orderData.duration as string),
             deadline: BigInt(orderData.deadline as string),
             multiLender: Boolean(orderData.multiLender ?? orderData.multi_lender),
-            nonce: BigInt(orderNonce),
+            nonce: BigInt(orderNonceRaw),
           },
           debtAssets: sdkDebtAssets,
           interestAssets: sdkInterestAssets,
@@ -167,17 +183,17 @@ export function useSignOrder(orderId: string) {
           lenderSig,
         })
 
-        // 10. Execute multicall: approve debt tokens + settle
+        // 13. Execute multicall: approve debt tokens + settle
         toast.info('Confirm the settlement transaction in your wallet...')
         const { transaction_hash } = await account.execute([...approveCalls, settleCall])
 
-        // 11. Wait for on-chain confirmation
+        // 14. Wait for on-chain confirmation
         progress?.advance()
         progress?.setTxHash(transaction_hash)
         toast.info('Waiting for transaction confirmation...')
         await provider.waitForTransaction(transaction_hash)
 
-        // 12. Store offer in backend and mark as settled
+        // 15. Store offer in backend and mark as settled
         progress?.advance()
         const offerId = crypto.randomUUID()
         await fetch(`/api/orders/${orderId}/offer`, {
