@@ -94,8 +94,9 @@ Set in `apps/web/wrangler.jsonc` under `vars`:
 | Variable | Description | Example |
 |---|---|---|
 | `NEXT_PUBLIC_NETWORK` | StarkNet network | `sepolia` |
-| `NEXT_PUBLIC_STELA_ADDRESS` | Stela contract address | `0x006885f85de...` |
+| `NEXT_PUBLIC_STELA_ADDRESS` | Stela contract address | `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0` |
 | `NEXT_PUBLIC_RPC_URL` | StarkNet RPC endpoint | `https://api.cartridge.gg/x/starknet/sepolia` |
+| `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Privacy pool contract address (empty to disable) | `0x002579e670f80cca558236c95762dd5b94ae017b6ed92df65b74b61b539cdec7` |
 
 ### Custom Domain
 
@@ -144,7 +145,7 @@ Under the hood, this runs `opennextjs-cloudflare build && opennextjs-cloudflare 
     }
   ],
   "vars": {
-    "STELA_ADDRESS": "0x021e81956fccd8463342ff7e774bf6616b40e242fe0ea09a6f38735a604ea0e0"
+    "STELA_ADDRESS": "0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0"
   },
   "triggers": {
     "crons": ["*/5 * * * *"]
@@ -165,7 +166,7 @@ The `WEBHOOK_SECRET` must match the secret configured for the Apibara indexer se
 
 ```bash
 cd workers/indexer
-pnpm deploy
+npx wrangler@3 deploy
 ```
 
 ### Endpoints
@@ -200,7 +201,7 @@ The `*/5 * * * *` cron trigger runs `expireOpenInscriptions(nowSeconds)` to mark
     }
   ],
   "vars": {
-    "STELA_ADDRESS": "0x021e81956fccd8463342ff7e774bf6616b40e242fe0ea09a6f38735a604ea0e0"
+    "STELA_ADDRESS": "0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0"
   },
   "triggers": {
     "crons": ["*/2 * * * *"]
@@ -225,18 +226,21 @@ The bot wallet must hold enough ETH/STRK to pay gas for liquidation and settleme
 
 ```bash
 cd workers/bot
-pnpm deploy
+npx wrangler@3 deploy
 ```
+
+**Note:** Use `npx wrangler@3 deploy` (NOT `pnpm deploy`) to avoid workerd architecture issues on macOS.
 
 ### Cron Behavior (`*/2 * * * *`)
 
 Every 2 minutes, the bot:
 
-1. **Expires stale orders** -- Updates off-chain orders past their deadline to `expired` status.
-2. **Settles matched orders** -- Finds orders with status `matched` and pending offers, builds the full `settle` calldata (order struct, asset arrays, borrower signature, offer struct, lender signature), and executes the on-chain transaction.
-3. **Liquidates expired inscriptions** -- Queries D1 for inscriptions where `status = 'filled'` and `signed_at + duration < now`, then calls `liquidate` on each.
+1. **Acquires D1 distributed lock** -- Uses `_meta` table key `bot_lock` with 5-minute TTL. Skips if another instance holds the lock.
+2. **Expires stale orders** -- Updates off-chain orders past their deadline to `expired` status.
+3. **Settles matched orders** -- Finds orders with status `matched` and pending offers, builds the full `settle` calldata (order struct, asset arrays, borrower signature, offer struct including `lender_commitment`, lender signature), and executes the on-chain transaction. Supports private settlement when `lender_commitment != 0`.
+4. **Liquidates expired inscriptions** -- Queries D1 for inscriptions where `status = 'filled'` and `signed_at + duration < now`, then calls `liquidate` on each.
 
-Operations are serialized to avoid StarkNet nonce conflicts.
+Operations are serialized to avoid StarkNet nonce conflicts. The lock is released on completion or error.
 
 ---
 
@@ -259,7 +263,7 @@ cp .env.example .env
 | `WEBHOOK_URL` | Base URL of the indexer CF Worker | `https://stela-indexer.stela-app.workers.dev` |
 | `WEBHOOK_SECRET` | Shared secret for webhook auth | Must match the worker's `WEBHOOK_SECRET` |
 | `RPC_URL` | StarkNet RPC for enrichment calls | `https://api.cartridge.gg/x/starknet/sepolia` |
-| `STELA_ADDRESS` | Stela contract address | `0x006885f85de...` |
+| `STELA_ADDRESS` | Stela contract address | `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0` |
 
 ### Run Locally
 
@@ -267,6 +271,8 @@ cp .env.example .env
 cd services/indexer
 pnpm dev    # tsx --watch src/index.ts
 ```
+
+**Note:** If you encounter OOM errors during local builds, set `NODE_OPTIONS="--max-old-space-size=8192"`.
 
 ### Docker Deployment
 
@@ -286,7 +292,7 @@ The service:
 2. Connects to Apibara DNA (Sepolia) via gRPC at `https://sepolia.starknet.a5a.ch`
 3. Streams events matching the Stela contract address with `finality: 'accepted'`
 4. For each block with events:
-   - Parses event selectors (InscriptionCreated, InscriptionSigned, InscriptionCancelled, InscriptionRepaid, InscriptionLiquidated, SharesRedeemed, TransferSingle)
+   - Parses event selectors (InscriptionCreated, InscriptionSigned, InscriptionCancelled, InscriptionRepaid, InscriptionLiquidated, SharesRedeemed, TransferSingle, PrivateSettled, PrivateSharesRedeemed)
    - Enriches via RPC (fetches on-chain inscription data, locker addresses)
    - Extracts asset details from transaction calldata (for create events)
    - Batches events into a `WebhookPayload` and POSTs to the CF Worker
@@ -310,6 +316,12 @@ When adding new tables or columns:
 
 All DDL statements use `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS`, making them safe to re-run.
 
+For column additions (e.g., `lender_commitment` on `order_offers`), use `ALTER TABLE` statements applied directly:
+
+```bash
+npx wrangler d1 execute stela-db --command "ALTER TABLE order_offers ADD COLUMN lender_commitment TEXT DEFAULT '0x0'"
+```
+
 ---
 
 ## Secret Management Summary
@@ -324,7 +336,7 @@ All DDL statements use `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXI
 | `services/indexer` | `WEBHOOK_SECRET` | `.env` file or container env vars |
 | `services/indexer` | `RPC_URL` | `.env` file or container env vars |
 
-Non-secret variables (contract address, network) are set in `wrangler.jsonc` under `vars`.
+Non-secret variables (contract address, network, privacy pool address) are set in `wrangler.jsonc` under `vars`.
 
 ---
 

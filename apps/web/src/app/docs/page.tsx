@@ -3,8 +3,16 @@ import { CONTRACT_ADDRESS, NETWORK } from '@/lib/config'
 
 const GITHUB_LINKS = {
   protocol: 'https://github.com/fepvenancio/Stela',
+  privacy: 'https://github.com/fepvenancio/stela-privacy',
   app: 'https://github.com/fepvenancio/stela-app',
   sdk: 'https://github.com/fepvenancio/stela-sdk-ts',
+}
+
+const DOCS_LINKS = {
+  protocol: `${GITHUB_LINKS.protocol}/tree/main/docs`,
+  privacy: `${GITHUB_LINKS.privacy}/tree/main/docs`,
+  sdk: `${GITHUB_LINKS.sdk}/tree/main/docs`,
+  app: `${GITHUB_LINKS.app}/tree/main/docs`,
 }
 
 const VOYAGER_BASE = NETWORK === 'mainnet'
@@ -79,6 +87,39 @@ function StatusNode({ label, description, color = 'star', icon }: { label: strin
       </div>
       {description && <span className="text-[8px] text-ash uppercase tracking-widest font-bold opacity-60">{description}</span>}
     </div>
+  )
+}
+
+function DocsRepoCard({ title, description, href, icon, files }: { title: string; description: string; href: string; icon: React.ReactNode; files: string[] }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group bg-abyss/50 border border-edge/30 hover:border-star/40 rounded-3xl p-8 transition-all relative overflow-hidden granite-noise"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-star/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-5">
+          <div className="w-12 h-12 rounded-2xl bg-void border border-edge/50 flex items-center justify-center text-star group-hover:border-star/40 transition-all shadow-lg shadow-black/30">
+            {icon}
+          </div>
+          <svg className="w-4 h-4 text-ash group-hover:text-star transition-colors mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </div>
+        <h4 className="font-display text-chalk text-sm uppercase tracking-widest mb-2 group-hover:text-star transition-colors">{title}</h4>
+        <p className="text-dust text-xs leading-relaxed mb-5">{description}</p>
+        <div className="space-y-1.5">
+          {files.map(file => (
+            <div key={file} className="flex items-center gap-2 text-[10px] text-ash group-hover:text-dust transition-colors">
+              <div className="w-1 h-1 bg-star/40 rounded-full flex-shrink-0" />
+              <span className="font-mono tracking-wide">{file}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </a>
   )
 }
 
@@ -369,6 +410,206 @@ export default function DocsPage() {
           </div>
         </section>
 
+        {/* Privacy Pool */}
+        <section>
+          <SectionHeading>Privacy Pool</SectionHeading>
+          <p className="text-dust mb-12 leading-relaxed text-lg max-w-3xl">
+            Stela&apos;s Privacy Pool enables <span className="text-chalk font-semibold">anonymous lending</span> with
+            regulatory compliance. Lenders can participate without revealing their identity on-chain, while
+            proving their funds are clean through zero-knowledge innocence proofs.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-16">
+            <div>
+              <SubHeading>Shielded Deposits</SubHeading>
+              <p className="text-dust text-sm leading-relaxed">
+                Instead of receiving visible ERC1155 shares, private lenders commit a
+                <span className="text-star"> Poseidon hash</span> of their position to a Merkle tree. The commitment
+                encodes the lender&apos;s address, inscription ID, share amount, and a secret salt — but reveals
+                none of these on-chain.
+              </p>
+            </div>
+            <div>
+              <SubHeading>Commitment Tree</SubHeading>
+              <p className="text-dust text-sm leading-relaxed">
+                A binary Merkle tree of depth <span className="text-chalk font-mono">16</span> stores up to
+                <span className="text-chalk font-mono"> 65,536</span> leaf commitments. The tree uses
+                Poseidon hashes (StarkNet-native) and maintains a history of the last
+                <span className="text-chalk font-mono"> 100</span> roots for proof flexibility.
+              </p>
+            </div>
+            <div>
+              <SubHeading>ZK Innocence Proofs</SubHeading>
+              <p className="text-dust text-sm leading-relaxed">
+                Before redeeming, lenders must prove their commitment is
+                <span className="text-chalk font-semibold"> not</span> in a blacklist set. This
+                <span className="text-star"> innocence proof</span> ensures regulatory compliance without
+                revealing which specific commitment belongs to the prover. Blacklist roots are maintained
+                by the contract owner.
+              </p>
+            </div>
+            <div>
+              <SubHeading>Standby Period</SubHeading>
+              <p className="text-dust text-sm leading-relaxed">
+                A configurable delay between shielding and redemption. This
+                <span className="text-chalk font-semibold"> standby period</span> prevents front-running
+                attacks and gives compliance validators time to update blacklist roots
+                before funds can be withdrawn.
+              </p>
+            </div>
+          </div>
+
+          {/* Privacy Flow Diagram */}
+          <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-16 overflow-hidden relative shadow-2xl">
+            <h4 className="font-display text-xs text-ash uppercase tracking-[0.2em] text-center mb-12 font-bold">Privacy Flow</h4>
+            <div className="flex flex-col items-center gap-0">
+              {/* Step 1: Shield */}
+              <StatusNode
+                label="Shield"
+                description="Commit to tree"
+                color="star"
+                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
+              />
+              <FlowArrow label="Poseidon hash" vertical />
+
+              {/* Step 2: Prove Innocence */}
+              <StatusNode
+                label="Prove Innocence"
+                description="ZK verification"
+                color="aurora"
+                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
+              />
+              <FlowArrow label="Standby period" vertical />
+
+              {/* Step 3: Private Settlement */}
+              <StatusNode
+                label="Private Settle"
+                description="Shares committed"
+                color="star"
+                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>}
+              />
+              <FlowArrow label="Nullifier" vertical />
+
+              {/* Step 4: Private Redeem */}
+              <StatusNode
+                label="Private Redeem"
+                description="Claim assets"
+                color="chalk"
+                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" /></svg>}
+              />
+            </div>
+
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Tree Depth</span>
+                <span className="text-star font-mono text-sm">16</span>
+              </div>
+              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Max Leaves</span>
+                <span className="text-star font-mono text-sm">65,536</span>
+              </div>
+              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Root History</span>
+                <span className="text-star font-mono text-sm">100</span>
+              </div>
+              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Hash</span>
+                <span className="text-star font-mono text-sm">Poseidon</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Off-Chain Signing */}
+        <section>
+          <SectionHeading>Off-Chain Signing</SectionHeading>
+          <p className="text-dust mb-12 leading-relaxed text-lg max-w-3xl">
+            Stela supports <span className="text-chalk font-semibold">gasless order creation</span> through
+            SNIP-12 typed data signatures. Borrowers create orders without paying gas — a relayer bot
+            settles matched orders on-chain.
+          </p>
+
+          <div className="space-y-16 max-w-4xl">
+            <StepCard numeral="I" title="Sign Order (Off-Chain)">
+              <p>
+                The <span className="text-chalk font-medium">borrower</span> signs a
+                <span className="text-star"> SNIP-12 InscriptionOrder</span> typed data message with their wallet.
+                This contains all loan terms — collateral, debt, interest, duration, deadline, and a nonce for replay protection.
+                No transaction is sent, so <span className="text-chalk font-semibold">no gas is paid</span>.
+              </p>
+              <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
+                <span className="text-[10px] text-ash uppercase tracking-widest font-bold block mb-2">SNIP-12 Typed Data</span>
+                <p className="text-xs text-dust">
+                  StarkNet&apos;s typed data standard (like EIP-712 on Ethereum). The wallet shows the user exactly what
+                  they are signing — asset types, amounts, and terms — before they approve.
+                </p>
+              </div>
+            </StepCard>
+
+            <StepCard numeral="II" title="Submit Offer (Off-Chain)">
+              <p>
+                A <span className="text-chalk font-medium">lender</span> signs a
+                <span className="text-star"> SNIP-12 LendOffer</span> specifying the order ID and the
+                BPS (basis points) of debt they want to provide. The signed offer is stored off-chain
+                alongside the order.
+              </p>
+            </StepCard>
+
+            <StepCard numeral="III" title="Bot Settlement (On-Chain)">
+              <p>
+                When an order is fully matched (offers total 10,000 BPS), the
+                <span className="text-star font-medium"> relayer bot</span> calls
+                <span className="text-chalk font-mono"> settle()</span> on the Stela contract with both signatures.
+                The contract verifies each signature on-chain via SNIP-12 typed data hashing, then
+                executes the loan — locking collateral, transferring debt, and minting shares.
+              </p>
+              <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Relayer Fee</span>
+                    <span className="text-star font-mono">10 BPS (0.1%)</span>
+                  </div>
+                  <div>
+                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>
+                    <span className="text-chalk font-mono">NoncesComponent</span>
+                  </div>
+                </div>
+              </div>
+            </StepCard>
+
+            <StepCard numeral="IV" title="On-Chain Verification">
+              <p>
+                The <span className="text-chalk font-mono">settle()</span> entrypoint reconstructs the SNIP-12
+                type hashes for both <span className="text-star">InscriptionOrder</span> and
+                <span className="text-star"> LendOffer</span>, verifies signatures against the signer
+                accounts, consumes nonces, and executes the inscription creation and signing atomically.
+              </p>
+            </StepCard>
+          </div>
+
+          {/* Off-chain flow diagram */}
+          <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-16 overflow-hidden relative shadow-2xl mt-16">
+            <h4 className="font-display text-xs text-ash uppercase tracking-[0.2em] text-center mb-12 font-bold">Off-Chain Settlement Flow</h4>
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 w-full">
+              <StatusNode label="Borrower" description="Signs order" />
+              <FlowArrow label="SNIP-12" className="hidden lg:flex" />
+              <div className="lg:hidden h-6 w-px bg-star/20" />
+              <StatusNode label="D1 Store" description="Off-chain" color="ash" />
+              <FlowArrow label="Match" className="hidden lg:flex" />
+              <div className="lg:hidden h-6 w-px bg-star/20" />
+              <StatusNode label="Lender" description="Signs offer" />
+              <FlowArrow label="Bot" className="hidden lg:flex" />
+              <div className="lg:hidden h-6 w-px bg-star/20" />
+              <StatusNode
+                label="Settle"
+                description="On-chain"
+                color="aurora"
+                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Supported Assets */}
         <section>
           <SectionHeading>Asset Support</SectionHeading>
@@ -475,6 +716,62 @@ export default function DocsPage() {
           </div>
         </section>
 
+        {/* Documentation Hub */}
+        <section>
+          <SectionHeading>Documentation Hub</SectionHeading>
+          <p className="text-dust mb-12 leading-relaxed text-lg max-w-3xl">
+            Deep-dive into each component of the Stela ecosystem. Every repository maintains
+            its own technical documentation covering architecture, types, flows, and security.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <DocsRepoCard
+              title="Stela Contracts"
+              description="Cairo smart contracts powering the protocol — inscription state machine, collateral lockers, ERC1155 shares, and the settle() entrypoint."
+              href={DOCS_LINKS.protocol}
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              }
+              files={['ARCHITECTURE.md', 'SPEC.md', 'TYPES.md', 'EVENTS.md', 'FLOWS.md', 'SHARE-MATH.md', 'security.md', 'deployment.md']}
+            />
+            <DocsRepoCard
+              title="Privacy Pool"
+              description="Zero-knowledge privacy layer — commitment trees, nullifier stores, shielded pool, verifier registry, and innocence proof mechanics."
+              href={DOCS_LINKS.privacy}
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              }
+              files={['ARCHITECTURE.md', 'API.md', 'FLOWS.md', 'TYPES.md', 'CRYPTO.md']}
+            />
+            <DocsRepoCard
+              title="TypeScript SDK"
+              description="Client library for interacting with Stela programmatically — InscriptionClient, ShareClient, privacy utilities, and off-chain signing helpers."
+              href={DOCS_LINKS.sdk}
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                </svg>
+              }
+              files={['ARCHITECTURE.md', 'api-reference.md', 'TYPES.md', 'FLOWS.md', 'getting-started.md', 'security.md']}
+            />
+            <DocsRepoCard
+              title="Stela App"
+              description="Next.js frontend, Cloudflare Workers (indexer + bot), D1 database schema, API routes, and deployment guides."
+              href={DOCS_LINKS.app}
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              }
+              files={['architecture.md', 'frontend.md', 'api.md', 'workers.md', 'flows.md', 'd1-schema.md', 'deployment.md']}
+            />
+          </div>
+        </section>
+
         {/* SDK */}
         <section>
           <SectionHeading>SDK &amp; Developer Tools</SectionHeading>
@@ -501,9 +798,10 @@ export default function DocsPage() {
         {/* Links */}
         <section>
           <SectionHeading>Source Code &amp; Links</SectionHeading>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'Protocol (Contracts)', href: GITHUB_LINKS.protocol, desc: 'Cairo smart contracts' },
+              { label: 'Privacy Pool', href: GITHUB_LINKS.privacy, desc: 'ZK privacy layer (Cairo)' },
               { label: 'Application (Frontend)', href: GITHUB_LINKS.app, desc: 'Next.js app, indexer, bot' },
               { label: 'TypeScript SDK', href: GITHUB_LINKS.sdk, desc: 'npm: @fepvenancio/stela-sdk' },
             ].map(({ label, href, desc }) => (

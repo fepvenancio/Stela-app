@@ -10,13 +10,18 @@ This monorepo contains the full application stack for the Stela protocol: a Next
 |---|---|
 | [architecture.md](./architecture.md) | System architecture, monorepo structure, data flow, and Cloudflare stack |
 | [frontend.md](./frontend.md) | Frontend pages, components, hooks, state management, and wallet integration |
+| [api.md](./api.md) | Complete API route reference with request/response formats and security |
+| [workers.md](./workers.md) | Indexer worker, bot worker, and Apibara service documentation |
+| [flows.md](./flows.md) | Step-by-step user flows: create, lend, repay, liquidate, redeem, cancel, batch |
+| [d1-schema.md](./d1-schema.md) | D1 database schema reference: all tables, columns, and query methods |
 | [deployment.md](./deployment.md) | Deployment guide, prerequisites, environment setup, and secret management |
 
 ## Quick Reference
 
 - **Live domain:** `stela-dapp.xyz`
 - **Network:** StarkNet Sepolia (testnet)
-- **Contract:** `0x021e81956fccd8463342ff7e774bf6616b40e242fe0ea09a6f38735a604ea0e0`
+- **Contract:** `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0`
+- **Privacy Pool:** `0x002579e670f80cca558236c95762dd5b94ae017b6ed92df65b74b61b539cdec7`
 - **Package manager:** pnpm 10.28.0
 - **Build system:** Turborepo
 - **Runtime:** Cloudflare Workers (workerd)
