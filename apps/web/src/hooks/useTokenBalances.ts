@@ -36,7 +36,7 @@ export function useTokenBalances() {
     setIsLoading(true)
 
     async function fetchBalances() {
-      const provider = new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' })
+      const provider = new RpcProvider({ nodeUrl: RPC_URL })
       const result = new Map<string, bigint>()
 
       // Fetch all balances in parallel

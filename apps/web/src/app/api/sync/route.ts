@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { tx_hash, assets } = parsed.data
-  const provider = new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' })
+  const provider = new RpcProvider({ nodeUrl: RPC_URL })
 
   // Wait for transaction confirmation
   let receipt: Record<string, unknown>

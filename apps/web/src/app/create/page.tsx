@@ -122,7 +122,7 @@ export default function CreatePage() {
   const { address, account } = useAccount()
   const [isPending, setIsPending] = useState(false)
 
-  const provider = useMemo(() => new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' }), [])
+  const provider = useMemo(() => new RpcProvider({ nodeUrl: RPC_URL }), [])
 
   const [multiLender, setMultiLender] = useState(false)
   const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([emptyAsset()])

@@ -28,7 +28,7 @@ export function useBatchSign() {
     () =>
       new InscriptionClient({
         stelaAddress: CONTRACT_ADDRESS,
-        provider: new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' }),
+        provider: new RpcProvider({ nodeUrl: RPC_URL }),
       }),
     [],
   )

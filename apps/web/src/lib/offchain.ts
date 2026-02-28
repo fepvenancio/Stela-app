@@ -22,20 +22,30 @@ export {
 
 export type { StoredSignature, PrivateNote, PrivateRedeemRequest } from '@fepvenancio/stela-sdk'
 
-// getNonce uses the SDK's InscriptionClient which calls the correct 'nonces' entrypoint
-import { InscriptionClient } from '@fepvenancio/stela-sdk'
 import type { RpcProvider, TypedData } from 'starknet'
 
+/**
+ * Read the on-chain nonce for an address from the Stela contract.
+ *
+ * Uses provider.callContract with explicit 'latest' block identifier
+ * to avoid stale reads when the provider defaults to 'pending'.
+ * The provider must default to 'pending' for waitForTransaction to work,
+ * but nonce reads need 'latest' to match server-side verification.
+ */
 export async function getNonce(
   provider: RpcProvider,
   stelaAddress: string,
   accountAddress: string,
 ): Promise<bigint> {
-  const client = new InscriptionClient({
-    stelaAddress,
-    provider,
-  })
-  return client.getNonce(accountAddress)
+  const result = await provider.callContract(
+    {
+      contractAddress: stelaAddress,
+      entrypoint: 'nonces',
+      calldata: [accountAddress],
+    },
+    'latest',
+  )
+  return BigInt(result[0])
 }
 
 /**

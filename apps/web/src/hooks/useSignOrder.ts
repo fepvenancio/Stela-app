@@ -70,7 +70,7 @@ export function useSignOrder(orderId: string) {
         }
 
         // 3. Get lender nonce from contract
-        const provider = new RpcProvider({ nodeUrl: RPC_URL, blockIdentifier: 'latest' })
+        const provider = new RpcProvider({ nodeUrl: RPC_URL })
         const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
 
         // 4. Verify borrower's nonce is still valid (order may be stale)
