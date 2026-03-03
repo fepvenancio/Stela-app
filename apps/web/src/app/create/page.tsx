@@ -5,7 +5,7 @@ import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, toU256 } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType } from '@fepvenancio/stela-sdk'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
+import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
 import { AssetInput } from '@/components/AssetInput'
@@ -264,7 +264,7 @@ export default function CreatePage() {
         deadline: BigInt(deadline || '0'),
         multiLender: multiLender,
         nonce,
-        chainId: 'SN_SEPOLIA',
+        chainId: CHAIN_ID,
       })
 
       // Compute the SNIP-12 message hash (the true order identity)

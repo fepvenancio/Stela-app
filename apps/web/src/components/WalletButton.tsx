@@ -235,6 +235,16 @@ export function WalletButton() {
   const { address, status, connector } = useAccount()
   const [connectOpen, setConnectOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [showConnect, setShowConnect] = useState(false)
+
+  useEffect(() => {
+    if (status === 'reconnecting') {
+      setShowConnect(false)
+      const timer = setTimeout(() => setShowConnect(true), 3000)
+      return () => clearTimeout(timer)
+    }
+    setShowConnect(status !== 'connected')
+  }, [status])
 
   if (status === 'connected' && address) {
     const wallet = connector ? getWalletMeta(connector) : null
@@ -264,6 +274,12 @@ export function WalletButton() {
         </div>
         <AccountModal open={accountOpen} onOpenChange={setAccountOpen} />
       </>
+    )
+  }
+
+  if (status === 'reconnecting' && !showConnect) {
+    return (
+      <div className="h-10 w-36 rounded-full bg-surface/20 border border-edge/30 animate-pulse" aria-label="Reconnecting wallet" />
     )
   }
 

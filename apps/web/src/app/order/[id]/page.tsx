@@ -10,7 +10,7 @@ import { formatAddress, addressesEqual } from '@/lib/address'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { getCancelOrderTypedData } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
-import { PRIVACY_POOL_ADDRESS } from '@/lib/config'
+import { PRIVACY_POOL_ADDRESS, CHAIN_ID } from '@/lib/config'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -382,7 +382,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                             if (!account || !address) return
                             try {
                               // Sign a cancellation typed data to prove ownership
-                              const cancelTypedData = getCancelOrderTypedData(id)
+                              const cancelTypedData = getCancelOrderTypedData(id, CHAIN_ID)
                               const sig = await account.signMessage(cancelTypedData)
                               const toHex = (s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s)
                               const sigArray = Array.isArray(sig) ? sig.map(toHex) : [sig.r, sig.s].map(toHex)

@@ -57,7 +57,7 @@ export async function getNonce(
  * Both client and server must produce the same typed data to agree
  * on the message hash that gets verified via is_valid_signature.
  */
-export function getCancelOrderTypedData(orderId: string): TypedData {
+export function getCancelOrderTypedData(orderId: string, chainId: string): TypedData {
   return {
     types: {
       StarknetDomain: [
@@ -74,7 +74,7 @@ export function getCancelOrderTypedData(orderId: string): TypedData {
     domain: {
       name: 'Stela',
       version: 'v1',
-      chainId: 'SN_SEPOLIA',
+      chainId,
       revision: '1',
     },
     message: {

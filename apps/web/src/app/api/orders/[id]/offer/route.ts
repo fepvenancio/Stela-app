@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { typedData as starknetTypedData } from 'starknet'
 import type { AssetType } from '@fepvenancio/stela-sdk'
 import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
+import { CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
 import { createOfferSchema } from '@/lib/validation'
@@ -110,7 +111,7 @@ export async function POST(
           deadline: BigInt(String(orderDataParsed.deadline ?? '0')),
           multiLender: Boolean(orderDataParsed.multiLender ?? orderDataParsed.multi_lender),
           nonce: BigInt(String(orderDataParsed.nonce ?? orderRecord.nonce ?? '0')),
-          chainId: 'SN_SEPOLIA',
+          chainId: CHAIN_ID,
         })
 
         const borrowerAddr = (orderDataParsed.borrower as string) ?? (orderRecord.borrower as string)
@@ -125,7 +126,7 @@ export async function POST(
         lender,
         issuedDebtPercentage: BigInt(bps),
         nonce: BigInt(nonce),
-        chainId: 'SN_SEPOLIA',
+        chainId: CHAIN_ID,
         lenderCommitment: lender_commitment,
       })
 

@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { VOYAGER_TX_URL } from '@/lib/config'
 import type { StepState } from '@/hooks/useTransactionProgress'
 
 interface TransactionProgressModalProps {
@@ -84,7 +85,7 @@ export function TransactionProgressModal({ open, steps, txHash, onClose }: Trans
               <span className="text-xs text-chalk font-mono truncate block">{txHash.slice(0, 20)}...</span>
             </div>
             <a
-              href={`https://sepolia.voyager.online/tx/${txHash}`}
+              href={`${VOYAGER_TX_URL}/${txHash}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-[10px] text-star hover:text-star-bright transition-colors shrink-0 ml-2"

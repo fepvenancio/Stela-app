@@ -5,7 +5,7 @@ import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
 import type { AssetType, Asset } from '@fepvenancio/stela-sdk'
-import { CONTRACT_ADDRESS, RPC_URL, PRIVACY_POOL_ADDRESS } from '@/lib/config'
+import { CONTRACT_ADDRESS, RPC_URL, PRIVACY_POOL_ADDRESS, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce, computeDepositCommitment, generateSalt, createPrivateNote } from '@/lib/offchain'
 import { savePrivateNote } from '@/lib/private-notes'
 import { toast } from 'sonner'
@@ -121,7 +121,7 @@ export function useSignOrder(orderId: string) {
             deadline: BigInt(orderData.deadline as string),
             multiLender: (orderData.multiLender ?? orderData.multi_lender) as boolean,
             nonce: BigInt(orderNonceRaw),
-            chainId: 'SN_SEPOLIA',
+            chainId: CHAIN_ID,
           })
           orderHash = starknetTypedData.getMessageHash(orderTypedData, orderData.borrower as string)
         }
@@ -246,7 +246,7 @@ async function settlePrivate(params: {
     lender: '0x0',
     issuedDebtPercentage: BigInt(bps),
     nonce,
-    chainId: 'SN_SEPOLIA',
+    chainId: CHAIN_ID,
     lenderCommitment: depositCommitment,
   })
 
@@ -312,7 +312,7 @@ async function settlePublic(params: {
     lender: address,
     issuedDebtPercentage: BigInt(bps),
     nonce,
-    chainId: 'SN_SEPOLIA',
+    chainId: CHAIN_ID,
   })
 
   const signature = await account.signMessage(typedData)

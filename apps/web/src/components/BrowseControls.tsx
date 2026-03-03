@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { InfoTooltip } from '@/components/InfoTooltip'
 import { Search, ArrowUpDown, SlidersHorizontal, X } from 'lucide-react'
 import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
+import { NETWORK } from '@/lib/config'
 import { useMemo } from 'react'
 import type { FilterValues } from '@/lib/filter-utils'
 import { hasActiveFilters } from '@/lib/filter-utils'
@@ -33,7 +34,7 @@ export function BrowseControls({
   showFilters,
   onToggleFilters,
 }: BrowseControlsProps) {
-  const tokens = useMemo(() => getTokensForNetwork('sepolia'), [])
+  const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
   const filtersActive = hasActiveFilters(filters)
 
   const updateFilter = (key: keyof FilterValues, value: string) => {

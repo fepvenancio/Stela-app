@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { typedData as starknetTypedData } from 'starknet'
 import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
+import { CHAIN_ID } from '@/lib/config'
 import { getCancelOrderTypedData } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
 import { cancelOrderSchema } from '@/lib/validation'
@@ -92,7 +93,7 @@ export async function DELETE(
     // ── Signature Verification ──────────────────────────────────────────
     // Reconstruct the CancelOrder typed data and compute the SNIP-12 message hash.
     // This must match what the frontend signs via account.signMessage().
-    const cancelTypedData = getCancelOrderTypedData(id)
+    const cancelTypedData = getCancelOrderTypedData(id, CHAIN_ID)
     const cancelHash = starknetTypedData.getMessageHash(cancelTypedData, callerAddress)
 
     // Verify the borrower's cancellation signature on-chain
