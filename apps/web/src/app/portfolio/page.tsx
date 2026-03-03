@@ -105,9 +105,13 @@ export default function PortfolioPage() {
     () => q ? redeemable.filter((ins) => matchesSearch(q, ins)) : redeemable,
     [redeemable, q],
   )
+  const activeOrders = useMemo(
+    () => orders.filter((o) => o.status === 'pending' || o.status === 'matched'),
+    [orders],
+  )
   const filteredOrders = useMemo(
-    () => q ? orders.filter((o) => matchesOrderSearch(q, o)) : orders,
-    [orders, q],
+    () => q ? activeOrders.filter((o) => matchesOrderSearch(q, o)) : activeOrders,
+    [activeOrders, q],
   )
 
   return (
