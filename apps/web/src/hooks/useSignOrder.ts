@@ -10,6 +10,7 @@ import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNon
 import { savePrivateNote } from '@/lib/private-notes'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
+import { findDebtBalanceShortfall } from '@/lib/balance'
 import type { TransactionProgress } from '@/hooks/useTransactionProgress'
 
 function toSdkAssets(arr: Record<string, string>[] | undefined): Asset[] {
@@ -182,7 +183,15 @@ async function settlePrivate(params: {
     throw new Error('No ERC20 debt tokens to shield')
   }
 
-  // 1. Compute proportional amounts and build shield calls
+  // 1. Pre-flight balance check (fail early with clear message)
+  const shortfall = await findDebtBalanceShortfall(provider, address, sdkDebtAssets, bps)
+  if (shortfall) {
+    throw new Error(
+      `Insufficient ${shortfall.symbol} balance. You need ${shortfall.neededFormatted} but only have ${shortfall.balanceFormatted}.`
+    )
+  }
+
+  // 2. Compute proportional amounts and build shield calls
   const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })
   const salt = BigInt(generateSalt())
   const calls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
@@ -326,7 +335,15 @@ async function settlePublic(params: {
   const interestHash = (orderData.interestHash as string) || hashAssets(sdkInterestAssets)
   const collateralHash = (orderData.collateralHash as string) || hashAssets(sdkCollateralAssets)
 
-  // 10. Build ERC20 approve calls for debt tokens (lender provides debt)
+  // 10. Pre-flight balance check (fail early with clear message)
+  const shortfall = await findDebtBalanceShortfall(provider, address, sdkDebtAssets, bps)
+  if (shortfall) {
+    throw new Error(
+      `Insufficient ${shortfall.symbol} balance. You need ${shortfall.neededFormatted} but only have ${shortfall.balanceFormatted}.`
+    )
+  }
+
+  // 11. Build ERC20 approve calls for debt tokens (lender provides debt)
   const approveCalls = sdkDebtAssets
     .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
     .map(asset => {
