@@ -88,7 +88,7 @@ function matchesOrderSearch(q: string, order: OrderRow): boolean {
 export default function PortfolioPage() {
   const { address } = useAccount()
   const normalized = address ? normalizeAddress(address) : undefined
-  const { lending, borrowing, redeemable, orders, summary, isLoading, error } = usePortfolio(normalized)
+  const { lending, borrowing, redeemable, orders, borrowingOrders, lendingOrders, summary, isLoading, error } = usePortfolio(normalized)
   const [search, setSearch] = useState('')
 
   const q = search.trim().toLowerCase()
@@ -164,16 +164,16 @@ export default function PortfolioPage() {
               />
             </div>
 
-            <Tabs defaultValue={orders.length > 0 && lending.length === 0 ? 'orders' : 'lending'}>
+            <Tabs defaultValue={lending.length === 0 && lendingOrders.length === 0 && (borrowing.length > 0 || borrowingOrders.length > 0) ? 'borrowing' : orders.length > 0 && lending.length === 0 && lendingOrders.length === 0 ? 'orders' : 'lending'}>
               <TabsList variant="line" className="mb-6">
                 <TabsTrigger value="orders" className="text-chalk data-[state=active]:text-star after:bg-star">
                   Orders{filteredOrders.length > 0 && ` (${filteredOrders.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="lending" className="text-chalk data-[state=active]:text-star after:bg-star">
-                  Lending{filteredLending.length > 0 && ` (${filteredLending.length})`}
+                  Lending{(filteredLending.length + lendingOrders.length) > 0 && ` (${filteredLending.length + lendingOrders.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="borrowing" className="text-chalk data-[state=active]:text-nebula after:bg-nebula">
-                  Borrowing{filteredBorrowing.length > 0 && ` (${filteredBorrowing.length})`}
+                  Borrowing{(filteredBorrowing.length + borrowingOrders.length) > 0 && ` (${filteredBorrowing.length + borrowingOrders.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="redeemable" className="text-chalk data-[state=active]:text-cosmic after:bg-cosmic">
                   Redeemable{filteredRedeemable.length > 0 && ` (${filteredRedeemable.length})`}
@@ -198,18 +198,46 @@ export default function PortfolioPage() {
               </TabsContent>
 
               <TabsContent value="lending">
-                {filteredLending.length === 0 ? (
+                {filteredLending.length === 0 && lendingOrders.length === 0 ? (
                   <EmptyTab message={q ? 'No lending positions match your search.' : 'No lending positions yet. Browse open inscriptions to start lending.'} />
                 ) : (
-                  <InscriptionList items={filteredLending} />
+                  <>
+                    {lendingOrders.length > 0 && (
+                      <>
+                        <ListingTableHeader />
+                        <div className="flex flex-col gap-3 mb-4">
+                          {lendingOrders.map((order, i) => (
+                            <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
+                              <OrderListRow order={order} />
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    <InscriptionList items={filteredLending} />
+                  </>
                 )}
               </TabsContent>
 
               <TabsContent value="borrowing">
-                {filteredBorrowing.length === 0 ? (
+                {filteredBorrowing.length === 0 && borrowingOrders.length === 0 ? (
                   <EmptyTab message={q ? 'No borrowing positions match your search.' : 'No borrowing positions yet. Create an inscription to start borrowing.'} />
                 ) : (
-                  <InscriptionList items={filteredBorrowing} />
+                  <>
+                    {borrowingOrders.length > 0 && (
+                      <>
+                        <ListingTableHeader />
+                        <div className="flex flex-col gap-3 mb-4">
+                          {borrowingOrders.map((order, i) => (
+                            <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
+                              <OrderListRow order={order} />
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    <InscriptionList items={filteredBorrowing} />
+                  </>
                 )}
               </TabsContent>
 

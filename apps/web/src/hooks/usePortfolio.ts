@@ -58,6 +58,10 @@ export interface PortfolioData {
   borrowing: EnrichedInscription[]
   redeemable: (EnrichedInscription & { shareBalance: string })[]
   orders: OrderRow[]
+  /** Active (pending/matched) orders where user is borrower — shown in Borrowing tab */
+  borrowingOrders: OrderRow[]
+  /** Active (pending/matched) orders where user is lender (has offer) — shown in Lending tab */
+  lendingOrders: OrderRow[]
   summary: PortfolioSummary
   isLoading: boolean
   error: Error | null
@@ -192,16 +196,31 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       }
     })
 
+    // Split active orders into borrowing/lending for display in those tabs
+    const activeOrderStatuses = new Set(['pending', 'matched'])
+    const borrowingOrders: OrderRow[] = []
+    const lendingOrders: OrderRow[] = []
+    for (const order of allOrders) {
+      if (!activeOrderStatuses.has(order.status)) continue
+      if (address && addressesEqual(order.borrower, address)) {
+        borrowingOrders.push(order)
+      } else {
+        // User appears on this order via an offer (they're the lender)
+        lendingOrders.push(order)
+      }
+    }
+
     const redeemableCount = redeemable.length
     const activeCount = enriched.filter((ins) => ACTIVE_STATUSES.has(ins.computedStatus)).length
-    const activeOrderStatuses = new Set(['pending', 'matched'])
-    const orderCount = allOrders.filter((o) => activeOrderStatuses.has(o.status)).length
+    const orderCount = borrowingOrders.length + lendingOrders.length
 
     return {
       lending,
       borrowing,
       redeemable,
       orders: allOrders,
+      borrowingOrders,
+      lendingOrders,
       summary: { totalLent, collateralLocked, redeemableCount, activeCount, orderCount },
       isLoading,
       error,
