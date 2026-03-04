@@ -471,24 +471,22 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-5 bg-surface/20 border border-edge/20 rounded-2xl">
-             <div className="flex items-start gap-3">
-              <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
-              <Label htmlFor="multi-lender" className="cursor-pointer">
-                <span className="text-xs text-chalk block">Allow multiple lenders</span>
-                <span className="text-[10px] text-ash block uppercase tracking-tight">Lenders can fund partially</span>
-              </Label>
-            </div>
+          <div className="flex items-center gap-3 p-5 bg-surface/20 border border-edge/20 rounded-2xl">
+            <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
+            <Label htmlFor="multi-lender" className="cursor-pointer">
+              <span className="text-xs text-chalk block">Allow multiple lenders</span>
+              <span className="text-[10px] text-ash block uppercase tracking-tight">Lenders can fund partially</span>
+            </Label>
+          </div>
 
-            <div className="flex items-center gap-6">
-              <div className="text-right">
-                <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Offer Expires</span>
-                <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(deadline))}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Repay By</span>
-                <span className="text-xs text-chalk font-mono font-bold">{formatTimestamp(BigInt(Number(deadline) + Number(duration)))}</span>
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+              <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Offer Expires</span>
+              <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(deadline))}</span>
+            </div>
+            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+              <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Repay By</span>
+              <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(Number(deadline) + Number(duration)))}</span>
             </div>
           </div>
         </div>
