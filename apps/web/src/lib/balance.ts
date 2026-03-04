@@ -18,7 +18,7 @@ export async function getErc20Balance(
   owner: string,
 ): Promise<bigint> {
   const result = await provider.callContract(
-    { contractAddress: tokenAddress, entrypoint: 'balanceOf', calldata: [owner] },
+    { contractAddress: tokenAddress, entrypoint: 'balance_of', calldata: [owner] },
     'latest',
   )
   // balanceOf returns u256 (low, high)

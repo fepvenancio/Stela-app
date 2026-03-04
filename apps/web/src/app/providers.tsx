@@ -10,7 +10,7 @@ const chains = NETWORK === 'mainnet' ? [mainnet] : [sepolia]
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.cartridge.gg/x/starknet/sepolia'
 
 const provider = jsonRpcProvider({
-  rpc: () => ({ nodeUrl: rpcUrl }),
+  rpc: () => ({ nodeUrl: rpcUrl, default_block: 'latest' as const }),
 })
 
 export function Providers({ children }: { children: React.ReactNode }) {

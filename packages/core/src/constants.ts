@@ -1,7 +1,7 @@
 export const MAX_BPS = 10_000n
 
 export const STELA_ADDRESS = {
-  sepolia: '0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0',
+  sepolia: '0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973',
   mainnet: '0x0',
 } as const
 

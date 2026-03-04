@@ -197,7 +197,7 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     })
 
     // Split active orders into borrowing/lending for display in those tabs
-    const activeOrderStatuses = new Set(['pending', 'matched'])
+    const activeOrderStatuses = new Set(['pending', 'matched', 'settled'])
     const borrowingOrders: OrderRow[] = []
     const lendingOrders: OrderRow[] = []
     for (const order of allOrders) {

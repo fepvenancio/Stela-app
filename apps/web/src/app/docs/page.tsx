@@ -564,10 +564,14 @@ export default function DocsPage() {
                 executes the loan — locking collateral, transferring debt, and minting shares.
               </p>
               <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
-                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Relayer Fee</span>
-                    <span className="text-star font-mono">10 BPS (0.1%)</span>
+                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
+                    <span className="text-star font-mono">25 BPS (0.25%)</span>
+                  </div>
+                  <div>
+                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
+                    <span className="text-chalk font-mono">5 relayer / 15 vault / 5 treasury</span>
                   </div>
                   <div>
                     <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>

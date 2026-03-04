@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useMemo } from 'react'
+import { use, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, STATUS_LABELS } from '@fepvenancio/stela-sdk'
@@ -215,9 +215,12 @@ function InscriptionView({ id }: { id: string }) {
   const { data: assets, isLoading: assetsLoading } = useInscriptionAssets(id)
   const { data: sharesRaw } = useShares(id)
 
+  const statusRef = useRef<InscriptionStatus>('open')
   const status = useMemo<InscriptionStatus>(() => {
-    if (!inscription) return 'open'
-    return computeStatus(inscription as Parameters<typeof computeStatus>[0])
+    if (!inscription) return statusRef.current
+    const s = computeStatus(inscription as Parameters<typeof computeStatus>[0])
+    statusRef.current = s
+    return s
   }, [inscription])
 
   const a = inscription as Record<string, unknown> | undefined

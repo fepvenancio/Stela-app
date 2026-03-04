@@ -29,6 +29,7 @@ export interface DebtAssetInfo {
 /**
  * useSignInscription - validates BPS range, builds ERC20 approvals for debt
  * tokens, and sends [approve..., sign_inscription] as an atomic multicall.
+ * Supports optional TransactionProgress for step-by-step modal feedback.
  */
 export function useSignInscription(inscriptionId: string) {
   const { address, status } = useAccount()
@@ -37,32 +38,50 @@ export function useSignInscription(inscriptionId: string) {
   const { sync } = useSync()
 
   const sign = useCallback(
-    async (bps: number, debtAssets?: DebtAssetInfo[]) => {
+    async (bps: number, debtAssets?: DebtAssetInfo[], progress?: import('@/hooks/useTransactionProgress').TransactionProgress) => {
       ensureStarknetContext({ address, status })
 
       if (bps < 1 || bps > 10000) {
         throw new Error('Percentage must be between 1 and 10000 BPS')
       }
 
-      // Build ERC20 approval calls for each debt asset
-      const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-      if (!debtAssets || debtAssets.length === 0) {
-        throw new Error('No debt asset data available — the inscription may still be indexing. Please wait a moment and refresh.')
-      }
-      for (const asset of debtAssets) {
-        const totalValue = BigInt(asset.value || '0')
-        if (totalValue <= 0n) continue
-        // Calculate proportional amount with ceiling: ceil(value * bps / 10000)
-        const amount = (totalValue * BigInt(bps) + 9999n) / 10000n
-        approvals.push({
-          contractAddress: asset.address,
-          entrypoint: 'approve',
-          calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
-        })
-      }
+      progress?.start()
 
-      const signCall = client.buildSignInscription(BigInt(inscriptionId), BigInt(bps))
-      await sendTxWithToast(sendAsync, [...approvals, signCall], 'Inscription signed', (txHash) => sync(txHash))
+      try {
+        // Build ERC20 approval calls for each debt asset
+        const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+        if (!debtAssets || debtAssets.length === 0) {
+          throw new Error('No debt asset data available — the inscription may still be indexing. Please wait a moment and refresh.')
+        }
+        for (const asset of debtAssets) {
+          const totalValue = BigInt(asset.value || '0')
+          if (totalValue <= 0n) continue
+          // Calculate proportional amount with ceiling: ceil(value * bps / 10000)
+          const amount = (totalValue * BigInt(bps) + 9999n) / 10000n
+          approvals.push({
+            contractAddress: asset.address,
+            entrypoint: 'approve',
+            calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+          })
+        }
+
+        const signCall = client.buildSignInscription(BigInt(inscriptionId), BigInt(bps))
+        const result = await sendAsync([...approvals, signCall])
+
+        progress?.setTxHash(result.transaction_hash)
+        progress?.advance() // approve+sign done
+
+        // Wait for confirmation
+        const provider = new RpcProvider({ nodeUrl: RPC_URL })
+        await provider.waitForTransaction(result.transaction_hash)
+        progress?.advance() // confirmed
+
+        sync(result.transaction_hash).catch(() => {})
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        progress?.fail(msg)
+        throw err
+      }
     },
     [address, status, inscriptionId, sendAsync, client, sync],
   )

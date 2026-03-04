@@ -10,7 +10,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./abi/stela.json": "./src/abi/stela.json"
+    "./abi/stela.json": "./src/abi/stela.json",
+    "./abi/genesis.json": "./src/abi/genesis.json",
+    "./abi/fee-vault.json": "./src/abi/fee-vault.json"
   },
   "scripts": {
     "build": "tsc",

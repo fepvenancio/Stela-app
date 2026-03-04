@@ -106,7 +106,7 @@ export default function PortfolioPage() {
     [redeemable, q],
   )
   const activeOrders = useMemo(
-    () => orders.filter((o) => o.status === 'pending' || o.status === 'matched'),
+    () => orders.filter((o) => o.status === 'pending' || o.status === 'matched' || o.status === 'settled'),
     [orders],
   )
   const filteredOrders = useMemo(

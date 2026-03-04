@@ -250,6 +250,7 @@ export default function CreatePage() {
 
       // Get nonce from contract
       const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
+      console.log(`[stela] getNonce: address=${address}, contract=${CONTRACT_ADDRESS}, nonce=${nonce}`)
 
       // Build SNIP-12 typed data
       const typedData = getInscriptionOrderTypedData({

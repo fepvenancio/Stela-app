@@ -212,8 +212,9 @@ export default function LandingPage() {
             Inscribe Your <span className="text-star">Legacy</span>
           </h1>
           <p className="text-dust text-lg md:text-xl leading-relaxed mb-12 max-w-2xl mx-auto">
-            Stela is a decentralized, peer-to-peer lending protocol on StarkNet.
-            Direct, durable, and carved into the blockchain through digital inscriptions.
+            A decentralized, peer-to-peer lending protocol on StarkNet.
+            Direct, private, and carved into the blockchain through digital inscriptions.
+            Genesis NFT holders earn a perpetual share of all protocol fees.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-10 h-14 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(232,168,37,0.4)] text-lg">
@@ -278,7 +279,7 @@ export default function LandingPage() {
             </div>
             <h3 className="font-display text-xl text-chalk mb-3 uppercase tracking-wider">Pure P2P</h3>
             <p className="text-dust text-sm leading-relaxed">
-              Borrowers define terms. Lenders choose what to fund. Direct interaction, no hidden fees. Your assets, your terms, your inscription.
+              Borrowers define terms. Lenders choose what to fund. Direct interaction with transparent, on-chain fees (0.35% round-trip). Your assets, your terms, your inscription.
             </p>
           </div>
         </div>
@@ -431,8 +432,8 @@ export default function LandingPage() {
               <div className="flex gap-4 items-start">
                 <div className="w-9 h-9 rounded-xl bg-nebula/10 flex items-center justify-center text-nebula flex-shrink-0 mt-0.5">{icons.coins}</div>
                 <div>
-                  <h4 className="text-chalk text-sm font-semibold mb-1">0.1% Relayer Fee</h4>
-                  <p className="text-dust text-sm leading-relaxed">The bot charges 10 basis points (0.1%) to compensate for gas costs. This is the only fee in the entire protocol.</p>
+                  <h4 className="text-chalk text-sm font-semibold mb-1">Permissionless Relayers</h4>
+                  <p className="text-dust text-sm leading-relaxed">Anyone can call <span className="font-mono text-xs text-star">settle()</span> and earn 5 BPS (0.05%) per settlement. No permissions needed -- just a StarkNet wallet and some gas.</p>
                 </div>
               </div>
             </div>
@@ -731,7 +732,195 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 7. Key Features Grid ─────────────────────────────── */}
+      {/* ── 7. Genesis NFT ──────────────────────────────────── */}
+      <section className="px-4 max-w-6xl mx-auto w-full">
+        <div className="text-center mb-16">
+          <SectionLabel>Genesis Collection</SectionLabel>
+          <SectionTitle>
+            Own a piece of the <span className="text-star italic">protocol</span>
+          </SectionTitle>
+          <p className="text-dust mt-6 max-w-3xl mx-auto leading-relaxed">
+            300 Genesis NFTs. Each one entitles its holder to a perpetual share of all protocol fees.
+            Real yield, paid in the same tokens flowing through Stela -- not inflationary emissions.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          {/* Genesis details */}
+          <div className="bg-star/[0.03] border border-star/20 rounded-[32px] p-8 sm:p-10 relative overflow-hidden granite-noise">
+            <div className="absolute top-4 right-4 w-24 h-24 bg-star/5 rounded-full blur-[50px] pointer-events-none" />
+            <div className="flex items-center gap-3 mb-8 relative z-10">
+              <div className="w-12 h-12 rounded-xl bg-star/10 border border-star/30 flex items-center justify-center text-star">{icons.shield}</div>
+              <div>
+                <h3 className="font-display text-xl text-star uppercase tracking-wider">Genesis NFT</h3>
+                <p className="text-[10px] text-ash uppercase tracking-widest">ERC721 on StarkNet</p>
+              </div>
+            </div>
+
+            <div className="space-y-5 relative z-10">
+              <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                <span className="text-dust text-sm">Total Supply</span>
+                <span className="text-chalk font-display text-lg tracking-wider">300</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                <span className="text-dust text-sm">Mint Price</span>
+                <span className="text-star font-display text-lg tracking-wider">5,000 STRK</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                <span className="text-dust text-sm">Fee Share</span>
+                <span className="text-chalk font-display text-lg tracking-wider">~63% of all fees</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                <span className="text-dust text-sm">Claim</span>
+                <span className="text-chalk font-display text-sm tracking-wider">Anytime, any token</span>
+              </div>
+              <div className="flex justify-between items-center py-3">
+                <span className="text-dust text-sm">Transferable</span>
+                <span className="text-aurora font-display text-sm tracking-wider">Yes -- unclaimed fees travel with NFT</span>
+              </div>
+            </div>
+          </div>
+
+          {/* How it works */}
+          <div className="space-y-6">
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-star/10 flex items-center justify-center text-star">{icons.coins}</div>
+                <h4 className="font-display text-base text-chalk uppercase tracking-wider">Real Yield</h4>
+              </div>
+              <p className="text-dust text-sm leading-relaxed relative z-10">
+                Genesis holders earn actual ERC20 tokens from every settlement and redemption on the protocol.
+                No token inflation. No dilution. Revenue flows directly from borrowers and lenders to the FeeVault,
+                claimable by NFT holders at any time.
+              </p>
+            </div>
+
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-nebula/10 flex items-center justify-center text-nebula">{icons.vault}</div>
+                <h4 className="font-display text-base text-chalk uppercase tracking-wider">FeeVault</h4>
+              </div>
+              <p className="text-dust text-sm leading-relaxed relative z-10">
+                A cumulative reward-per-token contract inspired by GMX and Synthetix. Each of the 300 NFTs has
+                equal weight. Multiple ERC20 fee tokens are tracked independently. Claim individually or batch-claim
+                across multiple NFTs in a single transaction.
+              </p>
+            </div>
+
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-aurora/10 flex items-center justify-center text-aurora">{icons.scale}</div>
+                <h4 className="font-display text-base text-chalk uppercase tracking-wider">No Staking Required</h4>
+              </div>
+              <p className="text-dust text-sm leading-relaxed relative z-10">
+                Unlike GMX or BendDAO, Genesis holders do not need to lock or stake their NFTs.
+                Ownership is checked at claim time. Sell the NFT and all unclaimed rewards transfer
+                to the new owner -- making each Genesis NFT inherently valuable.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 8. Fee Structure ──────────────────────────────────── */}
+      <section className="px-4 max-w-6xl mx-auto w-full">
+        <div className="text-center mb-16">
+          <SectionLabel>Fees</SectionLabel>
+          <SectionTitle>
+            Transparent and <span className="text-star italic">minimal</span>
+          </SectionTitle>
+          <p className="text-dust mt-6 max-w-3xl mx-auto leading-relaxed">
+            0.35% total round-trip cost. Cheaper than Aave (50-100 BPS) and Compound.
+            Every basis point is accounted for and routed on-chain.
+          </p>
+        </div>
+
+        <div className="bg-void/40 border border-edge/20 rounded-[40px] p-8 sm:p-12 relative overflow-hidden granite-noise">
+          {/* Fee table */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* Settlement */}
+            <div className="bg-star/[0.03] border border-star/20 rounded-3xl p-6 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-star/10 border border-star/20 flex items-center justify-center text-star mx-auto mb-4">{icons.send}</div>
+              <h4 className="font-display text-lg text-star uppercase tracking-widest mb-2">Settlement</h4>
+              <div className="text-3xl font-display text-chalk mb-4">25 <span className="text-base text-dust">BPS</span></div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Relayer</span>
+                  <span className="text-chalk">5 BPS</span>
+                </div>
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Genesis Holders</span>
+                  <span className="text-star">15 BPS</span>
+                </div>
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Treasury</span>
+                  <span className="text-chalk">5 BPS</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Redemption */}
+            <div className="bg-aurora/[0.03] border border-aurora/20 rounded-3xl p-6 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-aurora/10 border border-aurora/20 flex items-center justify-center text-aurora mx-auto mb-4">{icons.checkCircle}</div>
+              <h4 className="font-display text-lg text-aurora uppercase tracking-widest mb-2">Redemption</h4>
+              <div className="text-3xl font-display text-chalk mb-4">10 <span className="text-base text-dust">BPS</span></div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Relayer</span>
+                  <span className="text-chalk">0 BPS</span>
+                </div>
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Genesis Holders</span>
+                  <span className="text-star">7 BPS</span>
+                </div>
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Treasury</span>
+                  <span className="text-chalk">3 BPS</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Liquidation */}
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-nova/10 border border-nova/20 flex items-center justify-center text-nova mx-auto mb-4">{icons.clock}</div>
+              <h4 className="font-display text-lg text-nova uppercase tracking-widest mb-2">Liquidation</h4>
+              <div className="text-3xl font-display text-chalk mb-4">0 <span className="text-base text-dust">BPS</span></div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Relayer</span>
+                  <span className="text-chalk">0 BPS</span>
+                </div>
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Genesis Holders</span>
+                  <span className="text-chalk">0 BPS</span>
+                </div>
+                <div className="flex justify-between px-2">
+                  <span className="text-dust">Treasury</span>
+                  <span className="text-chalk">0 BPS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Summary callouts */}
+          <div className="grid sm:grid-cols-3 gap-4 pt-8 border-t border-edge/15">
+            <div className="text-center p-4">
+              <div className="text-2xl font-display text-star mb-1">0.35%</div>
+              <p className="text-[11px] text-dust uppercase tracking-widest">Total Round-Trip</p>
+            </div>
+            <div className="text-center p-4">
+              <div className="text-2xl font-display text-star mb-1">~63%</div>
+              <p className="text-[11px] text-dust uppercase tracking-widest">Fees to Genesis Holders</p>
+            </div>
+            <div className="text-center p-4">
+              <div className="text-2xl font-display text-chalk mb-1">Permissionless</div>
+              <p className="text-[11px] text-dust uppercase tracking-widest">Anyone Can Relay</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 9. Key Features Grid ────────────────────────────── */}
       <section className="px-4 max-w-6xl mx-auto w-full">
         <div className="text-center mb-16">
           <SectionLabel>Features</SectionLabel>
@@ -777,10 +966,22 @@ export default function LandingPage() {
             description="Simple, predictable, and manipulation-resistant. The borrower has until the duration expires to repay. No surprises."
             accent="nova"
           />
+          <FeatureCard
+            icon={icons.shield}
+            title="Genesis NFTs"
+            description="300 NFTs, each earning a perpetual share of protocol fees. Real yield from actual lending activity, claimable at any time."
+            accent="star"
+          />
+          <FeatureCard
+            icon={icons.send}
+            title="Permissionless Relayers"
+            description="Anyone can settle matched orders on-chain and earn 5 BPS per trade. No whitelist, no permission -- just a wallet and gas."
+            accent="ember"
+          />
         </div>
       </section>
 
-      {/* ── 8. Architecture Overview ─────────────────────────── */}
+      {/* ── 10. Architecture Overview ────────────────────────── */}
       <section className="px-4 max-w-6xl mx-auto w-full">
         <div className="text-center mb-16">
           <SectionLabel>Architecture</SectionLabel>
@@ -802,7 +1003,7 @@ export default function LandingPage() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
                 </div>
                 <h4 className="font-display text-sm text-star uppercase tracking-widest mb-2">Smart Contracts</h4>
-                <p className="text-[11px] text-dust leading-relaxed">Cairo on StarkNet. Inscription state machine, locker deployment, share minting, privacy pool.</p>
+                <p className="text-[11px] text-dust leading-relaxed">Cairo on StarkNet. Inscription state machine, locker deployment, share minting, privacy pool, Genesis NFT, and FeeVault.</p>
                 <div className="mt-3 font-mono text-[10px] text-ash">Cairo</div>
               </div>
 
@@ -850,7 +1051,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 9. Final CTA ─────────────────────────────────────── */}
+      {/* ── 11. Final CTA ────────────────────────────────────── */}
       <section className="text-center py-20 relative px-4">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-star/10 rounded-full blur-[100px] -z-10" />
         <Divider />
@@ -859,7 +1060,8 @@ export default function LandingPage() {
         </h2>
         <p className="text-dust mb-10 max-w-lg mx-auto leading-relaxed">
           Join the protocol built for permanence. Create lending inscriptions,
-          provide liquidity, or explore existing positions on StarkNet.
+          provide liquidity, mint a Genesis NFT for perpetual fee share,
+          or explore existing positions on StarkNet.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
           <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-14 h-16 rounded-full text-xl shadow-[0_0_40px_rgba(232,168,37,0.5)] transition-all hover:scale-105 active:scale-95">

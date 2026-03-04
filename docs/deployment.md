@@ -94,7 +94,7 @@ Set in `apps/web/wrangler.jsonc` under `vars`:
 | Variable | Description | Example |
 |---|---|---|
 | `NEXT_PUBLIC_NETWORK` | StarkNet network | `sepolia` |
-| `NEXT_PUBLIC_STELA_ADDRESS` | Stela contract address | `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0` |
+| `NEXT_PUBLIC_STELA_ADDRESS` | Stela contract address | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` |
 | `NEXT_PUBLIC_RPC_URL` | StarkNet RPC endpoint | `https://api.cartridge.gg/x/starknet/sepolia` |
 | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Privacy pool contract address (empty to disable) | `0x002579e670f80cca558236c95762dd5b94ae017b6ed92df65b74b61b539cdec7` |
 
@@ -145,7 +145,7 @@ Under the hood, this runs `opennextjs-cloudflare build && opennextjs-cloudflare 
     }
   ],
   "vars": {
-    "STELA_ADDRESS": "0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0"
+    "STELA_ADDRESS": "0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973"
   },
   "triggers": {
     "crons": ["*/5 * * * *"]
@@ -201,7 +201,7 @@ The `*/5 * * * *` cron trigger runs `expireOpenInscriptions(nowSeconds)` to mark
     }
   ],
   "vars": {
-    "STELA_ADDRESS": "0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0"
+    "STELA_ADDRESS": "0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973"
   },
   "triggers": {
     "crons": ["*/2 * * * *"]
@@ -263,7 +263,7 @@ cp .env.example .env
 | `WEBHOOK_URL` | Base URL of the indexer CF Worker | `https://stela-indexer.stela-app.workers.dev` |
 | `WEBHOOK_SECRET` | Shared secret for webhook auth | Must match the worker's `WEBHOOK_SECRET` |
 | `RPC_URL` | StarkNet RPC for enrichment calls | `https://api.cartridge.gg/x/starknet/sepolia` |
-| `STELA_ADDRESS` | Stela contract address | `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0` |
+| `STELA_ADDRESS` | Stela contract address | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` |
 
 ### Run Locally
 

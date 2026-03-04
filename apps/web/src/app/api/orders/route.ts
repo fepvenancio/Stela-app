@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     const nonceCheck = await verifyNonce(borrower, BigInt(order_data.nonce))
     if (!nonceCheck.valid) {
       return errorResponse(
-        `Nonce mismatch: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain}. Please refresh and try again.`,
+        `Nonce mismatch: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}. Please hard-refresh the page and try again.`,
         400,
         request,
       )

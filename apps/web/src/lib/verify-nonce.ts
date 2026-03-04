@@ -69,7 +69,7 @@ export async function verifyNonce(
 
     if (!response.ok) {
       console.error(`RPC HTTP error during nonce verification: ${response.status}`)
-      return { valid: true } // Fail open
+      return { valid: false, submitted: expectedNonce }
     }
 
     const result = await response.json() as {
@@ -79,12 +79,12 @@ export async function verifyNonce(
 
     if (result.error) {
       console.error('RPC error during nonce verification:', JSON.stringify(result.error))
-      return { valid: true } // Fail open
+      return { valid: false, submitted: expectedNonce }
     }
 
     if (!result.result || result.result.length === 0) {
       console.error('RPC returned empty result for nonces()')
-      return { valid: true } // Fail open
+      return { valid: false, submitted: expectedNonce }
     }
 
     const onChainNonce = BigInt(result.result[0])
@@ -101,6 +101,6 @@ export async function verifyNonce(
       'Nonce verification RPC call failed:',
       err instanceof Error ? err.message : String(err),
     )
-    return { valid: true } // Fail open
+    return { valid: false, submitted: expectedNonce }
   }
 }
