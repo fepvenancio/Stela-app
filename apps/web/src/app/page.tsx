@@ -740,7 +740,7 @@ export default function LandingPage() {
             Own a piece of the <span className="text-star italic">protocol</span>
           </SectionTitle>
           <p className="text-dust mt-6 max-w-3xl mx-auto leading-relaxed">
-            300 Genesis NFTs. Each one entitles its holder to a perpetual share of all protocol fees.
+            500 Genesis NFTs. Each one entitles its holder to a perpetual share of all protocol fees.
             Real yield, paid in the same tokens flowing through Stela -- not inflationary emissions.
           </p>
         </div>
@@ -760,7 +760,7 @@ export default function LandingPage() {
             <div className="space-y-5 relative z-10">
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Total Supply</span>
-                <span className="text-chalk font-display text-lg tracking-wider">300</span>
+                <span className="text-chalk font-display text-lg tracking-wider">500</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Mint Price</span>
@@ -801,7 +801,7 @@ export default function LandingPage() {
                 <h4 className="font-display text-base text-chalk uppercase tracking-wider">FeeVault</h4>
               </div>
               <p className="text-dust text-sm leading-relaxed relative z-10">
-                A cumulative reward-per-token contract inspired by GMX and Synthetix. Each of the 300 NFTs has
+                A cumulative reward-per-token contract inspired by GMX and Synthetix. Each of the 500 NFTs has
                 equal weight. Multiple ERC20 fee tokens are tracked independently. Claim individually or batch-claim
                 across multiple NFTs in a single transaction.
               </p>
@@ -957,7 +957,7 @@ export default function LandingPage() {
           <FeatureCard
             icon={icons.shield}
             title="Genesis NFTs"
-            description="300 NFTs, each earning a perpetual share of protocol fees. Real yield from actual lending activity, claimable at any time."
+            description="500 NFTs, each earning a perpetual share of protocol fees. Real yield from actual lending activity, claimable at any time."
             accent="star"
           />
           <FeatureCard

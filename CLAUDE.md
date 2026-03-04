@@ -535,7 +535,7 @@ When `fee_vault == zero_address` on the contract, no Genesis fees are taken (bac
 
 ### Contract Architecture
 
-- **StelaGenesis** — ERC721, 300 supply, 5,000 STRK mint price, sequential IDs 1-300
+- **StelaGenesis** — ERC721, 500 supply, 5,000 STRK mint price, sequential IDs 1-500
 - **FeeVault** — Multi-token fee distribution using cumulative sum pattern. Stela contract calls `deposit()` during settle/redeem. NFT holders call `claim()` directly.
 - **stela.cairo** — `set_fee_vault()` / `get_fee_vault()` admin functions control fee routing
 
@@ -819,7 +819,7 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 | Contract | Address | Notes |
 |----------|---------|-------|
 | **Stela (genesis-fee-vault)** | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` | Current production |
-| **StelaGenesis NFT** | `0x05acfbb98a9f8d2e177886fa02f5f329b254f6e333ab430ef53e25f4bbfbc8a3` | ERC721, 300 supply |
+| **StelaGenesis NFT** | `0x05acfbb98a9f8d2e177886fa02f5f329b254f6e333ab430ef53e25f4bbfbc8a3` | ERC721, 500 supply |
 | **FeeVault** | `0x0111beaef1d9b13378b0dbf1be40c556ccf6886591f6b1b29ed790fa13606471` | Fee distribution |
 | **Privacy Pool** | `0x002579e670f80cca558236c95762dd5b94ae017b6ed92df65b74b61b539cdec7` | NOT linked to current contract |
 

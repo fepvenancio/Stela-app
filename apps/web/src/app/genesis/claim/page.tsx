@@ -16,20 +16,12 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getErrorMessage } from '@/lib/tx'
-import { formatTokenValue } from '@/lib/format'
+import { formatTokenValue, readU256 } from '@/lib/format'
 
 const CLAIM_STEPS = [
   { label: 'Claim Fees', description: 'Claiming accumulated fees from vault' },
   { label: 'Confirming', description: 'Waiting for confirmation' },
 ]
-
-function readU256(data: unknown): bigint {
-  if (data == null) return 0n
-  if (typeof data === 'bigint') return data
-  if (typeof data === 'number') return BigInt(data)
-  if (typeof data === 'string') return BigInt(data)
-  return 0n
-}
 
 interface OwnedNft {
   tokenId: bigint

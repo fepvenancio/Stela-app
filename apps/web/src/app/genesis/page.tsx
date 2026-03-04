@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getErrorMessage } from '@/lib/tx'
+import { readU256 } from '@/lib/format'
 
 const MINT_STEPS = [
   { label: 'Approve STRK', description: 'Approve token spend for mint' },
@@ -21,19 +22,13 @@ const MINT_STEPS = [
   { label: 'Confirming', description: 'Waiting for confirmation' },
 ]
 
+const MAX_SUPPLY = 500
+const MAX_QUANTITY = 5
 const STRK_DECIMALS = 18
 
 function formatStrk(raw: bigint): string {
   const whole = raw / 10n ** BigInt(STRK_DECIMALS)
   return whole.toLocaleString()
-}
-
-function readU256(data: unknown): bigint {
-  if (data == null) return 0n
-  if (typeof data === 'bigint') return data
-  if (typeof data === 'number') return BigInt(data)
-  if (typeof data === 'string') return BigInt(data)
-  return 0n
 }
 
 export default function GenesisPage() {
@@ -77,7 +72,9 @@ export default function GenesisPage() {
   const mintEnabled = mintEnabledRaw !== false && mintEnabledRaw !== 0n && mintEnabledRaw != null
   const balance = readU256(balanceRaw)
   const totalCost = mintPrice * BigInt(quantity)
-  const soldOut = totalMinted >= 300n
+  const soldOut = totalMinted >= BigInt(MAX_SUPPLY)
+  const mintPercentage = (Number(totalMinted) / MAX_SUPPLY) * 100
+  const remaining = MAX_SUPPLY - Number(totalMinted)
 
   const canMint = useMemo(() => {
     return mintEnabled && !soldOut && !isPending && !!address
@@ -122,8 +119,8 @@ export default function GenesisPage() {
           Genesis Collection
         </h1>
         <p className="text-dust leading-relaxed">
-          300 unique NFTs that earn a share of every protocol fee on Stela.
-          Settle fees (15 BPS) and redeem fees (7 BPS) are split across all 300 holders.
+          {MAX_SUPPLY} unique NFTs that earn a share of every protocol fee on Stela.
+          Settle fees (20 BPS) and redeem fees (10 BPS) are split across all {MAX_SUPPLY} holders.
         </p>
       </div>
 
@@ -135,7 +132,7 @@ export default function GenesisPage() {
             <Skeleton className="h-8 w-20 bg-edge/20" />
           ) : (
             <span className="text-2xl font-display text-chalk">
-              {totalMinted.toString()} <span className="text-sm text-dust">/ 300</span>
+              {totalMinted.toString()} <span className="text-sm text-dust">/ {MAX_SUPPLY}</span>
             </span>
           )}
         </Card>
@@ -158,12 +155,12 @@ export default function GenesisPage() {
         <div className="h-2 bg-surface/30 rounded-full overflow-hidden border border-edge/20">
           <div
             className="h-full bg-gradient-to-r from-star to-star-bright rounded-full transition-all duration-500"
-            style={{ width: `${Math.min((Number(totalMinted) / 300) * 100, 100)}%` }}
+            style={{ width: `${Math.min(mintPercentage, 100)}%` }}
           />
         </div>
         <div className="flex justify-between mt-2">
-          <span className="text-[10px] text-ash">{((Number(totalMinted) / 300) * 100).toFixed(1)}% minted</span>
-          <span className="text-[10px] text-ash">{300 - Number(totalMinted)} remaining</span>
+          <span className="text-[10px] text-ash">{mintPercentage.toFixed(1)}% minted</span>
+          <span className="text-[10px] text-ash">{remaining} remaining</span>
         </div>
       </div>
 
@@ -177,7 +174,7 @@ export default function GenesisPage() {
                 <p className="text-sm text-nova">Minting is currently paused.</p>
               )}
               {soldOut && (
-                <p className="text-sm text-nova">Sold out! All 300 Genesis NFTs have been minted.</p>
+                <p className="text-sm text-nova">Sold out! All {MAX_SUPPLY} Genesis NFTs have been minted.</p>
               )}
             </div>
 
@@ -204,8 +201,8 @@ export default function GenesisPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setQuantity(Math.min(5, quantity + 1))}
-                      disabled={quantity >= 5}
+                      onClick={() => setQuantity(Math.min(MAX_QUANTITY, quantity + 1))}
+                      disabled={quantity >= MAX_QUANTITY}
                       className="text-dust hover:text-chalk"
                       aria-label="Increase quantity"
                     >
@@ -256,17 +253,17 @@ export default function GenesisPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
               <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Settle Fee</span>
-              <span className="text-lg font-display text-star">15 BPS</span>
-              <span className="text-xs text-dust block mt-1">0.15% of each settled inscription</span>
+              <span className="text-lg font-display text-star">20 BPS</span>
+              <span className="text-xs text-dust block mt-1">0.20% of each settled inscription</span>
             </div>
             <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
               <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Redeem Fee</span>
-              <span className="text-lg font-display text-star">7 BPS</span>
-              <span className="text-xs text-dust block mt-1">0.07% of each share redemption</span>
+              <span className="text-lg font-display text-star">10 BPS</span>
+              <span className="text-xs text-dust block mt-1">0.10% of each share redemption</span>
             </div>
           </div>
           <p className="text-xs text-dust leading-relaxed">
-            Fees accumulate in the vault and are split equally across all 300 Genesis NFTs.
+            Fees accumulate in the vault and are split equally across all {MAX_SUPPLY} Genesis NFTs.
             Claim anytime — there is no expiry on accumulated fees.
           </p>
         </div>

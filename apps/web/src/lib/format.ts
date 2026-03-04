@@ -20,6 +20,15 @@ export function formatDuration(seconds: number | bigint): string {
   return `${h}h`
 }
 
+/** Safely read a u256 value from contract read results */
+export function readU256(data: unknown): bigint {
+  if (data == null) return 0n
+  if (typeof data === 'bigint') return data
+  if (typeof data === 'number') return BigInt(data)
+  if (typeof data === 'string') return BigInt(data)
+  return 0n
+}
+
 /** Format a unix timestamp (seconds) to locale string */
 export function formatTimestamp(ts: bigint): string {
   if (ts === 0n) return '--'
