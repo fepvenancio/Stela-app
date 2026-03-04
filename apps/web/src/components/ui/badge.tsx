@@ -24,6 +24,10 @@ const badgeVariants = cva(
         liquidated: "bg-nova/15 text-nova border-nova/20",
         expired: "bg-ember/15 text-ember border-ember/20",
         cancelled: "bg-ash/15 text-ash border-ash/20",
+        // Off-chain order status variants
+        pending: "bg-aurora/15 text-aurora border-aurora/20",
+        matched: "bg-cosmic/15 text-cosmic border-cosmic/20",
+        settled: "bg-nebula/15 text-nebula border-nebula/20",
         // Network badges
         testnet: "bg-aurora/10 text-aurora border-aurora/20",
         mainnet: "bg-star/10 text-star border-star/20",

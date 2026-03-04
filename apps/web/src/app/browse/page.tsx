@@ -230,8 +230,7 @@ function BrowseContent() {
       {/* Selection Action Bar */}
       <SelectionActionBar onReview={() => setReviewOpen(true)} />
 
-      {/* Table Header (hidden on mobile) */}
-      {!isLoading && !error && data.length > 0 && <ListingTableHeader />}
+      {/* Table header rendered inside the content container below */}
 
       {/* Loading */}
       {isLoading && (
@@ -252,15 +251,17 @@ function BrowseContent() {
 
       {/* Content */}
       {!isLoading && !error && data.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {data.map((a, i) => {
-            const enrichedStatus = a.status
-            const isOwn = address && a.creator && addressesEqual(address, a.creator)
-            const canSelect = enrichedStatus === 'open' && !a.multi_lender && !isOwn
+        <div className="rounded-lg border border-edge/30 overflow-hidden">
+          <ListingTableHeader />
+          <div className="flex flex-col">
+            {data.map((a, i) => {
+              const enrichedStatus = a.status
+              const isOwn = address && a.creator && addressesEqual(address, a.creator)
+              const canSelect = enrichedStatus === 'open' && !a.multi_lender && !isOwn
 
-            return (
-              <div key={a.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
+              return (
                 <InscriptionListRow
+                  key={a.id}
                   id={a.id}
                   status={enrichedStatus}
                   creator={a.creator}
@@ -277,9 +278,9 @@ function BrowseContent() {
                     toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
                   } : undefined}
                 />
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -293,12 +294,13 @@ function BrowseContent() {
             </span>
             <div className="h-px w-full bg-edge/20" />
           </div>
-          <div className="flex flex-col gap-3">
-            {filteredOrders.map((order, i) => (
-              <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
-                <OrderListRow order={order} />
-              </div>
-            ))}
+          <div className="rounded-lg border border-edge/30 overflow-hidden">
+            <ListingTableHeader />
+            <div className="flex flex-col">
+              {filteredOrders.map((order) => (
+                <OrderListRow key={order.id} order={order} />
+              ))}
+            </div>
           </div>
         </div>
       )}

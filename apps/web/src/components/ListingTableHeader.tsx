@@ -5,9 +5,8 @@ import { CONCEPT_DESCRIPTIONS } from '@/lib/status'
 
 export function ListingTableHeader() {
   return (
-    <div className="hidden md:flex items-center gap-4 px-3 pb-2 text-[9px] text-dust uppercase tracking-widest font-semibold">
-      <div className="shrink-0 w-5" />
-      <div className="grid grid-cols-12 gap-4 flex-1">
+    <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 sticky top-0 bg-void/95 backdrop-blur-sm z-10 mb-px">
+      <div className="grid grid-cols-12 gap-3 flex-1">
         <div className="col-span-2">Status</div>
         <div className="col-span-3 flex items-center gap-1">
           Debt

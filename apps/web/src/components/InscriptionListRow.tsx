@@ -15,6 +15,8 @@ interface InscriptionListRowProps {
   multiLender: boolean
   duration: string
   assets: AssetRow[]
+  /** Unredeemed share balance — shown as "Pending Redemption" indicator */
+  pendingShares?: string
   selectable?: boolean
   selected?: boolean
   onSelect?: () => void
@@ -32,6 +34,7 @@ export function InscriptionListRow({
   multiLender,
   duration,
   assets,
+  pendingShares,
   selectable,
   selected,
   onSelect,
@@ -42,17 +45,17 @@ export function InscriptionListRow({
   const row = (
     <div
       onClick={selectable ? () => onSelect?.() : undefined}
-      className={`group flex items-center gap-4 p-3 rounded-xl border transition-all duration-200 ${
+      className={`group flex items-center gap-3 px-3 py-1.5 border-b transition-colors duration-100 ${
         selectable ? 'cursor-pointer' : ''
       } ${
         selected
-          ? 'bg-star/5 border-star/30'
-          : 'bg-surface/20 border-edge/50 hover:border-edge hover:bg-surface/40'
+          ? 'bg-star/5 border-star/20'
+          : 'border-edge/20 hover:bg-surface/30'
       }`}
     >
-      {/* Checkbox column — always rendered for alignment */}
-      <div className="shrink-0 w-5 h-5 flex items-center justify-center">
-        {selectable ? (
+      {/* Checkbox — only rendered when selectable */}
+      {selectable && (
+        <div className="shrink-0 w-4 h-4 flex items-center justify-center">
           <div
             role="checkbox"
             aria-checked={selected}
@@ -60,70 +63,67 @@ export function InscriptionListRow({
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect?.(); } }}
             onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
-            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors cursor-pointer ${
-              selected ? 'bg-star border-star' : 'border-dust/40 bg-surface/60 hover:border-star/50'
+            className={`w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-colors cursor-pointer ${
+              selected ? 'bg-star border-star' : 'border-dust/30 bg-surface/40 hover:border-star/50'
             }`}
           >
             {selected && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-void" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-void" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
           </div>
-        ) : (
-          <div className="w-5 h-5" />
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Desktop: 12-column grid */}
-      <div className="hidden md:grid grid-cols-12 gap-4 flex-1 items-center">
-        {/* Status & ID */}
-        <div className="col-span-2 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <Badge variant={statusKey} className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
-              {label}
-            </Badge>
-            <InfoTooltip content={STATUS_DESCRIPTIONS[status] ?? 'Inscription status'} side="right" />
-          </div>
+      {/* Desktop: single-line grid, no inline labels */}
+      <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
+        {/* Status + ID */}
+        <div className="col-span-2 flex items-center gap-1.5 min-w-0">
+          <Badge variant={statusKey} className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
+            {label}
+          </Badge>
           <Link
             href={`/stela/${id}`}
             onClick={(e) => e.stopPropagation()}
-            className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
+            className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors truncate"
           >
             #{id.slice(2, 8)}
           </Link>
+          {pendingShares && (
+            <span className="text-[8px] text-cosmic font-semibold shrink-0" title={`${pendingShares} shares pending redemption`}>
+              {pendingShares}sh
+            </span>
+          )}
+          <InfoTooltip content={STATUS_DESCRIPTIONS[status] ?? 'Inscription status'} side="right" />
         </div>
 
         {/* Debt */}
-        <div className="col-span-3 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
+        <div className="col-span-3">
           <AssetsByRole assets={assets} role="debt" />
         </div>
 
         {/* Interest */}
-        <div className="col-span-2 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Interest</span>
+        <div className="col-span-2">
           <AssetsByRole assets={assets} role="interest" />
         </div>
 
         {/* Collateral */}
-        <div className="col-span-3 flex flex-col gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
+        <div className="col-span-3">
           <AssetsByRole assets={assets} role="collateral" />
         </div>
 
         {/* Duration */}
-        <div className="col-span-2 flex flex-col items-end gap-0.5">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Duration</span>
-          <span className="text-chalk text-xs font-medium">{formatDuration(Number(duration))}</span>
+        <div className="col-span-2 text-right">
+          <span className="text-chalk text-[11px] font-medium">{formatDuration(Number(duration))}</span>
         </div>
       </div>
 
-      {/* Mobile: card-style stacked layout */}
-      <div className="flex md:hidden flex-col gap-2 flex-1 min-w-0">
+      {/* Mobile: compact two-line layout */}
+      <div className="flex md:hidden flex-col gap-1 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Badge variant={statusKey} className="w-fit h-4 text-[9px] px-1.5 py-0 uppercase font-bold">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Badge variant={statusKey} className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
               {label}
             </Badge>
             <Link
@@ -133,16 +133,20 @@ export function InscriptionListRow({
             >
               #{id.slice(2, 8)}
             </Link>
+            {pendingShares && (
+              <span className="text-[8px] text-cosmic font-semibold">{pendingShares}sh</span>
+            )}
           </div>
-          <span className="text-chalk text-xs font-medium shrink-0">{formatDuration(Number(duration))}</span>
+          <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(Number(duration))}</span>
         </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Debt</span>
+        <div className="flex items-center gap-3 overflow-x-auto">
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-[8px] text-dust uppercase">D</span>
             <AssetsByRole assets={assets} role="debt" />
           </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[9px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
+          <div className="text-edge/40">|</div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-[8px] text-dust uppercase">C</span>
             <AssetsByRole assets={assets} role="collateral" />
           </div>
         </div>

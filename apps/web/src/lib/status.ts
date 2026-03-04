@@ -6,7 +6,7 @@ export type { StatusInput }
 
 // ── Badge variant types ─────────────────────────────────────────────
 
-export type StatusBadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'cancelled'
+export type StatusBadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'cancelled' | 'pending' | 'matched' | 'settled'
 
 /** Map any status string to a valid badge variant, defaulting to 'open'. */
 export function getStatusBadgeVariant(status: string): StatusBadgeVariant {
@@ -15,8 +15,7 @@ export function getStatusBadgeVariant(status: string): StatusBadgeVariant {
 
 /** Map any status string to its human-readable label. */
 export function getStatusLabel(status: string): string {
-  const variant = getStatusBadgeVariant(status)
-  return STATUS_LABELS[variant]
+  return (STATUS_LABELS as Record<string, string>)[status] ?? status
 }
 
 // ── Off-chain order status helpers ──────────────────────────────────
@@ -29,16 +28,16 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled',
 }
 
-/** Map off-chain order status to a badge variant using closest visual match. */
+/** Map off-chain order status to its own badge variant. */
 export function getOrderStatusBadgeVariant(status: string): StatusBadgeVariant {
   const map: Record<string, StatusBadgeVariant> = {
-    pending: 'open',
-    matched: 'partial',
-    settled: 'filled',
+    pending: 'pending',
+    matched: 'matched',
+    settled: 'settled',
     expired: 'expired',
     cancelled: 'cancelled',
   }
-  return map[status] ?? 'open'
+  return map[status] ?? 'pending'
 }
 
 /** Get the human-readable label for an off-chain order status. */

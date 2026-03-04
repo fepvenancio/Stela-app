@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useFetchApi, buildApiUrl } from './api'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
-import { addressesEqual } from '@/lib/address'
+import { normalizeAddress } from '@/lib/address'
 import { enrichStatus } from '@/lib/status'
 import type { InscriptionRow, AssetRow, ApiListResponse } from '@/types/api'
 import type { OrderRow } from './useOrders'
@@ -36,6 +36,7 @@ interface ApiOrderListResponse {
 // Exported types
 export interface EnrichedInscription extends InscriptionRow {
   computedStatus: string
+  pendingShares?: string
 }
 
 export interface TokenAmount {
@@ -148,51 +149,56 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       computedStatus: enrichStatus(row),
     }))
 
-    // Categorize
+    // Single-pass categorization + redeemable
     const lending: EnrichedInscription[] = []
     const borrowing: EnrichedInscription[] = []
+    const repaid: EnrichedInscription[] = []
+    const redeemable: (EnrichedInscription & { shareBalance: string })[] = []
 
     for (const ins of enriched) {
-      if (address && ins.lender && addressesEqual(ins.lender, address)) {
+      if (!address) continue
+
+      const normLender = ins.lender ? normalizeAddress(ins.lender) : ''
+      const normBorrower = ins.borrower ? normalizeAddress(ins.borrower) : ''
+      const normCreator = normalizeAddress(ins.creator)
+
+      const isLender = normLender === address
+      const isBorrower = normBorrower === address
+      const isCreator = normCreator === address
+      const balance = shareMap.get(ins.id)
+
+      // Redeemable: user has shares > 0 AND status is liquidated
+      if (ins.computedStatus === 'liquidated' && balance && BigInt(balance) > 0n) {
+        redeemable.push({ ...ins, shareBalance: balance })
+        continue
+      }
+
+      if (ins.computedStatus === 'repaid') {
+        if (isLender) {
+          if (balance && BigInt(balance) > 0n) {
+            lending.push({ ...ins, pendingShares: balance })
+          } else {
+            repaid.push(ins)
+          }
+        }
+        if (isBorrower || (isCreator && !isBorrower)) {
+          repaid.push(ins)
+        }
+        continue
+      }
+
+      if (isLender) {
         lending.push(ins)
       }
-      if (address && ins.borrower && addressesEqual(ins.borrower, address)) {
+      if (isBorrower) {
         borrowing.push(ins)
       }
-      // Creator is the borrower when status is active (open/partial/filled)
-      if (
-        address &&
-        addressesEqual(ins.creator, address) &&
-        ACTIVE_STATUSES.has(ins.computedStatus)
-      ) {
-        // Avoid duplicates if creator === borrower
-        if (!ins.borrower || !addressesEqual(ins.borrower, address)) {
+      if (isCreator && ACTIVE_STATUSES.has(ins.computedStatus)) {
+        if (!normBorrower || normBorrower !== address) {
           borrowing.push(ins)
         }
       }
     }
-
-    // Repaid: inscriptions where user is lender or borrower and status is repaid
-    const repaid = enriched.filter((ins) => {
-      if (ins.computedStatus !== 'repaid') return false
-      if (!address) return false
-      const isLender = ins.lender && addressesEqual(ins.lender, address)
-      const isBorrower = (ins.borrower && addressesEqual(ins.borrower, address)) ||
-        addressesEqual(ins.creator, address)
-      return isLender || isBorrower
-    })
-
-    // Redeemable: user has shares > 0 AND status is liquidated
-    const redeemable = enriched
-      .filter((ins) => {
-        const balance = shareMap.get(ins.id)
-        if (!balance || BigInt(balance) <= 0n) return false
-        return ins.computedStatus === 'liquidated'
-      })
-      .map((ins) => ({
-        ...ins,
-        shareBalance: shareMap.get(ins.id)!,
-      }))
 
     // Summary metrics
     const totalLent = aggregateDebtAssets(lending)
@@ -208,15 +214,14 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     })
 
     // Split active orders into borrowing/lending for display in those tabs
-    const activeOrderStatuses = new Set(['pending', 'matched', 'settled'])
+    const activeOrderStatuses = new Set(['pending', 'matched'])
     const borrowingOrders: OrderRow[] = []
     const lendingOrders: OrderRow[] = []
     for (const order of allOrders) {
       if (!activeOrderStatuses.has(order.status)) continue
-      if (address && addressesEqual(order.borrower, address)) {
+      if (address && normalizeAddress(order.borrower) === address) {
         borrowingOrders.push(order)
       } else {
-        // User appears on this order via an offer (they're the lender)
         lendingOrders.push(order)
       }
     }

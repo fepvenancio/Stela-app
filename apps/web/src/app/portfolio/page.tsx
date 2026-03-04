@@ -22,12 +22,7 @@ import Link from 'next/link'
 
 function EmptyTab({ message }: { message: string }) {
   return (
-    <div className="text-center py-20">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface border border-edge/30 mb-5">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
-          <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
-        </svg>
-      </div>
+    <div className="text-center py-16">
       <p className="text-dust text-sm">{message}</p>
     </div>
   )
@@ -35,23 +30,20 @@ function EmptyTab({ message }: { message: string }) {
 
 function InscriptionList({ items }: { items: EnrichedInscription[] }) {
   return (
-    <>
-      {items.length > 0 && <ListingTableHeader />}
-      <div className="flex flex-col gap-3">
-        {items.map((ins, i) => (
-          <div key={ins.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
-            <InscriptionListRow
-              id={ins.id}
-              status={ins.computedStatus}
-              creator={ins.creator}
-              multiLender={ins.multi_lender}
-              duration={ins.duration}
-              assets={ins.assets ?? []}
-            />
-          </div>
-        ))}
-      </div>
-    </>
+    <div className="flex flex-col">
+      {items.map((ins) => (
+        <InscriptionListRow
+          key={ins.id}
+          id={ins.id}
+          status={ins.computedStatus}
+          creator={ins.creator}
+          multiLender={ins.multi_lender}
+          duration={ins.duration}
+          assets={ins.assets ?? []}
+          pendingShares={ins.pendingShares}
+        />
+      ))}
+    </div>
   )
 }
 
@@ -142,9 +134,9 @@ export default function PortfolioPage() {
                 <Skeleton key={i} className="h-24 rounded-2xl bg-surface/20 border border-edge/20" />
               ))}
             </div>
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full bg-surface/20 rounded-xl" />
+            <div className="space-y-px">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full bg-surface/10" />
               ))}
             </div>
             <span className="sr-only">Loading portfolio...</span>
@@ -169,7 +161,7 @@ export default function PortfolioPage() {
             </div>
 
             <Tabs defaultValue={lending.length === 0 && lendingOrders.length === 0 && (borrowing.length > 0 || borrowingOrders.length > 0) ? 'borrowing' : orders.length > 0 && lending.length === 0 && lendingOrders.length === 0 ? 'orders' : 'lending'}>
-              <TabsList variant="line" className="mb-6">
+              <TabsList variant="line" className="mb-4">
                 <TabsTrigger value="orders" className="text-chalk data-[state=active]:text-star after:bg-star">
                   Orders{filteredOrders.length > 0 && ` (${filteredOrders.length})`}
                 </TabsTrigger>
@@ -179,7 +171,7 @@ export default function PortfolioPage() {
                 <TabsTrigger value="borrowing" className="text-chalk data-[state=active]:text-nebula after:bg-nebula">
                   Borrowing{(filteredBorrowing.length + borrowingOrders.length) > 0 && ` (${filteredBorrowing.length + borrowingOrders.length})`}
                 </TabsTrigger>
-                <TabsTrigger value="repaid" className="text-chalk data-[state=active]:text-star after:bg-star">
+                <TabsTrigger value="repaid" className="text-chalk data-[state=active]:text-aurora after:bg-aurora">
                   Repaid{filteredRepaid.length > 0 && ` (${filteredRepaid.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="redeemable" className="text-chalk data-[state=active]:text-cosmic after:bg-cosmic">
@@ -189,78 +181,70 @@ export default function PortfolioPage() {
 
               <TabsContent value="orders">
                 {filteredOrders.length === 0 ? (
-                  <EmptyTab message={q ? 'No orders match your search.' : 'No off-chain orders yet. Create a gasless borrowing request or browse existing orders to lend.'} />
+                  <EmptyTab message={q ? 'No orders match your search.' : 'No off-chain orders yet.'} />
                 ) : (
-                  <>
+                  <div className="rounded-lg border border-edge/30 overflow-hidden">
                     <ListingTableHeader />
-                    <div className="flex flex-col gap-3">
-                      {filteredOrders.map((order, i) => (
-                        <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
-                          <OrderListRow order={order} />
-                        </div>
+                    <div className="flex flex-col">
+                      {filteredOrders.map((order) => (
+                        <OrderListRow key={order.id} order={order} />
                       ))}
                     </div>
-                  </>
+                  </div>
                 )}
               </TabsContent>
 
               <TabsContent value="lending">
                 {filteredLending.length === 0 && lendingOrders.length === 0 ? (
-                  <EmptyTab message={q ? 'No lending positions match your search.' : 'No lending positions yet. Browse open inscriptions to start lending.'} />
+                  <EmptyTab message={q ? 'No lending positions match your search.' : 'No lending positions yet.'} />
                 ) : (
-                  <>
-                    {lendingOrders.length > 0 && (
-                      <>
-                        <ListingTableHeader />
-                        <div className="flex flex-col gap-3 mb-4">
-                          {lendingOrders.map((order, i) => (
-                            <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
-                              <OrderListRow order={order} />
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
+                  <div className="rounded-lg border border-edge/30 overflow-hidden">
+                    <ListingTableHeader />
+                    <div className="flex flex-col">
+                      {lendingOrders.map((order) => (
+                        <OrderListRow key={order.id} order={order} />
+                      ))}
+                    </div>
                     <InscriptionList items={filteredLending} />
-                  </>
+                  </div>
                 )}
               </TabsContent>
 
               <TabsContent value="borrowing">
                 {filteredBorrowing.length === 0 && borrowingOrders.length === 0 ? (
-                  <EmptyTab message={q ? 'No borrowing positions match your search.' : 'No borrowing positions yet. Create an inscription to start borrowing.'} />
+                  <EmptyTab message={q ? 'No borrowing positions match your search.' : 'No borrowing positions yet.'} />
                 ) : (
-                  <>
-                    {borrowingOrders.length > 0 && (
-                      <>
-                        <ListingTableHeader />
-                        <div className="flex flex-col gap-3 mb-4">
-                          {borrowingOrders.map((order, i) => (
-                            <div key={order.id} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-up">
-                              <OrderListRow order={order} />
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
+                  <div className="rounded-lg border border-edge/30 overflow-hidden">
+                    <ListingTableHeader />
+                    <div className="flex flex-col">
+                      {borrowingOrders.map((order) => (
+                        <OrderListRow key={order.id} order={order} />
+                      ))}
+                    </div>
                     <InscriptionList items={filteredBorrowing} />
-                  </>
+                  </div>
                 )}
               </TabsContent>
 
               <TabsContent value="repaid">
                 {filteredRepaid.length === 0 ? (
-                  <EmptyTab message={q ? 'No repaid positions match your search.' : 'No repaid positions yet. Positions appear here after borrowers repay their loans.'} />
+                  <EmptyTab message={q ? 'No repaid positions match your search.' : 'No repaid positions yet.'} />
                 ) : (
-                  <InscriptionList items={filteredRepaid} />
+                  <div className="rounded-lg border border-edge/30 overflow-hidden">
+                    <ListingTableHeader />
+                    <InscriptionList items={filteredRepaid} />
+                  </div>
                 )}
               </TabsContent>
 
               <TabsContent value="redeemable">
                 {filteredRedeemable.length === 0 ? (
-                  <EmptyTab message={q ? 'No redeemable positions match your search.' : 'No redeemable positions. Positions appear here when liquidated collateral is claimable.'} />
+                  <EmptyTab message={q ? 'No redeemable positions match your search.' : 'No redeemable positions.'} />
                 ) : (
-                  <InscriptionList items={filteredRedeemable} />
+                  <div className="rounded-lg border border-edge/30 overflow-hidden">
+                    <ListingTableHeader />
+                    <InscriptionList items={filteredRedeemable} />
+                  </div>
                 )}
               </TabsContent>
             </Tabs>
