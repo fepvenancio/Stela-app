@@ -521,13 +521,15 @@ Off-chain orders use SNIP-12 typed data signatures stored in D1, settled on-chai
 
 ## Genesis NFT Fee System
 
-The Stela contract applies protocol fees at settle and redeem, split between a relayer, Genesis FeeVault, and treasury. Fee constants are hardcoded in `stela.cairo`:
+The Stela contract applies protocol fees at settle and redeem, split between a relayer and Genesis FeeVault. Fee constants are hardcoded in `stela.cairo`. **Treasury is set to the FeeVault address** — no individual receives protocol revenue. 100% of non-relayer fees go to Genesis NFT holders.
 
-| Event | Total BPS | Relayer | Genesis Vault | Treasury |
-|-------|-----------|---------|---------------|----------|
-| SETTLE | 25 (0.25%) | 5 | 15 | 5 |
-| REDEEM | 10 (0.1%) | 0 | 7 | 3 |
-| LIQUIDATE | 0 | 0 | 0 | 0 |
+| Event | Total BPS | Relayer | Genesis Vault |
+|-------|-----------|---------|---------------|
+| SETTLE | 25 (0.25%) | 5 | 20 |
+| REDEEM | 10 (0.1%) | 0 | 10 |
+| LIQUIDATE | 0 | 0 | 0 |
+
+**Mainnet deployment note:** Before renouncing ownership, `set_treasury()` MUST be called with the FeeVault address so treasury fees route to Genesis NFT holders (not an individual wallet). This is critical for regulatory compliance.
 
 When `fee_vault == zero_address` on the contract, no Genesis fees are taken (backwards compatible).
 

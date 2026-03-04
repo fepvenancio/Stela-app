@@ -768,7 +768,7 @@ export default function LandingPage() {
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Fee Share</span>
-                <span className="text-chalk font-display text-lg tracking-wider">~63% of all fees</span>
+                <span className="text-chalk font-display text-lg tracking-wider">100% of non-relayer fees</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Claim</span>
@@ -850,11 +850,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex justify-between px-2">
                   <span className="text-dust">Genesis Holders</span>
-                  <span className="text-star">15 BPS</span>
-                </div>
-                <div className="flex justify-between px-2">
-                  <span className="text-dust">Treasury</span>
-                  <span className="text-chalk">5 BPS</span>
+                  <span className="text-star">20 BPS</span>
                 </div>
               </div>
             </div>
@@ -871,11 +867,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex justify-between px-2">
                   <span className="text-dust">Genesis Holders</span>
-                  <span className="text-star">7 BPS</span>
-                </div>
-                <div className="flex justify-between px-2">
-                  <span className="text-dust">Treasury</span>
-                  <span className="text-chalk">3 BPS</span>
+                  <span className="text-star">10 BPS</span>
                 </div>
               </div>
             </div>
@@ -894,10 +886,6 @@ export default function LandingPage() {
                   <span className="text-dust">Genesis Holders</span>
                   <span className="text-chalk">0 BPS</span>
                 </div>
-                <div className="flex justify-between px-2">
-                  <span className="text-dust">Treasury</span>
-                  <span className="text-chalk">0 BPS</span>
-                </div>
               </div>
             </div>
           </div>
@@ -909,8 +897,8 @@ export default function LandingPage() {
               <p className="text-[11px] text-dust uppercase tracking-widest">Total Round-Trip</p>
             </div>
             <div className="text-center p-4">
-              <div className="text-2xl font-display text-star mb-1">~63%</div>
-              <p className="text-[11px] text-dust uppercase tracking-widest">Fees to Genesis Holders</p>
+              <div className="text-2xl font-display text-star mb-1">100%</div>
+              <p className="text-[11px] text-dust uppercase tracking-widest">Non-Relayer Fees to Genesis</p>
             </div>
             <div className="text-center p-4">
               <div className="text-2xl font-display text-chalk mb-1">Permissionless</div>

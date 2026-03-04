@@ -227,7 +227,7 @@ export default function DocsPage() {
           <div>
             <SubHeading>Fee Structure</SubHeading>
             <div className="bg-surface/20 border border-edge/20 rounded-3xl overflow-hidden granite-noise">
-              <div className="grid grid-cols-5 gap-px bg-edge/10">
+              <div className="grid grid-cols-4 gap-px bg-edge/10">
                 <div className="bg-abyss/60 p-5">
                   <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Event</span>
                 </div>
@@ -240,12 +240,9 @@ export default function DocsPage() {
                 <div className="bg-abyss/60 p-5 text-center">
                   <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Genesis Vault</span>
                 </div>
-                <div className="bg-abyss/60 p-5 text-center">
-                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Treasury</span>
-                </div>
               </div>
               {/* Settlement */}
-              <div className="grid grid-cols-5 gap-px bg-edge/10">
+              <div className="grid grid-cols-4 gap-px bg-edge/10">
                 <div className="bg-surface/10 p-5">
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement</span>
                 </div>
@@ -256,14 +253,11 @@ export default function DocsPage() {
                   <span className="text-sm text-dust">5</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">15</span>
-                </div>
-                <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">5</span>
+                  <span className="text-sm text-dust">20</span>
                 </div>
               </div>
               {/* Redemption */}
-              <div className="grid grid-cols-5 gap-px bg-edge/10">
+              <div className="grid grid-cols-4 gap-px bg-edge/10">
                 <div className="bg-surface/10 p-5">
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Redemption</span>
                 </div>
@@ -274,14 +268,11 @@ export default function DocsPage() {
                   <span className="text-sm text-dust">0</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">7</span>
-                </div>
-                <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">3</span>
+                  <span className="text-sm text-dust">10</span>
                 </div>
               </div>
               {/* Liquidation */}
-              <div className="grid grid-cols-5 gap-px bg-edge/10">
+              <div className="grid grid-cols-4 gap-px bg-edge/10">
                 <div className="bg-surface/10 p-5">
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Liquidation</span>
                 </div>
@@ -294,13 +285,10 @@ export default function DocsPage() {
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-dust">0</span>
                 </div>
-                <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">0</span>
-                </div>
               </div>
             </div>
             <p className="text-ash text-xs mt-4 leading-relaxed">
-              All fees are hardcoded in the immutable contract. Liquidation is completely free and permissionless — anyone can liquidate an expired inscription with zero cost.
+              All fees are hardcoded in the immutable contract. Treasury is set to the FeeVault — 100% of non-relayer fees go to Genesis NFT holders. No individual or entity receives protocol revenue.
             </p>
           </div>
         </section>
@@ -717,7 +705,7 @@ export default function DocsPage() {
                   </div>
                   <div>
                     <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
-                    <span className="text-chalk font-mono">5 relayer / 15 vault / 5 treasury</span>
+                    <span className="text-chalk font-mono">5 relayer / 20 genesis vault</span>
                   </div>
                   <div>
                     <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>
