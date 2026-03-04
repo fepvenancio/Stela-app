@@ -6,6 +6,7 @@ const GITHUB_LINKS = {
   privacy: 'https://github.com/fepvenancio/stela-privacy',
   app: 'https://github.com/fepvenancio/stela-app',
   sdk: 'https://github.com/fepvenancio/stela-sdk-ts',
+  relayer: 'https://github.com/fepvenancio/stela-relayer',
 }
 
 const DOCS_LINKS = {
@@ -159,6 +160,151 @@ export default function DocsPage() {
       </div>
 
       <div className="space-y-32">
+        {/* Decentralized Protocol */}
+        <section className="relative">
+          <SectionHeading>Decentralized Protocol</SectionHeading>
+
+          {/* Permissionless Protocol */}
+          <div className="mb-16">
+            <SubHeading>Permissionless Protocol</SubHeading>
+            <div className="grid sm:grid-cols-3 gap-6">
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">No Admin</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  Ownership has been <span className="text-chalk font-medium">permanently renounced</span> on all deployed contracts. There is no multisig, no governance, no backdoor.
+                </p>
+              </div>
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">No Upgrades</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  Contracts are <span className="text-chalk font-medium">immutable</span>. No pause function, no proxy pattern, no parameter changes. The code is the protocol.
+                </p>
+              </div>
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">Open Access</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  Every protocol function — <span className="text-chalk font-medium">settle, liquidate, redeem, repay, claim</span> — is callable by anyone. No whitelists, no gatekeepers.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Run a Relayer */}
+          <div className="mb-16">
+            <SubHeading>Run a Relayer</SubHeading>
+            <a
+              href={GITHUB_LINKS.relayer}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block bg-abyss/60 border border-star/20 hover:border-star/50 rounded-3xl p-10 transition-all relative overflow-hidden granite-noise"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-star/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-8">
+                <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-void border border-star/30 flex items-center justify-center group-hover:border-star/60 transition-all shadow-lg shadow-black/30">
+                  <svg className="w-7 h-7 text-star" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-display text-star text-lg uppercase tracking-widest mb-2 group-hover:text-star-bright transition-colors">
+                    Earn by Running a Relayer
+                  </h4>
+                  <p className="text-dust text-sm leading-relaxed mb-3">
+                    Anyone can run a relayer bot to settle matched lending orders on-chain. Relayers earn <span className="text-chalk font-semibold">5 BPS (0.05%)</span> of each debt asset on every successful settlement.
+                  </p>
+                  <span className="inline-flex items-center gap-2 text-xs text-star font-display uppercase tracking-widest">
+                    View on GitHub
+                    <svg className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          {/* Fee Structure */}
+          <div>
+            <SubHeading>Fee Structure</SubHeading>
+            <div className="bg-surface/20 border border-edge/20 rounded-3xl overflow-hidden granite-noise">
+              <div className="grid grid-cols-5 gap-px bg-edge/10">
+                <div className="bg-abyss/60 p-5">
+                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Event</span>
+                </div>
+                <div className="bg-abyss/60 p-5 text-center">
+                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Total</span>
+                </div>
+                <div className="bg-abyss/60 p-5 text-center">
+                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Relayer</span>
+                </div>
+                <div className="bg-abyss/60 p-5 text-center">
+                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Genesis Vault</span>
+                </div>
+                <div className="bg-abyss/60 p-5 text-center">
+                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Treasury</span>
+                </div>
+              </div>
+              {/* Settlement */}
+              <div className="grid grid-cols-5 gap-px bg-edge/10">
+                <div className="bg-surface/10 p-5">
+                  <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-star font-semibold">25 BPS</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">5</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">15</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">5</span>
+                </div>
+              </div>
+              {/* Redemption */}
+              <div className="grid grid-cols-5 gap-px bg-edge/10">
+                <div className="bg-surface/10 p-5">
+                  <span className="text-sm text-chalk font-display uppercase tracking-widest">Redemption</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-star font-semibold">10 BPS</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">0</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">7</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">3</span>
+                </div>
+              </div>
+              {/* Liquidation */}
+              <div className="grid grid-cols-5 gap-px bg-edge/10">
+                <div className="bg-surface/10 p-5">
+                  <span className="text-sm text-chalk font-display uppercase tracking-widest">Liquidation</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-star font-semibold">0 BPS</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">0</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">0</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">0</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-ash text-xs mt-4 leading-relaxed">
+              All fees are hardcoded in the immutable contract. Liquidation is completely free and permissionless — anyone can liquidate an expired inscription with zero cost.
+            </p>
+          </div>
+        </section>
+
         {/* Overview */}
         <section className="relative">
           <SectionHeading>What is Stela?</SectionHeading>
