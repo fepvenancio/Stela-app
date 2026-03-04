@@ -86,7 +86,7 @@ export function InscriptionListRow({
             <InfoTooltip content={STATUS_DESCRIPTIONS[status] ?? 'Inscription status'} side="right" />
           </div>
           <Link
-            href={`/inscription/${id}`}
+            href={`/stela/${id}`}
             onClick={(e) => e.stopPropagation()}
             className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
           >
@@ -127,7 +127,7 @@ export function InscriptionListRow({
               {label}
             </Badge>
             <Link
-              href={`/inscription/${id}`}
+              href={`/stela/${id}`}
               onClick={(e) => e.stopPropagation()}
               className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
             >
@@ -153,7 +153,7 @@ export function InscriptionListRow({
   if (selectable) return row
 
   return (
-    <Link href={`/inscription/${id}`} className="block" aria-label={`View inscription ${id.slice(2, 8)}`}>
+    <Link href={`/stela/${id}`} className="block" aria-label={`View inscription ${id.slice(2, 8)}`}>
       {row}
     </Link>
   )

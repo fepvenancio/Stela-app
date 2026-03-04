@@ -158,7 +158,7 @@ export function PositionCard({ inscription, role, shareBalance }: PositionCardPr
 
   return (
     <Link
-      href={`/inscription/${inscription.id}`}
+      href={`/stela/${inscription.id}`}
       className="group block transition-all duration-300 hover:-translate-y-1"
     >
       <Card className={`granite-noise rounded-3xl border-edge bg-surface/40 backdrop-blur-sm p-6 transition-all duration-300 ${ROLE_HOVER[role]}`}>

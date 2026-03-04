@@ -196,8 +196,7 @@ apps/web/
     │   ├── create/page.tsx
     │   ├── docs/page.tsx
     │   ├── faucet/page.tsx
-    │   ├── inscription/[id]/page.tsx
-    │   ├── order/[id]/page.tsx
+    │   ├── stela/[id]/page.tsx           ← unified detail page (orders + inscriptions)
     │   ├── portfolio/page.tsx
     │   └── api/
     │       ├── health/route.ts
@@ -282,7 +281,7 @@ Variables are set in `wrangler.jsonc` for production:
 ```json
 "vars": {
   "NEXT_PUBLIC_NETWORK": "sepolia",
-  "NEXT_PUBLIC_STELA_ADDRESS": "0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a53ece0",
+  "NEXT_PUBLIC_STELA_ADDRESS": "0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973",
   "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia"
 }
 ```
@@ -517,6 +516,317 @@ Event fields are split between `keys[]` and `data[]` based on `kind` in the ABI:
 
 Never proxy on-chain writes through the backend. Users sign directly with their wallet.
 Off-chain orders use SNIP-12 typed data signatures stored in D1, settled on-chain by the bot.
+
+---
+
+## Genesis NFT Fee System
+
+The Stela contract applies protocol fees at settle and redeem, split between a relayer, Genesis FeeVault, and treasury. Fee constants are hardcoded in `stela.cairo`:
+
+| Event | Total BPS | Relayer | Genesis Vault | Treasury |
+|-------|-----------|---------|---------------|----------|
+| SETTLE | 25 (0.25%) | 5 | 15 | 5 |
+| REDEEM | 10 (0.1%) | 0 | 7 | 3 |
+| LIQUIDATE | 0 | 0 | 0 | 0 |
+
+When `fee_vault == zero_address` on the contract, no Genesis fees are taken (backwards compatible).
+
+### Contract Architecture
+
+- **StelaGenesis** — ERC721, 300 supply, 5,000 STRK mint price, sequential IDs 1-300
+- **FeeVault** — Multi-token fee distribution using cumulative sum pattern. Stela contract calls `deposit()` during settle/redeem. NFT holders call `claim()` directly.
+- **stela.cairo** — `set_fee_vault()` / `get_fee_vault()` admin functions control fee routing
+
+### Future Frontend Routes
+
+- `/genesis` — Mint page (approve STRK, call `mint()` or `mint_batch()` on StelaGenesis)
+- `/genesis/claim` — Claim page (view claimable fees per NFT, call `claim()` / `claim_batch()` on FeeVault)
+
+### New Contract Events (for indexer)
+
+- `Minted(token_id, minter, price)` — from StelaGenesis
+- `Deposited(token, amount, per_nft)` — from FeeVault
+- `Claimed(token_id, token, amount, recipient)` — from FeeVault
+- `TokenRegistered(token, index)` — from FeeVault
+
+---
+
+## Contract Deployment Checklist
+
+**EVERY new contract deployment requires a FULL RESET of the entire stack.** This is not optional.
+Old orders, nonces, indexer cursors, and cached bundles are ALL tied to the previous contract.
+Missing any single step will cause silent failures that are extremely hard to debug (stale nonces,
+wrong contract reads, failed settlements, orders expiring instantly).
+
+**The reset includes:** SDK address → 7 config files → ABI → D1 database wipe → cache nuke →
+redeploy all 3 CF workers → restart Railway indexer → verify everything.
+
+### Step 0: Prerequisites
+
+Before starting, gather:
+- New Stela contract address (from `sncast deploy` output)
+- New StelaGenesis NFT address (if redeployed)
+- New FeeVault address (if redeployed)
+- New Privacy Pool address (if redeployed, or empty if not linked)
+- Updated ABI (from `scarb build` output)
+
+### Step 1: Update SDK (`stela-sdk-ts` repo)
+
+| File | What to update |
+|------|----------------|
+| `src/constants.ts` | `STELA_ADDRESS[sepolia]` (or `mainnet`) |
+| `src/abi/stela.json` | Full ABI array from Sierra contract class (`data['abi']`) |
+
+Then: `pnpm build && npm publish` (or `pnpm link` for local dev)
+
+### Step 2: Update `stela-app` — Config Files (7 places!)
+
+| # | File | Variable | Notes |
+|---|------|----------|-------|
+| 1 | `apps/web/.env.local` | `NEXT_PUBLIC_STELA_ADDRESS` | Local dev |
+| 2 | `apps/web/.env.example` | `NEXT_PUBLIC_STELA_ADDRESS` | Template for others |
+| 3 | `apps/web/wrangler.jsonc` | `vars.NEXT_PUBLIC_STELA_ADDRESS` | Cloudflare production |
+| 4 | `workers/bot/wrangler.jsonc` | `vars.STELA_ADDRESS` | Bot settlement target |
+| 5 | `workers/indexer/wrangler.jsonc` | `vars.STELA_ADDRESS` | Webhook indexer |
+| 6 | `services/indexer/.env.example` | `STELA_ADDRESS` | Apibara indexer template |
+| 7 | `packages/core/src/constants.ts` | `STELA_ADDRESS[sepolia]` | Shared constant (if not using SDK) |
+
+**Optional addresses** (only if the associated contract was redeployed):
+
+| File | Variable | When |
+|------|----------|------|
+| `apps/web/.env.local` | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Only if privacy pool deployed AND linked via `set_privacy_pool()` |
+| `apps/web/wrangler.jsonc` | `vars.NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Same — omit entirely if no privacy pool |
+| `apps/web/.env.example` | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Template reference |
+
+### Step 3: Update ABI
+
+```bash
+# Extract ABI from Sierra contract class JSON
+python3 -c "import json; data=json.load(open('path/to/target/dev/stela_StelaContract.contract_class.json')); json.dump(data['abi'], open('packages/core/src/abi/stela.json','w'), indent=2)"
+
+# Or if sync-abi script is configured:
+pnpm sync-abi
+```
+
+### Step 4: Clean D1 Database
+
+Old orders/offers signed against the previous contract are invalid (different nonces, different typed data domain).
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID=616231e4ffa88bb203ec4cbedeab4a8e
+
+# Delete offers first (FK constraint), then orders
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM order_offers"
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM orders"
+
+# Reset indexer cursor so it re-indexes from block 0
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM _meta WHERE key='last_block'"
+
+# Clear existing on-chain data (inscriptions from old contract)
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM inscription_events"
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM inscription_assets"
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM share_balances"
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM lockers"
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM inscriptions"
+
+# Release bot lock
+npx wrangler d1 execute stela-db --remote --command="DELETE FROM _meta WHERE key='bot_lock'"
+```
+
+### Step 5: Deploy Everything (order matters!)
+
+```bash
+# 1. Build + deploy web app (MUST nuke caches first!)
+cd apps/web
+rm -rf .next .open-next ../../.turbo ../../node_modules/.cache
+pnpm run deploy
+# ⚠️ CRITICAL: `pnpm build` alone only runs `next build` — NOT the OpenNext Cloudflare bundle.
+# Always use `pnpm run deploy` which runs `opennextjs-cloudflare build && opennextjs-cloudflare deploy`.
+
+# 2. Deploy bot worker
+cd ../../workers/bot
+npx wrangler@3 deploy
+# ⚠️ Use `npx wrangler@3 deploy`, NOT `pnpm deploy` (workerd arch issues on macOS)
+
+# 3. Deploy indexer webhook worker
+cd ../indexer
+npx wrangler@3 deploy
+
+# 4. Restart Apibara indexer (Railway)
+# Update STELA_ADDRESS env var in Railway dashboard, then redeploy
+```
+
+### Step 6: Update Bot Secrets (if bot wallet changed)
+
+```bash
+cd workers/bot
+wrangler secret put BOT_PRIVATE_KEY    # bot wallet private key
+wrangler secret put BOT_ADDRESS        # bot wallet address
+wrangler secret put RPC_URL            # Alchemy v0.8 endpoint (V3 tx support)
+```
+
+### Step 7: Update Railway/Fly.io (Apibara indexer)
+
+Update these env vars in the Railway dashboard:
+- `STELA_ADDRESS` — new contract address
+- `RPC_URL` — if RPC endpoint changed
+- `DNA_TOKEN` — if Apibara token rotated
+- `WEBHOOK_URL` — if indexer worker URL changed
+- `WEBHOOK_SECRET` — if secret rotated
+
+Then redeploy the service.
+
+### Step 8: Verify Deployment
+
+```bash
+# Check web app has correct address in server bundle
+curl -s https://stela-dapp.xyz/api/health | jq
+
+# Check nonces are 0 for test wallets
+curl -s "https://stela-dapp.xyz/api/nonce?address=0x05f9b3f0bf7a3231bc4c34fc53624b2b016d9a819813d6161c9aec13dc8a379a"
+
+# Check bot is running (look at D1 _meta for bot_lock timestamps)
+CLOUDFLARE_ACCOUNT_ID=616231e4ffa88bb203ec4cbedeab4a8e \
+npx wrangler d1 execute stela-db --remote --command="SELECT * FROM _meta"
+
+# Check indexer is catching up (last_block should be increasing)
+curl -s https://stela-indexer.stela-app.workers.dev/health
+```
+
+### Step 9: Link Privacy Pool (after `set_privacy_pool()` on contract)
+
+After deploying the privacy pool contract and calling `set_privacy_pool(pool_address)` on the Stela contract:
+
+**1. Verify on-chain link:**
+```bash
+# Confirm the contract returns the correct privacy pool address
+sncast call --contract-address <STELA_ADDRESS> --function get_privacy_pool
+```
+
+**2. Add `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` back to config (3 places):**
+
+| # | File | What to add |
+|---|------|-------------|
+| 1 | `apps/web/.env.local` | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS=<pool_address>` |
+| 2 | `apps/web/.env.example` | Uncomment `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS=<pool_address>` |
+| 3 | `apps/web/wrangler.jsonc` | Add `"NEXT_PUBLIC_PRIVACY_POOL_ADDRESS": "<pool_address>"` to `vars` |
+
+**3. Rebuild & deploy web app (nuke caches!):**
+```bash
+cd apps/web
+rm -rf .next .open-next ../../.turbo ../../node_modules/.cache
+pnpm run deploy
+```
+
+**4. What this enables in the UI:**
+- Privacy toggle appears on `/order/[id]` page (defaults to ON)
+- Lenders can choose "Shield & Lend" (private) or "Sign & Settle" (public)
+- Private notes stored in localStorage for later redemption
+- "Private Lender" badge shown on offers with `lender_commitment != 0`
+
+**5. Bot behavior changes:**
+- When `lender_commitment != 0` in an offer, bot calls `settle()` with the commitment
+- Contract routes shares to privacy pool Merkle tree instead of minting ERC1155
+- No bot config changes needed — it reads `lender_commitment` from D1 offer data
+
+**6. What does NOT need changing:**
+- Bot worker (`workers/bot/`) — no config changes, reads commitment from D1
+- Indexer worker (`workers/indexer/`) — already handles `PrivateSettled` / `PrivateSharesRedeemed` events
+- Railway Apibara indexer — already handles privacy events
+- D1 schema — `lender_commitment` column already exists on `order_offers`
+- SDK — already has privacy module (`computeCommitment`, `computeNullifier`, etc.)
+
+---
+
+### Why Nonces Break on Redeployment
+
+The Stela contract uses OpenZeppelin's `NoncesComponent` for replay protection on off-chain signatures.
+Each borrower has a nonce counter starting at 0, incremented each time `settle()` is called.
+
+**How it works:**
+- `use_checked_nonce(owner)` does an **equality check**: `nonce == current_on_chain_nonce`
+- If the order was signed with nonce=3 but on-chain is nonce=2, settlement REVERTS
+- If nonce=3 was already consumed (on-chain is now 4), the order is **permanently invalid**
+
+**What happens on redeployment:**
+- Old contract might have nonce=4 for a wallet (4 orders settled)
+- New contract starts at nonce=0 for ALL wallets
+- Old orders in D1 still reference nonce=4 → bot's `expireStaleNonceOrders()` sees mismatch → expires them
+- Solution: clean all orders from D1 (Step 4 above), so fresh orders start at nonce=0
+
+**Server-side protection:**
+- `POST /api/orders` calls `verify-nonce.ts` which reads `nonces(address)` from the contract
+- Rejects orders where submitted nonce != on-chain nonce
+- Also rejects duplicate pending orders with the same borrower+nonce
+- verify-nonce **fails CLOSED** — if RPC is down, order creation is rejected (not silently accepted)
+
+### Common Gotchas
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Orders expire immediately | Stale contract address in server bundle | Nuke `.next`, `.open-next`, `.turbo`, `node_modules/.cache` and redeploy |
+| `pnpm build` doesn't update deployed code | `pnpm build` only runs `next build`, not OpenNext | Use `pnpm run deploy` from `apps/web/` |
+| Nonce mismatch (e.g. nonce=4 vs on-chain=0) | Old contract had consumed nonces, new contract starts at 0 | Clean D1 orders table |
+| `balanceOf` entrypoint not found | Cairo uses snake_case | Use `balance_of` not `balanceOf` |
+| `PRIV: unauthorized` on settlement | Privacy pool not linked on contract | Remove `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` or call `set_privacy_pool()` on contract |
+| Bot can't settle (gas errors) | Bot wallet has no ETH/STRK | Fund the bot wallet |
+| Indexer not catching events | `STELA_ADDRESS` wrong in Railway env | Update Railway env var and redeploy |
+| verify-nonce accepts bad nonces | RPC failures + fail-open design | verify-nonce.ts now fails CLOSED (2026-03-03 fix) |
+
+---
+
+## All Secrets & Config Reference
+
+### Cloudflare Workers (wrangler.jsonc vars + secrets)
+
+| Service | Variable | Source | Secret? |
+|---------|----------|--------|---------|
+| `stela-app` (web) | `NEXT_PUBLIC_STELA_ADDRESS` | `apps/web/wrangler.jsonc` vars | No |
+| `stela-app` (web) | `NEXT_PUBLIC_NETWORK` | `apps/web/wrangler.jsonc` vars | No |
+| `stela-app` (web) | `NEXT_PUBLIC_RPC_URL` | `apps/web/wrangler.jsonc` vars | No |
+| `stela-app` (web) | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | `apps/web/wrangler.jsonc` vars | No (optional) |
+| `stela-bot` | `STELA_ADDRESS` | `workers/bot/wrangler.jsonc` vars | No |
+| `stela-bot` | `BOT_PRIVATE_KEY` | `wrangler secret put` | **YES** |
+| `stela-bot` | `BOT_ADDRESS` | `wrangler secret put` | **YES** |
+| `stela-bot` | `RPC_URL` | `wrangler secret put` | **YES** (Alchemy key) |
+| `stela-indexer` | `STELA_ADDRESS` | `workers/indexer/wrangler.jsonc` vars | No |
+| `stela-indexer` | `WEBHOOK_SECRET` | `wrangler secret put` | **YES** |
+
+### Railway (Apibara indexer service)
+
+| Variable | Secret? | Notes |
+|----------|---------|-------|
+| `STELA_ADDRESS` | No | Must match all other services |
+| `RPC_URL` | Yes | StarkNet RPC for enrichment reads |
+| `DNA_TOKEN` | Yes | Apibara DNA gRPC auth token |
+| `WEBHOOK_URL` | No | `https://stela-indexer.stela-app.workers.dev` |
+| `WEBHOOK_SECRET` | Yes | Must match indexer worker secret |
+
+### Local Development (`.env.local`)
+
+| Variable | File | Notes |
+|----------|------|-------|
+| `NEXT_PUBLIC_STELA_ADDRESS` | `apps/web/.env.local` | Overrides SDK constant |
+| `NEXT_PUBLIC_NETWORK` | `apps/web/.env.local` | `sepolia` or `mainnet` |
+| `NEXT_PUBLIC_RPC_URL` | `apps/web/.env.local` | Alchemy for local dev (faster) |
+| `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | `apps/web/.env.local` | Optional — omit if no pool |
+
+### Current Contract Addresses (Sepolia)
+
+| Contract | Address | Notes |
+|----------|---------|-------|
+| **Stela (genesis-fee-vault)** | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` | Current production |
+| **StelaGenesis NFT** | `0x05acfbb98a9f8d2e177886fa02f5f329b254f6e333ab430ef53e25f4bbfbc8a3` | ERC721, 300 supply |
+| **FeeVault** | `0x0111beaef1d9b13378b0dbf1be40c556ccf6886591f6b1b29ed790fa13606471` | Fee distribution |
+| **Privacy Pool** | `0x002579e670f80cca558236c95762dd5b94ae017b6ed92df65b74b61b539cdec7` | NOT linked to current contract |
+
+### Previous Contract Addresses (historical, do not use)
+
+| Contract | Address | Tag |
+|----------|---------|-----|
+| Stela (deposit-privacy) | `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a03ece0` | — |
+| Stela (privacy-enabled) | `0x00c667d12113011a05f6271cc4bd9e7f4c3c5b90a093708801955af5a5b1e6d5` | — |
 
 ---
 

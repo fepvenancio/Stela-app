@@ -106,7 +106,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
             <div key={id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface/20 border border-edge/30 group">
               <div className="flex flex-col gap-1 min-w-0">
                 <Link
-                  href={`/inscription/${id}`}
+                  href={`/stela/${id}`}
                   onClick={(e) => e.stopPropagation()}
                   className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
                 >

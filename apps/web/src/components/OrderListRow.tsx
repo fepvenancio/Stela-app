@@ -28,7 +28,7 @@ export function OrderListRow({ order }: OrderListRowProps) {
   const statusLabel = getOrderStatusLabel(order.status)
 
   return (
-    <Link href={`/order/${order.id}`} className="block" aria-label={`View order ${order.id.slice(0, 8)}`}>
+    <Link href={`/stela/${order.id}`} className="block" aria-label={`View order ${order.id.slice(0, 8)}`}>
       <div className="group flex items-center gap-4 p-3 rounded-xl border transition-all duration-200 bg-surface/20 border-edge/50 hover:border-edge hover:bg-surface/40">
         {/* Spacer for alignment with inscription rows */}
         <div className="shrink-0 w-5 h-5" />

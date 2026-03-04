@@ -83,19 +83,19 @@ export function useRepayInscription(inscriptionId: string) {
   const repay = useCallback(async (debtAssets?: DebtAssetInfo[], interestAssets?: DebtAssetInfo[]) => {
     ensureStarknetContext({ address, status })
 
-    // Build ERC20 approval calls for debt + interest tokens the borrower must return
-    const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-    const allAssets = [...(debtAssets ?? []), ...(interestAssets ?? [])]
-
-    for (const asset of allAssets) {
+    // Build ERC20 approval calls for debt + interest tokens the borrower must return.
+    // Aggregate by token address so same-token debt+interest don't overwrite each other.
+    const approvalMap = new Map<string, bigint>()
+    for (const asset of [...(debtAssets ?? []), ...(interestAssets ?? [])]) {
       const amount = BigInt(asset.value || '0')
       if (amount <= 0n) continue
-      approvals.push({
-        contractAddress: asset.address,
-        entrypoint: 'approve',
-        calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
-      })
+      approvalMap.set(asset.address, (approvalMap.get(asset.address) ?? 0n) + amount)
     }
+    const approvals = [...approvalMap].map(([tokenAddress, total]) => ({
+      contractAddress: tokenAddress,
+      entrypoint: 'approve',
+      calldata: [CONTRACT_ADDRESS, ...toU256(total)],
+    }))
 
     const repayCall = client.buildRepay(BigInt(inscriptionId))
     await sendTxWithToast(sendAsync, [...approvals, repayCall], 'Inscription repaid', (txHash) => sync(txHash))
