@@ -56,6 +56,7 @@ export interface PortfolioSummary {
 export interface PortfolioData {
   lending: EnrichedInscription[]
   borrowing: EnrichedInscription[]
+  repaid: EnrichedInscription[]
   redeemable: (EnrichedInscription & { shareBalance: string })[]
   orders: OrderRow[]
   /** Active (pending/matched) orders where user is borrower — shown in Borrowing tab */
@@ -171,12 +172,22 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       }
     }
 
-    // Redeemable: user has shares > 0 AND status is repaid/liquidated
+    // Repaid: inscriptions where user is lender or borrower and status is repaid
+    const repaid = enriched.filter((ins) => {
+      if (ins.computedStatus !== 'repaid') return false
+      if (!address) return false
+      const isLender = ins.lender && addressesEqual(ins.lender, address)
+      const isBorrower = (ins.borrower && addressesEqual(ins.borrower, address)) ||
+        addressesEqual(ins.creator, address)
+      return isLender || isBorrower
+    })
+
+    // Redeemable: user has shares > 0 AND status is liquidated
     const redeemable = enriched
       .filter((ins) => {
         const balance = shareMap.get(ins.id)
         if (!balance || BigInt(balance) <= 0n) return false
-        return ins.computedStatus === 'repaid' || ins.computedStatus === 'liquidated'
+        return ins.computedStatus === 'liquidated'
       })
       .map((ins) => ({
         ...ins,
@@ -217,6 +228,7 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     return {
       lending,
       borrowing,
+      repaid,
       redeemable,
       orders: allOrders,
       borrowingOrders,

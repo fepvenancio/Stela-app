@@ -88,7 +88,7 @@ function matchesOrderSearch(q: string, order: OrderRow): boolean {
 export default function PortfolioPage() {
   const { address } = useAccount()
   const normalized = address ? normalizeAddress(address) : undefined
-  const { lending, borrowing, redeemable, orders, borrowingOrders, lendingOrders, summary, isLoading, error } = usePortfolio(normalized)
+  const { lending, borrowing, repaid, redeemable, orders, borrowingOrders, lendingOrders, summary, isLoading, error } = usePortfolio(normalized)
   const [search, setSearch] = useState('')
 
   const q = search.trim().toLowerCase()
@@ -105,13 +105,13 @@ export default function PortfolioPage() {
     () => q ? redeemable.filter((ins) => matchesSearch(q, ins)) : redeemable,
     [redeemable, q],
   )
-  const activeOrders = useMemo(
-    () => orders.filter((o) => o.status === 'pending' || o.status === 'matched' || o.status === 'settled'),
-    [orders],
+  const filteredRepaid = useMemo(
+    () => q ? repaid.filter((ins) => matchesSearch(q, ins)) : repaid,
+    [repaid, q],
   )
   const filteredOrders = useMemo(
-    () => q ? activeOrders.filter((o) => matchesOrderSearch(q, o)) : activeOrders,
-    [activeOrders, q],
+    () => q ? orders.filter((o) => matchesOrderSearch(q, o)) : orders,
+    [orders, q],
   )
 
   return (
@@ -179,6 +179,9 @@ export default function PortfolioPage() {
                 <TabsTrigger value="borrowing" className="text-chalk data-[state=active]:text-nebula after:bg-nebula">
                   Borrowing{(filteredBorrowing.length + borrowingOrders.length) > 0 && ` (${filteredBorrowing.length + borrowingOrders.length})`}
                 </TabsTrigger>
+                <TabsTrigger value="repaid" className="text-chalk data-[state=active]:text-star after:bg-star">
+                  Repaid{filteredRepaid.length > 0 && ` (${filteredRepaid.length})`}
+                </TabsTrigger>
                 <TabsTrigger value="redeemable" className="text-chalk data-[state=active]:text-cosmic after:bg-cosmic">
                   Redeemable{filteredRedeemable.length > 0 && ` (${filteredRedeemable.length})`}
                 </TabsTrigger>
@@ -245,9 +248,17 @@ export default function PortfolioPage() {
                 )}
               </TabsContent>
 
+              <TabsContent value="repaid">
+                {filteredRepaid.length === 0 ? (
+                  <EmptyTab message={q ? 'No repaid positions match your search.' : 'No repaid positions yet. Positions appear here after borrowers repay their loans.'} />
+                ) : (
+                  <InscriptionList items={filteredRepaid} />
+                )}
+              </TabsContent>
+
               <TabsContent value="redeemable">
                 {filteredRedeemable.length === 0 ? (
-                  <EmptyTab message={q ? 'No redeemable positions match your search.' : 'No redeemable positions. Positions appear here after repayment or liquidation.'} />
+                  <EmptyTab message={q ? 'No redeemable positions match your search.' : 'No redeemable positions. Positions appear here when liquidated collateral is claimable.'} />
                 ) : (
                   <InscriptionList items={filteredRedeemable} />
                 )}
@@ -255,7 +266,7 @@ export default function PortfolioPage() {
             </Tabs>
 
             {/* Global empty state when user has no positions at all */}
-            {lending.length === 0 && borrowing.length === 0 && redeemable.length === 0 && orders.length === 0 && (
+            {lending.length === 0 && borrowing.length === 0 && repaid.length === 0 && redeemable.length === 0 && orders.length === 0 && (
               <div className="text-center py-16">
                 <p className="text-ash text-sm max-w-xs mx-auto leading-relaxed">
                   Your personal library of stelas is empty. Inscribe a new agreement to begin your legacy.
