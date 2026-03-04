@@ -480,9 +480,15 @@ export default function CreatePage() {
               </Label>
             </div>
 
-            <div className="text-right">
-               <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Calculated Deadline</span>
-               <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(deadline))}</span>
+            <div className="flex items-center gap-6">
+              <div className="text-right">
+                <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Offer Expires</span>
+                <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(deadline))}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Repay By</span>
+                <span className="text-xs text-chalk font-mono font-bold">{formatTimestamp(BigInt(Number(deadline) + Number(duration)))}</span>
+              </div>
             </div>
           </div>
         </div>
