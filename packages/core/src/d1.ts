@@ -313,6 +313,37 @@ export function createD1Queries(db: D1Database) {
       return row ? row.value : null
     },
 
+    /**
+     * D1-backed write rate limiter. Persists across cold starts.
+     * Key: `rl:{identifier}`, value: `{minute_bucket}:{count}`.
+     * Returns true if the identifier has exceeded maxPerMinute writes.
+     */
+    async checkWriteRateLimit(identifier: string, maxPerMinute: number): Promise<boolean> {
+      const bucket = Math.floor(Date.now() / 60_000)
+      const key = `rl:${identifier}`
+      const row = await db
+        .prepare('SELECT value FROM _meta WHERE key = ?')
+        .bind(key)
+        .first<{ value: string }>()
+
+      let count = 0
+      if (row) {
+        const [storedBucket, storedCount] = row.value.split(':')
+        if (Number(storedBucket) === bucket) {
+          count = Number(storedCount)
+        }
+        // If bucket is old, count resets to 0
+      }
+
+      if (count >= maxPerMinute) return true
+
+      await db
+        .prepare('INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)')
+        .bind(key, `${bucket}:${count + 1}`)
+        .run()
+      return false
+    },
+
     // -----------------------------------------------------------------------
     // Expire open inscriptions past their deadline (no lender signed)
     // -----------------------------------------------------------------------
@@ -563,6 +594,38 @@ export function createD1Queries(db: D1Database) {
         .prepare('UPDATE order_offers SET status = ? WHERE id = ?')
         .bind(status, id)
         .run()
+    },
+
+    async purgeOrderSignature(orderId: string) {
+      await db
+        .prepare('UPDATE orders SET borrower_signature = NULL WHERE id = ?')
+        .bind(orderId)
+        .run()
+    },
+
+    async purgeOfferSignature(offerId: string) {
+      await db
+        .prepare('UPDATE order_offers SET lender_signature = NULL, depositor = NULL WHERE id = ?')
+        .bind(offerId)
+        .run()
+    },
+
+    /** Bulk-purge signatures on orders that are expired or cancelled (no longer settleable). */
+    async purgeStaleSignatures(): Promise<number> {
+      const r1 = await db
+        .prepare(
+          `UPDATE orders SET borrower_signature = NULL
+           WHERE status IN ('expired', 'cancelled') AND borrower_signature IS NOT NULL`
+        )
+        .run()
+      const r2 = await db
+        .prepare(
+          `UPDATE order_offers SET lender_signature = NULL, depositor = NULL
+           WHERE (status = 'expired' OR order_id IN (SELECT id FROM orders WHERE status IN ('expired', 'cancelled')))
+             AND (lender_signature IS NOT NULL OR depositor IS NOT NULL)`
+        )
+        .run()
+      return ((r1.meta?.changes as number) ?? 0) + ((r2.meta?.changes as number) ?? 0)
     },
 
     async createOrderOffer(offer: {

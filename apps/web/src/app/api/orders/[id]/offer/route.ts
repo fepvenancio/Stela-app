@@ -5,6 +5,7 @@ import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError 
 import { CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
+import { verifySettleTransaction } from '@/lib/verify-tx'
 import { createOfferSchema } from '@/lib/validation'
 
 export function OPTIONS(request: NextRequest) {
@@ -60,8 +61,16 @@ export async function POST(
       return errorResponse('Order deadline has passed', 400, request)
     }
 
-    // If tx_hash is provided, the lender already settled on-chain.
-    // Skip server-side signature verification (contract already verified both signatures).
+    // If tx_hash is provided, the lender claims to have already settled on-chain.
+    // Verify the tx receipt before accepting — prevents fake tx_hash submissions.
+    if (tx_hash) {
+      const txValid = await verifySettleTransaction(tx_hash)
+      if (!txValid) {
+        return errorResponse('Transaction not found or did not succeed on the Stela contract', 400, request)
+      }
+    }
+
+    // Verify lender signature (skip only if tx was verified on-chain above)
     if (!tx_hash) {
       // For private offers (lender=0x0), the depositor field identifies the actual signer.
       const isPrivateOffer = lender.replace(/^0x0*/i, '') === '0' || lender === '0x0'
@@ -147,7 +156,7 @@ export async function POST(
       lender_signature: JSON.stringify(lender_signature),
       nonce: String(nonce),
       lender_commitment: lender_commitment ?? '0x0',
-      depositor: depositor ?? undefined,
+      depositor: undefined,
       created_at: now,
     })
 

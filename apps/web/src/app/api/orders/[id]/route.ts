@@ -114,6 +114,10 @@ export async function DELETE(
     }
 
     await db.updateOrderStatus(id, 'cancelled')
+
+    // Purge signature immediately — no longer needed after cancellation
+    await db.purgeOrderSignature(id)
+
     return jsonResponse({ ok: true }, request)
   } catch (err) {
     logError('orders/[id]', err)

@@ -66,8 +66,11 @@ export function parseOrderRow(row: Record<string, unknown>): Record<string, unkn
   const interestAssets = parsed.interestAssets ?? parsed.interest_assets ?? []
   const collateralAssets = parsed.collateralAssets ?? parsed.collateral_assets ?? []
 
+  // Strip sensitive fields before spreading into the response
+  const { borrower_signature: _bs, ...safeRow } = row
+
   return {
-    ...row,
+    ...safeRow,
     order_data: {
       borrower: parsed.borrower ?? '',
       debtAssets,

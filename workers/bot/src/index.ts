@@ -312,6 +312,10 @@ async function settleOrders(
       // Update statuses on success
       await queries.updateOrderStatus(order_id, 'settled')
       await queries.updateOfferStatus(offer_id, 'settled')
+
+      // Purge signatures — no longer needed after on-chain verification
+      await queries.purgeOrderSignature(order_id)
+      await queries.purgeOfferSignature(offer_id)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error(`Failed to settle order ${order_id}: ${message}`)
@@ -374,6 +378,12 @@ export default {
         const staleExpired = await expireStaleNonceOrders(provider, env.STELA_ADDRESS, queries)
         if (staleExpired > 0) {
           console.log(`Expired ${staleExpired} order(s) with stale nonces`)
+        }
+
+        // 1c. Purge signatures on expired/cancelled orders (no longer needed)
+        const purged = await queries.purgeStaleSignatures()
+        if (purged > 0) {
+          console.log(`Purged signatures from ${purged} stale order/offer row(s)`)
         }
 
         // 2. Settle matched orders

@@ -529,7 +529,9 @@ The Stela contract applies protocol fees at settle and redeem, split between a r
 | REDEEM | 10 (0.1%) | 0 | 10 |
 | LIQUIDATE | 0 | 0 | 0 |
 
-**Mainnet deployment note:** Before renouncing ownership, `set_treasury()` MUST be called with the FeeVault address so treasury fees route to Genesis NFT holders (not an individual wallet). This is critical for regulatory compliance.
+**Mainnet deployment notes:**
+- Before renouncing ownership, `set_treasury()` MUST be called with the FeeVault address so treasury fees route to Genesis NFT holders (not an individual wallet). This is critical for regulatory compliance.
+- **SECURITY:** FeeVault's `deposit()` has no caller restriction — anyone can call it with arbitrary tokens, polluting the deposit ledger. For mainnet, add an `assert(caller == stela_contract)` check in `deposit()` before renouncing ownership. This prevents phantom deposits that could confuse the fee distribution accounting.
 
 When `fee_vault == zero_address` on the contract, no Genesis fees are taken (backwards compatible).
 

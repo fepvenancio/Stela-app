@@ -4,6 +4,7 @@ import { createD1Queries } from '@stela/core'
 import type { D1Database } from '@stela/core'
 import { isRateLimited, isAddressRateLimited, MAX_BODY_SIZE } from '@/lib/rate-limit'
 import type { RateLimitMethod } from '@/lib/rate-limit'
+import type { D1Queries } from '@stela/core'
 import { AppError, NotFoundError, UnauthorizedError, ValidationError, RateLimitError } from '@/lib/errors'
 
 export { AppError, NotFoundError, UnauthorizedError, ValidationError, RateLimitError }
