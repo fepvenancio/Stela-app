@@ -11,7 +11,7 @@ import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getCancelOrderTypedData } from '@/lib/offchain'
-import { PRIVACY_POOL_ADDRESS, CHAIN_ID } from '@/lib/config'
+import { CHAIN_ID } from '@/lib/config'
 import { parseAmount } from '@/lib/amount'
 import { addressesEqual } from '@/lib/address'
 import { toast } from 'sonner'
@@ -24,7 +24,7 @@ interface OrderActionsProps {
   borrower: string
   debtAssets: SerializedAsset[]
   multiLender: boolean
-  offers?: { id: string; lender: string; bps: number; lender_commitment?: string }[]
+  offers?: { id: string; lender: string; bps: number }[]
 }
 
 export function OrderActions({
@@ -33,23 +33,12 @@ export function OrderActions({
   const { address, account } = useAccount()
   const { signOrder, isPending: signPending } = useSignOrder(orderId)
   const [lendAmount, setLendAmount] = useState('')
-  const [privateMode, setPrivateMode] = useState(!!PRIVACY_POOL_ADDRESS)
 
-  const settleSteps = useMemo(() =>
-    privateMode
-      ? [
-          { label: 'Shield deposit', description: 'Approve tokens & shield to privacy pool' },
-          { label: 'Confirming shield', description: 'Waiting for block confirmation' },
-          { label: 'Signing offer', description: 'Sign the anonymous lend offer' },
-          { label: 'Submitting offer', description: 'Recording offer for bot settlement' },
-        ]
-      : [
-          { label: 'Approve & Settle', description: 'Confirm the transaction in your wallet' },
-          { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
-          { label: 'Saving offer', description: 'Recording settlement details' },
-        ],
-    [privateMode],
-  )
+  const settleSteps = useMemo(() => [
+    { label: 'Approve & Settle', description: 'Confirm the transaction in your wallet' },
+    { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
+    { label: 'Saving offer', description: 'Recording settlement details' },
+  ], [])
   const settleProgress = useTransactionProgress(settleSteps)
 
   const isPending = status === 'pending'
@@ -67,42 +56,8 @@ export function OrderActions({
         {isPending && !isOwner ? (
           <>
             <p className="text-xs text-dust leading-relaxed pb-4">
-              {privateMode
-                ? 'Shield your tokens into the privacy pool. A bot will settle the loan without revealing your identity.'
-                : 'Sign and settle on-chain in one step. You approve tokens and execute the settlement.'}
+              Sign and settle on-chain in one step. You approve tokens and execute the settlement.
             </p>
-            {/* Privacy Toggle */}
-            {PRIVACY_POOL_ADDRESS && (
-              <div className="pb-4 mb-4 border-b border-star/10 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setPrivateMode(!privateMode)}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-edge/20 bg-abyss/40 hover:border-star/30 transition-colors"
-                  aria-label="Toggle private lending"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${privateMode ? 'bg-star/20 text-star' : 'bg-surface/40 text-ash'} transition-colors`}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                        <path d="M7 11V7a5 5 0 0110 0v4" />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <span className="text-xs text-chalk font-display block">Private Lending</span>
-                      <span className="text-[10px] text-ash">Your identity is hidden on-chain</span>
-                    </div>
-                  </div>
-                  <div className={`w-10 h-5 rounded-full relative transition-colors ${privateMode ? 'bg-star' : 'bg-edge/40'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-chalk transition-transform ${privateMode ? 'left-5' : 'left-0.5'}`} />
-                  </div>
-                </button>
-                {privateMode && (
-                  <p className="text-[10px] text-dust leading-relaxed px-1">
-                    Your tokens are shielded in the privacy pool. A bot settles the loan — your address never appears on-chain. A private note is saved to your browser for redemption.
-                  </p>
-                )}
-              </div>
-            )}
 
             {multiLender ? (
               <form
@@ -128,7 +83,7 @@ export function OrderActions({
                     return
                   }
                   try {
-                    await signOrder(bps, privateMode, settleProgress)
+                    await signOrder(bps, settleProgress)
                   } catch {
                     // Error already toasted in hook
                   }
@@ -155,7 +110,7 @@ export function OrderActions({
                   />
                 </div>
                 <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={signPending || !lendAmount}>
-                  {signPending ? (privateMode ? 'Shielding...' : 'Settling...') : (privateMode ? 'Shield & Lend' : 'Sign & Settle')}
+                  {signPending ? 'Settling...' : 'Sign & Settle'}
                 </Button>
               </form>
             ) : (
@@ -171,13 +126,13 @@ export function OrderActions({
                   disabled={signPending}
                   onClick={async () => {
                     try {
-                      await signOrder(10000, privateMode, settleProgress)
+                      await signOrder(10000, settleProgress)
                     } catch {
                       // Error already toasted in hook
                     }
                   }}
                 >
-                  {signPending ? (privateMode ? 'Shielding...' : 'Settling...') : (privateMode ? 'Shield & Lend 100%' : 'Sign & Settle 100%')}
+                  {signPending ? 'Settling...' : 'Sign & Settle 100%'}
                 </Button>
               </div>
             )}

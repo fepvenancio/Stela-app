@@ -10,8 +10,6 @@ export const SELECTORS = {
   InscriptionLiquidated: hash.getSelectorFromName('InscriptionLiquidated'),
   SharesRedeemed: hash.getSelectorFromName('SharesRedeemed'),
   TransferSingle: hash.getSelectorFromName('TransferSingle'),
-  PrivateSettled: hash.getSelectorFromName('PrivateSettled'),
-  PrivateSharesRedeemed: hash.getSelectorFromName('PrivateSharesRedeemed'),
 } as const
 
 export const ALL_SELECTORS = Object.values(SELECTORS)

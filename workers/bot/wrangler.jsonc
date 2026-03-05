@@ -12,7 +12,7 @@
     }
   ],
   "vars": {
-    "STELA_ADDRESS": "0x042e955a1905261e7afdba17518506c8f275759e1195bc19e2eca908658bf8e9"
+    "STELA_ADDRESS": "0x042f27b5cf82781d8fffd7daeec9184ac4f14c9e86e87b880bd81ef5197345ed"
   },
   "triggers": {
     "crons": ["*/2 * * * *"]

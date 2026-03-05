@@ -508,238 +508,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 5. Privacy Pool ──────────────────────────────────── */}
-      <section className="px-4 max-w-6xl mx-auto w-full">
-        <div className="text-center mb-16">
-          <SectionLabel>Privacy Pool</SectionLabel>
-          <SectionTitle>
-            Lend <span className="text-nebula italic">anonymously</span>
-          </SectionTitle>
-          <p className="text-dust mt-6 max-w-3xl mx-auto leading-relaxed">
-            Lenders shouldn&apos;t have to reveal their full portfolio to provide liquidity.
-            Stela&apos;s Privacy Pool lets you lend and redeem without linking your identity
-            to specific positions -- while remaining fully compliant.
-          </p>
-        </div>
-
-        {/* Public vs Private paths */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
-          {/* Public path */}
-          <div className="bg-surface/20 border border-edge/20 rounded-[32px] p-8 relative overflow-hidden granite-noise">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-chalk/5 border border-edge/30 flex items-center justify-center text-chalk">{icons.eye}</div>
-              <div>
-                <h3 className="font-display text-lg text-chalk uppercase tracking-wider">Public Path</h3>
-                <p className="text-[10px] text-ash uppercase tracking-widest">Standard lending</p>
-              </div>
-            </div>
-            <div className="space-y-4 text-sm text-dust leading-relaxed">
-              <div className="flex gap-3 items-start">
-                <div className="w-1.5 h-1.5 rounded-full bg-chalk/30 mt-2 flex-shrink-0" />
-                <p>Lender signs and provides debt assets</p>
-              </div>
-              <div className="flex gap-3 items-start">
-                <div className="w-1.5 h-1.5 rounded-full bg-chalk/30 mt-2 flex-shrink-0" />
-                <p>ERC1155 shares minted directly to lender&apos;s address</p>
-              </div>
-              <div className="flex gap-3 items-start">
-                <div className="w-1.5 h-1.5 rounded-full bg-chalk/30 mt-2 flex-shrink-0" />
-                <p>Redeem shares from lender&apos;s address (publicly visible)</p>
-              </div>
-            </div>
-            <div className="mt-6 p-4 bg-void/40 rounded-xl border border-edge/15 text-xs text-ash">
-              Anyone can see which address lent to which inscription, and the exact amount.
-            </div>
-          </div>
-
-          {/* Private path */}
-          <div className="bg-nebula/5 border border-nebula/20 rounded-[32px] p-8 relative overflow-hidden granite-noise">
-            <div className="absolute top-4 right-4 w-20 h-20 bg-nebula/5 rounded-full blur-[40px] pointer-events-none" />
-            <div className="flex items-center gap-3 mb-6 relative z-10">
-              <div className="w-10 h-10 rounded-xl bg-nebula/10 border border-nebula/30 flex items-center justify-center text-nebula">{icons.eyeOff}</div>
-              <div>
-                <h3 className="font-display text-lg text-nebula uppercase tracking-wider">Private Path</h3>
-                <p className="text-[10px] text-ash uppercase tracking-widest">Shielded lending</p>
-              </div>
-            </div>
-            <div className="space-y-4 text-sm text-dust leading-relaxed relative z-10">
-              <div className="flex gap-3 items-start">
-                <div className="w-1.5 h-1.5 rounded-full bg-nebula/40 mt-2 flex-shrink-0" />
-                <p>Lender provides a <span className="text-chalk">commitment hash</span> with their offer</p>
-              </div>
-              <div className="flex gap-3 items-start">
-                <div className="w-1.5 h-1.5 rounded-full bg-nebula/40 mt-2 flex-shrink-0" />
-                <p>Shares committed to <span className="text-nebula">Merkle tree</span> (not minted to address)</p>
-              </div>
-              <div className="flex gap-3 items-start">
-                <div className="w-1.5 h-1.5 rounded-full bg-nebula/40 mt-2 flex-shrink-0" />
-                <p>Redeem with <span className="text-nebula">ZK proof</span> -- no link to original lender</p>
-              </div>
-            </div>
-            <div className="mt-6 p-4 bg-void/40 rounded-xl border border-nebula/15 text-xs text-nebula/80">
-              The connection between lender identity and lending position is broken cryptographically.
-            </div>
-          </div>
-        </div>
-
-        {/* Privacy mechanism deep-dive */}
-        <div className="bg-void/40 border border-edge/20 rounded-[40px] p-8 sm:p-12 relative overflow-hidden">
-          <h3 className="font-display text-xl sm:text-2xl text-chalk uppercase tracking-wider mb-10 text-center">How Privacy Works</h3>
-
-          <div className="grid md:grid-cols-4 gap-6 lg:gap-8">
-            <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-star/10 border border-star/20 flex items-center justify-center text-star mx-auto">
-                {icons.lock}
-              </div>
-              <h4 className="font-display text-sm text-chalk uppercase tracking-widest">1. Commit</h4>
-              <p className="text-dust text-xs leading-relaxed">
-                Lender generates a secret <span className="text-chalk font-mono text-[11px]">salt</span> and computes a <span className="text-star">commitment</span> = Poseidon(inscription_id, shares, salt). This commitment is submitted with the lend offer.
-              </p>
-            </div>
-
-            <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-nebula/10 border border-nebula/20 flex items-center justify-center text-nebula mx-auto">
-                {icons.tree}
-              </div>
-              <h4 className="font-display text-sm text-chalk uppercase tracking-widest">2. Insert</h4>
-              <p className="text-dust text-xs leading-relaxed">
-                On settlement, the commitment is inserted into a <span className="text-nebula">Merkle tree</span> (depth 16, up to 65,536 leaves). Poseidon hash function ensures efficient ZK-circuit compatibility.
-              </p>
-            </div>
-
-            <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-cosmic/10 border border-cosmic/20 flex items-center justify-center text-cosmic mx-auto">
-                {icons.hash}
-              </div>
-              <h4 className="font-display text-sm text-chalk uppercase tracking-widest">3. Nullify</h4>
-              <p className="text-dust text-xs leading-relaxed">
-                To redeem, the lender generates a <span className="text-cosmic">nullifier</span> = Poseidon(commitment, salt). The nullifier prevents double-spending without revealing which commitment is being spent.
-              </p>
-            </div>
-
-            <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-aurora/10 border border-aurora/20 flex items-center justify-center text-aurora mx-auto">
-                {icons.checkCircle}
-              </div>
-              <h4 className="font-display text-sm text-chalk uppercase tracking-widest">4. Redeem</h4>
-              <p className="text-dust text-xs leading-relaxed">
-                Present a <span className="text-aurora">ZK proof</span> that you know the secret behind a valid commitment in the tree. Assets are sent to any address you choose. No link to the original lender.
-              </p>
-            </div>
-          </div>
-
-          {/* Tree visualization */}
-          <div className="mt-12 pt-8 border-t border-edge/15">
-            <div className="text-center mb-6">
-              <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Commitment Tree</span>
-            </div>
-            <div className="flex flex-col items-center gap-1 max-w-md mx-auto">
-              {/* Root */}
-              <div className="w-16 h-8 rounded-lg bg-star/10 border border-star/30 flex items-center justify-center">
-                <span className="text-[8px] text-star font-mono uppercase tracking-wider">Root</span>
-              </div>
-              <div className="flex gap-12">
-                <div className="w-px h-4 bg-edge/30" />
-                <div className="w-px h-4 bg-edge/30" />
-              </div>
-              {/* Level 1 */}
-              <div className="flex gap-8">
-                <div className="w-12 h-6 rounded-md bg-nebula/8 border border-nebula/20 flex items-center justify-center">
-                  <span className="text-[7px] text-nebula/60 font-mono">H(a,b)</span>
-                </div>
-                <div className="w-12 h-6 rounded-md bg-nebula/8 border border-nebula/20 flex items-center justify-center">
-                  <span className="text-[7px] text-nebula/60 font-mono">H(c,d)</span>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="w-px h-3 bg-edge/20" />
-                ))}
-              </div>
-              {/* Leaves */}
-              <div className="flex gap-2">
-                {['C1', 'C2', 'C3', 'C4'].map((label) => (
-                  <div key={label} className="w-10 h-5 rounded bg-surface/40 border border-edge/20 flex items-center justify-center">
-                    <span className="text-[7px] text-dust font-mono">{label}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-ash mt-4 text-center">
-                Depth 16 &middot; 65,536 leaf capacity &middot; 100 root history &middot; Poseidon hashes
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 6. Regulatory Compliance ─────────────────────────── */}
-      <section className="px-4 max-w-6xl mx-auto w-full">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-          <div>
-            <SectionLabel>Compliance</SectionLabel>
-            <SectionTitle className="mb-6">
-              Privacy is not about <span className="text-nova italic">hiding</span>
-            </SectionTitle>
-            <p className="text-dust leading-relaxed mb-6">
-              It&apos;s about choosing what to reveal. Stela&apos;s Privacy Pool is designed from the ground up
-              to be compatible with regulatory requirements. Privacy and compliance are not at odds --
-              they are complementary.
-            </p>
-            <blockquote className="border-l-2 border-star/40 pl-6 my-8">
-              <p className="text-chalk italic text-lg leading-relaxed font-display">
-                &ldquo;Prove what you are not, without revealing what you are.&rdquo;
-              </p>
-            </blockquote>
-            <p className="text-dust leading-relaxed text-sm">
-              On mainnet, the protocol enforces innocence proofs and standby periods for all
-              private redemptions. This ensures that shielded funds can be verified as compliant
-              without compromising the privacy of legitimate users.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            {/* Innocence Proofs */}
-            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-aurora/10 flex items-center justify-center text-aurora">{icons.shield}</div>
-                <h4 className="font-display text-base text-chalk uppercase tracking-wider">Innocence Proofs</h4>
-              </div>
-              <p className="text-dust text-sm leading-relaxed relative z-10">
-                Before redeeming, users prove their commitment is <span className="text-aurora">NOT</span> in a
-                blacklist set -- without revealing which commitment is theirs. This is a ZK
-                exclusion proof: &ldquo;I am not a bad actor&rdquo; verified cryptographically.
-              </p>
-            </div>
-
-            {/* Standby Period */}
-            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-star/10 flex items-center justify-center text-star">{icons.clock}</div>
-                <h4 className="font-display text-base text-chalk uppercase tracking-wider">Standby Period</h4>
-              </div>
-              <p className="text-dust text-sm leading-relaxed relative z-10">
-                A configurable time window between commitment insertion and redemption. This allows
-                time for compliance verification and blacklist updates before funds can be withdrawn.
-              </p>
-            </div>
-
-            {/* Blacklist Root */}
-            <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-nova/10 flex items-center justify-center text-nova">{icons.scale}</div>
-                <h4 className="font-display text-base text-chalk uppercase tracking-wider">Blacklist Root</h4>
-              </div>
-              <p className="text-dust text-sm leading-relaxed relative z-10">
-                A protocol-level Merkle root hash representing known illicit addresses, updated by
-                governance. Innocence proofs verify against this root. If your commitment is not
-                derived from a blacklisted address, your proof passes.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 7. Genesis NFT ──────────────────────────────────── */}
+      {/* ── 5. Genesis NFT ──────────────────────────────────── */}
       <section className="px-4 max-w-6xl mx-auto w-full">
         <div className="text-center mb-16">
           <SectionLabel>Genesis Collection</SectionLabel>
@@ -747,8 +516,8 @@ export default function LandingPage() {
             Own a piece of the <span className="text-star italic">protocol</span>
           </SectionTitle>
           <p className="text-dust mt-6 max-w-3xl mx-auto leading-relaxed">
-            500 Genesis NFTs. Each one entitles its holder to a perpetual share of all protocol fees.
-            Real yield, paid in the same tokens flowing through Stela -- not inflationary emissions.
+            300 Genesis NFTs. Each one entitles its holder to protocol fee discounts up to 50%.
+            The more you hold (up to 5), the less you pay in settlement and redemption fees.
           </p>
         </div>
 
@@ -767,23 +536,23 @@ export default function LandingPage() {
             <div className="space-y-5 relative z-10">
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Total Supply</span>
-                <span className="text-chalk font-display text-lg tracking-wider">500</span>
+                <span className="text-chalk font-display text-lg tracking-wider">300</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Mint Price</span>
                 <span className="text-star font-display text-lg tracking-wider">5,000 STRK</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
-                <span className="text-dust text-sm">Fee Share</span>
-                <span className="text-chalk font-display text-lg tracking-wider">100% of non-relayer fees</span>
+                <span className="text-dust text-sm">Max Discount</span>
+                <span className="text-chalk font-display text-lg tracking-wider">50% off fees (5 NFTs)</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
-                <span className="text-dust text-sm">Claim</span>
-                <span className="text-chalk font-display text-sm tracking-wider">Anytime, any token</span>
+                <span className="text-dust text-sm">Discount</span>
+                <span className="text-chalk font-display text-sm tracking-wider">10% per NFT, applied automatically</span>
               </div>
               <div className="flex justify-between items-center py-3">
                 <span className="text-dust text-sm">Transferable</span>
-                <span className="text-aurora font-display text-sm tracking-wider">Yes -- unclaimed fees travel with NFT</span>
+                <span className="text-aurora font-display text-sm tracking-wider">Yes -- discount travels with NFT</span>
               </div>
             </div>
           </div>
@@ -793,24 +562,22 @@ export default function LandingPage() {
             <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-star/10 flex items-center justify-center text-star">{icons.coins}</div>
-                <h4 className="font-display text-base text-chalk uppercase tracking-wider">Real Yield</h4>
+                <h4 className="font-display text-base text-chalk uppercase tracking-wider">Fee Discounts</h4>
               </div>
               <p className="text-dust text-sm leading-relaxed relative z-10">
-                Genesis holders earn actual ERC20 tokens from every settlement and redemption on the protocol.
-                No token inflation. No dilution. Revenue flows directly from borrowers and lenders to the FeeVault,
-                claimable by NFT holders at any time.
+                Genesis holders pay reduced protocol fees. Each NFT grants a 10% discount (up to 50% with 5 NFTs).
+                Discounts are applied automatically on-chain during settlement and redemption -- no claiming needed.
               </p>
             </div>
 
             <div className="bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden group hover:border-star/20 transition-all">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-nebula/10 flex items-center justify-center text-nebula">{icons.vault}</div>
-                <h4 className="font-display text-base text-chalk uppercase tracking-wider">FeeVault</h4>
+                <h4 className="font-display text-base text-chalk uppercase tracking-wider">Simple Treasury</h4>
               </div>
               <p className="text-dust text-sm leading-relaxed relative z-10">
-                A cumulative reward-per-token contract inspired by GMX and Synthetix. Each of the 500 NFTs has
-                equal weight. Multiple ERC20 fee tokens are tracked independently. Claim individually or batch-claim
-                across multiple NFTs in a single transaction.
+                Protocol fees flow to a simple treasury address. No complex vault contracts or claiming mechanics.
+                NFT discounts are computed on-chain by reading the user&apos;s Genesis NFT balance at transaction time.
               </p>
             </div>
 
@@ -838,8 +605,8 @@ export default function LandingPage() {
             <div>
               <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Treasury Reserve</h5>
               <p className="text-dust text-sm leading-relaxed">
-                100 of the 500 Genesis NFTs are minted to the protocol treasury on contract deployment —
-                hardcoded in the smart contract constructor, not an admin action. These 100 NFTs fund
+                50 of the 300 Genesis NFTs are minted to the protocol treasury on contract deployment —
+                hardcoded in the smart contract constructor, not an admin action. These 50 NFTs fund
                 protocol development: audits, upgrades, and licensing.
               </p>
             </div>
@@ -847,7 +614,7 @@ export default function LandingPage() {
               <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Per-Wallet Cap</h5>
               <p className="text-dust text-sm leading-relaxed">
                 Public minting is limited to 5 NFTs per wallet to prevent concentration.
-                No single participant can accumulate an outsized share of protocol revenue.
+                No single participant can accumulate an outsized discount.
               </p>
             </div>
             <div>
@@ -859,11 +626,10 @@ export default function LandingPage() {
               </p>
             </div>
             <div>
-              <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Fair Fee Distribution</h5>
+              <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Instant Discounts</h5>
               <p className="text-dust text-sm leading-relaxed">
-                Each NFT only earns fees deposited after it was minted. A snapshot at mint time
-                prevents new holders from claiming retroactive fees. Treasury NFTs (minted at deploy)
-                earn from the first deposit; public minters earn from their mint onwards.
+                Discounts are applied automatically at transaction time by reading your NFT balance on-chain.
+                No staking, no claiming, no lock-up. Buy or sell an NFT and the discount updates immediately.
               </p>
             </div>
           </div>
@@ -878,8 +644,8 @@ export default function LandingPage() {
             Transparent and <span className="text-star italic">minimal</span>
           </SectionTitle>
           <p className="text-dust mt-6 max-w-3xl mx-auto leading-relaxed">
-            0.35% total round-trip cost. Cheaper than Aave (50-100 BPS) and Compound.
-            Every basis point is accounted for and routed on-chain.
+            0.30% total round-trip cost. Cheaper than Aave (50-100 BPS) and Compound.
+            Genesis NFT holders pay even less with discounts up to 50%.
           </p>
         </div>
 
@@ -890,15 +656,15 @@ export default function LandingPage() {
             <div className="bg-star/[0.03] border border-star/20 rounded-3xl p-6 text-center">
               <div className="w-12 h-12 rounded-2xl bg-star/10 border border-star/20 flex items-center justify-center text-star mx-auto mb-4">{icons.send}</div>
               <h4 className="font-display text-lg text-star uppercase tracking-widest mb-2">Settlement</h4>
-              <div className="text-3xl font-display text-chalk mb-4">25 <span className="text-base text-dust">BPS</span></div>
+              <div className="text-3xl font-display text-chalk mb-4">20 <span className="text-base text-dust">BPS</span></div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between px-2">
                   <span className="text-dust">Relayer</span>
                   <span className="text-chalk">5 BPS</span>
                 </div>
                 <div className="flex justify-between px-2">
-                  <span className="text-dust">Genesis Holders</span>
-                  <span className="text-star">20 BPS</span>
+                  <span className="text-dust">Treasury</span>
+                  <span className="text-star">15 BPS</span>
                 </div>
               </div>
             </div>
@@ -914,7 +680,7 @@ export default function LandingPage() {
                   <span className="text-chalk">0 BPS</span>
                 </div>
                 <div className="flex justify-between px-2">
-                  <span className="text-dust">Genesis Holders</span>
+                  <span className="text-dust">Treasury</span>
                   <span className="text-star">10 BPS</span>
                 </div>
               </div>
@@ -1045,7 +811,7 @@ export default function LandingPage() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
                 </div>
                 <h4 className="font-display text-sm text-star uppercase tracking-widest mb-2">Smart Contracts</h4>
-                <p className="text-[11px] text-dust leading-relaxed">Cairo on StarkNet. Inscription state machine, locker deployment, share minting, privacy pool, Genesis NFT, and FeeVault.</p>
+                <p className="text-[11px] text-dust leading-relaxed">Cairo on StarkNet. Inscription state machine, locker deployment, share minting, Genesis NFT, and fee discounts.</p>
                 <div className="mt-3 font-mono text-[10px] text-ash">Cairo</div>
               </div>
 
@@ -1054,7 +820,7 @@ export default function LandingPage() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 </div>
                 <h4 className="font-display text-sm text-chalk uppercase tracking-widest mb-2">TypeScript SDK</h4>
-                <p className="text-[11px] text-dust leading-relaxed">Build calldata, query state, compute status, privacy utilities. Works in browser and Node.js.</p>
+                <p className="text-[11px] text-dust leading-relaxed">Build calldata, query state, compute status, off-chain signing. Works in browser and Node.js.</p>
                 <div className="mt-3 font-mono text-[10px] text-ash">@fepvenancio/stela-sdk</div>
               </div>
 

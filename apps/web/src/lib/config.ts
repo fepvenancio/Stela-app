@@ -11,11 +11,7 @@ const DEFAULT_RPC: Record<Network, string> = {
 }
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || DEFAULT_RPC[NETWORK]
 
-export const PRIVACY_POOL_ADDRESS =
-  (process.env.NEXT_PUBLIC_PRIVACY_POOL_ADDRESS || '') as `0x${string}`
-
-export const GENESIS_ADDRESS = '0x02405de15c17aaf863bcf23c22706d73d142c8a81df29de9ef129666655847ca' as `0x${string}`
-export const FEE_VAULT_ADDRESS = '0x065f7103f01474dcc860d200e9e8eb7c467dbe3f6dcf0af5b84cfa143fb264f6' as `0x${string}`
+export const GENESIS_ADDRESS = '0x07b1579dd61bbbaaea402d93c272a0a1b4d8e1a06a57743f509fbd6cb9b53fb2' as `0x${string}`
 export const STRK_ADDRESS = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d' as `0x${string}`
 
 /** SNIP-12 chain ID shortstrings - mirrors SDK's CHAIN_ID */

@@ -16,7 +16,6 @@ import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { PRIVACY_POOL_ADDRESS } from '@/lib/config'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTokenValue } from '@/lib/format'
@@ -41,7 +40,6 @@ export function InscriptionActions({
 }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [lendAmount, setLendAmount] = useState('')
-  const [privateMode, setPrivateMode] = useState(!!PRIVACY_POOL_ADDRESS)
 
   const { sign, isPending: signPending } = useSignInscription(inscriptionId)
   const { repay, isPending: repayPending } = useRepayInscription(inscriptionId)
@@ -49,20 +47,10 @@ export function InscriptionActions({
   const { liquidate, isPending: liquidatePending } = useLiquidateInscription(inscriptionId)
   const { redeem, isPending: redeemPending } = useRedeemShares(inscriptionId)
 
-  const signSteps = useMemo(() =>
-    privateMode
-      ? [
-          { label: 'Shield deposit', description: 'Approve tokens & shield to privacy pool' },
-          { label: 'Confirming shield', description: 'Waiting for block confirmation' },
-          { label: 'Signing inscription', description: 'Sign the lending transaction' },
-          { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
-        ]
-      : [
-          { label: 'Approve & Sign', description: 'Confirm the transaction in your wallet' },
-          { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
-        ],
-    [privateMode],
-  )
+  const signSteps = useMemo(() => [
+    { label: 'Approve & Sign', description: 'Confirm the transaction in your wallet' },
+    { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
+  ], [])
   const signProgress = useTransactionProgress(signSteps)
 
   const isPending = signPending || repayPending || cancelPending || liquidatePending || redeemPending
@@ -88,44 +76,11 @@ export function InscriptionActions({
       />
     )
 
-    const privacyToggle = PRIVACY_POOL_ADDRESS && (
-      <div className="pb-4 mb-4 border-b border-star/10 space-y-3">
-        <button
-          type="button"
-          onClick={() => setPrivateMode(!privateMode)}
-          className="w-full flex items-center justify-between p-3 rounded-2xl border border-edge/20 bg-abyss/40 hover:border-star/30 transition-colors"
-          aria-label="Toggle private lending"
-        >
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${privateMode ? 'bg-star/20 text-star' : 'bg-surface/40 text-ash'} transition-colors`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
-            </div>
-            <div className="text-left">
-              <span className="text-xs text-chalk font-display block">Private Lending</span>
-              <span className="text-[10px] text-ash">Your identity is hidden on-chain</span>
-            </div>
-          </div>
-          <div className={`w-10 h-5 rounded-full relative transition-colors ${privateMode ? 'bg-star' : 'bg-edge/40'}`}>
-            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-chalk transition-transform ${privateMode ? 'left-5' : 'left-0.5'}`} />
-          </div>
-        </button>
-        {privateMode && (
-          <p className="text-[10px] text-dust leading-relaxed px-1">
-            Your tokens are shielded in the privacy pool. A bot settles the loan — your address never appears on-chain. A private note is saved to your browser for redemption.
-          </p>
-        )}
-      </div>
-    )
-
     // Non-multi-lender: one-click lend at 100%
     if (!multiLender) {
       return (
         <>
           <div className="space-y-6">
-            {privacyToggle}
             <div className="p-4 rounded-2xl bg-star/5 border border-star/10 text-center">
                <span className="text-[10px] text-star uppercase tracking-widest font-bold">Rewards for Lender</span>
                <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
@@ -143,10 +98,7 @@ export function InscriptionActions({
                 }
               }}
             >
-              {signPending
-                ? (privateMode ? 'Shielding...' : 'Signing...')
-                : (privateMode ? 'Shield & Lend 100%' : 'Sign & Lend 100%')
-              }
+              {signPending ? 'Signing...' : 'Sign & Lend 100%'}
             </Button>
             <div className="flex justify-center">
               {cancelButton}
@@ -169,7 +121,6 @@ export function InscriptionActions({
     return (
       <>
         <div className="space-y-6">
-          {privacyToggle}
           <div className="p-4 rounded-2xl bg-star/5 border border-star/10 text-center">
              <span className="text-[10px] text-star uppercase tracking-widest font-bold">Multi-Lending Active</span>
              <p className="text-xs text-dust mt-1">Total Vault Debt: {totalDebtFormatted}</p>
@@ -224,10 +175,7 @@ export function InscriptionActions({
               />
             </div>
             <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={isPending || !lendAmount}>
-              {signPending
-                ? (privateMode ? 'Shielding...' : 'Signing...')
-                : (privateMode ? 'Shield & Lend' : 'Sign & Lend')
-              }
+              {signPending ? 'Signing...' : 'Sign & Lend'}
             </Button>
           </form>
           <div className="flex justify-center">

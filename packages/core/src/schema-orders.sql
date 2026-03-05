@@ -18,8 +18,6 @@ CREATE TABLE IF NOT EXISTS order_offers (
   bps INTEGER NOT NULL,
   lender_signature TEXT NOT NULL,
   nonce TEXT NOT NULL,
-  lender_commitment TEXT NOT NULL DEFAULT '0',
-  depositor TEXT,
   status TEXT NOT NULL DEFAULT 'pending',
   created_at INTEGER NOT NULL
 );

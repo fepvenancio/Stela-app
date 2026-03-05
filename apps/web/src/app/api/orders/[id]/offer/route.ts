@@ -35,10 +35,9 @@ export async function POST(
       return errorResponse(`Validation failed: ${messages.join('; ')}`, 400, request)
     }
 
-    const { id, lender, bps, lender_signature, nonce, lender_commitment, depositor, tx_hash } = parsed.data
+    const { id, lender, bps, lender_signature, nonce, tx_hash } = parsed.data
 
-    // For private offers, lender is '0x0' — rate limit by depositor instead
-    const rateLimitAddress = depositor ?? lender
+    const rateLimitAddress = lender
     const limited = rateLimit(request, rateLimitAddress)
     if (limited) return limited
 
@@ -76,13 +75,7 @@ export async function POST(
 
     // Verify lender signature (skip only if tx was verified on-chain above)
     if (!tx_hash) {
-      // For private offers (lender=0x0), the depositor field identifies the actual signer.
-      const isPrivateOffer = lender.replace(/^0x0*/i, '') === '0' || lender === '0x0'
-      const signerAddress = isPrivateOffer ? depositor : lender
-
-      if (isPrivateOffer && !depositor) {
-        return errorResponse('Private offers require a depositor address', 400, request)
-      }
+      const signerAddress = lender
 
       // ── Signature Verification ──────────────────────────────────────────
       // Reconstruct the InscriptionOrder typed data to get the order hash,
@@ -132,21 +125,18 @@ export async function POST(
       }
 
       // Build the LendOffer typed data and compute the message hash.
-      // For private offers, the typed data has lender='0x0' but the hash is
-      // computed against the depositor address (actual signer).
       const lendOfferTypedData = getLendOfferTypedData({
         orderHash,
         lender,
         issuedDebtPercentage: BigInt(bps),
         nonce: BigInt(nonce),
         chainId: CHAIN_ID,
-        lenderCommitment: lender_commitment,
       })
 
-      const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, signerAddress!)
+      const offerMessageHash = starknetTypedData.getMessageHash(lendOfferTypedData, signerAddress)
 
       // Verify the signer's signature on-chain via their account contract.
-      const sigValid = await verifyStarknetSignature(signerAddress!, offerMessageHash, lender_signature)
+      const sigValid = await verifyStarknetSignature(signerAddress, offerMessageHash, lender_signature)
       if (!sigValid) {
         return errorResponse('Invalid lender signature', 401, request)
       }
@@ -159,8 +149,6 @@ export async function POST(
       bps: Number(bps),
       lender_signature: JSON.stringify(lender_signature),
       nonce: String(nonce),
-      lender_commitment: lender_commitment ?? '0x0',
-      depositor: undefined,
       created_at: now,
     })
 

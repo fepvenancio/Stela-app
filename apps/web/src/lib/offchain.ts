@@ -9,20 +9,12 @@
 export {
   getInscriptionOrderTypedData,
   getLendOfferTypedData,
-  getPrivateLendOfferTypedData,
   hashAssets,
   serializeSignature,
   deserializeSignature,
-  // Privacy utilities
-  computeCommitment,
-  computeDepositCommitment,
-  computeNullifier,
-  hashPair,
-  generateSalt,
-  createPrivateNote,
 } from '@fepvenancio/stela-sdk'
 
-export type { StoredSignature, PrivateNote, PrivateRedeemRequest } from '@fepvenancio/stela-sdk'
+export type { StoredSignature } from '@fepvenancio/stela-sdk'
 
 import type { RpcProvider, TypedData } from 'starknet'
 

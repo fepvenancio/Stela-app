@@ -1,165 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
 import { toU256 } from '@fepvenancio/stela-sdk'
 import { GENESIS_ADDRESS, STRK_ADDRESS } from '@/lib/config'
-import { useGenesisPosition, type ClaimableToken } from '@/hooks/useGenesisPosition'
+import { useGenesisPosition } from '@/hooks/useGenesisPosition'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
-import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatTokenValue } from '@/lib/format'
 import { getErrorMessage } from '@/lib/tx'
 
-const MAX_SUPPLY = 500
+const MAX_SUPPLY = 300
 const MAX_QUANTITY = 5
 const STRK_DECIMALS = 18
 
 function formatStrk(raw: bigint): string {
   const whole = raw / 10n ** BigInt(STRK_DECIMALS)
   return whole.toLocaleString()
-}
-
-/* ── Claimable Token Row (Convex pattern) ──────────────── */
-
-function ClaimableRow({ token }: { token: ClaimableToken }) {
-  return (
-    <div className="flex items-center justify-between py-2.5 px-1">
-      <div className="flex items-center gap-2.5">
-        <TokenAvatarByAddress address={token.address} size={20} />
-        <span className="text-sm text-chalk font-medium">{token.symbol}</span>
-      </div>
-      <span className="text-sm font-mono text-chalk">
-        {formatTokenValue(token.amount.toString(), token.decimals)}
-      </span>
-    </div>
-  )
-}
-
-/* ── Claim Section (GMX Total Rewards pattern) ─────────── */
-
-function ClaimSection({
-  claimable,
-  hasClaimable,
-  tokenIds,
-  balance,
-  isLoading,
-  onClaimed,
-}: {
-  claimable: ClaimableToken[]
-  hasClaimable: boolean
-  tokenIds: bigint[]
-  balance: bigint
-  isLoading: boolean
-  onClaimed: () => void
-}) {
-  const { sendAsync, isPending } = useSendTransaction({})
-  const progress = useTransactionProgress([
-    { label: 'Claim Fees', description: 'Claiming accumulated fees from vault' },
-    { label: 'Confirming', description: 'Waiting for confirmation' },
-  ])
-
-  async function handleClaimAll() {
-    if (tokenIds.length === 0) return
-    progress.start()
-    try {
-      const calldata: string[] = [String(tokenIds.length)]
-      for (const id of tokenIds) {
-        calldata.push(...toU256(id))
-      }
-      const result = await sendAsync([{
-        contractAddress: '0x065f7103f01474dcc860d200e9e8eb7c467dbe3f6dcf0af5b84cfa143fb264f6',
-        entrypoint: 'claim_batch',
-        calldata,
-      }])
-      progress.setTxHash(result.transaction_hash)
-      progress.advance()
-      progress.advance()
-      onClaimed()
-    } catch (err: unknown) {
-      progress.fail(getErrorMessage(err))
-    }
-  }
-
-  return (
-    <>
-      <section className="bg-surface/15 border border-edge/25 rounded-2xl overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-edge/20 flex items-center justify-between">
-          <div>
-            <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Claimable Fees</h2>
-            <p className="text-[10px] text-ash mt-0.5">
-              {Number(balance)} NFT{Number(balance) !== 1 ? 's' : ''} = {((Number(balance) / MAX_SUPPLY) * 100).toFixed(2)}% of protocol fees
-            </p>
-          </div>
-          <Button
-            variant="gold"
-            size="sm"
-            className="rounded-full px-6"
-            onClick={handleClaimAll}
-            disabled={!hasClaimable || isPending || isLoading}
-          >
-            {isPending ? 'Claiming...' : 'Claim All'}
-          </Button>
-        </div>
-
-        {/* Token rows */}
-        <div className="px-6 py-4">
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <div key={i} className="flex items-center justify-between py-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <Skeleton className="w-5 h-5 rounded-full bg-edge/20" />
-                    <Skeleton className="h-4 w-16 bg-edge/20" />
-                  </div>
-                  <Skeleton className="h-4 w-20 bg-edge/20" />
-                </div>
-              ))}
-            </div>
-          ) : hasClaimable ? (
-            <div className="divide-y divide-edge/15">
-              {claimable.map((token) => (
-                <ClaimableRow key={token.address} token={token} />
-              ))}
-            </div>
-          ) : (
-            <div className="py-6 text-center">
-              <p className="text-sm text-dust">No fees to claim yet</p>
-              <p className="text-[10px] text-ash mt-1">
-                Fees accumulate as inscriptions are settled and redeemed on the protocol.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* NFT IDs footer */}
-        {tokenIds.length > 0 && (
-          <div className="px-6 py-3 border-t border-edge/15 bg-surface/10">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[9px] text-ash uppercase tracking-widest">Your NFTs:</span>
-              {tokenIds.map((id) => (
-                <span key={id.toString()} className="text-[10px] font-mono text-chalk bg-surface/50 px-2 py-0.5 rounded-md border border-edge/20">
-                  #{id.toString()}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-
-      <TransactionProgressModal
-        open={progress.open}
-        steps={progress.steps}
-        txHash={progress.txHash}
-        onClose={progress.close}
-      />
-    </>
-  )
 }
 
 /* ── Mint Section ──────────────────────────────────────── */
@@ -312,24 +171,29 @@ function FeeInfo() {
   return (
     <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
       <div className="px-6 py-3 border-b border-edge/15">
-        <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">How Fees Work</h3>
+        <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">NFT Fee Discounts</h3>
       </div>
       <div className="p-6">
-        <div className="grid sm:grid-cols-2 gap-3 mb-4">
+        <div className="grid sm:grid-cols-3 gap-3 mb-4">
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Settle Fee</span>
-            <span className="text-base font-display text-star">20 BPS</span>
-            <span className="text-[10px] text-ash block">0.20% of each settled inscription</span>
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">1 NFT</span>
+            <span className="text-base font-display text-star">10% off</span>
+            <span className="text-[10px] text-ash block">Entry tier discount</span>
           </div>
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Redeem Fee</span>
-            <span className="text-base font-display text-star">10 BPS</span>
-            <span className="text-[10px] text-ash block">0.10% of each share redemption</span>
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">3 NFTs</span>
+            <span className="text-base font-display text-star">30% off</span>
+            <span className="text-[10px] text-ash block">Mid tier discount</span>
+          </div>
+          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">5 NFTs</span>
+            <span className="text-base font-display text-star">50% off</span>
+            <span className="text-[10px] text-ash block">Max tier discount</span>
           </div>
         </div>
         <p className="text-[11px] text-ash leading-relaxed">
-          Fees accumulate in the vault and are split equally across all {MAX_SUPPLY} Genesis NFTs.
-          Claim anytime — there is no expiry. Ownership is renounced; supply is immutable.
+          Genesis NFT holders receive protocol fee discounts. The more NFTs you hold (up to 5),
+          the larger your discount on settle and redeem fees. Ownership is renounced; supply is immutable.
         </p>
       </div>
     </section>
@@ -347,9 +211,9 @@ function TransparencyInfo() {
       <div className="p-6">
         <div className="grid sm:grid-cols-2 gap-3">
           {[
-            { label: 'Treasury Reserve', value: '100 NFTs', desc: 'Protocol treasury. Funds audits, upgrades, licensing.' },
-            { label: 'Public Supply', value: '400 NFTs', desc: 'Available for public mint at 5,000 STRK each.' },
-            { label: 'Per-Wallet Cap', value: '5 Max', desc: 'Prevents concentration of fee-earning power.' },
+            { label: 'Treasury Reserve', value: '50 NFTs', desc: 'Protocol treasury. Funds audits, upgrades, licensing.' },
+            { label: 'Public Supply', value: '250 NFTs', desc: 'Available for public mint at 5,000 STRK each.' },
+            { label: 'Per-Wallet Cap', value: '5 Max', desc: 'Prevents concentration of discount power.' },
             { label: 'Ownership', value: 'Renounced', desc: 'Fully immutable. No admin can change supply or price.' },
           ].map((item) => (
             <div key={item.label} className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
@@ -379,7 +243,7 @@ export default function GenesisPage() {
           Genesis Collection
         </h1>
         <p className="text-dust text-sm leading-relaxed">
-          {MAX_SUPPLY} Genesis NFTs — each earns a perpetual share of all protocol fees.
+          {MAX_SUPPLY} Genesis NFTs — holders receive protocol fee discounts up to 50%.
         </p>
       </div>
 
@@ -405,21 +269,33 @@ export default function GenesisPage() {
         </div>
       </div>
 
-      <Web3ActionWrapper message="Connect your wallet to mint or claim fees">
+      <Web3ActionWrapper message="Connect your wallet to mint Genesis NFTs">
         <div className="space-y-5">
-          {/* Claim section — FIRST if holder (primary action) */}
+          {/* Your NFTs section — show discount tier if holder */}
           {isHolder && (
-            <ClaimSection
-              claimable={pos.claimable}
-              hasClaimable={pos.hasClaimable}
-              tokenIds={pos.tokenIds}
-              balance={pos.balance}
-              isLoading={pos.isLoadingTokenIds || pos.isLoadingClaimable}
-              onClaimed={pos.refreshClaimable}
-            />
+            <section className="bg-surface/15 border border-edge/25 rounded-2xl overflow-hidden">
+              <div className="px-6 py-5 border-b border-edge/20">
+                <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Your Position</h2>
+                <p className="text-[10px] text-ash mt-0.5">
+                  {Number(pos.balance)} NFT{Number(pos.balance) !== 1 ? 's' : ''} = {Math.min(Number(pos.balance) * 10, 50)}% fee discount
+                </p>
+              </div>
+              {pos.tokenIds.length > 0 && (
+                <div className="px-6 py-3 bg-surface/10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[9px] text-ash uppercase tracking-widest">Your NFTs:</span>
+                    {pos.tokenIds.map((id) => (
+                      <span key={id.toString()} className="text-[10px] font-mono text-chalk bg-surface/50 px-2 py-0.5 rounded-md border border-edge/20">
+                        #{id.toString()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
           )}
 
-          {/* Mint section — secondary if holder, primary if not */}
+          {/* Mint section */}
           <MintSection
             totalMinted={pos.totalMinted}
             mintPrice={pos.mintPrice}

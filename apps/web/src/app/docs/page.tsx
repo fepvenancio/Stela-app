@@ -3,7 +3,6 @@ import { CONTRACT_ADDRESS, NETWORK } from '@/lib/config'
 
 const GITHUB_LINKS = {
   protocol: 'https://github.com/fepvenancio/Stela',
-  privacy: 'https://github.com/fepvenancio/stela-privacy',
   app: 'https://github.com/fepvenancio/stela-app',
   sdk: 'https://github.com/fepvenancio/stela-sdk-ts',
   relayer: 'https://github.com/fepvenancio/stela-relayer',
@@ -11,7 +10,6 @@ const GITHUB_LINKS = {
 
 const DOCS_LINKS = {
   protocol: `${GITHUB_LINKS.protocol}/tree/main/docs`,
-  privacy: `${GITHUB_LINKS.privacy}/tree/main/docs`,
   sdk: `${GITHUB_LINKS.sdk}/tree/main/docs`,
   app: `${GITHUB_LINKS.app}/tree/main/docs`,
 }
@@ -153,7 +151,7 @@ export default function DocsPage() {
           The <span className="text-star italic">Stela</span> Codex
         </h1>
         <p className="text-dust max-w-2xl leading-relaxed text-lg mx-auto">
-          Ancient logic meeting modern ZK-rollups. Everything you need to understand, 
+          Ancient logic meeting modern validity rollups. Everything you need to understand,
           integrate, and master the Stela P2P lending protocol.
         </p>
         <div className="w-32 h-px bg-gradient-to-r from-transparent via-star/50 to-transparent mx-auto mt-12" />
@@ -183,7 +181,7 @@ export default function DocsPage() {
               <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
                 <h4 className="font-display text-star text-lg mb-3">Open Access</h4>
                 <p className="text-dust text-sm leading-relaxed">
-                  Every protocol function — <span className="text-chalk font-medium">settle, liquidate, redeem, repay, claim</span> — is callable by anyone. No whitelists, no gatekeepers.
+                  Every protocol function — <span className="text-chalk font-medium">settle, liquidate, redeem, repay, cancel</span> — is callable by anyone. No whitelists, no gatekeepers.
                 </p>
               </div>
             </div>
@@ -238,7 +236,7 @@ export default function DocsPage() {
                   <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Relayer</span>
                 </div>
                 <div className="bg-abyss/60 p-5 text-center">
-                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Genesis Vault</span>
+                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Treasury</span>
                 </div>
               </div>
               {/* Settlement */}
@@ -247,13 +245,13 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">25 BPS</span>
+                  <span className="text-sm text-star font-semibold">20 BPS</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-dust">5</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">20</span>
+                  <span className="text-sm text-dust">15</span>
                 </div>
               </div>
               {/* Redemption */}
@@ -288,7 +286,7 @@ export default function DocsPage() {
               </div>
             </div>
             <p className="text-ash text-xs mt-4 leading-relaxed">
-              All fees are hardcoded in the immutable contract. Treasury is set to the FeeVault — 100% of non-relayer fees go to Genesis NFT holders. No individual or entity receives protocol revenue.
+              All fees are hardcoded in the immutable contract. Non-relayer fees go to the protocol treasury. Genesis NFT holders receive automatic fee discounts (10% per NFT, up to 50%) on settle and redeem operations.
             </p>
           </div>
 
@@ -299,14 +297,14 @@ export default function DocsPage() {
               <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
                 <h4 className="font-display text-star text-lg mb-3">Treasury Reserve</h4>
                 <p className="text-dust text-sm leading-relaxed">
-                  <span className="text-chalk font-semibold">100 of 500</span> Genesis NFTs are minted to the protocol treasury at contract deployment. This is hardcoded in the constructor — not an admin action that can be changed later. Revenue from treasury NFTs funds protocol development: <span className="text-chalk font-medium">security audits, contract upgrades, and licensing</span>.
+                  <span className="text-chalk font-semibold">50 of 300</span> Genesis NFTs are minted to the protocol treasury at contract deployment. This is hardcoded in the constructor — not an admin action that can be changed later. Treasury NFTs are held for protocol development: <span className="text-chalk font-medium">security audits, contract upgrades, and licensing</span>.
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
                   <h4 className="font-display text-star text-lg mb-3">Per-Wallet Limit</h4>
                   <p className="text-dust text-sm leading-relaxed">
-                    Public minting is capped at <span className="text-chalk font-semibold">5 NFTs per wallet</span>, enforced on-chain via the <span className="text-chalk font-mono text-xs">MAX_PER_WALLET</span> constant. No single participant can accumulate an outsized share of protocol revenue.
+                    Public minting is capped at <span className="text-chalk font-semibold">5 NFTs per wallet</span>, enforced on-chain via the <span className="text-chalk font-mono text-xs">MAX_PER_WALLET</span> constant. No single participant can accumulate an outsized fee discount.
                   </p>
                 </div>
                 <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
@@ -317,9 +315,9 @@ export default function DocsPage() {
                 </div>
               </div>
               <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
-                <h4 className="font-display text-star text-lg mb-3">Fair Fee Distribution</h4>
+                <h4 className="font-display text-star text-lg mb-3">NFT Fee Discounts</h4>
                 <p className="text-dust text-sm leading-relaxed">
-                  Each NFT only earns fees deposited <span className="text-chalk font-semibold">after it was minted</span>. When a new NFT is minted, the Genesis contract calls <span className="text-chalk font-mono text-xs">snapshot_new_nft()</span> on the FeeVault, which sets the NFT&apos;s claim checkpoint to the current cumulative value for every registered fee token. This prevents new holders from claiming retroactive fees that accrued before their NFT existed. Treasury NFTs (IDs 1-100, minted at deployment before the vault is linked) earn from the very first deposit. Public minters (IDs 101+) earn only from their mint onwards.
+                  Genesis NFT holders receive automatic protocol fee discounts. Each NFT grants <span className="text-chalk font-semibold">10% off</span> settle and redeem fees, up to a maximum of <span className="text-chalk font-semibold">50% off</span> with 5 NFTs. Discounts are applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 5,000 STRK each.
                 </p>
               </div>
               <div className="bg-abyss/60 border border-star/20 rounded-3xl p-8 granite-noise">
@@ -338,11 +336,11 @@ export default function DocsPage() {
                   </div>
                   <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
                     <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Max Supply</span>
-                    <span className="text-sm text-chalk font-semibold">500</span>
+                    <span className="text-sm text-chalk font-semibold">300</span>
                   </div>
                   <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
                     <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Treasury</span>
-                    <span className="text-sm text-chalk font-semibold">100</span>
+                    <span className="text-sm text-chalk font-semibold">50</span>
                   </div>
                   <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
                     <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Per Wallet</span>
@@ -605,116 +603,6 @@ export default function DocsPage() {
           </div>
         </section>
 
-        {/* Privacy Pool */}
-        <section>
-          <SectionHeading>Privacy Pool</SectionHeading>
-          <p className="text-dust mb-12 leading-relaxed text-lg max-w-3xl">
-            Stela&apos;s Privacy Pool enables <span className="text-chalk font-semibold">anonymous lending</span> with
-            regulatory compliance. Lenders can participate without revealing their identity on-chain, while
-            proving their funds are clean through zero-knowledge innocence proofs.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            <div>
-              <SubHeading>Shielded Deposits</SubHeading>
-              <p className="text-dust text-sm leading-relaxed">
-                Instead of receiving visible ERC1155 shares, private lenders commit a
-                <span className="text-star"> Poseidon hash</span> of their position to a Merkle tree. The commitment
-                encodes the lender&apos;s address, inscription ID, share amount, and a secret salt — but reveals
-                none of these on-chain.
-              </p>
-            </div>
-            <div>
-              <SubHeading>Commitment Tree</SubHeading>
-              <p className="text-dust text-sm leading-relaxed">
-                A binary Merkle tree of depth <span className="text-chalk font-mono">16</span> stores up to
-                <span className="text-chalk font-mono"> 65,536</span> leaf commitments. The tree uses
-                Poseidon hashes (StarkNet-native) and maintains a history of the last
-                <span className="text-chalk font-mono"> 100</span> roots for proof flexibility.
-              </p>
-            </div>
-            <div>
-              <SubHeading>ZK Innocence Proofs</SubHeading>
-              <p className="text-dust text-sm leading-relaxed">
-                Before redeeming, lenders must prove their commitment is
-                <span className="text-chalk font-semibold"> not</span> in a blacklist set. This
-                <span className="text-star"> innocence proof</span> ensures regulatory compliance without
-                revealing which specific commitment belongs to the prover. Blacklist roots are maintained
-                by the contract owner.
-              </p>
-            </div>
-            <div>
-              <SubHeading>Standby Period</SubHeading>
-              <p className="text-dust text-sm leading-relaxed">
-                A configurable delay between shielding and redemption. This
-                <span className="text-chalk font-semibold"> standby period</span> prevents front-running
-                attacks and gives compliance validators time to update blacklist roots
-                before funds can be withdrawn.
-              </p>
-            </div>
-          </div>
-
-          {/* Privacy Flow Diagram */}
-          <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-16 overflow-hidden relative shadow-2xl">
-            <h4 className="font-display text-xs text-ash uppercase tracking-[0.2em] text-center mb-12 font-bold">Privacy Flow</h4>
-            <div className="flex flex-col items-center gap-0">
-              {/* Step 1: Shield */}
-              <StatusNode
-                label="Shield"
-                description="Commit to tree"
-                color="star"
-                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
-              />
-              <FlowArrow label="Poseidon hash" vertical />
-
-              {/* Step 2: Prove Innocence */}
-              <StatusNode
-                label="Prove Innocence"
-                description="ZK verification"
-                color="aurora"
-                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
-              />
-              <FlowArrow label="Standby period" vertical />
-
-              {/* Step 3: Private Settlement */}
-              <StatusNode
-                label="Private Settle"
-                description="Shares committed"
-                color="star"
-                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>}
-              />
-              <FlowArrow label="Nullifier" vertical />
-
-              {/* Step 4: Private Redeem */}
-              <StatusNode
-                label="Private Redeem"
-                description="Claim assets"
-                color="chalk"
-                icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" /></svg>}
-              />
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Tree Depth</span>
-                <span className="text-star font-mono text-sm">16</span>
-              </div>
-              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Max Leaves</span>
-                <span className="text-star font-mono text-sm">65,536</span>
-              </div>
-              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Root History</span>
-                <span className="text-star font-mono text-sm">100</span>
-              </div>
-              <div className="bg-abyss/60 border border-edge/20 rounded-xl p-4 text-center">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1 font-bold">Hash</span>
-                <span className="text-star font-mono text-sm">Poseidon</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Off-Chain Signing */}
         <section>
           <SectionHeading>Off-Chain Signing</SectionHeading>
@@ -967,7 +855,7 @@ export default function DocsPage() {
           <div className="grid md:grid-cols-2 gap-6">
             <DocsRepoCard
               title="Stela Contracts"
-              description="Cairo smart contracts powering the protocol — inscription state machine, collateral lockers, ERC1155 shares, and the settle() entrypoint."
+              description="Cairo smart contracts powering the protocol — inscription state machine, collateral lockers, ERC1155 shares, Genesis NFT fee discounts, and the settle() entrypoint."
               href={DOCS_LINKS.protocol}
               icon={
                 <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
@@ -977,19 +865,8 @@ export default function DocsPage() {
               files={['ARCHITECTURE.md', 'SPEC.md', 'TYPES.md', 'EVENTS.md', 'FLOWS.md', 'SHARE-MATH.md', 'security.md', 'deployment.md']}
             />
             <DocsRepoCard
-              title="Privacy Pool"
-              description="Zero-knowledge privacy layer — commitment trees, nullifier stores, shielded pool, verifier registry, and innocence proof mechanics."
-              href={DOCS_LINKS.privacy}
-              icon={
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                </svg>
-              }
-              files={['ARCHITECTURE.md', 'API.md', 'FLOWS.md', 'TYPES.md', 'CRYPTO.md']}
-            />
-            <DocsRepoCard
               title="TypeScript SDK"
-              description="Client library for interacting with Stela programmatically — InscriptionClient, ShareClient, privacy utilities, and off-chain signing helpers."
+              description="Client library for interacting with Stela programmatically — InscriptionClient, ShareClient, and off-chain signing helpers."
               href={DOCS_LINKS.sdk}
               icon={
                 <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
@@ -1041,9 +918,9 @@ export default function DocsPage() {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'Protocol (Contracts)', href: GITHUB_LINKS.protocol, desc: 'Cairo smart contracts' },
-              { label: 'Privacy Pool', href: GITHUB_LINKS.privacy, desc: 'ZK privacy layer (Cairo)' },
               { label: 'Application (Frontend)', href: GITHUB_LINKS.app, desc: 'Next.js app, indexer, bot' },
               { label: 'TypeScript SDK', href: GITHUB_LINKS.sdk, desc: 'npm: @fepvenancio/stela-sdk' },
+              { label: 'Relayer', href: GITHUB_LINKS.relayer, desc: 'Standalone settlement bot' },
             ].map(({ label, href, desc }) => (
               <a
                 key={href}

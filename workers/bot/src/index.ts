@@ -210,11 +210,6 @@ async function settleOrders(
       // Parse stored order data
       const orderData: OrderData = JSON.parse(order.order_data as string)
 
-      // Detect private settlement: lender_commitment is non-zero and lender is zero address
-      const lenderCommitment = (offer.lender_commitment as string) ?? '0'
-      const isPrivateSettle = lenderCommitment !== '0' && lenderCommitment !== '0x0'
-        && (offer.lender as string).replace(/^0x0*/i, '') === '0'
-
       // Pre-settle nonce check: verify both nonces are still valid on-chain
       const borrowerNonce = await getOnChainNonce(provider, contractAddress, orderData.borrower)
       const expectedBorrowerNonce = BigInt(orderData.nonce)
@@ -227,19 +222,15 @@ async function settleOrders(
         continue
       }
 
-      // Skip lender nonce check for private settlements (lender is zero address,
-      // contract doesn't consume lender nonce in private path)
-      if (!isPrivateSettle) {
-        const lenderNonce = await getOnChainNonce(provider, contractAddress, offer.lender as string)
-        const expectedLenderNonce = BigInt(offer.nonce as string)
+      const lenderNonce = await getOnChainNonce(provider, contractAddress, offer.lender as string)
+      const expectedLenderNonce = BigInt(offer.nonce as string)
 
-        if (lenderNonce !== expectedLenderNonce) {
-          console.warn(
-            `Order ${order_id}: lender nonce stale (on-chain=${lenderNonce}, offer=${expectedLenderNonce}). Expiring offer.`,
-          )
-          await queries.updateOfferStatus(offer_id, 'expired')
-          continue
-        }
+      if (lenderNonce !== expectedLenderNonce) {
+        console.warn(
+          `Order ${order_id}: lender nonce stale (on-chain=${lenderNonce}, offer=${expectedLenderNonce}). Expiring offer.`,
+        )
+        await queries.updateOfferStatus(offer_id, 'expired')
+        continue
       }
 
       // Compute asset hashes from asset arrays (may not be stored in order_data)
@@ -273,8 +264,8 @@ async function settleOrders(
       // Serialize borrower signature
       const borrowerSigCalldata = serializeSignatureCalldata(order.borrower_signature as string)
 
-      // Build offer struct calldata (6 fields inline):
-      // order_hash, lender, issued_debt_percentage_low, issued_debt_percentage_high, nonce, lender_commitment
+      // Build offer struct calldata (5 fields inline):
+      // order_hash, lender, issued_debt_percentage_low, issued_debt_percentage_high, nonce
       const [bpsLow, bpsHigh] = toU256(BigInt(offer.bps as number))
       const orderHash = orderData.orderHash
       const offerCalldata: string[] = [
@@ -283,7 +274,6 @@ async function settleOrders(
         bpsLow,
         bpsHigh,
         offer.nonce as string,
-        lenderCommitment,
       ]
 
       // Serialize lender signature
@@ -307,7 +297,7 @@ async function settleOrders(
       })
 
       await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
-      console.log(`Settled order ${order_id} with offer ${offer_id}${isPrivateSettle ? ' (private)' : ''}: ${transaction_hash}`)
+      console.log(`Settled order ${order_id} with offer ${offer_id}: ${transaction_hash}`)
 
       // Update statuses on success
       await queries.updateOrderStatus(order_id, 'settled')

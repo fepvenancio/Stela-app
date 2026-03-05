@@ -5,9 +5,8 @@ import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
 import type { AssetType, Asset } from '@fepvenancio/stela-sdk'
-import { CONTRACT_ADDRESS, RPC_URL, PRIVACY_POOL_ADDRESS, CHAIN_ID } from '@/lib/config'
-import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce, computeDepositCommitment, generateSalt, createPrivateNote } from '@/lib/offchain'
-import { savePrivateNote } from '@/lib/private-notes'
+import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
+import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { findDebtBalanceShortfall } from '@/lib/balance'
@@ -48,7 +47,7 @@ export function useSignOrder(orderId: string) {
   const [isPending, setIsPending] = useState(false)
 
   const signOrder = useCallback(
-    async (bps: number, privateMode = false, progress?: TransactionProgress) => {
+    async (bps: number, progress?: TransactionProgress) => {
       if (!address || !account) throw new Error('Wallet not connected')
 
       setIsPending(true)
@@ -127,18 +126,11 @@ export function useSignOrder(orderId: string) {
           orderHash = starknetTypedData.getMessageHash(orderTypedData, orderData.borrower as string)
         }
 
-        if (privateMode) {
-          await settlePrivate({
-            account, address, provider, nonce, orderHash, orderId, order,
-            sdkDebtAssets, bps, progress,
-          })
-        } else {
-          await settlePublic({
-            account, address, provider, nonce, orderHash, orderId, order, orderData,
-            orderNonceRaw, sdkDebtAssets, sdkInterestAssets, sdkCollateralAssets,
-            bps, progress,
-          })
-        }
+        await settlePublic({
+          account, address, provider, nonce, orderHash, orderId, order, orderData,
+          orderNonceRaw, sdkDebtAssets, sdkInterestAssets, sdkCollateralAssets,
+          bps, progress,
+        })
       } catch (err: unknown) {
         const msg = getErrorMessage(err)
         progress?.fail(msg)
@@ -155,142 +147,7 @@ export function useSignOrder(orderId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Private settlement flow: shield deposit → sign anonymous offer → bot settles
-// ---------------------------------------------------------------------------
-
-async function settlePrivate(params: {
-  account: NonNullable<ReturnType<typeof useAccount>['account']>
-  address: string
-  provider: RpcProvider
-  nonce: bigint
-  orderHash: string
-  orderId: string
-  order: Record<string, unknown>
-  sdkDebtAssets: Asset[]
-  bps: number
-  progress?: TransactionProgress
-}) {
-  const { account, address, provider, nonce, orderHash, orderId, order, sdkDebtAssets, bps, progress } = params
-
-  // Validate privacy pool is configured
-  if (!PRIVACY_POOL_ADDRESS) {
-    throw new Error('Privacy pool is not configured — private lending is not available yet')
-  }
-
-  // Private mode currently supports single debt token only
-  const erc20DebtAssets = sdkDebtAssets.filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
-  if (erc20DebtAssets.length === 0) {
-    throw new Error('No ERC20 debt tokens to shield')
-  }
-
-  // 1. Pre-flight balance check (fail early with clear message)
-  const shortfall = await findDebtBalanceShortfall(provider, address, sdkDebtAssets, bps)
-  if (shortfall) {
-    throw new Error(
-      `Insufficient ${shortfall.symbol} balance. You need ${shortfall.neededFormatted} but only have ${shortfall.balanceFormatted}.`
-    )
-  }
-
-  // 2. Compute proportional amounts and build shield calls
-  const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })
-  const salt = BigInt(generateSalt())
-  const calls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-
-  // Shield each debt token into the pool with a single commitment
-  // (commitment covers the primary debt token for authorization)
-  const primaryAsset = erc20DebtAssets[0]
-  const primaryAmount = (primaryAsset.value * BigInt(bps) + 9999n) / 10000n
-
-  const depositCommitment = computeDepositCommitment(
-    address,
-    primaryAsset.asset_address,
-    primaryAmount,
-    salt,
-  )
-
-  // Approve primary debt token to privacy pool
-  calls.push({
-    contractAddress: primaryAsset.asset_address,
-    entrypoint: 'approve',
-    calldata: [PRIVACY_POOL_ADDRESS, ...toU256(primaryAmount)],
-  })
-
-  // Shield primary debt token
-  calls.push(client.buildShieldDeposit({
-    privacyPoolAddress: PRIVACY_POOL_ADDRESS,
-    token: primaryAsset.asset_address,
-    amount: primaryAmount,
-    commitment: depositCommitment,
-  }))
-
-  // For additional debt tokens, approve and transfer directly to pool
-  for (let i = 1; i < erc20DebtAssets.length; i++) {
-    const asset = erc20DebtAssets[i]
-    const amount = (asset.value * BigInt(bps) + 9999n) / 10000n
-    calls.push({
-      contractAddress: asset.asset_address,
-      entrypoint: 'approve',
-      calldata: [PRIVACY_POOL_ADDRESS, ...toU256(amount)],
-    })
-    calls.push({
-      contractAddress: asset.asset_address,
-      entrypoint: 'transfer',
-      calldata: [PRIVACY_POOL_ADDRESS, ...toU256(amount)],
-    })
-  }
-
-  // 2. Execute shield on-chain
-  toast.info('Confirm the shield deposit in your wallet...')
-  const { transaction_hash: shieldTxHash } = await account.execute(calls)
-
-  progress?.advance()
-  progress?.setTxHash(shieldTxHash)
-  toast.info('Waiting for shield confirmation...')
-  await provider.waitForTransaction(shieldTxHash)
-
-  // 3. Sign anonymous LendOffer (lender = 0x0)
-  progress?.advance()
-  const typedData = getLendOfferTypedData({
-    orderHash,
-    lender: '0x0',
-    issuedDebtPercentage: BigInt(bps),
-    nonce,
-    chainId: CHAIN_ID,
-    lenderCommitment: depositCommitment,
-  })
-
-  const signature = await account.signMessage(typedData)
-  const lenderSig = formatSig(signature)
-
-  // 4. POST offer to API (bot will settle)
-  progress?.advance()
-  const offerId = crypto.randomUUID()
-  await fetch(`/api/orders/${orderId}/offer`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: offerId,
-      lender: '0x0',
-      depositor: address,
-      bps,
-      lender_signature: lenderSig,
-      nonce: nonce.toString(),
-      lender_commitment: depositCommitment,
-    }),
-  })
-
-  // 5. Save private note for future redemption
-  const privateNote = createPrivateNote(address, 0n, BigInt(bps), salt.toString())
-  savePrivateNote(privateNote, orderId)
-
-  toast.success('Private offer submitted!', {
-    description: 'Deposit shielded — the bot will settle your order privately',
-  })
-  progress?.advance()
-}
-
-// ---------------------------------------------------------------------------
-// Public settlement flow: approve + settle directly from wallet (unchanged)
+// Public settlement flow: approve + settle directly from wallet
 // ---------------------------------------------------------------------------
 
 async function settlePublic(params: {
@@ -407,7 +264,6 @@ async function settlePublic(params: {
       lender_signature: lenderSig,
       nonce: nonce.toString(),
       tx_hash: transaction_hash,
-      lender_commitment: '0x0',
     }),
   })
 

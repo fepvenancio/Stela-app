@@ -14,6 +14,26 @@ function timingSafeEqual(a: string, b: string): boolean {
   return crypto.subtle.timingSafeEqual(encoder.encode(a), encoder.encode(b))
 }
 
+/** Simple IP-based rate limiter for the webhook endpoint. */
+const WEBHOOK_WINDOW_MS = 60_000
+const WEBHOOK_MAX_REQUESTS = 30
+const webhookIpStore = new Map<string, number[]>()
+
+function isWebhookRateLimited(ip: string): boolean {
+  const now = Date.now()
+  let timestamps = webhookIpStore.get(ip)
+  if (!timestamps) {
+    timestamps = []
+    webhookIpStore.set(ip, timestamps)
+  }
+  // Slide window
+  const filtered = timestamps.filter(t => now - t < WEBHOOK_WINDOW_MS)
+  webhookIpStore.set(ip, filtered)
+  if (filtered.length >= WEBHOOK_MAX_REQUESTS) return true
+  filtered.push(now)
+  return false
+}
+
 // ---------------------------------------------------------------------------
 // Worker export
 // ---------------------------------------------------------------------------
@@ -29,6 +49,11 @@ export default {
     }
 
     if (url.pathname === '/webhook/events' && request.method === 'POST') {
+      const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
+      if (isWebhookRateLimited(ip)) {
+        return new Response('Too Many Requests', { status: 429 })
+      }
+
       const authHeader = request.headers.get('Authorization')
       const token = authHeader?.startsWith('Bearer ')
         ? authHeader.slice(7).trim()

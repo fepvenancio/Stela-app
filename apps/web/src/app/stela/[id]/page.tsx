@@ -181,17 +181,7 @@ function OrderView({ id }: { id: string }) {
                 <div key={offer.id} className="flex items-center justify-between p-4 bg-surface/20 border border-edge/20 rounded-2xl">
                   <div>
                     <span className="text-[9px] text-ash uppercase tracking-widest block mb-0.5">Lender</span>
-                    {offer.lender_commitment && offer.lender_commitment !== '0x0' && offer.lender_commitment !== '0' ? (
-                      <span className="text-sm text-chalk font-display flex items-center gap-1.5">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-star" aria-hidden="true">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0110 0v4" />
-                        </svg>
-                        Private Lender
-                      </span>
-                    ) : (
-                      <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
-                    )}
+                    <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
                   </div>
                   <div className="text-right">
                     <span className="text-[9px] text-ash uppercase tracking-widest block mb-0.5">Share</span>

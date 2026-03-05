@@ -1,43 +1,25 @@
 'use client'
 
 import Link from 'next/link'
-import { useAccount, useSendTransaction } from '@starknet-react/core'
-import { toU256 } from '@fepvenancio/stela-sdk'
-import { FEE_VAULT_ADDRESS } from '@/lib/config'
-import { useGenesisPosition, type ClaimableToken } from '@/hooks/useGenesisPosition'
+import { useAccount } from '@starknet-react/core'
+import { useGenesisPosition } from '@/hooks/useGenesisPosition'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
-import { TransactionProgressModal } from '@/components/TransactionProgressModal'
-import { useTransactionProgress } from '@/hooks/useTransactionProgress'
-import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatTokenValue } from '@/lib/format'
-import { getErrorMessage } from '@/lib/tx'
 
-const MAX_SUPPLY = 500
+const MAX_SUPPLY = 300
 
-const CLAIM_STEPS = [
-  { label: 'Claim Fees', description: 'Claiming accumulated fees from vault' },
-  { label: 'Confirming', description: 'Waiting for confirmation' },
-]
+/* ── Discount Tiers ────────────────────────────────────── */
 
-/* ── Token Row ─────────────────────────────────────────── */
+function getDiscountPercent(nftCount: number): number {
+  return Math.min(nftCount * 10, 50)
+}
 
-function TokenRow({ token }: { token: ClaimableToken }) {
-  return (
-    <div className="flex items-center justify-between py-3 px-1">
-      <div className="flex items-center gap-3">
-        <TokenAvatarByAddress address={token.address} size={24} />
-        <div>
-          <span className="text-sm text-chalk font-medium block">{token.symbol}</span>
-          <span className="text-[10px] text-ash font-mono">{token.address.slice(0, 10)}...{token.address.slice(-4)}</span>
-        </div>
-      </div>
-      <span className="text-base font-mono text-star font-medium">
-        {formatTokenValue(token.amount.toString(), token.decimals)}
-      </span>
-    </div>
-  )
+function getDiscountTier(nftCount: number): string {
+  if (nftCount >= 5) return 'Max'
+  if (nftCount >= 3) return 'Mid'
+  if (nftCount >= 1) return 'Entry'
+  return 'None'
 }
 
 /* ── Main Page ─────────────────────────────────────────── */
@@ -45,51 +27,9 @@ function TokenRow({ token }: { token: ClaimableToken }) {
 export default function GenesisClaimPage() {
   const { address } = useAccount()
   const pos = useGenesisPosition()
-  const { sendAsync, isPending } = useSendTransaction({})
-  const progress = useTransactionProgress(CLAIM_STEPS)
 
-  async function handleClaimAll() {
-    if (!address || pos.tokenIds.length === 0) return
-    progress.start()
-    try {
-      const calldata: string[] = [String(pos.tokenIds.length)]
-      for (const id of pos.tokenIds) {
-        calldata.push(...toU256(id))
-      }
-      const result = await sendAsync([{
-        contractAddress: FEE_VAULT_ADDRESS,
-        entrypoint: 'claim_batch',
-        calldata,
-      }])
-      progress.setTxHash(result.transaction_hash)
-      progress.advance()
-      progress.advance()
-      pos.refreshClaimable()
-    } catch (err: unknown) {
-      progress.fail(getErrorMessage(err))
-    }
-  }
-
-  async function handleClaimSingle(tokenId: bigint) {
-    if (!address) return
-    progress.start()
-    try {
-      const result = await sendAsync([{
-        contractAddress: FEE_VAULT_ADDRESS,
-        entrypoint: 'claim',
-        calldata: toU256(tokenId),
-      }])
-      progress.setTxHash(result.transaction_hash)
-      progress.advance()
-      progress.advance()
-      pos.refreshClaimable()
-    } catch (err: unknown) {
-      progress.fail(getErrorMessage(err))
-    }
-  }
-
-  const isClaimLoading = pos.isLoadingTokenIds || pos.isLoadingClaimable
-  const sharePercent = pos.balance > 0n ? ((Number(pos.balance) / MAX_SUPPLY) * 100).toFixed(2) : '0'
+  const discount = getDiscountPercent(Number(pos.balance))
+  const tier = getDiscountTier(Number(pos.balance))
 
   return (
     <div className="animate-fade-up max-w-2xl">
@@ -106,14 +46,14 @@ export default function GenesisClaimPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-display text-3xl tracking-widest text-chalk mb-2 uppercase">
-          Claim Fees
+          Your NFTs
         </h1>
         <p className="text-dust text-sm leading-relaxed">
-          View and claim accumulated protocol fees for your Genesis NFTs.
+          View your Genesis NFTs and current fee discount tier.
         </p>
       </div>
 
-      <Web3ActionWrapper message="Connect your wallet to view claimable fees">
+      <Web3ActionWrapper message="Connect your wallet to view your Genesis position">
         {pos.balance === 0n && !pos.isLoading ? (
           /* No NFTs */
           <div className="bg-surface/15 border border-edge/25 rounded-2xl p-10 text-center">
@@ -136,94 +76,80 @@ export default function GenesisClaimPage() {
                 <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
               </div>
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Fee Share</span>
-                <span className="text-xl font-display text-star">{sharePercent}%</span>
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Fee Discount</span>
+                <span className="text-xl font-display text-star">{discount}%</span>
               </div>
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Tokens</span>
-                <span className="text-xl font-display text-chalk">
-                  {isClaimLoading ? <Skeleton className="h-7 w-6 bg-edge/20 inline-block" /> : pos.claimable.length}
-                </span>
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Tier</span>
+                <span className="text-xl font-display text-chalk">{tier}</span>
               </div>
             </div>
 
-            {/* ── Total Rewards Card (GMX pattern) ─────── */}
+            {/* ── Discount Tiers ────────────────────────── */}
             <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden">
-              <div className="px-6 py-5 flex items-center justify-between">
-                <div>
-                  <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Total Claimable</h2>
-                  <p className="text-[10px] text-ash mt-0.5">
-                    Aggregated across {pos.tokenIds.length > 0 ? pos.tokenIds.length : '...'} NFT{pos.tokenIds.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <Button
-                  variant="gold"
-                  className="rounded-full px-8 shadow-[0_0_20px_rgba(232,168,37,0.15)]"
-                  onClick={handleClaimAll}
-                  disabled={!pos.hasClaimable || isPending || isClaimLoading}
-                >
-                  {isPending ? 'Claiming...' : 'Claim All'}
-                </Button>
+              <div className="px-6 py-5">
+                <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Discount Tiers</h2>
+                <p className="text-[10px] text-ash mt-0.5">
+                  More NFTs = bigger fee discounts on settle and redeem
+                </p>
               </div>
 
-              <div className="px-6 pb-5">
-                {isClaimLoading ? (
-                  <div className="space-y-3 pt-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-3">
-                          <Skeleton className="w-6 h-6 rounded-full bg-edge/20" />
-                          <Skeleton className="h-4 w-20 bg-edge/20" />
+              <div className="px-6 pb-5 space-y-2">
+                {[
+                  { nfts: 1, pct: 10, label: 'Entry' },
+                  { nfts: 2, pct: 20, label: 'Bronze' },
+                  { nfts: 3, pct: 30, label: 'Silver' },
+                  { nfts: 4, pct: 40, label: 'Gold' },
+                  { nfts: 5, pct: 50, label: 'Max' },
+                ].map((t) => {
+                  const isActive = Number(pos.balance) >= t.nfts
+                  return (
+                    <div
+                      key={t.nfts}
+                      className={`flex items-center justify-between p-3 rounded-xl border ${
+                        isActive ? 'bg-star/5 border-star/20' : 'bg-abyss/30 border-edge/15'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          isActive ? 'bg-star/15 text-star' : 'bg-surface/40 text-ash'
+                        }`}>
+                          <span className="text-[10px] font-display">{t.nfts}</span>
                         </div>
-                        <Skeleton className="h-4 w-24 bg-edge/20" />
+                        <div>
+                          <span className={`text-sm font-medium ${isActive ? 'text-chalk' : 'text-dust'}`}>{t.label} Tier</span>
+                          <span className="text-[10px] text-ash block">{t.nfts} NFT{t.nfts > 1 ? 's' : ''}</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : pos.hasClaimable ? (
-                  <div className="divide-y divide-star/10">
-                    {pos.claimable.map((token) => (
-                      <TokenRow key={token.address} token={token} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-8 text-center">
-                    <p className="text-sm text-dust">No fees to claim yet</p>
-                    <p className="text-[10px] text-ash mt-1 max-w-xs mx-auto leading-relaxed">
-                      Fees accumulate as inscriptions are settled and redeemed. Check back after protocol activity.
-                    </p>
-                  </div>
-                )}
+                      <span className={`text-base font-display ${isActive ? 'text-star' : 'text-ash'}`}>{t.pct}% off</span>
+                    </div>
+                  )
+                })}
               </div>
             </section>
 
-            {/* ── Per-NFT Breakdown ────────────────────── */}
-            {pos.tokenIds.length > 1 && pos.hasClaimable && (
+            {/* ── Your NFT IDs ──────────────────────────── */}
+            {pos.tokenIds.length > 0 && (
               <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
                 <div className="px-6 py-3 border-b border-edge/15">
-                  <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Per-NFT Actions</h3>
+                  <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Your Token IDs</h3>
                 </div>
-                <div className="px-6 py-4 space-y-2">
-                  {pos.tokenIds.map((id) => (
-                    <div key={id.toString()} className="flex items-center justify-between p-3 bg-abyss/30 border border-edge/15 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-star/8 border border-star/15 flex items-center justify-center">
-                          <span className="text-[10px] font-display text-star">#{id.toString()}</span>
-                        </div>
-                        <span className="text-sm text-chalk font-medium">Genesis #{id.toString()}</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-[10px] h-7 px-3"
-                        onClick={() => handleClaimSingle(id)}
-                        disabled={isPending}
-                      >
-                        Claim
-                      </Button>
-                    </div>
-                  ))}
+                <div className="px-6 py-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {pos.tokenIds.map((id) => (
+                      <span key={id.toString()} className="text-[10px] font-mono text-chalk bg-surface/50 px-2 py-0.5 rounded-md border border-edge/20">
+                        #{id.toString()}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </section>
+            )}
+
+            {pos.isLoadingTokenIds && (
+              <div className="flex justify-center py-4">
+                <Skeleton className="h-6 w-32 bg-edge/20" />
+              </div>
             )}
 
             {/* ── Info footer ──────────────────────────── */}
@@ -233,20 +159,13 @@ export default function GenesisClaimPage() {
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
               <p className="text-[10px] text-ash leading-relaxed">
-                Fees accumulate indefinitely — no expiry, no penalty for late claiming.
-                &quot;Claim All&quot; collects all fee tokens for all your NFTs in a single transaction.
+                Fee discounts are applied automatically when you settle or redeem inscriptions.
+                The contract reads your NFT balance on-chain — no claiming needed.
               </p>
             </div>
           </div>
         )}
       </Web3ActionWrapper>
-
-      <TransactionProgressModal
-        open={progress.open}
-        steps={progress.steps}
-        txHash={progress.txHash}
-        onClose={progress.close}
-      />
     </div>
   )
 }

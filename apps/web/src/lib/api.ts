@@ -173,7 +173,11 @@ export async function rateLimitWrite(
       }
     }
   } catch {
-    // D1 rate limit is best-effort; don't block requests if it fails
+    // D1 rate limit check failed — fail closed to prevent abuse
+    return NextResponse.json(
+      { error: 'rate limit check failed' },
+      { status: 503, headers: corsHeaders(request) },
+    )
   }
 
   return null

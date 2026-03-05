@@ -55,7 +55,6 @@ function InscriptionList({ items }: { items: EnrichedInscription[] }) {
           duration={ins.duration}
           assets={ins.assets ?? []}
           pendingShares={ins.pendingShares}
-          isPrivateLender={ins.isPrivateLender}
         />
       ))}
     </div>

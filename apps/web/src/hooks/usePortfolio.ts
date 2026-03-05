@@ -5,8 +5,6 @@ import { useFetchApi, buildApiUrl } from './api'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { normalizeAddress } from '@/lib/address'
 import { enrichStatus } from '@/lib/status'
-import { getPrivateNotes } from '@/lib/private-notes'
-import { normalizeOrderData, type RawOrderData, type SerializedAsset } from '@/lib/order-utils'
 import type { InscriptionRow, AssetRow, ApiListResponse } from '@/types/api'
 import type { OrderRow } from './useOrders'
 
@@ -39,8 +37,6 @@ interface ApiOrderListResponse {
 export interface EnrichedInscription extends InscriptionRow {
   computedStatus: string
   pendingShares?: string
-  isPrivateLender?: boolean
-  privateNote?: { commitment: string; shares: string }
 }
 
 export interface TokenAmount {
@@ -201,68 +197,6 @@ export function usePortfolio(address: string | undefined): PortfolioData {
         if (!normBorrower || normBorrower !== address) {
           borrowing.push(ins)
         }
-      }
-    }
-
-    // Private lender positions from localStorage notes
-    if (address) {
-      const privateNotes = getPrivateNotes()
-      const orderMap = new Map(allOrders.map((o) => [o.id, o]))
-      const seenOrderIds = new Set<string>()
-
-      for (const note of privateNotes) {
-        if (normalizeAddress(note.owner) !== address) continue
-        if (!note.orderId) continue
-        if (seenOrderIds.has(note.orderId)) continue
-        const order = orderMap.get(note.orderId)
-        if (!order || order.status !== 'settled') continue
-        seenOrderIds.add(note.orderId)
-
-        // Build a synthetic EnrichedInscription from the order data
-        const raw: RawOrderData = typeof order.order_data === 'string'
-          ? (() => { try { return JSON.parse(order.order_data as string) } catch { return {} } })()
-          : (order.order_data as unknown as RawOrderData) ?? {}
-        const data = normalizeOrderData(raw)
-
-        const toAssetRows = (assets: SerializedAsset[], role: 'debt' | 'interest' | 'collateral'): AssetRow[] =>
-          assets.map((a, i) => ({
-            inscription_id: order.id,
-            asset_role: role,
-            asset_index: i,
-            asset_address: a.asset_address,
-            asset_type: a.asset_type,
-            value: a.value,
-            token_id: a.token_id,
-          }))
-
-        const syntheticAssets: AssetRow[] = [
-          ...toAssetRows(data.debtAssets, 'debt'),
-          ...toAssetRows(data.interestAssets, 'interest'),
-          ...toAssetRows(data.collateralAssets, 'collateral'),
-        ]
-
-        const synthetic: EnrichedInscription = {
-          id: order.id,
-          creator: data.borrower,
-          borrower: data.borrower,
-          lender: address,
-          status: 'filled',
-          computedStatus: 'filled',
-          issued_debt_percentage: '10000',
-          multi_lender: data.multiLender,
-          duration: data.duration,
-          deadline: data.deadline,
-          signed_at: String(order.created_at),
-          debt_asset_count: data.debtAssets.length,
-          interest_asset_count: data.interestAssets.length,
-          collateral_asset_count: data.collateralAssets.length,
-          created_at_ts: String(order.created_at),
-          assets: syntheticAssets,
-          isPrivateLender: true,
-          privateNote: { commitment: note.commitment, shares: note.shares.toString() },
-        }
-
-        lending.push(synthetic)
       }
     }
 

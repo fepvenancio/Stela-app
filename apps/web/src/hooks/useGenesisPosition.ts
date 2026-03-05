@@ -1,22 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useReadContract } from '@starknet-react/core'
 import { RpcProvider, type Abi } from 'starknet'
-import { toU256, findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { toU256 } from '@fepvenancio/stela-sdk'
 import genesisAbi from '@stela/core/abi/genesis.json'
-import feeVaultAbi from '@stela/core/abi/fee-vault.json'
-import { GENESIS_ADDRESS, FEE_VAULT_ADDRESS, RPC_URL } from '@/lib/config'
+import { GENESIS_ADDRESS, RPC_URL } from '@/lib/config'
 import { readU256 } from '@/lib/format'
 
 /* ── Types ──────────────────────────────────────────────── */
-
-export interface ClaimableToken {
-  address: string
-  symbol: string
-  decimals: number
-  amount: bigint
-}
 
 export interface GenesisPosition {
   /** Number of Genesis NFTs the user owns */
@@ -29,16 +21,9 @@ export interface GenesisPosition {
   mintPrice: bigint
   /** Whether minting is enabled */
   mintEnabled: boolean
-  /** Aggregated claimable amounts across all owned NFTs */
-  claimable: ClaimableToken[]
-  /** Whether any claimable amount > 0 */
-  hasClaimable: boolean
   /** Loading states */
   isLoading: boolean
   isLoadingTokenIds: boolean
-  isLoadingClaimable: boolean
-  /** Refresh claimable amounts (e.g. after claiming) */
-  refreshClaimable: () => void
 }
 
 const BATCH_SIZE = 25 // parallel RPC calls per batch
@@ -88,88 +73,6 @@ async function findOwnedTokenIds(
   }
 
   return owned.sort((a, b) => Number(a - b))
-}
-
-/* ── Parallel claimable_all fetching ────────────────────── */
-
-async function fetchClaimableAll(
-  tokenIds: bigint[],
-): Promise<ClaimableToken[]> {
-  if (tokenIds.length === 0) return []
-
-  // First get the fee tokens list
-  let feeTokens: string[] = []
-  try {
-    const result = await PROVIDER.callContract({
-      contractAddress: FEE_VAULT_ADDRESS,
-      entrypoint: 'get_fee_tokens',
-      calldata: [],
-    })
-    const data = result.map(BigInt)
-    const len = Number(data[0])
-    for (let i = 0; i < len; i++) {
-      feeTokens.push('0x' + data[1 + i].toString(16))
-    }
-  } catch {
-    return []
-  }
-
-  if (feeTokens.length === 0) return []
-
-  // Fetch claimable_all for each token ID in parallel
-  const perNftResults = await Promise.all(
-    tokenIds.map(async (tokenId) => {
-      try {
-        const result = await PROVIDER.callContract({
-          contractAddress: FEE_VAULT_ADDRESS,
-          entrypoint: 'claimable_all',
-          calldata: toU256(tokenId),
-        })
-        const data = result.map(BigInt)
-        const tokensLen = Number(data[0])
-        let offset = 1 + tokensLen // skip token addresses (we already have them)
-        const amountsLen = Number(data[offset])
-        offset++
-
-        const amounts: bigint[] = []
-        for (let i = 0; i < amountsLen; i++) {
-          const low = data[offset]
-          const high = data[offset + 1]
-          amounts.push(low + (high << 128n))
-          offset += 2
-        }
-        return amounts
-      } catch {
-        return feeTokens.map(() => 0n)
-      }
-    }),
-  )
-
-  // Aggregate across all NFTs
-  const aggregated = new Map<string, bigint>()
-  for (const amounts of perNftResults) {
-    for (let i = 0; i < feeTokens.length && i < amounts.length; i++) {
-      const prev = aggregated.get(feeTokens[i]) ?? 0n
-      aggregated.set(feeTokens[i], prev + amounts[i])
-    }
-  }
-
-  // Build result with token info
-  const claimable: ClaimableToken[] = []
-  for (const [addr, amount] of aggregated) {
-    if (amount === 0n) continue
-    const token = findTokenByAddress(addr)
-    claimable.push({
-      address: addr,
-      symbol: token?.symbol ?? addr.slice(0, 10) + '...',
-      decimals: token?.decimals ?? 18,
-      amount,
-    })
-  }
-
-  // Sort by amount descending (approximate — works for same-decimal tokens)
-  claimable.sort((a, b) => (a.amount > b.amount ? -1 : 1))
-  return claimable
 }
 
 /* ── Main hook ──────────────────────────────────────────── */
@@ -245,33 +148,7 @@ export function useGenesisPosition(): GenesisPosition {
     return () => controller.abort()
   }, [address, balance, totalMinted])
 
-  // Claimable amounts (parallel fetch, aggregated)
-  const [claimable, setClaimable] = useState<ClaimableToken[]>([])
-  const [isLoadingClaimable, setIsLoadingClaimable] = useState(false)
-  const [claimVersion, setClaimVersion] = useState(0)
-
-  const refreshClaimable = useCallback(() => {
-    setClaimVersion((v) => v + 1)
-  }, [])
-
-  useEffect(() => {
-    if (tokenIds.length === 0) {
-      setClaimable([])
-      return
-    }
-
-    setIsLoadingClaimable(true)
-    fetchClaimableAll(tokenIds)
-      .then((result) => {
-        setClaimable(result)
-        setIsLoadingClaimable(false)
-      })
-      .catch(() => {
-        setIsLoadingClaimable(false)
-      })
-  }, [tokenIds, claimVersion])
-
-  const isLoading = balanceLoading || mintedLoading || isLoadingTokenIds || isLoadingClaimable
+  const isLoading = balanceLoading || mintedLoading || isLoadingTokenIds
 
   return {
     balance,
@@ -279,11 +156,7 @@ export function useGenesisPosition(): GenesisPosition {
     totalMinted,
     mintPrice,
     mintEnabled,
-    claimable,
-    hasClaimable: claimable.length > 0,
     isLoading,
     isLoadingTokenIds,
-    isLoadingClaimable,
-    refreshClaimable,
   }
 }
