@@ -345,20 +345,14 @@ export default {
 
     // Serialize all operations to avoid StarkNet nonce conflicts
     const work = async () => {
-      // Acquire a D1-based lock to prevent overlapping cron runs
+      // Acquire a D1-based lock atomically to prevent overlapping cron runs
       const LOCK_KEY = 'bot_lock'
       const LOCK_TTL_SECONDS = 300 // 5 minutes
-      const lockValue = await queries.getMeta(LOCK_KEY)
-      if (lockValue) {
-        const lockTime = Number(lockValue)
-        if (now - lockTime < LOCK_TTL_SECONDS) {
-          console.log(`Skipping: lock held since ${new Date(lockTime * 1000).toISOString()}`)
-          return
-        }
+      const acquired = await queries.tryAcquireLock(LOCK_KEY, now, LOCK_TTL_SECONDS)
+      if (!acquired) {
+        console.log('Skipping: lock held by another instance')
+        return
       }
-
-      // Set lock
-      await queries.setMeta(LOCK_KEY, String(now))
 
       try {
         const provider = new RpcProvider({ nodeUrl: env.RPC_URL })

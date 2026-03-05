@@ -318,6 +318,37 @@ export function createD1Queries(db: D1Database) {
      * Key: `rl:{identifier}`, value: `{minute_bucket}:{count}`.
      * Returns true if the identifier has exceeded maxPerMinute writes.
      */
+    /**
+     * Atomic lock acquisition using conditional UPDATE.
+     * Returns true if lock was acquired, false if held by another instance.
+     * Eliminates TOCTOU race by combining read + write into one statement.
+     */
+    async tryAcquireLock(key: string, nowSeconds: number, ttlSeconds: number): Promise<boolean> {
+      // Attempt atomic CAS: update only if lock is stale or unset
+      const staleThreshold = nowSeconds - ttlSeconds
+      const result = await db
+        .prepare(
+          `UPDATE _meta SET value = ? WHERE key = ? AND (CAST(value AS INTEGER) < ? OR value = '0')`
+        )
+        .bind(String(nowSeconds), key, staleThreshold)
+        .run()
+      const updated = (result.meta?.changes as number) ?? 0
+
+      if (updated > 0) return true
+
+      // Row might not exist yet — try INSERT, ignoring conflict
+      try {
+        await db
+          .prepare(`INSERT INTO _meta (key, value) VALUES (?, ?)`)
+          .bind(key, String(nowSeconds))
+          .run()
+        return true
+      } catch {
+        // Row exists and lock is fresh — another instance holds it
+        return false
+      }
+    },
+
     async checkWriteRateLimit(identifier: string, maxPerMinute: number): Promise<boolean> {
       const bucket = Math.floor(Date.now() / 60_000)
       const key = `rl:${identifier}`

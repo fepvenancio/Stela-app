@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { typedData as starknetTypedData } from 'starknet'
 import type { AssetType } from '@fepvenancio/stela-sdk'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, rateLimitWrite, logError } from '@/lib/api'
 import { CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
@@ -43,6 +43,10 @@ export async function POST(
     if (limited) return limited
 
     const db = getD1()
+
+    // D1-backed rate limit (persists across cold starts)
+    const d1Limited = await rateLimitWrite(request, db, rateLimitAddress)
+    if (d1Limited) return d1Limited
 
     // Verify order exists and is pending
     const order = await db.getOrder(orderId)

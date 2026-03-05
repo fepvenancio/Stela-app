@@ -135,3 +135,46 @@ export function rateLimit(request: NextRequest, address?: string): NextResponse 
 
   return null
 }
+
+const D1_WRITE_MAX = 10 // matches in-memory WRITE_MAX
+
+/**
+ * D1-backed rate limit for write operations. Persists across cold starts.
+ * Use alongside the in-memory rateLimit() for defense-in-depth.
+ * Returns a 429 response if limited, or null if allowed.
+ */
+export async function rateLimitWrite(
+  request: NextRequest,
+  db: D1Queries,
+  address?: string,
+): Promise<NextResponse | null> {
+  try {
+    const ip =
+      request.headers.get('cf-connecting-ip') ??
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      'unknown'
+
+    const ipLimited = await db.checkWriteRateLimit(`ip:${ip}`, D1_WRITE_MAX)
+    if (ipLimited) {
+      return NextResponse.json(
+        { error: 'too many requests' },
+        { status: 429, headers: corsHeaders(request) },
+      )
+    }
+
+    if (address) {
+      const normalized = address.replace(/^0x/i, '').toLowerCase()
+      const addrLimited = await db.checkWriteRateLimit(`addr:${normalized}`, D1_WRITE_MAX)
+      if (addrLimited) {
+        return NextResponse.json(
+          { error: 'too many requests for this address' },
+          { status: 429, headers: corsHeaders(request) },
+        )
+      }
+    }
+  } catch {
+    // D1 rate limit is best-effort; don't block requests if it fails
+  }
+
+  return null
+}

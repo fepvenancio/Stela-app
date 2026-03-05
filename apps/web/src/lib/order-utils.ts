@@ -62,9 +62,25 @@ export function parseOrderRow(row: Record<string, unknown>): Record<string, unkn
     parsed = raw as Record<string, unknown>
   }
 
-  const debtAssets = parsed.debtAssets ?? parsed.debt_assets ?? []
-  const interestAssets = parsed.interestAssets ?? parsed.interest_assets ?? []
-  const collateralAssets = parsed.collateralAssets ?? parsed.collateral_assets ?? []
+  // Validate asset arrays: must be arrays of objects with expected fields
+  const sanitizeAssets = (arr: unknown): SerializedAsset[] => {
+    if (!Array.isArray(arr)) return []
+    return arr.filter(
+      (a): a is SerializedAsset =>
+        a != null && typeof a === 'object' &&
+        typeof (a as Record<string, unknown>).asset_address === 'string' &&
+        typeof (a as Record<string, unknown>).asset_type === 'string',
+    ).map((a) => ({
+      asset_address: String(a.asset_address),
+      asset_type: String(a.asset_type),
+      value: String(a.value ?? '0'),
+      token_id: String(a.token_id ?? '0'),
+    }))
+  }
+
+  const debtAssets = sanitizeAssets(parsed.debtAssets ?? parsed.debt_assets)
+  const interestAssets = sanitizeAssets(parsed.interestAssets ?? parsed.interest_assets)
+  const collateralAssets = sanitizeAssets(parsed.collateralAssets ?? parsed.collateral_assets)
 
   // Strip sensitive fields before spreading into the response
   const { borrower_signature: _bs, ...safeRow } = row

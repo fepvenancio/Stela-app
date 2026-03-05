@@ -825,6 +825,16 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 | **FeeVault** | `0x065f7103f01474dcc860d200e9e8eb7c467dbe3f6dcf0af5b84cfa143fb264f6` | Fee distribution, snapshot-on-mint |
 | **Privacy Pool** | `0x05852d427e3fabd544a1f2aca11f8b139b4b9c2064236172defff80ca2d5ed44` | Linked via set_privacy_pool |
 
+### D1 Access Security
+
+D1 databases are accessible to anyone with Cloudflare dashboard access. For production:
+
+- **Enable 2FA** on all Cloudflare accounts with D1 access
+- **Restrict member roles** — only Admin/Super Admin should have D1 write access
+- **Audit access regularly** — review Cloudflare team members quarterly
+- **Signatures are purged** after settlement/expiry/cancellation, but `order_data` JSON (borrower address, asset details) persists for history
+- **Never store private keys or secrets** in D1 — use `wrangler secret put` for sensitive config
+
 ### Previous Contract Addresses (historical, do not use)
 
 | Contract | Address | Tag |

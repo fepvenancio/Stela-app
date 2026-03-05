@@ -202,7 +202,7 @@ async function handleOrderSettled(event: WebhookEvent, queries: D1Queries): Prom
   // Update the off-chain order status to 'settled' (if it exists in D1)
   await queries.updateOrderStatus(d.order_id, 'settled')
 
-  console.log(`OrderSettled: order=${d.order_id} borrower=${d.borrower} lender=${d.lender} tx=${event.tx_hash}`)
+  console.log(`OrderSettled: order=${d.order_id} tx=${event.tx_hash}`)
 }
 
 async function handlePrivateSettled(event: WebhookEvent, queries: D1Queries): Promise<void> {
@@ -222,7 +222,7 @@ async function handlePrivateSettled(event: WebhookEvent, queries: D1Queries): Pr
     },
   })
 
-  console.log(`PrivateSettled: inscription=${d.inscription_id} commitment=${d.lender_commitment} tx=${event.tx_hash}`)
+  console.log(`PrivateSettled: inscription=${d.inscription_id} tx=${event.tx_hash}`)
 }
 
 async function handlePrivateRedeemed(event: WebhookEvent, queries: D1Queries): Promise<void> {
@@ -242,5 +242,5 @@ async function handlePrivateRedeemed(event: WebhookEvent, queries: D1Queries): P
     },
   })
 
-  console.log(`PrivateRedeemed: inscription=${d.inscription_id} nullifier=${d.nullifier} recipient=${d.recipient} tx=${event.tx_hash}`)
+  console.log(`PrivateRedeemed: inscription=${d.inscription_id} tx=${event.tx_hash}`)
 }

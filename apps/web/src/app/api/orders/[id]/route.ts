@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { typedData as starknetTypedData } from 'starknet'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, rateLimitWrite, logError } from '@/lib/api'
 import { CHAIN_ID } from '@/lib/config'
 import { getCancelOrderTypedData } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
@@ -79,6 +79,11 @@ export async function DELETE(
     if (limited) return limited
 
     const db = getD1()
+
+    // D1-backed rate limit (persists across cold starts)
+    const d1Limited = await rateLimitWrite(request, db, callerAddress)
+    if (d1Limited) return d1Limited
+
     const order = await db.getOrder(id)
 
     if (!order) {

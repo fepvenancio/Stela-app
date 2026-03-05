@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { typedData as starknetTypedData } from 'starknet'
 import type { AssetType } from '@fepvenancio/stela-sdk'
-import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
+import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, rateLimitWrite, logError } from '@/lib/api'
 import { CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, hashAssets } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
@@ -65,6 +65,11 @@ export async function POST(request: NextRequest) {
       return errorResponse('Deadline must be in the future', 400, request)
     }
 
+    // D1-backed rate limit (persists across cold starts)
+    const db = getD1()
+    const d1Limited = await rateLimitWrite(request, db, borrower)
+    if (d1Limited) return d1Limited
+
     // ── Signature Verification ──────────────────────────────────────────
     // Reconstruct the SNIP-12 typed data from the submitted order data and
     // compute the message hash server-side. This prevents an attacker from
@@ -115,7 +120,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Check no other pending order exists with the same borrower + nonce
-    const db = getD1()
     const existingOrders = await db.getOrders({ status: 'pending', address: borrower, page: 1, limit: 100 })
     const duplicateNonce = (existingOrders as Record<string, unknown>[]).some((o) => {
       const od = typeof o.order_data === 'string' ? JSON.parse(o.order_data as string) : o.order_data
