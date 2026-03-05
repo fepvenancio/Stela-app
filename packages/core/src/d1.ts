@@ -715,6 +715,21 @@ export function createD1Queries(db: D1Database) {
       return (result.meta?.changes as number) ?? 0
     },
 
+    /**
+     * After settling an order, expire all other pending orders from the same borrower
+     * with the same nonce (that nonce is now consumed on-chain, so they can never settle).
+     */
+    async expireSiblingOrders(settledOrderId: string, borrower: string, nonce: string): Promise<number> {
+      const result = await db
+        .prepare(
+          `UPDATE orders SET status = 'expired'
+           WHERE status = 'pending' AND id != ? AND LOWER(borrower) = LOWER(?) AND nonce = ?`
+        )
+        .bind(settledOrderId, normalizeAddress(borrower), nonce)
+        .run()
+      return (result.meta?.changes as number) ?? 0
+    },
+
     async getPendingOrders(): Promise<Record<string, unknown>[]> {
       const result = await db
         .prepare(`SELECT * FROM orders WHERE status = 'pending' ORDER BY created_at ASC LIMIT 50`)

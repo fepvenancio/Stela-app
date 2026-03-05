@@ -313,6 +313,12 @@ async function settleOrders(
       await queries.updateOrderStatus(order_id, 'settled')
       await queries.updateOfferStatus(offer_id, 'settled')
 
+      // Expire sibling orders with the same borrower+nonce (nonce is now consumed)
+      const siblingExpired = await queries.expireSiblingOrders(order_id, orderData.borrower, orderData.nonce)
+      if (siblingExpired > 0) {
+        console.log(`Expired ${siblingExpired} sibling order(s) for borrower ${orderData.borrower} nonce ${orderData.nonce}`)
+      }
+
       // Purge signatures — no longer needed after on-chain verification
       await queries.purgeOrderSignature(order_id)
       await queries.purgeOfferSignature(offer_id)
