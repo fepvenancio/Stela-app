@@ -55,15 +55,20 @@ function BrowseContent() {
 
   const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
   const orderStatusFilter = useMemo(() => mapInscriptionFilterToOrderFilter(statusFilter), [statusFilter])
-  const { data: allOrders, isLoading: ordersLoading } = useOrders({ status: orderStatusFilter })
+  // When comma-separated, fetch all and filter client-side; 'none' still fetches but gets filtered to []
+  const orderApiFetchStatus = orderStatusFilter.includes(',') ? 'all' : orderStatusFilter === 'none' ? 'all' : orderStatusFilter
+  const { data: allOrders, isLoading: ordersLoading } = useOrders({ status: orderApiFetchStatus })
 
   // Client-side filter orders to match the active status filter
   const filteredOrders = useMemo(() => {
+    if (orderStatusFilter === 'none') return []
     let result = allOrders
     if (statusFilter !== 'all') {
-      const target = mapInscriptionFilterToOrderFilter(statusFilter)
-      if (target !== 'all') {
-        result = result.filter((o) => o.status === target)
+      if (orderStatusFilter.includes(',')) {
+        const allowed = new Set(orderStatusFilter.split(','))
+        result = result.filter((o) => allowed.has(o.status))
+      } else if (orderStatusFilter !== 'all') {
+        result = result.filter((o) => o.status === orderStatusFilter)
       }
     }
 
@@ -98,7 +103,7 @@ function BrowseContent() {
     })
 
     return result
-  }, [allOrders, statusFilter, search, deferredFilters])
+  }, [allOrders, statusFilter, orderStatusFilter, search, deferredFilters])
 
   // Enrich, Filter, and Sort inscriptions
   const data = useMemo(() => {

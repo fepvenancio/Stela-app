@@ -47,12 +47,14 @@ export function getOrderStatusLabel(status: string): string {
 
 // ── Map on-chain filter to off-chain filter ─────────────────────────
 
-/** Map an on-chain inscription status filter to the equivalent off-chain order status. */
+/** Map an on-chain inscription status filter to the equivalent off-chain order status.
+ *  Returns comma-separated values when multiple statuses apply (e.g. 'matched,settled').
+ *  Returns 'none' when no off-chain orders should be shown for that filter. */
 export function mapInscriptionFilterToOrderFilter(filter: string): string {
   const map: Record<string, string> = {
     open: 'pending',
-    partial: 'matched',
-    filled: 'settled',
+    partial: 'none',
+    filled: 'matched,settled',
     expired: 'expired',
     all: 'all',
   }

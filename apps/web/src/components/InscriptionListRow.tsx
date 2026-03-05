@@ -17,6 +17,8 @@ interface InscriptionListRowProps {
   assets: AssetRow[]
   /** Unredeemed share balance — shown as "Pending Redemption" indicator */
   pendingShares?: string
+  /** Private lender position (shielded via privacy pool) */
+  isPrivateLender?: boolean
   selectable?: boolean
   selected?: boolean
   onSelect?: () => void
@@ -35,6 +37,7 @@ export function InscriptionListRow({
   duration,
   assets,
   pendingShares,
+  isPrivateLender,
   selectable,
   selected,
   onSelect,
@@ -95,6 +98,14 @@ export function InscriptionListRow({
               {pendingShares}sh
             </span>
           )}
+          {isPrivateLender && (
+            <span className="flex items-center gap-0.5 text-[8px] text-nebula font-semibold shrink-0" title="Private lender — shielded via privacy pool">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-nebula" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              Shielded
+            </span>
+          )}
           <InfoTooltip content={STATUS_DESCRIPTIONS[status] ?? 'Inscription status'} side="right" />
         </div>
 
@@ -135,6 +146,13 @@ export function InscriptionListRow({
             </Link>
             {pendingShares && (
               <span className="text-[8px] text-cosmic font-semibold">{pendingShares}sh</span>
+            )}
+            {isPrivateLender && (
+              <span className="flex items-center gap-0.5 text-[8px] text-nebula font-semibold" title="Shielded">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-nebula" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </span>
             )}
           </div>
           <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(Number(duration))}</span>
