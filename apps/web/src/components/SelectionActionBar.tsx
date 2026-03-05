@@ -30,7 +30,7 @@ export function SelectionActionBar({ onReview }: SelectionActionBarProps) {
   if (count === 0) return null
 
   return (
-    <div role="status" aria-live="polite" aria-label={`${count} inscription${count !== 1 ? 's' : ''} selected`} className="sticky top-0 z-30 -mx-4 px-4 py-3 mb-4 bg-void/90 backdrop-blur-xl border-b border-star/20">
+    <div role="status" aria-live="polite" aria-label={`${count} inscription${count !== 1 ? 's' : ''} selected`} className="sticky top-16 z-30 -mx-4 px-4 py-3 mb-4 bg-void/90 backdrop-blur-xl border-b border-star/20">
       <div className="flex items-center gap-4 flex-wrap">
         {/* Count badge */}
         <div className="w-8 h-8 rounded-full bg-star/20 flex items-center justify-center text-star font-bold text-xs shrink-0">
