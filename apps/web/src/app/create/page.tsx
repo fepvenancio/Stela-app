@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
-import { formatTimestamp } from '@/lib/format'
+import { formatTimestamp, formatDisplayAmount } from '@/lib/format'
 import { formatAddress } from '@/lib/address'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
@@ -126,7 +126,7 @@ function AssetRow({
           {isNft ? (
             <>{token?.symbol || 'NFT'} #{asset.token_id}</>
           ) : (
-            <>{asset.value || '0'} <span className="text-dust">{token?.symbol || formatAddress(asset.asset)}</span></>
+            <>{formatDisplayAmount(asset.value || '0')} <span className="text-dust">{token?.symbol || formatAddress(asset.asset)}</span></>
           )}
         </span>
       </div>
@@ -313,11 +313,16 @@ function AddAssetModal({
                   <Input
                     type="text"
                     inputMode="decimal"
-                    placeholder="0.00"
+                    placeholder="0.000"
                     value={amount}
                     onChange={(e) => {
                       const raw = e.target.value
-                      if (raw === '' || /^\d*\.?\d*$/.test(raw)) setAmount(raw)
+                      // Allow digits with optional dot and up to 3 decimal places
+                      if (raw === '' || /^\d*\.?\d{0,3}$/.test(raw)) setAmount(raw)
+                    }}
+                    onPaste={(e) => {
+                      const text = e.clipboardData.getData('text')
+                      if (!/^\d*\.?\d{0,3}$/.test(text)) e.preventDefault()
                     }}
                     className={`text-lg font-mono h-12 ${selectedToken ? 'pr-16' : ''}`}
                     autoFocus

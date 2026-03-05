@@ -139,13 +139,19 @@ export function OrderActions({
                   <label htmlFor="order-lend-amount" className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
                   <Input
                     id="order-lend-amount"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     value={lendAmount}
-                    onChange={(e) => setLendAmount(e.target.value)}
-                    placeholder="Amount to Lend"
-                    step="any"
-                    min={0}
-                    className="h-14 text-lg bg-void/50"
+                    onChange={(e) => {
+                      const v = e.target.value
+                      if (v === '' || /^\d*\.?\d{0,3}$/.test(v)) setLendAmount(v)
+                    }}
+                    onPaste={(e) => {
+                      const text = e.clipboardData.getData('text')
+                      if (!/^\d*\.?\d{0,3}$/.test(text)) e.preventDefault()
+                    }}
+                    placeholder="0.000"
+                    className="h-14 text-lg bg-void/50 font-mono"
                   />
                 </div>
                 <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={signPending || !lendAmount}>
