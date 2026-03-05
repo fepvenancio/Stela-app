@@ -436,6 +436,13 @@ export default function LandingPage() {
                   <p className="text-dust text-sm leading-relaxed">Anyone can call <span className="font-mono text-xs text-star">settle()</span> and earn 5 BPS (0.05%) per settlement. No permissions needed -- just a StarkNet wallet and some gas.</p>
                 </div>
               </div>
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-cosmic/10 flex items-center justify-center text-cosmic flex-shrink-0 mt-0.5">{icons.layers}</div>
+                <div>
+                  <h4 className="text-chalk text-sm font-semibold mb-1">Order Book</h4>
+                  <p className="text-dust text-sm leading-relaxed">Create multiple orders with different terms simultaneously. Lenders pick the best offer. First one to settle wins -- all others auto-cancel. Like limit orders on an exchange.</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1006,6 +1013,12 @@ export default function LandingPage() {
             title="Permissionless Relayers"
             description="Anyone can settle matched orders on-chain and earn 5 BPS per trade. No whitelist, no permission -- just a wallet and gas."
             accent="ember"
+          />
+          <FeatureCard
+            icon={icons.scale}
+            title="Order Book"
+            description="Post multiple orders with competing terms. Lenders browse and pick. First to settle wins, siblings auto-cancel. P2P price discovery."
+            accent="cosmic"
           />
         </div>
       </section>
