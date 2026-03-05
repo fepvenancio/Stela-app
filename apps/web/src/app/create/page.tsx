@@ -16,7 +16,6 @@ import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -721,31 +720,58 @@ export default function CreatePage() {
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-chalk">Loan Settings</span>
           </div>
 
-          {/* Multi-lender toggle — PROMINENT gold theme */}
-          <div
-            className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
-              multiLender
-                ? 'bg-star/10 border-2 border-star/40 shadow-[0_0_12px_rgba(232,168,37,0.08)]'
-                : 'bg-surface/60 border-2 border-edge/30 hover:border-edge/50'
-            }`}
-          >
-            <label htmlFor="multi-lender" className="flex items-center gap-3 cursor-pointer flex-1">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                multiLender ? 'bg-star/20 border border-star/40' : 'bg-surface border border-edge'
-              }`}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" className={multiLender ? 'text-star' : 'text-ash'}>
-                  <circle cx="4" cy="5" r="2" />
-                  <circle cx="10" cy="5" r="2" />
-                  <path d="M1 12c0-2 1.5-3 3-3s3 1 3 3" />
-                  <path d="M7 12c0-2 1.5-3 3-3s3 1 3 3" />
+          {/* Multi-lender toggle */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Lender Mode</Label>
+              <div className="group relative">
+                <button type="button" className="w-4 h-4 rounded-full border border-edge text-ash hover:text-star hover:border-star/40 flex items-center justify-center transition-colors" aria-label="What is multi-lender?">
+                  <span className="text-[9px] font-bold">i</span>
+                </button>
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-3 bg-elevated border border-edge-bright rounded-xl text-xs text-dust leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50 shadow-lg">
+                  <span className="text-chalk font-medium block mb-1">Single vs Multi-Lender</span>
+                  <span className="block mb-1"><strong className="text-chalk">Single:</strong> One lender funds the entire loan. Faster settlement.</span>
+                  <span className="block"><strong className="text-chalk">Multi:</strong> Multiple lenders can each fund a portion. Better for large loans — each lender chooses how much to contribute.</span>
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-elevated border-r border-b border-edge-bright rotate-45 -mt-1" />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMultiLender(false)}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                  !multiLender
+                    ? 'border-star/40 bg-star/10 shadow-[0_0_12px_rgba(232,168,37,0.08)]'
+                    : 'border-edge/30 bg-surface/40 hover:border-edge/50'
+                }`}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={!multiLender ? 'text-star' : 'text-ash'}>
+                  <circle cx="8" cy="5" r="2.5" />
+                  <path d="M3 14c0-2.5 2-4 5-4s5 1.5 5 4" />
                 </svg>
-              </div>
-              <div>
-                <span className={`text-sm font-medium block ${multiLender ? 'text-star' : 'text-chalk'}`}>Allow multiple lenders</span>
-                <span className="text-[10px] text-ash uppercase tracking-wider">Lenders can fund partial amounts</span>
-              </div>
-            </label>
-            <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
+                <span className={`text-xs font-semibold ${!multiLender ? 'text-star' : 'text-chalk'}`}>Single Lender</span>
+                <span className="text-[9px] text-ash leading-tight text-center">One lender funds all</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMultiLender(true)}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                  multiLender
+                    ? 'border-star/40 bg-star/10 shadow-[0_0_12px_rgba(232,168,37,0.08)]'
+                    : 'border-edge/30 bg-surface/40 hover:border-edge/50'
+                }`}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={multiLender ? 'text-star' : 'text-ash'}>
+                  <circle cx="5" cy="5" r="2" />
+                  <circle cx="11" cy="5" r="2" />
+                  <path d="M1 14c0-2 1.5-3 4-3s4 1 4 3" />
+                  <path d="M7 14c0-2 1.5-3 4-3s4 1 4 3" />
+                </svg>
+                <span className={`text-xs font-semibold ${multiLender ? 'text-star' : 'text-chalk'}`}>Multi-Lender</span>
+                <span className="text-[9px] text-ash leading-tight text-center">Partial funding allowed</span>
+              </button>
+            </div>
           </div>
 
           {/* Duration + Deadline — side by side */}
