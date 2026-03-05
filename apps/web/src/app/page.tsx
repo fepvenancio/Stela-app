@@ -279,7 +279,7 @@ export default function LandingPage() {
             </div>
             <h3 className="font-display text-xl text-chalk mb-3 uppercase tracking-wider">Pure P2P</h3>
             <p className="text-dust text-sm leading-relaxed">
-              Borrowers define terms. Lenders choose what to fund. Direct interaction with transparent, on-chain fees (0.35% round-trip). Your assets, your terms, your inscription.
+              Borrowers define terms. Lenders choose what to fund. Direct interaction with transparent, on-chain fees (0.30% round-trip). Your assets, your terms, your inscription.
             </p>
           </div>
         </div>
@@ -697,7 +697,7 @@ export default function LandingPage() {
                   <span className="text-chalk">0 BPS</span>
                 </div>
                 <div className="flex justify-between px-2">
-                  <span className="text-dust">Genesis Holders</span>
+                  <span className="text-dust">Treasury</span>
                   <span className="text-chalk">0 BPS</span>
                 </div>
               </div>
@@ -707,12 +707,12 @@ export default function LandingPage() {
           {/* Summary callouts */}
           <div className="grid sm:grid-cols-3 gap-4 pt-8 border-t border-edge/15">
             <div className="text-center p-4">
-              <div className="text-2xl font-display text-star mb-1">0.35%</div>
+              <div className="text-2xl font-display text-star mb-1">0.30%</div>
               <p className="text-[11px] text-dust uppercase tracking-widest">Total Round-Trip</p>
             </div>
             <div className="text-center p-4">
-              <div className="text-2xl font-display text-star mb-1">100%</div>
-              <p className="text-[11px] text-dust uppercase tracking-widest">Non-Relayer Fees to Genesis</p>
+              <div className="text-2xl font-display text-star mb-1">Up to 50%</div>
+              <p className="text-[11px] text-dust uppercase tracking-widest">NFT Holder Discount</p>
             </div>
             <div className="text-center p-4">
               <div className="text-2xl font-display text-chalk mb-1">Permissionless</div>
@@ -771,7 +771,7 @@ export default function LandingPage() {
           <FeatureCard
             icon={icons.shield}
             title="Genesis NFTs"
-            description="500 NFTs, each earning a perpetual share of protocol fees. Real yield from actual lending activity, claimable at any time."
+            description="300 NFTs, each granting protocol fee discounts up to 50%. No staking or claiming — discounts apply automatically on-chain."
             accent="star"
           />
           <FeatureCard

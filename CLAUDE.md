@@ -519,39 +519,42 @@ Off-chain orders use SNIP-12 typed data signatures stored in D1, settled on-chai
 
 ---
 
-## Genesis NFT Fee System
+## Genesis NFT Fee Discount System
 
-The Stela contract applies protocol fees at settle and redeem, split between a relayer and Genesis FeeVault. Fee constants are hardcoded in `stela.cairo`. **Treasury is set to the FeeVault address** — no individual receives protocol revenue. 100% of non-relayer fees go to Genesis NFT holders.
+The Stela contract applies protocol fees at settle and redeem, split between a relayer and treasury. Genesis NFT holders receive on-chain fee discounts (up to 50%) — no staking or claiming required.
 
-| Event | Total BPS | Relayer | Genesis Vault |
-|-------|-----------|---------|---------------|
-| SETTLE | 25 (0.25%) | 5 | 20 |
+| Event | Total BPS | Relayer | Treasury |
+|-------|-----------|---------|----------|
+| SETTLE | 20 (0.20%) | 5 | 15 |
 | REDEEM | 10 (0.1%) | 0 | 10 |
 | LIQUIDATE | 0 | 0 | 0 |
 
-**Mainnet deployment notes:**
-- Before renouncing ownership, `set_treasury()` MUST be called with the FeeVault address so treasury fees route to Genesis NFT holders (not an individual wallet). This is critical for regulatory compliance.
-- **SECURITY:** FeeVault's `deposit()` has no caller restriction — anyone can call it with arbitrary tokens, polluting the deposit ledger. For mainnet, add an `assert(caller == stela_contract)` check in `deposit()` before renouncing ownership. This prevents phantom deposits that could confuse the fee distribution accounting.
+**Fee discount model:**
+- 15% base discount for holding 1+ Genesis NFT
+- +5% per volume tier (7 tiers: $10K, $25K, $50K, $100K, $250K, $500K, $1M+)
+- +2% per additional NFT held
+- Hard cap: 50% total discount
+- Discount applies to treasury portion only — relayer 5 BPS never discounted
+- Floors: settle treasury min 10 BPS, redeem treasury min 5 BPS
 
-When `fee_vault == zero_address` on the contract, no Genesis fees are taken (backwards compatible).
+**Mainnet deployment notes:**
+- Before renouncing ownership, `set_treasury()` and `set_genesis_contract()` MUST be called.
+- Treasury receives fees via simple `transfer()` — no FeeVault or cumulative sum pattern.
 
 ### Contract Architecture
 
-- **StelaGenesis** — ERC721, 500 supply, 5,000 STRK mint price, sequential IDs 1-500
-- **FeeVault** — Multi-token fee distribution using cumulative sum pattern. Stela contract calls `deposit()` during settle/redeem. NFT holders call `claim()` directly.
-- **stela.cairo** — `set_fee_vault()` / `get_fee_vault()` admin functions control fee routing
+- **StelaGenesis** — ERC721, 300 supply, 1,000 STRK mint price, sequential IDs 1-300
+- **StelaProtocol** — `set_treasury()` / `get_treasury()` for fee routing, `set_genesis_contract()` / `get_genesis_contract()` for discount lookup
+- No FeeVault — fees go directly to treasury address
 
-### Future Frontend Routes
+### Frontend Routes
 
 - `/genesis` — Mint page (approve STRK, call `mint()` or `mint_batch()` on StelaGenesis)
-- `/genesis/claim` — Claim page (view claimable fees per NFT, call `claim()` / `claim_batch()` on FeeVault)
+- `/genesis/claim` — "Your NFTs" page (view owned NFTs, discount tier, volume stats)
 
-### New Contract Events (for indexer)
+### Contract Events (for indexer)
 
 - `Minted(token_id, minter, price)` — from StelaGenesis
-- `Deposited(token, amount, per_nft)` — from FeeVault
-- `Claimed(token_id, token, amount, recipient)` — from FeeVault
-- `TokenRegistered(token, index)` — from FeeVault
 
 ---
 
@@ -570,8 +573,6 @@ redeploy all 3 CF workers → restart Railway indexer → verify everything.
 Before starting, gather:
 - New Stela contract address (from `sncast deploy` output)
 - New StelaGenesis NFT address (if redeployed)
-- New FeeVault address (if redeployed)
-- New Privacy Pool address (if redeployed, or empty if not linked)
 - Updated ABI (from `scarb build` output)
 
 ### Step 1: Update SDK (`stela-sdk-ts` repo)
@@ -595,13 +596,7 @@ Then: `pnpm build && npm publish` (or `pnpm link` for local dev)
 | 6 | `services/indexer/.env.example` | `STELA_ADDRESS` | Apibara indexer template |
 | 7 | `packages/core/src/constants.ts` | `STELA_ADDRESS[sepolia]` | Shared constant (if not using SDK) |
 
-**Optional addresses** (only if the associated contract was redeployed):
-
-| File | Variable | When |
-|------|----------|------|
-| `apps/web/.env.local` | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Only if privacy pool deployed AND linked via `set_privacy_pool()` |
-| `apps/web/wrangler.jsonc` | `vars.NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Same — omit entirely if no privacy pool |
-| `apps/web/.env.example` | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Template reference |
+Also update `GENESIS_ADDRESS` in `apps/web/src/lib/config.ts` if the Genesis contract was redeployed.
 
 ### Step 3: Update ABI
 
@@ -698,51 +693,6 @@ npx wrangler d1 execute stela-db --remote --command="SELECT * FROM _meta"
 curl -s https://stela-indexer.stela-app.workers.dev/health
 ```
 
-### Step 9: Link Privacy Pool (after `set_privacy_pool()` on contract)
-
-After deploying the privacy pool contract and calling `set_privacy_pool(pool_address)` on the Stela contract:
-
-**1. Verify on-chain link:**
-```bash
-# Confirm the contract returns the correct privacy pool address
-sncast call --contract-address <STELA_ADDRESS> --function get_privacy_pool
-```
-
-**2. Add `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` back to config (3 places):**
-
-| # | File | What to add |
-|---|------|-------------|
-| 1 | `apps/web/.env.local` | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS=<pool_address>` |
-| 2 | `apps/web/.env.example` | Uncomment `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS=<pool_address>` |
-| 3 | `apps/web/wrangler.jsonc` | Add `"NEXT_PUBLIC_PRIVACY_POOL_ADDRESS": "<pool_address>"` to `vars` |
-
-**3. Rebuild & deploy web app (nuke caches!):**
-```bash
-cd apps/web
-rm -rf .next .open-next ../../.turbo ../../node_modules/.cache
-pnpm run deploy
-```
-
-**4. What this enables in the UI:**
-- Privacy toggle appears on `/order/[id]` page (defaults to ON)
-- Lenders can choose "Shield & Lend" (private) or "Sign & Settle" (public)
-- Private notes stored in localStorage for later redemption
-- "Private Lender" badge shown on offers with `lender_commitment != 0`
-
-**5. Bot behavior changes:**
-- When `lender_commitment != 0` in an offer, bot calls `settle()` with the commitment
-- Contract routes shares to privacy pool Merkle tree instead of minting ERC1155
-- No bot config changes needed — it reads `lender_commitment` from D1 offer data
-
-**6. What does NOT need changing:**
-- Bot worker (`workers/bot/`) — no config changes, reads commitment from D1
-- Indexer worker (`workers/indexer/`) — already handles `PrivateSettled` / `PrivateSharesRedeemed` events
-- Railway Apibara indexer — already handles privacy events
-- D1 schema — `lender_commitment` column already exists on `order_offers`
-- SDK — already has privacy module (`computeCommitment`, `computeNullifier`, etc.)
-
----
-
 ### Why Nonces Break on Redeployment
 
 The Stela contract uses OpenZeppelin's `NoncesComponent` for replay protection on off-chain signatures.
@@ -773,7 +723,6 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 | `pnpm build` doesn't update deployed code | `pnpm build` only runs `next build`, not OpenNext | Use `pnpm run deploy` from `apps/web/` |
 | Nonce mismatch (e.g. nonce=4 vs on-chain=0) | Old contract had consumed nonces, new contract starts at 0 | Clean D1 orders table |
 | `balanceOf` entrypoint not found | Cairo uses snake_case | Use `balance_of` not `balanceOf` |
-| `PRIV: unauthorized` on settlement | Privacy pool not linked on contract | Remove `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` or call `set_privacy_pool()` on contract |
 | Bot can't settle (gas errors) | Bot wallet has no ETH/STRK | Fund the bot wallet |
 | Indexer not catching events | `STELA_ADDRESS` wrong in Railway env | Update Railway env var and redeploy |
 | verify-nonce accepts bad nonces | RPC failures + fail-open design | verify-nonce.ts now fails CLOSED (2026-03-03 fix) |
@@ -789,7 +738,6 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 | `stela-app` (web) | `NEXT_PUBLIC_STELA_ADDRESS` | `apps/web/wrangler.jsonc` vars | No |
 | `stela-app` (web) | `NEXT_PUBLIC_NETWORK` | `apps/web/wrangler.jsonc` vars | No |
 | `stela-app` (web) | `NEXT_PUBLIC_RPC_URL` | `apps/web/wrangler.jsonc` vars | No |
-| `stela-app` (web) | `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | `apps/web/wrangler.jsonc` vars | No (optional) |
 | `stela-bot` | `STELA_ADDRESS` | `workers/bot/wrangler.jsonc` vars | No |
 | `stela-bot` | `BOT_PRIVATE_KEY` | `wrangler secret put` | **YES** |
 | `stela-bot` | `BOT_ADDRESS` | `wrangler secret put` | **YES** |
@@ -813,17 +761,14 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 |----------|------|-------|
 | `NEXT_PUBLIC_STELA_ADDRESS` | `apps/web/.env.local` | Overrides SDK constant |
 | `NEXT_PUBLIC_NETWORK` | `apps/web/.env.local` | `sepolia` or `mainnet` |
-| `NEXT_PUBLIC_RPC_URL` | `apps/web/.env.local` | Alchemy for local dev (faster) |
-| `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | `apps/web/.env.local` | Optional — omit if no pool |
+| `NEXT_PUBLIC_RPC_URL` | `apps/web/.env.local` | Cartridge public RPC (Alchemy server-side only) |
 
 ### Current Contract Addresses (Sepolia)
 
 | Contract | Address | Notes |
 |----------|---------|-------|
-| **Stela** | `0x042e955a1905261e7afdba17518506c8f275759e1195bc19e2eca908658bf8e9` | Current production, ownership renounced |
-| **StelaGenesis NFT** | `0x02405de15c17aaf863bcf23c22706d73d142c8a81df29de9ef129666655847ca` | ERC721, 500 supply, 100 treasury, 5/wallet cap |
-| **FeeVault** | `0x065f7103f01474dcc860d200e9e8eb7c467dbe3f6dcf0af5b84cfa143fb264f6` | Fee distribution, snapshot-on-mint |
-| **Privacy Pool** | `0x05852d427e3fabd544a1f2aca11f8b139b4b9c2064236172defff80ca2d5ed44` | Linked via set_privacy_pool |
+| **Stela** | `0x042f27b5cf82781d8fffd7daeec9184ac4f14c9e86e87b880bd81ef5197345ed` | protocol-overhaul-2026-03-05 |
+| **StelaGenesis NFT** | `0x07b1579dd61bbbaaea402d93c272a0a1b4d8e1a06a57743f509fbd6cb9b53fb2` | ERC721, 300 supply, 50 treasury, 5/wallet cap, 1000 STRK |
 
 ### D1 Access Security
 
