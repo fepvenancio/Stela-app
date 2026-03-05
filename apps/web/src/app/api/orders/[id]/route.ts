@@ -29,7 +29,18 @@ export async function GET(
       return errorResponse('Order not found', 404, request)
     }
 
-    const offers = await db.getOrderOffers(id)
+    const rawOffers = await db.getOrderOffers(id)
+
+    // Redact private lender identity: when lender_commitment is set,
+    // strip depositor and lender_signature to prevent deanonymization
+    const offers = (rawOffers as Record<string, unknown>[]).map((offer) => {
+      const commitment = String(offer.lender_commitment ?? '0')
+      const isPrivate = commitment !== '0' && commitment !== '0x0' && commitment !== ''
+      if (!isPrivate) return offer
+      const { depositor: _d, lender_signature: _s, ...safe } = offer
+      return { ...safe, lender: '0x0' }
+    })
+
     const parsed = parseOrderRow(order as Record<string, unknown>)
     return jsonResponse({ data: { ...parsed, offers } }, request)
   } catch (err) {
