@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useRef } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, toU256, getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
-import { RpcProvider, typedData as starknetTypedData } from 'starknet'
+import { RpcProvider, typedData as starknetTypedData, CallData } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID, NETWORK } from '@/lib/config'
 import { getInscriptionOrderTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
@@ -569,26 +569,70 @@ export default function CreatePage() {
     setIsPending(true)
     createProgress.start()
     try {
-      const erc20Approvals = sdkCollateralAssets
-        .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
-        .map(asset => ({
-          contractAddress: asset.asset_address,
-          entrypoint: 'approve',
-          calldata: [CONTRACT_ADDRESS, ...toU256(asset.value)],
-        }))
+      // Check existing allowances and only request approvals where needed
+      const erc20Collateral = sdkCollateralAssets.filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
+      const nftCollateral = sdkCollateralAssets.filter(a => a.asset_type === 'ERC721' || a.asset_type === 'ERC1155')
 
-      const nftApprovals = sdkCollateralAssets
-        .filter(a => a.asset_type === 'ERC721' || a.asset_type === 'ERC1155')
-        .map(asset => ({
-          contractAddress: asset.asset_address,
-          entrypoint: 'set_approval_for_all',
-          calldata: [CONTRACT_ADDRESS, '1'],
-        }))
+      const pendingApprovals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
 
-      const allApprovals = [...erc20Approvals, ...nftApprovals]
-      if (allApprovals.length > 0) {
+      // Check ERC20 allowances in parallel
+      if (erc20Collateral.length > 0) {
+        const checks = await Promise.all(
+          erc20Collateral.map(async (asset) => {
+            try {
+              const result = await provider.callContract({
+                contractAddress: asset.asset_address,
+                entrypoint: 'allowance',
+                calldata: CallData.compile({ owner: address, spender: CONTRACT_ADDRESS }),
+              })
+              const currentAllowance = BigInt(result[0])
+              return { asset, sufficient: currentAllowance >= asset.value }
+            } catch {
+              return { asset, sufficient: false }
+            }
+          }),
+        )
+        for (const { asset, sufficient } of checks) {
+          if (!sufficient) {
+            pendingApprovals.push({
+              contractAddress: asset.asset_address,
+              entrypoint: 'approve',
+              calldata: [CONTRACT_ADDRESS, ...toU256(asset.value)],
+            })
+          }
+        }
+      }
+
+      // Check NFT approvals in parallel
+      if (nftCollateral.length > 0) {
+        const checks = await Promise.all(
+          nftCollateral.map(async (asset) => {
+            try {
+              const result = await provider.callContract({
+                contractAddress: asset.asset_address,
+                entrypoint: 'is_approved_for_all',
+                calldata: CallData.compile({ owner: address, operator: CONTRACT_ADDRESS }),
+              })
+              return { asset, approved: BigInt(result[0]) !== 0n }
+            } catch {
+              return { asset, approved: false }
+            }
+          }),
+        )
+        for (const { asset, approved } of checks) {
+          if (!approved) {
+            pendingApprovals.push({
+              contractAddress: asset.asset_address,
+              entrypoint: 'set_approval_for_all',
+              calldata: [CONTRACT_ADDRESS, '1'],
+            })
+          }
+        }
+      }
+
+      if (pendingApprovals.length > 0) {
         toast.info('Approve collateral in your wallet...')
-        const { transaction_hash: approvalTx } = await account.execute(allApprovals)
+        const { transaction_hash: approvalTx } = await account.execute(pendingApprovals)
         createProgress.setTxHash(approvalTx)
         await provider.waitForTransaction(approvalTx)
         toast.success('Collateral approved!')
