@@ -121,18 +121,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check no other pending order exists with the same borrower + nonce
+    // Check no other pending order exists with the same borrower + nonce.
+    // If one exists, return it as success (the previous attempt likely saved but timed out).
     const existingOrders = await db.getOrders({ status: 'pending', address: borrower, page: 1, limit: 100 })
-    const duplicateNonce = (existingOrders as Record<string, unknown>[]).some((o) => {
+    const existingOrder = (existingOrders as Record<string, unknown>[]).find((o) => {
       const od = typeof o.order_data === 'string' ? JSON.parse(o.order_data as string) : o.order_data
       return String(od?.nonce) === String(order_data.nonce)
     })
-    if (duplicateNonce) {
-      return errorResponse(
-        'A pending order with this nonce already exists. Cancel it first or wait for it to settle.',
-        409,
-        request,
-      )
+    if (existingOrder) {
+      return jsonResponse({ ok: true, id: existingOrder.id, existing: true }, request)
     }
 
     // Verify asset hashes if provided (defense in depth)
