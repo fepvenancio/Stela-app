@@ -260,7 +260,7 @@ export default function PortfolioPage() {
                       cta={!q ? { label: 'Create Order', href: '/create' } : undefined}
                     />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-hidden">
+                    <div className="rounded-xl border border-edge/30 overflow-clip">
                       <ListingTableHeader />
                       <div className="flex flex-col">
                         {filteredOrders.map((order) => (
@@ -278,7 +278,7 @@ export default function PortfolioPage() {
                       cta={!q ? { label: 'Browse Stelas', href: '/browse' } : undefined}
                     />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-hidden">
+                    <div className="rounded-xl border border-edge/30 overflow-clip">
                       <ListingTableHeader />
                       {lendingOrders.length > 0 && (
                         <div className="flex flex-col">
@@ -299,7 +299,7 @@ export default function PortfolioPage() {
                       cta={!q ? { label: 'Create Inscription', href: '/create' } : undefined}
                     />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-hidden">
+                    <div className="rounded-xl border border-edge/30 overflow-clip">
                       <ListingTableHeader />
                       {borrowingOrders.length > 0 && (
                         <div className="flex flex-col">
@@ -317,7 +317,7 @@ export default function PortfolioPage() {
                   {filteredRepaid.length === 0 ? (
                     <EmptyTab message={q ? 'No repaid positions match your search.' : 'No repaid positions yet.'} />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-hidden">
+                    <div className="rounded-xl border border-edge/30 overflow-clip">
                       <ListingTableHeader />
                       <InscriptionList items={filteredRepaid} />
                     </div>
@@ -328,7 +328,7 @@ export default function PortfolioPage() {
                   {filteredRedeemable.length === 0 ? (
                     <EmptyTab message={q ? 'No redeemable positions match your search.' : 'No redeemable positions.'} />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-hidden">
+                    <div className="rounded-xl border border-edge/30 overflow-clip">
                       <ListingTableHeader />
                       <InscriptionList items={filteredRedeemable} />
                     </div>
