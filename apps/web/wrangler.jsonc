@@ -19,7 +19,7 @@
   ],
   "vars": {
     "NEXT_PUBLIC_NETWORK": "sepolia",
-    "NEXT_PUBLIC_STELA_ADDRESS": "0x038fb9a3bbf84aef962c70bc0ed15744f4f3088bae73bed99031b6f2b7cfab01",
+    "NEXT_PUBLIC_STELA_ADDRESS": "0x042e955a1905261e7afdba17518506c8f275759e1195bc19e2eca908658bf8e9",
     "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia",
     "NEXT_PUBLIC_PRIVACY_POOL_ADDRESS": "0x05852d427e3fabd544a1f2aca11f8b139b4b9c2064236172defff80ca2d5ed44"
   },
