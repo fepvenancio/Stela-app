@@ -119,7 +119,8 @@ export default function GenesisPage() {
           Genesis Collection
         </h1>
         <p className="text-dust leading-relaxed">
-          {MAX_SUPPLY} unique NFTs that earn a share of every protocol fee on Stela.
+          {MAX_SUPPLY} Genesis NFTs — 100 reserved for the protocol treasury, 400 available for public mint.
+          Each earns a perpetual share of all protocol fees.
           Settle fees (20 BPS) and redeem fees (10 BPS) are split across all {MAX_SUPPLY} holders.
         </p>
       </div>
@@ -266,6 +267,37 @@ export default function GenesisPage() {
             Fees accumulate in the vault and are split equally across all {MAX_SUPPLY} Genesis NFTs.
             Claim anytime — there is no expiry on accumulated fees.
           </p>
+        </div>
+      </section>
+
+      {/* Treasury & Transparency */}
+      <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden mt-6">
+        <div className="px-6 py-4 border-b border-edge/20 bg-surface/30">
+          <h3 className="text-xs uppercase tracking-widest text-dust font-bold">Treasury &amp; Transparency</h3>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Treasury Reserve</span>
+              <span className="text-lg font-display text-star">100 NFTs</span>
+              <span className="text-xs text-dust block mt-1">Minted to the protocol treasury at deployment. Funds audits, upgrades, and licensing. Hardcoded in the contract constructor.</span>
+            </div>
+            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Public Supply</span>
+              <span className="text-lg font-display text-star">400 NFTs</span>
+              <span className="text-xs text-dust block mt-1">Available for public minting at 5,000 STRK each after the treasury reserve.</span>
+            </div>
+            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Per-Wallet Cap</span>
+              <span className="text-lg font-display text-star">5 Max</span>
+              <span className="text-xs text-dust block mt-1">Public minting is capped at 5 NFTs per wallet to prevent concentration.</span>
+            </div>
+            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Ownership</span>
+              <span className="text-lg font-display text-star">Renounced</span>
+              <span className="text-xs text-dust block mt-1">After deployment, contract ownership is permanently renounced. No admin can mint more NFTs, change the price, or pause minting. Fully immutable.</span>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -141,6 +141,17 @@
       },
       {
         "type": "function",
+        "name": "max_per_wallet",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "set_mint_price",
         "inputs": [
           {
@@ -202,6 +213,29 @@
         ],
         "outputs": [],
         "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_fee_vault",
+        "inputs": [
+          {
+            "name": "fee_vault",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_fee_vault",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
       }
     ]
   },
@@ -642,6 +676,10 @@
       },
       {
         "name": "mint_recipient",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "treasury",
         "type": "core::starknet::contract_address::ContractAddress"
       },
       {

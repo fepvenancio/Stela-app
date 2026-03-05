@@ -820,6 +820,47 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+
+        {/* Transparency card */}
+        <div className="mt-8 bg-surface/20 border border-edge/20 rounded-3xl p-6 sm:p-8 granite-noise">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-chalk/10 flex items-center justify-center text-chalk">{icons.eye}</div>
+            <h4 className="font-display text-base text-chalk uppercase tracking-wider">Transparent &amp; Immutable</h4>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div>
+              <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Treasury Reserve</h5>
+              <p className="text-dust text-sm leading-relaxed">
+                100 of the 500 Genesis NFTs are minted to the protocol treasury on contract deployment —
+                hardcoded in the smart contract constructor, not an admin action. These 100 NFTs fund
+                protocol development: audits, upgrades, and licensing.
+              </p>
+            </div>
+            <div>
+              <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Per-Wallet Cap</h5>
+              <p className="text-dust text-sm leading-relaxed">
+                Public minting is limited to 5 NFTs per wallet to prevent concentration.
+                No single participant can accumulate an outsized share of protocol revenue.
+              </p>
+            </div>
+            <div>
+              <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Ownership Renounced</h5>
+              <p className="text-dust text-sm leading-relaxed">
+                After deployment, contract ownership is renounced — no admin can mint more, change
+                the price, pause minting, or alter any parameter. The contract becomes fully
+                autonomous and immutable.
+              </p>
+            </div>
+            <div>
+              <h5 className="font-display text-sm text-chalk uppercase tracking-wider mb-2">Fair Fee Distribution</h5>
+              <p className="text-dust text-sm leading-relaxed">
+                Each NFT only earns fees deposited after it was minted. A snapshot at mint time
+                prevents new holders from claiming retroactive fees. Treasury NFTs (minted at deploy)
+                earn from the first deposit; public minters earn from their mint onwards.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── 8. Fee Structure ──────────────────────────────────── */}

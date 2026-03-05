@@ -291,6 +291,67 @@ export default function DocsPage() {
               All fees are hardcoded in the immutable contract. Treasury is set to the FeeVault — 100% of non-relayer fees go to Genesis NFT holders. No individual or entity receives protocol revenue.
             </p>
           </div>
+
+          {/* Treasury & Governance */}
+          <div>
+            <SubHeading>Treasury & Governance</SubHeading>
+            <div className="space-y-6">
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">Treasury Reserve</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  <span className="text-chalk font-semibold">100 of 500</span> Genesis NFTs are minted to the protocol treasury at contract deployment. This is hardcoded in the constructor — not an admin action that can be changed later. Revenue from treasury NFTs funds protocol development: <span className="text-chalk font-medium">security audits, contract upgrades, and licensing</span>.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                  <h4 className="font-display text-star text-lg mb-3">Per-Wallet Limit</h4>
+                  <p className="text-dust text-sm leading-relaxed">
+                    Public minting is capped at <span className="text-chalk font-semibold">5 NFTs per wallet</span>, enforced on-chain via the <span className="text-chalk font-mono text-xs">MAX_PER_WALLET</span> constant. No single participant can accumulate an outsized share of protocol revenue.
+                  </p>
+                </div>
+                <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                  <h4 className="font-display text-star text-lg mb-3">Ownership Renounced</h4>
+                  <p className="text-dust text-sm leading-relaxed">
+                    After deployment, contract ownership is <span className="text-chalk font-semibold">permanently renounced</span> via OpenZeppelin&apos;s <span className="text-chalk font-mono text-xs">renounce_ownership()</span>. No admin functions can ever be called again — mint price, mint status, base URI, and admin minting are all permanently locked.
+                  </p>
+                </div>
+              </div>
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">Fair Fee Distribution</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  Each NFT only earns fees deposited <span className="text-chalk font-semibold">after it was minted</span>. When a new NFT is minted, the Genesis contract calls <span className="text-chalk font-mono text-xs">snapshot_new_nft()</span> on the FeeVault, which sets the NFT&apos;s claim checkpoint to the current cumulative value for every registered fee token. This prevents new holders from claiming retroactive fees that accrued before their NFT existed. Treasury NFTs (IDs 1-100, minted at deployment before the vault is linked) earn from the very first deposit. Public minters (IDs 101+) earn only from their mint onwards.
+                </p>
+              </div>
+              <div className="bg-abyss/60 border border-star/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">Immutable Parameters</h4>
+                <p className="text-dust text-sm leading-relaxed mb-4">
+                  After ownership is renounced, the following parameters are permanent and can never be modified by anyone:
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
+                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Mint Price</span>
+                    <span className="text-sm text-chalk font-semibold">5,000 STRK</span>
+                  </div>
+                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
+                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Mint Enabled</span>
+                    <span className="text-sm text-chalk font-semibold">True</span>
+                  </div>
+                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
+                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Max Supply</span>
+                    <span className="text-sm text-chalk font-semibold">500</span>
+                  </div>
+                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
+                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Treasury</span>
+                    <span className="text-sm text-chalk font-semibold">100</span>
+                  </div>
+                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
+                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Per Wallet</span>
+                    <span className="text-sm text-chalk font-semibold">5</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Overview */}
