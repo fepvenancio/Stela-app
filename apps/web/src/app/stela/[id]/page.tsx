@@ -15,9 +15,8 @@ import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import { InscriptionActions } from '@/components/InscriptionActions'
 import { OrderActions } from '@/components/OrderActions'
-import { AssetBadge } from '@/components/AssetBadge'
+import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CopyButton } from '@/components/CopyButton'
 
@@ -36,44 +35,64 @@ function detectIdType(id: string): IdType {
   return 'invalid'
 }
 
-// ── Asset display row ────────────────────────────────────────────────
+/* ── Role-colored asset display ─────────────────────────── */
 
-interface AssetDisplayProps {
-  role: 'debt' | 'interest' | 'collateral'
-  assets: { address: string; type: string; value?: string; tokenId?: string }[]
-  isLoading: boolean
+const ROLE_META = {
+  debt: { label: 'Borrow', dot: 'bg-nebula', text: 'text-nebula', bg: 'bg-nebula/8', border: 'border-nebula/20' },
+  interest: { label: 'Interest', dot: 'bg-aurora', text: 'text-aurora', bg: 'bg-aurora/8', border: 'border-aurora/20' },
+  collateral: { label: 'Collateral', dot: 'bg-star', text: 'text-star', bg: 'bg-star/8', border: 'border-star/20' },
+} as const
+
+type AssetRole = keyof typeof ROLE_META
+
+interface DisplayAsset {
+  address: string
+  type: string
+  value?: string
+  tokenId?: string
 }
 
-function AssetDisplay({ role, assets, isLoading }: AssetDisplayProps) {
-  const dotColor = role === 'debt' ? 'bg-star' : role === 'interest' ? 'bg-aurora' : 'bg-nebula'
+function AssetPillDisplay({ asset }: { asset: DisplayAsset }) {
+  const token = findTokenByAddress(asset.address)
+  const symbol = token?.symbol ?? formatAddress(asset.address)
+  const isNft = asset.type === 'ERC721'
+  const formatted = isNft
+    ? `${symbol}${asset.tokenId && asset.tokenId !== '0' ? ` #${asset.tokenId}` : ''}`
+    : `${formatTokenValue(asset.value ?? '0', token?.decimals ?? 18)} ${symbol}`
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="flex items-center gap-3 shrink-0 w-32">
-        <div className={`w-2 h-2 rounded-full ${dotColor}`} />
-        <span className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold">{role}</span>
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface/40 border border-edge/25">
+      <TokenAvatarByAddress address={asset.address} size={16} />
+      <span className="text-xs text-chalk font-medium">{formatted}</span>
+    </div>
+  )
+}
+
+function AssetSection({ role, assets, isLoading }: { role: AssetRole; assets: DisplayAsset[]; isLoading: boolean }) {
+  const meta = ROLE_META[role]
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2">
+        <div className={`w-2 h-2 rounded-full ${meta.dot}`} />
+        <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${meta.text}`}>{meta.label}</span>
+        {assets.length > 1 && (
+          <span className="text-[10px] font-mono text-ash bg-surface/60 px-1.5 py-0.5 rounded-md">{assets.length}</span>
+        )}
       </div>
-      <div className="flex flex-wrap gap-2 sm:justify-end flex-1">
-        {isLoading ? <Skeleton className="h-8 w-24 bg-edge/20" /> : assets.length > 0 ? (
-          assets.map((a, idx) => {
-            const token = findTokenByAddress(a.address)
-            const formattedValue = a.type === 'ERC721' ? undefined : formatTokenValue(a.value ?? '0', token?.decimals ?? 18)
-            return (
-              <AssetBadge
-                key={`${role}-${idx}`}
-                address={a.address}
-                assetType={a.type}
-                value={formattedValue}
-                tokenId={a.tokenId && a.tokenId !== '0' ? a.tokenId : undefined}
-              />
-            )
-          })
-        ) : <span className="text-xs text-ash italic">None</span>}
+      <div className="flex flex-wrap gap-1.5">
+        {isLoading ? (
+          <Skeleton className="h-8 w-28 rounded-full bg-edge/20" />
+        ) : assets.length > 0 ? (
+          assets.map((a, i) => <AssetPillDisplay key={`${role}-${i}`} asset={a} />)
+        ) : (
+          <span className="text-[11px] text-ash/50 italic pl-4">None</span>
+        )}
       </div>
     </div>
   )
 }
 
-// ── Order view ──────────────────────────────────────────────────────
+/* ── Order view ──────────────────────────────────────────── */
 
 function OrderView({ id }: { id: string }) {
   const { address } = useAccount()
@@ -116,8 +135,7 @@ function OrderView({ id }: { id: string }) {
   const isPending = order?.status === 'pending'
   const hasOffers = (order?.offers?.length ?? 0) > 0
 
-  // Normalize assets for AssetDisplay
-  const toDisplayAssets = (arr: typeof debtAssets) => arr.map(a => ({
+  const toDisplayAssets = (arr: typeof debtAssets): DisplayAsset[] => arr.map(a => ({
     address: a.asset_address, type: a.asset_type, value: a.value, tokenId: a.token_id,
   }))
 
@@ -129,40 +147,40 @@ function OrderView({ id }: { id: string }) {
       isLoading={isLoading}
       badges={
         <>
-          <Badge variant="default" className="rounded-full px-4 py-1 uppercase tracking-widest text-[10px] font-bold">
+          <Badge variant="default" className="rounded-full px-3 py-0.5 uppercase tracking-widest text-[9px] font-bold">
             Off-chain
           </Badge>
-          <Badge variant={isPending ? 'open' : 'cancelled'} className="rounded-full px-4 py-1 uppercase tracking-widest text-[10px] font-bold">
+          <Badge variant={isPending ? 'open' : 'cancelled'} className="rounded-full px-3 py-0.5 uppercase tracking-widest text-[9px] font-bold">
             {order?.status ?? 'Loading'}
           </Badge>
         </>
       }
       roiInfo={roiInfo}
       duration={isLoading ? null : formatDuration(Number(duration))}
-      durationLabel="From moment of settlement"
+      durationLabel="From settlement"
+      multiLender={isMultiLender}
       specs={[
         { label: 'Borrower', value: order?.borrower ? formatAddress(order.borrower) : '--', mono: true },
         { label: 'Status', value: order?.status ?? '--', mono: false },
-        { label: 'Type', value: isMultiLender ? 'Multi-Lender' : 'Single-Lender', mono: false },
+        { label: 'Created', value: order?.created_at ? formatTimestamp(BigInt(order.created_at)) : '--', mono: false },
+        { label: 'Deadline', value: order?.deadline ? formatTimestamp(BigInt(order.deadline)) : '--', mono: false },
       ]}
       assets={
         <>
-          <AssetDisplay role="debt" assets={toDisplayAssets(debtAssets)} isLoading={isLoading} />
-          <AssetDisplay role="interest" assets={toDisplayAssets(interestAssets)} isLoading={isLoading} />
-          <AssetDisplay role="collateral" assets={toDisplayAssets(collateralAssets)} isLoading={isLoading} />
+          <AssetSection role="debt" assets={toDisplayAssets(debtAssets)} isLoading={isLoading} />
+          <AssetSection role="collateral" assets={toDisplayAssets(collateralAssets)} isLoading={isLoading} />
+          <AssetSection role="interest" assets={toDisplayAssets(interestAssets)} isLoading={isLoading} />
         </>
       }
       extraContent={
         hasOffers ? (
-          <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-edge/20 bg-surface/30">
-              <h3 className="text-xs uppercase tracking-widest text-dust font-bold">Lending Offers</h3>
-            </div>
-            <div className="p-6 space-y-3">
+          <section className="space-y-3">
+            <h3 className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold pl-1">Lending Offers</h3>
+            <div className="space-y-2">
               {order?.offers?.map((offer) => (
-                <div key={offer.id} className="flex items-center justify-between p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+                <div key={offer.id} className="flex items-center justify-between p-4 bg-surface/20 border border-edge/20 rounded-2xl">
                   <div>
-                    <span className="text-[10px] text-ash uppercase tracking-widest block">Lender</span>
+                    <span className="text-[9px] text-ash uppercase tracking-widest block mb-0.5">Lender</span>
                     {offer.lender_commitment && offer.lender_commitment !== '0x0' && offer.lender_commitment !== '0' ? (
                       <span className="text-sm text-chalk font-display flex items-center gap-1.5">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-star" aria-hidden="true">
@@ -176,7 +194,7 @@ function OrderView({ id }: { id: string }) {
                     )}
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-ash uppercase tracking-widest block">Percentage</span>
+                    <span className="text-[9px] text-ash uppercase tracking-widest block mb-0.5">Share</span>
                     <span className="text-sm text-star font-display">{(offer.bps / 100).toFixed(2)}%</span>
                   </div>
                 </div>
@@ -186,7 +204,6 @@ function OrderView({ id }: { id: string }) {
         ) : null
       }
       sidebarTitle="Offer Actions"
-      sidebarDescription={null}
       sidebarActions={
         isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
           <OrderActions
@@ -199,15 +216,11 @@ function OrderView({ id }: { id: string }) {
           />
         )
       }
-      timeline={[
-        { label: 'Created', value: order?.created_at ? formatTimestamp(BigInt(order.created_at)) : '--' },
-        { label: 'Deadline', value: order?.deadline ? formatTimestamp(BigInt(order.deadline)) : '--' },
-      ]}
     />
   )
 }
 
-// ── Inscription view ────────────────────────────────────────────────
+/* ── Inscription view ────────────────────────────────────── */
 
 function InscriptionView({ id }: { id: string }) {
   const { address } = useAccount()
@@ -267,7 +280,7 @@ function InscriptionView({ id }: { id: string }) {
   const interestAssets = assets?.filter(r => r.asset_role === 'interest') ?? []
   const collateralAssets = assets?.filter(r => r.asset_role === 'collateral') ?? []
 
-  const toDisplayAssets = (arr: typeof debtAssets) => arr.map(r => ({
+  const toDisplayAssets = (arr: typeof debtAssets): DisplayAsset[] => arr.map(r => ({
     address: r.asset_address, type: r.asset_type, value: r.value ?? '0', tokenId: r.token_id ?? undefined,
   }))
 
@@ -275,7 +288,7 @@ function InscriptionView({ id }: { id: string }) {
     const lender = a?.lender as string | undefined
     const isFilled = status === 'filled' || status === 'repaid' || status === 'liquidated'
     if (lender && lender !== '0x0') return { value: formatAddress(lender), mono: true }
-    if (isFilled) return { value: '\u{1F512} Private Lender', mono: false }
+    if (isFilled) return { value: 'Private Lender', mono: false, isPrivate: true }
     return { value: a?.multi_lender ? 'Multi-Lender' : 'Waiting...', mono: false }
   })()
 
@@ -286,28 +299,29 @@ function InscriptionView({ id }: { id: string }) {
       isOwner={isOwner}
       isLoading={isLoading}
       badges={
-        <Badge variant={status} className="rounded-full px-4 py-1 uppercase tracking-widest text-[10px] font-bold">
+        <Badge variant={status} className="rounded-full px-3 py-0.5 uppercase tracking-widest text-[9px] font-bold">
           {STATUS_LABELS[status]}
         </Badge>
       }
       roiInfo={roiInfo}
       duration={isLoading ? null : (a?.duration ? formatDuration(BigInt(a.duration as string)) : '--')}
-      durationLabel="From moment of signing"
+      durationLabel="From signing"
+      multiLender={Boolean(a?.multi_lender)}
       specs={[
         { label: 'Borrower', value: a?.borrower ? formatAddress(a.borrower as string) : '--', mono: true },
-        { label: 'Lender', ...lenderDisplay },
+        { label: 'Lender', value: lenderDisplay.value, mono: lenderDisplay.mono, isPrivate: 'isPrivate' in lenderDisplay },
         { label: 'Issued Debt', value: a?.issued_debt_percentage ? `${Number(BigInt(a.issued_debt_percentage as string)) / 100}%` : '0%', mono: false },
+        { label: 'Signed At', value: a?.signed_at && a.signed_at !== '0' ? formatTimestamp(BigInt(a.signed_at as string)) : 'Unsigned', mono: false },
       ]}
       assets={
         <>
-          <AssetDisplay role="debt" assets={toDisplayAssets(debtAssets)} isLoading={assetsLoading} />
-          <AssetDisplay role="interest" assets={toDisplayAssets(interestAssets)} isLoading={assetsLoading} />
-          <AssetDisplay role="collateral" assets={toDisplayAssets(collateralAssets)} isLoading={assetsLoading} />
+          <AssetSection role="debt" assets={toDisplayAssets(debtAssets)} isLoading={assetsLoading} />
+          <AssetSection role="collateral" assets={toDisplayAssets(collateralAssets)} isLoading={assetsLoading} />
+          <AssetSection role="interest" assets={toDisplayAssets(interestAssets)} isLoading={assetsLoading} />
         </>
       }
       extraContent={null}
       sidebarTitle="Vault Actions"
-      sidebarDescription="Interact with this inscription. Lenders provide liquidity, Borrowers repay to reclaim collateral."
       sidebarActions={
         isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
           <InscriptionActions
@@ -327,15 +341,11 @@ function InscriptionView({ id }: { id: string }) {
           />
         )
       }
-      timeline={[
-        { label: 'Signed At', value: a?.signed_at && a.signed_at !== '0' ? formatTimestamp(BigInt(a.signed_at as string)) : 'Unsigned' },
-        { label: 'Deadline', value: a?.deadline ? formatTimestamp(BigInt(a.deadline as string)) : '--' },
-      ]}
     />
   )
 }
 
-// ── Shared layout ───────────────────────────────────────────────────
+/* ── Shared layout ───────────────────────────────────────── */
 
 interface StelaLayoutProps {
   id: string
@@ -346,88 +356,106 @@ interface StelaLayoutProps {
   roiInfo: { yieldPct: string; symbol: string } | null
   duration: string | null
   durationLabel: string
-  specs: { label: string; value: string; mono: boolean }[]
+  multiLender?: boolean
+  specs: { label: string; value: string; mono: boolean; isPrivate?: boolean }[]
   assets: React.ReactNode
   extraContent: React.ReactNode
   sidebarTitle: string
-  sidebarDescription: string | null
   sidebarActions: React.ReactNode
-  timeline: { label: string; value: string }[]
 }
 
 function StelaLayout({
   id, idLabel, isOwner, isLoading, badges, roiInfo, duration, durationLabel,
-  specs, assets, extraContent, sidebarTitle, sidebarDescription, sidebarActions, timeline,
+  multiLender, specs, assets, extraContent, sidebarTitle, sidebarActions,
 }: StelaLayoutProps) {
   return (
-    <div className="animate-fade-in max-w-6xl mx-auto">
+    <div className="animate-fade-in max-w-5xl mx-auto">
       {/* Breadcrumb */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <Link href={isOwner ? '/portfolio' : '/browse'} className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          {isOwner ? 'Back to Portfolio' : 'Back to Library'}
+          {isOwner ? 'Portfolio' : 'Library'}
         </Link>
-        <div className="flex items-center gap-2 bg-surface/50 px-3 py-1.5 rounded-full border border-edge/30">
+        <div className="flex items-center gap-2 bg-surface/40 px-3 py-1 rounded-full border border-edge/25">
           <span className="text-[10px] font-mono text-ash uppercase tracking-widest">{idLabel}</span>
           <CopyButton value={id} />
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8 items-start">
+      <div className="grid lg:grid-cols-3 gap-6 items-start">
         {/* Main Column */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Hero */}
-          <section className="bg-surface/20 border border-edge/30 rounded-[32px] p-8 relative overflow-hidden granite-noise">
-            <div className="flex flex-wrap gap-2 justify-end mb-4">
-              {badges}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Hero — compact */}
+          <section className="bg-surface/15 border border-edge/25 rounded-2xl p-6 relative overflow-hidden granite-noise">
+            {/* Status badges */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                {badges}
+                {multiLender && (
+                  <span className="inline-flex items-center gap-1 text-[9px] text-cosmic uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full bg-cosmic/8 border border-cosmic/20">
+                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-cosmic" aria-hidden="true">
+                      <circle cx="4" cy="5" r="2" /><circle cx="10" cy="5" r="2" />
+                      <path d="M1 12c0-2 1.5-3 3-3s3 1 3 3" /><path d="M7 12c0-2 1.5-3 3-3s3 1 3 3" />
+                    </svg>
+                    Multi
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="grid sm:grid-cols-2 gap-12">
+
+            {/* Key metrics — 2-col */}
+            <div className="grid sm:grid-cols-2 gap-8">
               <div className="space-y-1">
-                <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
-                {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
+                <span className="text-[9px] text-ash uppercase tracking-[0.2em] font-bold">Lender Yield</span>
+                {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-display text-star">
+                    <span className="text-3xl font-display text-star">
                       {roiInfo ? `+${roiInfo.yieldPct}%` : 'Variable'}
                     </span>
-                    {roiInfo && <span className="text-dust text-sm">in {roiInfo.symbol}</span>}
+                    {roiInfo && <span className="text-dust text-xs">in {roiInfo.symbol}</span>}
                   </div>
                 )}
-                <p className="text-xs text-ash leading-relaxed max-w-[200px] pt-2">
-                  Calculated based on the debt vs interest inscription.
-                </p>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">
-                  {duration === null ? 'Loan Duration' : 'Time to Unlock'}
-                </span>
-                {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
-                  <div className="flex flex-col">
-                    <span className="text-4xl font-display text-chalk">{duration ?? '--'}</span>
-                    <span className="text-[10px] text-ash uppercase tracking-widest mt-1">{durationLabel}</span>
+                <span className="text-[9px] text-ash uppercase tracking-[0.2em] font-bold">Duration</span>
+                {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
+                  <div>
+                    <span className="text-3xl font-display text-chalk">{duration ?? '--'}</span>
+                    <span className="text-[9px] text-ash uppercase tracking-widest block mt-0.5">{durationLabel}</span>
                   </div>
                 )}
               </div>
             </div>
           </section>
 
-          {/* Specs Grid */}
-          <section className="grid sm:grid-cols-3 gap-4">
+          {/* Specs — inline chips */}
+          <div className="flex flex-wrap gap-2">
             {specs.map((field, i) => (
-              <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-5">
-                <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">{field.label}</span>
-                <span className={`text-sm text-chalk ${field.mono ? 'font-mono' : 'font-display'} capitalize`}>{field.value}</span>
+              <div key={i} className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface/20 border border-edge/20 rounded-xl">
+                <span className="text-[9px] text-ash uppercase tracking-widest">{field.label}</span>
+                {field.isPrivate ? (
+                  <span className="text-xs text-chalk font-display flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-star" aria-hidden="true">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    {field.value}
+                  </span>
+                ) : (
+                  <span className={`text-xs text-chalk ${field.mono ? 'font-mono' : 'font-medium'}`}>{field.value}</span>
+                )}
               </div>
             ))}
-          </section>
+          </div>
 
           {/* Assets */}
-          <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-edge/20 bg-surface/30">
-              <h3 className="text-xs uppercase tracking-widest text-dust font-bold">Assets</h3>
+          <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+            <div className="px-5 py-3 border-b border-edge/20 bg-surface/25">
+              <h3 className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold">Assets</h3>
             </div>
-            <div className="p-6 space-y-8">
+            <div className="p-5 space-y-5">
               {assets}
             </div>
           </section>
@@ -436,40 +464,22 @@ function StelaLayout({
         </div>
 
         {/* Sidebar */}
-        <aside className="space-y-6">
-          <Card className="border-star/20 bg-star/[0.02] rounded-[32px] overflow-hidden">
-            <div className="p-8 space-y-6">
-              <div className="space-y-2">
-                <h3 className="font-display text-lg text-star uppercase tracking-widest">{sidebarTitle}</h3>
-                {sidebarDescription && (
-                  <p className="text-xs text-dust leading-relaxed">{sidebarDescription}</p>
-                )}
-              </div>
-              <div className="pt-4 border-t border-star/10">
-                {sidebarActions}
-              </div>
+        <aside className="space-y-5">
+          <div className="border border-star/15 bg-star/[0.02] rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-star/10">
+              <h3 className="font-display text-sm text-star uppercase tracking-[0.2em]">{sidebarTitle}</h3>
             </div>
-          </Card>
-
-          {/* Timeline */}
-          <section className="bg-surface/20 border border-edge/20 rounded-3xl p-6 space-y-4">
-            <h4 className="text-[10px] uppercase tracking-widest text-ash font-bold">Timeline</h4>
-            <div className="space-y-4">
-              {timeline.map((entry, i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <span className="text-[10px] text-dust uppercase">{entry.label}</span>
-                  <span className="text-xs text-chalk font-mono">{entry.value}</span>
-                </div>
-              ))}
+            <div className="p-6">
+              {sidebarActions}
             </div>
-          </section>
+          </div>
         </aside>
       </div>
     </div>
   )
 }
 
-// ── Page entry point ────────────────────────────────────────────────
+/* ── Page entry point ────────────────────────────────────── */
 
 export default function StelaPage({ params }: StelaPageProps) {
   const { id } = use(params)
