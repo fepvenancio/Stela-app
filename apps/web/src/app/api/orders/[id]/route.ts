@@ -37,7 +37,7 @@ export async function GET(
       const commitment = String(offer.lender_commitment ?? '0')
       const isPrivate = commitment !== '0' && commitment !== '0x0' && commitment !== ''
       if (!isPrivate) return offer
-      const { depositor: _d, lender_signature: _s, ...safe } = offer
+      const { depositor: _d, lender_signature: _s, nonce: _n, ...safe } = offer
       return { ...safe, lender: '0x0' }
     })
 
