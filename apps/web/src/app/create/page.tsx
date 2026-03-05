@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, toU256, getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
@@ -83,13 +83,23 @@ const DURATION_PRESETS = [
   { label: '14 Days', seconds: 1209600 },
   { label: '30 Days', seconds: 2592000 },
   { label: '90 Days', seconds: 7776000 },
+  { label: '180 Days', seconds: 15552000 },
+  { label: '1 Year', seconds: 31536000 },
 ]
 
 const DEADLINE_PRESETS = [
-  { label: '1h', seconds: 3600 },
-  { label: '24h', seconds: 86400 },
-  { label: '3d', seconds: 259200 },
   { label: '7d', seconds: 604800 },
+  { label: '14d', seconds: 1209600 },
+  { label: '30d', seconds: 2592000 },
+  { label: '60d', seconds: 5184000 },
+  { label: '90d', seconds: 7776000 },
+]
+
+const CUSTOM_DURATION_UNITS = [
+  { label: 'Days', multiplier: 86400 },
+  { label: 'Weeks', multiplier: 604800 },
+  { label: 'Months', multiplier: 2592000 },
+  { label: 'Years', multiplier: 31536000 },
 ]
 
 function formatDurationHuman(seconds: number): string {
@@ -167,6 +177,7 @@ function AddAssetModal({
   const [amount, setAmount] = useState('')
   const [tokenId, setTokenId] = useState('0')
   const [role, setRole] = useState<AssetRole>('debt')
+  const transitionRef = useRef(false)
 
   const isNft = assetType === 'ERC721' || assetType === 'ERC1155'
   const address = selectedToken?.addresses[NETWORK] ?? customAddress
@@ -183,6 +194,7 @@ function AddAssetModal({
   }, [])
 
   function handleTokenSelect(token: TokenInfo) {
+    transitionRef.current = true
     setSelectedToken(token)
     setIsCustom(false)
     setAssetType('ERC20')
@@ -190,6 +202,7 @@ function AddAssetModal({
   }
 
   function handleCustomSelect() {
+    transitionRef.current = true
     setSelectedToken(null)
     setIsCustom(true)
     setStep('configure')
@@ -217,6 +230,10 @@ function AddAssetModal({
         open={open && step === 'token'}
         onOpenChange={(o) => {
           if (!o) {
+            if (transitionRef.current) {
+              transitionRef.current = false
+              return
+            }
             reset()
             onOpenChange(false)
           }
@@ -440,18 +457,22 @@ export default function CreatePage() {
 
   // Duration
   const [durationPreset, setDurationPreset] = useState('86400')
-  const [customDuration, setCustomDuration] = useState('')
+  const [customDurationValue, setCustomDurationValue] = useState('')
+  const [customDurationUnit, setCustomDurationUnit] = useState(86400) // days
   const [useCustomDuration, setUseCustomDuration] = useState(false)
 
   const duration = useMemo(() => {
-    if (useCustomDuration && customDuration) {
-      return customDuration
+    if (useCustomDuration && customDurationValue) {
+      const parsed = parseFloat(customDurationValue)
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        return String(Math.round(parsed * customDurationUnit))
+      }
     }
     return durationPreset
-  }, [durationPreset, customDuration, useCustomDuration])
+  }, [durationPreset, customDurationValue, customDurationUnit, useCustomDuration])
 
   // Deadline
-  const [deadlinePreset, setDeadlinePreset] = useState('86400')
+  const [deadlinePreset, setDeadlinePreset] = useState('604800')
   const deadline = useMemo(() => {
     const now = Math.floor(Date.now() / 1000)
     return (now + Number(deadlinePreset)).toString()
@@ -657,9 +678,10 @@ export default function CreatePage() {
       setInterestAssets([])
       setCollateralAssets([])
       setDurationPreset('86400')
-      setCustomDuration('')
+      setCustomDurationValue('')
+      setCustomDurationUnit(86400)
       setUseCustomDuration(false)
-      setDeadlinePreset('86400')
+      setDeadlinePreset('604800')
       setMultiLender(false)
       setShowErrors(false)
     } catch (err: unknown) {
@@ -699,13 +721,19 @@ export default function CreatePage() {
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-chalk">Loan Settings</span>
           </div>
 
-          {/* Multi-lender toggle — PROMINENT */}
-          <div className="flex items-center justify-between p-4 bg-surface/60 border border-edge/30 rounded-2xl">
-            <div className="flex items-center gap-3">
+          {/* Multi-lender toggle — PROMINENT gold theme */}
+          <div
+            className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
+              multiLender
+                ? 'bg-star/10 border-2 border-star/40 shadow-[0_0_12px_rgba(232,168,37,0.08)]'
+                : 'bg-surface/60 border-2 border-edge/30 hover:border-edge/50'
+            }`}
+          >
+            <label htmlFor="multi-lender" className="flex items-center gap-3 cursor-pointer flex-1">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                multiLender ? 'bg-cosmic/20 border border-cosmic/30' : 'bg-surface border border-edge'
+                multiLender ? 'bg-star/20 border border-star/40' : 'bg-surface border border-edge'
               }`}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" className={multiLender ? 'text-cosmic' : 'text-ash'}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" className={multiLender ? 'text-star' : 'text-ash'}>
                   <circle cx="4" cy="5" r="2" />
                   <circle cx="10" cy="5" r="2" />
                   <path d="M1 12c0-2 1.5-3 3-3s3 1 3 3" />
@@ -713,10 +741,10 @@ export default function CreatePage() {
                 </svg>
               </div>
               <div>
-                <span className="text-sm text-chalk font-medium block">Allow multiple lenders</span>
+                <span className={`text-sm font-medium block ${multiLender ? 'text-star' : 'text-chalk'}`}>Allow multiple lenders</span>
                 <span className="text-[10px] text-ash uppercase tracking-wider">Lenders can fund partial amounts</span>
               </div>
-            </div>
+            </label>
             <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
           </div>
 
@@ -743,11 +771,29 @@ export default function CreatePage() {
                 <div className="flex gap-2">
                   <Input
                     type="number"
-                    value={customDuration}
-                    onChange={(e) => setCustomDuration(e.target.value)}
+                    value={customDurationValue}
+                    onChange={(e) => setCustomDurationValue(e.target.value)}
                     className="flex-1 bg-surface/50 border-edge/50 font-mono"
-                    placeholder="Seconds"
+                    placeholder="Amount"
+                    min="1"
+                    step="any"
                   />
+                  <div className="flex gap-1">
+                    {CUSTOM_DURATION_UNITS.map((u) => (
+                      <button
+                        key={u.multiplier}
+                        type="button"
+                        onClick={() => setCustomDurationUnit(u.multiplier)}
+                        className={`px-2.5 py-1.5 rounded-lg text-[10px] border transition-all whitespace-nowrap ${
+                          customDurationUnit === u.multiplier
+                            ? 'border-star/40 bg-star/10 text-star font-medium'
+                            : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                        }`}
+                      >
+                        {u.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -821,7 +867,7 @@ export default function CreatePage() {
             </div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/40 border border-edge/20 text-[11px]">
               <span className="text-ash">Type:</span>
-              <span className={`font-medium ${multiLender ? 'text-cosmic' : 'text-chalk'}`}>
+              <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>
                 {multiLender ? 'Multi-Lender' : 'Single-Lender'}
               </span>
             </div>
