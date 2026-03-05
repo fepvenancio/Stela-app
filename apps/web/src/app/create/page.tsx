@@ -1,29 +1,65 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useAccount } from '@starknet-react/core'
-import { findTokenByAddress, toU256 } from '@fepvenancio/stela-sdk'
-import type { Asset, AssetType } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress, toU256, getTokensForNetwork } from '@fepvenancio/stela-sdk'
+import type { Asset, AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
+import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID, NETWORK } from '@/lib/config'
 import { getInscriptionOrderTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
-import { AssetInput } from '@/components/AssetInput'
 import type { AssetInputValue } from '@/components/AssetInput'
+import { TokenSelectorModal } from '@/components/TokenSelectorModal'
+import { TokenAvatar } from '@/components/TokenAvatar'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTimestamp } from '@/lib/format'
+import { formatAddress } from '@/lib/address'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
+
+/* ── Types ──────────────────────────────────────────────── */
+
+type AssetRole = 'debt' | 'collateral' | 'interest'
+
+const ROLE_META: Record<AssetRole, { label: string; color: string; bgClass: string; borderClass: string; textClass: string; description: string }> = {
+  debt: {
+    label: 'Borrow',
+    color: 'nebula',
+    bgClass: 'bg-nebula/10',
+    borderClass: 'border-nebula/25',
+    textClass: 'text-nebula',
+    description: 'Assets you want to receive',
+  },
+  collateral: {
+    label: 'Collateral',
+    color: 'star',
+    bgClass: 'bg-star/10',
+    borderClass: 'border-star/25',
+    textClass: 'text-star',
+    description: 'Assets you lock as guarantee',
+  },
+  interest: {
+    label: 'Interest',
+    color: 'aurora',
+    bgClass: 'bg-aurora/10',
+    borderClass: 'border-aurora/25',
+    textClass: 'text-aurora',
+    description: 'Reward paid to lender',
+  },
+}
+
+const ROLES: AssetRole[] = ['debt', 'collateral', 'interest']
+
+/* ── Helpers ────────────────────────────────────────────── */
 
 const emptyAsset = (): AssetInputValue => ({
   asset: '',
@@ -33,90 +69,361 @@ const emptyAsset = (): AssetInputValue => ({
   decimals: 18,
 })
 
-const DURATION_UNITS = [
-  { label: 'Minutes', value: '60' },
-  { label: 'Hours', value: '3600' },
-  { label: 'Days', value: '86400' },
+const networkTokens = getTokensForNetwork(NETWORK)
+
+function getSelectedToken(address: string): TokenInfo | undefined {
+  return networkTokens.find(
+    (t) => t.addresses[NETWORK]?.toLowerCase() === address.toLowerCase(),
+  )
+}
+
+const DURATION_PRESETS = [
+  { label: '1 Day', seconds: 86400 },
+  { label: '7 Days', seconds: 604800 },
+  { label: '14 Days', seconds: 1209600 },
+  { label: '30 Days', seconds: 2592000 },
+  { label: '90 Days', seconds: 7776000 },
 ]
 
 const DEADLINE_PRESETS = [
-  { label: '1h', value: '3600' },
-  { label: '24h', value: '86400' },
-  { label: '3d', value: '259200' },
-  { label: '7d', value: '604800' },
+  { label: '1h', seconds: 3600 },
+  { label: '24h', seconds: 86400 },
+  { label: '3d', seconds: 259200 },
+  { label: '7d', seconds: 604800 },
 ]
 
-function AssetSection({
-  title,
-  assets,
-  setAssets,
-  required,
-  showErrors,
-  balances,
-}: {
-  title: string
-  assets: AssetInputValue[]
-  setAssets: (val: AssetInputValue[]) => void
-  required?: boolean
-  showErrors?: boolean
-  balances?: Map<string, bigint>
-}) {
-  const hasValid = assets.some((a) => a.asset)
-  const missing = required && showErrors && !hasValid
+function formatDurationHuman(seconds: number): string {
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`
+  if (seconds < 86400) return `${Math.round(seconds / 3600)} hours`
+  const days = Math.round(seconds / 86400)
+  return `${days} day${days !== 1 ? 's' : ''}`
+}
 
-  const descriptions: Record<string, string> = {
-    'Debt Assets': 'The principal assets the borrower wishes to receive.',
-    'Interest Assets': 'The reward assets paid to the lender upon repayment.',
-    'Collateral Assets': 'The guarantee assets locked to secure the loan.',
-  }
+/* ── Asset Pill ─────────────────────────────────────────── */
+
+function AssetPill({
+  asset,
+  role,
+  onRemove,
+}: {
+  asset: AssetInputValue
+  role: AssetRole
+  onRemove: () => void
+}) {
+  const token = getSelectedToken(asset.asset)
+  const meta = ROLE_META[role]
+  const isNft = asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155'
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <h3 className="text-sm font-display uppercase tracking-widest text-chalk">
-            {title}
-            {required && <span className="text-star ml-1">*</span>}
-          </h3>
-          <p className="text-[10px] text-ash uppercase tracking-wider">{descriptions[title]}</p>
+    <div
+      className={`group flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-full border ${meta.borderClass} ${meta.bgClass} transition-all hover:border-opacity-60`}
+    >
+      {token ? (
+        <TokenAvatar token={token} size={22} />
+      ) : (
+        <div className="w-[22px] h-[22px] rounded-full bg-edge-bright flex items-center justify-center text-[9px] text-dust shrink-0">
+          ?
         </div>
-        <button
-          type="button"
-          onClick={() => setAssets([...assets, emptyAsset()])}
-          className="text-xs text-star hover:text-star-bright transition-colors flex items-center gap-1"
-          aria-label={`Add ${title.toLowerCase().replace(' assets', '')} asset`}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-            <path d="M6 2v8M2 6h8" />
-          </svg>
-          Add asset
-        </button>
-      </div>
-      <div className="space-y-2">
-        {assets.map((a, i) => (
-          <AssetInput
-            key={i}
-            index={i}
-            value={a}
-            onChange={(val) => {
-              const next = [...assets]
-              next[i] = val
-              setAssets(next)
-            }}
-            onRemove={() => setAssets(assets.filter((_, j) => j !== i))}
-            balances={balances}
-          />
-        ))}
-        {assets.length === 0 && (
-          <p className="text-xs text-ash py-3 text-center">No assets added yet</p>
+      )}
+      <span className="text-xs text-chalk font-medium truncate max-w-[80px]">
+        {isNft ? (
+          <>{token?.symbol || 'NFT'} #{asset.token_id}</>
+        ) : (
+          <>{asset.value || '0'} <span className="text-dust">{token?.symbol || formatAddress(asset.asset)}</span></>
         )}
-        {missing && (
-          <p className="text-xs text-nova">At least one {title.toLowerCase().replace(' assets', '')} asset with a contract address is required.</p>
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="w-5 h-5 rounded-full flex items-center justify-center text-ash hover:text-nova hover:bg-nova/15 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+        aria-label="Remove asset"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M2 2l6 6M8 2l-6 6" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+/* ── Add Asset Modal ────────────────────────────────────── */
+
+function AddAssetModal({
+  open,
+  onOpenChange,
+  onAdd,
+  balances,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onAdd: (asset: AssetInputValue, role: AssetRole) => void
+  balances?: Map<string, bigint>
+}) {
+  const [step, setStep] = useState<'token' | 'configure'>('token')
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null)
+  const [isCustom, setIsCustom] = useState(false)
+  const [customAddress, setCustomAddress] = useState('')
+  const [assetType, setAssetType] = useState<AssetType>('ERC20')
+  const [amount, setAmount] = useState('')
+  const [tokenId, setTokenId] = useState('0')
+  const [role, setRole] = useState<AssetRole>('debt')
+
+  const isNft = assetType === 'ERC721' || assetType === 'ERC1155'
+  const address = selectedToken?.addresses[NETWORK] ?? customAddress
+
+  const reset = useCallback(() => {
+    setStep('token')
+    setSelectedToken(null)
+    setIsCustom(false)
+    setCustomAddress('')
+    setAssetType('ERC20')
+    setAmount('')
+    setTokenId('0')
+    setRole('debt')
+  }, [])
+
+  function handleTokenSelect(token: TokenInfo) {
+    setSelectedToken(token)
+    setIsCustom(false)
+    setAssetType('ERC20')
+    setStep('configure')
+  }
+
+  function handleCustomSelect() {
+    setSelectedToken(null)
+    setIsCustom(true)
+    setStep('configure')
+  }
+
+  function handleAdd() {
+    const asset: AssetInputValue = {
+      asset: address,
+      asset_type: assetType,
+      value: isNft ? '0' : amount,
+      token_id: tokenId,
+      decimals: selectedToken?.decimals ?? 18,
+    }
+    onAdd(asset, role)
+    reset()
+    onOpenChange(false)
+  }
+
+  const canAdd = address && (isNft ? tokenId !== '' : amount !== '' && parseFloat(amount) > 0)
+
+  return (
+    <>
+      {/* Step 1: Token selection — reuses existing modal */}
+      <TokenSelectorModal
+        open={open && step === 'token'}
+        onOpenChange={(o) => {
+          if (!o) {
+            reset()
+            onOpenChange(false)
+          }
+        }}
+        onSelect={handleTokenSelect}
+        showCustomOption={true}
+        onCustomSelect={handleCustomSelect}
+        balances={balances}
+      />
+
+      {/* Step 2: Configure amount + role */}
+      <Dialog
+        open={open && step === 'configure'}
+        onOpenChange={(o) => {
+          if (!o) {
+            reset()
+            onOpenChange(false)
+          }
+        }}
+      >
+        <DialogContent className="bg-abyss border-edge text-chalk p-0 gap-0 max-w-md overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-0">
+            <DialogTitle className="text-chalk text-lg font-semibold flex items-center gap-3">
+              {selectedToken ? (
+                <>
+                  <TokenAvatar token={selectedToken} size={28} />
+                  {selectedToken.symbol}
+                </>
+              ) : (
+                'Custom Token'
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="px-6 pt-5 pb-6 space-y-5">
+            {/* Custom address input */}
+            {isCustom && (
+              <div className="space-y-2">
+                <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Contract Address</Label>
+                <Input
+                  type="text"
+                  placeholder="0x..."
+                  value={customAddress}
+                  onChange={(e) => setCustomAddress(e.target.value)}
+                  className="font-mono text-sm"
+                />
+                {/* Asset type selector for custom tokens */}
+                <div className="flex gap-1.5 pt-1">
+                  {(['ERC20', 'ERC721', 'ERC1155', 'ERC4626'] as AssetType[]).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setAssetType(t)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-colors ${
+                        assetType === t
+                          ? 'border-star/40 bg-star/10 text-star'
+                          : 'border-edge text-ash hover:text-chalk hover:border-edge-bright'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Amount / Token ID */}
+            <div className="space-y-2">
+              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
+                {isNft ? 'Token ID' : 'Amount'}
+              </Label>
+              {isNft ? (
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Enter token ID"
+                  value={tokenId}
+                  onChange={(e) => setTokenId(e.target.value)}
+                  className="font-mono"
+                />
+              ) : (
+                <div className="relative">
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      if (raw === '' || /^\d*\.?\d*$/.test(raw)) setAmount(raw)
+                    }}
+                    className={`text-lg font-mono h-12 ${selectedToken ? 'pr-16' : ''}`}
+                    autoFocus
+                  />
+                  {selectedToken && (
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-dust font-mono pointer-events-none">
+                      {selectedToken.symbol}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Role selector — the key UX improvement */}
+            <div className="space-y-2.5">
+              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Assign Role</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {ROLES.map((r) => {
+                  const meta = ROLE_META[r]
+                  const selected = role === r
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                        selected
+                          ? `${meta.borderClass} ${meta.bgClass}`
+                          : 'border-edge/50 hover:border-edge-bright bg-surface/30'
+                      }`}
+                    >
+                      {selected && (
+                        <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-${meta.color}`} />
+                      )}
+                      <span className={`text-sm font-semibold ${selected ? meta.textClass : 'text-chalk'}`}>
+                        {meta.label}
+                      </span>
+                      <span className="text-[9px] text-ash leading-tight text-center">
+                        {meta.description}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Add button */}
+            <Button
+              variant="gold"
+              size="lg"
+              className="w-full uppercase tracking-widest"
+              onClick={handleAdd}
+              disabled={!canAdd}
+            >
+              Add {ROLE_META[role].label} Asset
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+/* ── Asset Column ───────────────────────────────────────── */
+
+function AssetColumn({
+  role,
+  assets,
+  onRemove,
+  required,
+  showErrors,
+}: {
+  role: AssetRole
+  assets: AssetInputValue[]
+  onRemove: (index: number) => void
+  required?: boolean
+  showErrors?: boolean
+}) {
+  const meta = ROLE_META[role]
+  const validAssets = assets.filter((a) => a.asset)
+  const missing = required && showErrors && validAssets.length === 0
+
+  return (
+    <div className="space-y-2.5">
+      {/* Column header */}
+      <div className="flex items-center gap-2">
+        <div className={`w-2 h-2 rounded-full bg-${meta.color}`} />
+        <span className={`text-xs font-semibold uppercase tracking-wider ${meta.textClass}`}>
+          {meta.label}
+        </span>
+        {validAssets.length > 0 && (
+          <span className="text-[10px] font-mono text-ash bg-surface px-1.5 py-0.5 rounded-md">
+            {validAssets.length}
+          </span>
+        )}
+        {required && <span className="text-star text-[10px]">*</span>}
+      </div>
+
+      {/* Asset pills */}
+      <div className="flex flex-wrap gap-1.5 min-h-[36px]">
+        {validAssets.map((asset, i) => (
+          <AssetPill key={i} asset={asset} role={role} onRemove={() => onRemove(i)} />
+        ))}
+        {validAssets.length === 0 && (
+          <span className={`text-[11px] italic ${missing ? 'text-nova' : 'text-ash/50'}`}>
+            {missing ? 'Required' : 'None added'}
+          </span>
         )}
       </div>
     </div>
   )
 }
+
+
+/* ════════════════════════════════════════════════════════════
+   MAIN PAGE
+   ════════════════════════════════════════════════════════════ */
 
 export default function CreatePage() {
   const { address, account } = useAccount()
@@ -124,69 +431,91 @@ export default function CreatePage() {
 
   const provider = useMemo(() => new RpcProvider({ nodeUrl: RPC_URL }), [])
 
-  const [multiLender, setMultiLender] = useState(false)
-  const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([emptyAsset()])
-  const [interestAssets, setInterestAssets] = useState<AssetInputValue[]>([emptyAsset()])
-  const [collateralAssets, setCollateralAssets] = useState<AssetInputValue[]>([emptyAsset()])
-  
-  // Duration handling
-  const [durationValue, setDurationValue] = useState('1')
-  const [durationUnit, setDurationUnit] = useState('86400') // Default to Days
-  const duration = useMemo(() => {
-    const val = parseFloat(durationValue) || 0
-    return Math.floor(val * Number(durationUnit)).toString()
-  }, [durationValue, durationUnit])
+  /* ── Form State ────────────────────────────────────────── */
 
-  // Deadline handling
-  const [deadlinePreset, setDeadlinePreset] = useState('86400') // Default 24h
-  const [customDeadline, setCustomDeadline] = useState('')
-  const [useCustomDeadline, setUseCustomDeadline] = useState(false)
-  
+  const [multiLender, setMultiLender] = useState(false)
+  const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([])
+  const [interestAssets, setInterestAssets] = useState<AssetInputValue[]>([])
+  const [collateralAssets, setCollateralAssets] = useState<AssetInputValue[]>([])
+
+  // Duration
+  const [durationPreset, setDurationPreset] = useState('86400')
+  const [customDuration, setCustomDuration] = useState('')
+  const [useCustomDuration, setUseCustomDuration] = useState(false)
+
+  const duration = useMemo(() => {
+    if (useCustomDuration && customDuration) {
+      return customDuration
+    }
+    return durationPreset
+  }, [durationPreset, customDuration, useCustomDuration])
+
+  // Deadline
+  const [deadlinePreset, setDeadlinePreset] = useState('86400')
   const deadline = useMemo(() => {
-    if (useCustomDeadline) return customDeadline
     const now = Math.floor(Date.now() / 1000)
     return (now + Number(deadlinePreset)).toString()
-  }, [deadlinePreset, customDeadline, useCustomDeadline])
+  }, [deadlinePreset])
 
   const [showErrors, setShowErrors] = useState(false)
   const { balances } = useTokenBalances()
+  const [addModalOpen, setAddModalOpen] = useState(false)
+
   const createProgress = useTransactionProgress([
     { label: 'Approving collateral', description: 'Confirm token approvals in your wallet' },
     { label: 'Signing order', description: 'Sign the SNIP-12 typed data (no gas)' },
     { label: 'Submitting order', description: 'Recording your order on the network' },
   ])
 
+  /* ── Derived State ─────────────────────────────────────── */
+
   const hasDebt = debtAssets.some((a) => a.asset)
   const hasCollateral = collateralAssets.some((a) => a.asset)
   const hasDuration = Boolean(duration && Number(duration) > 0)
   const isValid = hasDebt && hasCollateral && hasDuration
 
-  // ROI Math — only meaningful when debt and interest are the same token
+  const totalAssets = [
+    ...debtAssets.filter((a) => a.asset),
+    ...interestAssets.filter((a) => a.asset),
+    ...collateralAssets.filter((a) => a.asset),
+  ].length
+
+  // ROI Math
   const roiInfo = useMemo(() => {
     const debt = debtAssets.filter((a) => a.asset && a.asset_type === 'ERC20')
     const interest = interestAssets.filter((a) => a.asset && a.asset_type === 'ERC20')
-
     if (debt.length === 1 && interest.length === 1) {
       const debtToken = findTokenByAddress(debt[0].asset)
       const intToken = findTokenByAddress(interest[0].asset)
-
-      // Skip yield calculation for different tokens — no price oracle
       if (!debtToken || !intToken || debtToken.symbol !== intToken.symbol) return null
-
       const dVal = debt[0].value ? parseAmount(debt[0].value, debt[0].decimals) : 0n
       const iVal = interest[0].value ? parseAmount(interest[0].value, interest[0].decimals) : 0n
-
       if (dVal > 0n) {
         const yieldPctBig = (iVal * 10000n) / dVal
         const yieldPct = Number(yieldPctBig) / 100
-        return {
-          yieldPct: yieldPct.toFixed(2),
-          symbol: debtToken.symbol,
-        }
+        return { yieldPct: yieldPct.toFixed(2), symbol: debtToken.symbol }
       }
     }
     return null
   }, [debtAssets, interestAssets])
+
+  /* ── Add Asset Handler ─────────────────────────────────── */
+
+  const handleAddAsset = useCallback((asset: AssetInputValue, role: AssetRole) => {
+    switch (role) {
+      case 'debt':
+        setDebtAssets((prev) => [...prev, asset])
+        break
+      case 'collateral':
+        setCollateralAssets((prev) => [...prev, asset])
+        break
+      case 'interest':
+        setInterestAssets((prev) => [...prev, asset])
+        break
+    }
+  }, [])
+
+  /* ── Submit (unchanged logic) ──────────────────────────── */
 
   async function handleSubmit() {
     if (!address || !account) return
@@ -213,7 +542,6 @@ export default function CreatePage() {
           token_id: BigInt(a.token_id || '0'),
         }))
 
-    // Build SDK asset arrays
     const sdkDebtAssets = toSdkAssets(debtAssets)
     const sdkInterestAssets = toSdkAssets(interestAssets)
     const sdkCollateralAssets = toSdkAssets(collateralAssets)
@@ -221,7 +549,6 @@ export default function CreatePage() {
     setIsPending(true)
     createProgress.start()
     try {
-      // Approve collateral tokens so settle() can transfer them later
       const erc20Approvals = sdkCollateralAssets
         .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
         .map(asset => ({
@@ -248,11 +575,8 @@ export default function CreatePage() {
       }
       createProgress.advance()
 
-      // Get nonce from contract
       const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
-      console.log(`[stela] getNonce: address=${address}, contract=${CONTRACT_ADDRESS}, nonce=${nonce}`)
 
-      // Build SNIP-12 typed data
       const typedData = getInscriptionOrderTypedData({
         borrower: address,
         debtAssets: sdkDebtAssets,
@@ -268,16 +592,10 @@ export default function CreatePage() {
         chainId: CHAIN_ID,
       })
 
-      // Compute the SNIP-12 message hash (the true order identity)
       const orderMessageHash = starknetTypedData.getMessageHash(typedData, address)
-
-      // Sign off-chain (no gas!)
       const signature = await account.signMessage(typedData)
-
-      // Generate order ID
       const orderId = crypto.randomUUID()
 
-      // Compute asset hashes and build order data for the backend
       const orderData = {
         borrower: address,
         debtAssets: sdkDebtAssets.map(a => ({
@@ -308,7 +626,6 @@ export default function CreatePage() {
         collateralHash: hashAssets(sdkCollateralAssets),
       }
 
-      // POST to backend
       createProgress.advance()
       const response = await fetch('/api/orders', {
         method: 'POST',
@@ -335,15 +652,14 @@ export default function CreatePage() {
         description: 'Your inscription order is now live. No gas was spent!',
       })
 
-      // Reset form after successful submission
-      setDebtAssets([emptyAsset()])
-      setInterestAssets([emptyAsset()])
-      setCollateralAssets([emptyAsset()])
-      setDurationValue('1')
-      setDurationUnit('86400')
+      // Reset
+      setDebtAssets([])
+      setInterestAssets([])
+      setCollateralAssets([])
+      setDurationPreset('86400')
+      setCustomDuration('')
+      setUseCustomDuration(false)
       setDeadlinePreset('86400')
-      setCustomDeadline('')
-      setUseCustomDeadline(false)
       setMultiLender(false)
       setShowErrors(false)
     } catch (err: unknown) {
@@ -354,211 +670,303 @@ export default function CreatePage() {
     }
   }
 
+  /* ── Render ────────────────────────────────────────────── */
+
   return (
     <div className="animate-fade-up max-w-2xl">
-      {/* Header */}
-      <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl tracking-widest text-chalk mb-3 uppercase">
-            Inscribe the Stela
-          </h1>
-          <p className="text-dust leading-relaxed">
-            Define the terms of your lending inscription on StarkNet.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 bg-surface/50 px-3 py-1.5 rounded-full border border-edge/30 w-fit">
-          <span className="text-[10px] font-mono text-ash uppercase tracking-widest">Type: New Inscription</span>
-        </div>
+      {/* ── Header ──────────────────────────────────────── */}
+      <div className="mb-10">
+        <h1 className="font-display text-3xl tracking-widest text-chalk mb-3 uppercase">
+          Inscribe the Stela
+        </h1>
+        <p className="text-dust leading-relaxed text-sm">
+          Define the terms of your lending inscription. No gas until settlement.
+        </p>
       </div>
 
-      <div className="space-y-8">
-        {/* Asset sections */}
-        <div className="space-y-10">
-          <AssetSection title="Debt Assets" assets={debtAssets} setAssets={setDebtAssets} required showErrors={showErrors} balances={balances} />
-          <AssetSection title="Interest Assets" assets={interestAssets} setAssets={setInterestAssets} balances={balances} />
-          <AssetSection title="Collateral Assets" assets={collateralAssets} setAssets={setCollateralAssets} required showErrors={showErrors} balances={balances} />
-        </div>
+      <div className="space-y-6">
 
-        <Separator />
-
-        {/* Configuration Section */}
+        {/* ══════════════════════════════════════════════════
+            SECTION 1: LOAN SETTINGS
+           ══════════════════════════════════════════════════ */}
         <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap">Time Specifications</span>
-            <div className="h-px w-full bg-edge/20" />
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-lg bg-star/15 border border-star/25 flex items-center justify-center">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                <path d="M6 1v10M1 6h10" />
+              </svg>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-chalk">Loan Settings</span>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          {/* Multi-lender toggle — PROMINENT */}
+          <div className="flex items-center justify-between p-4 bg-surface/60 border border-edge/30 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                multiLender ? 'bg-cosmic/20 border border-cosmic/30' : 'bg-surface border border-edge'
+              }`}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" className={multiLender ? 'text-cosmic' : 'text-ash'}>
+                  <circle cx="4" cy="5" r="2" />
+                  <circle cx="10" cy="5" r="2" />
+                  <path d="M1 12c0-2 1.5-3 3-3s3 1 3 3" />
+                  <path d="M7 12c0-2 1.5-3 3-3s3 1 3 3" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-sm text-chalk font-medium block">Allow multiple lenders</span>
+                <span className="text-[10px] text-ash uppercase tracking-wider">Lenders can fund partial amounts</span>
+              </div>
+            </div>
+            <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
+          </div>
+
+          {/* Duration + Deadline — side by side */}
+          <div className="grid sm:grid-cols-2 gap-3">
             {/* Duration */}
-            <div className="bg-abyss/40 border border-edge/20 rounded-2xl p-5 space-y-4">
-              <div className="space-y-1">
+            <div className="p-4 bg-abyss/60 border border-edge/20 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
                 <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
                   Loan Duration <span className="text-star">*</span>
                 </Label>
-                <p className="text-[10px] text-ash/60 uppercase tracking-tight">Repayment window</p>
-              </div>
-              
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={durationValue}
-                  onChange={(e) => setDurationValue(e.target.value)}
-                  className="flex-1 bg-surface/50 border-edge/50 focus:border-star"
-                  placeholder="Value"
-                />
-                <ToggleGroup 
-                  type="single" 
-                  value={durationUnit} 
-                  onValueChange={(v) => v && setDurationUnit(v)}
-                  variant="outline"
-                  size="sm"
-                  className="bg-surface/50 rounded-xl border border-edge/30"
-                >
-                  {DURATION_UNITS.map(u => (
-                    <ToggleGroupItem key={u.value} value={u.value} className="text-[10px] uppercase px-2 data-[state=on]:bg-star/20">
-                      {u.label.charAt(0)}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </div>
-            </div>
-
-            {/* Deadline */}
-            <div className="bg-abyss/40 border border-edge/20 rounded-2xl p-5 space-y-4">
-              <div className="space-y-1">
-                <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
-                  Discovery Deadline
-                </Label>
-                <p className="text-[10px] text-ash/60 uppercase tracking-tight">Offer expiration</p>
-              </div>
-
-              {useCustomDeadline ? (
-                <div className="flex gap-2">
-                   <Input
-                    type="number"
-                    value={customDeadline}
-                    onChange={(e) => setCustomDeadline(e.target.value)}
-                    className="flex-1 bg-surface/50 border-edge/50 focus:border-star"
-                    placeholder="Unix timestamp"
-                  />
-                  <Button variant="ghost" size="sm" onClick={() => setUseCustomDeadline(false)} className="text-[10px] uppercase h-9">Presets</Button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <ToggleGroup 
-                    type="single" 
-                    value={deadlinePreset} 
-                    onValueChange={(v) => v && setDeadlinePreset(v)}
-                    variant="outline"
-                    size="sm"
-                    className="bg-surface/50 rounded-xl w-full justify-start border border-edge/30"
-                  >
-                    {DEADLINE_PRESETS.map(p => (
-                      <ToggleGroupItem key={p.value} value={p.value} className="text-[10px] uppercase flex-1 data-[state=on]:bg-star/20">
-                        {p.label}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
+                {useCustomDuration && (
                   <button
                     type="button"
-                    onClick={() => setUseCustomDeadline(true)}
-                    className="text-[10px] text-ash hover:text-star text-left uppercase tracking-widest pl-1 transition-colors"
+                    onClick={() => setUseCustomDuration(false)}
+                    className="text-[10px] text-star hover:text-star-bright transition-colors"
                   >
-                    Set custom timestamp
+                    Presets
+                  </button>
+                )}
+              </div>
+
+              {useCustomDuration ? (
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={customDuration}
+                    onChange={(e) => setCustomDuration(e.target.value)}
+                    className="flex-1 bg-surface/50 border-edge/50 font-mono"
+                    placeholder="Seconds"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {DURATION_PRESETS.map((p) => (
+                      <button
+                        key={p.seconds}
+                        type="button"
+                        onClick={() => setDurationPreset(p.seconds.toString())}
+                        className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
+                          durationPreset === p.seconds.toString()
+                            ? 'border-star/40 bg-star/10 text-star font-medium'
+                            : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setUseCustomDuration(true)}
+                    className="text-[10px] text-ash hover:text-star transition-colors uppercase tracking-widest"
+                  >
+                    Custom duration
                   </button>
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 p-5 bg-surface/20 border border-edge/20 rounded-2xl">
-            <Switch checked={multiLender} onCheckedChange={setMultiLender} id="multi-lender" />
-            <Label htmlFor="multi-lender" className="cursor-pointer">
-              <span className="text-xs text-chalk block">Allow multiple lenders</span>
-              <span className="text-[10px] text-ash block uppercase tracking-tight">Lenders can fund partially</span>
-            </Label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Offer Expires</span>
-              <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(deadline))}</span>
+            {/* Deadline */}
+            <div className="p-4 bg-abyss/60 border border-edge/20 rounded-2xl space-y-3">
+              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
+                Offer Expires In
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {DEADLINE_PRESETS.map((p) => (
+                  <button
+                    key={p.seconds}
+                    type="button"
+                    onClick={() => setDeadlinePreset(p.seconds.toString())}
+                    className={`px-3 py-1.5 rounded-lg text-xs border transition-all flex-1 text-center ${
+                      deadlinePreset === p.seconds.toString()
+                        ? 'border-star/40 bg-star/10 text-star font-medium'
+                        : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-[10px] text-ash">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2" className="shrink-0">
+                  <circle cx="5" cy="5" r="4" />
+                  <path d="M5 3v2.5l1.5 1" />
+                </svg>
+                <span>Expires {formatTimestamp(BigInt(deadline))}</span>
+              </div>
             </div>
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Repay By</span>
-              <span className="text-xs text-star font-mono font-bold">{formatTimestamp(BigInt(Number(deadline) + Number(duration)))}</span>
+          </div>
+
+          {/* Quick summary chips */}
+          <div className="flex flex-wrap gap-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/40 border border-edge/20 text-[11px]">
+              <span className="text-ash">Duration:</span>
+              <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/40 border border-edge/20 text-[11px]">
+              <span className="text-ash">Repay by:</span>
+              <span className="text-chalk font-medium">{formatTimestamp(BigInt(Number(deadline) + Number(duration)))}</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/40 border border-edge/20 text-[11px]">
+              <span className="text-ash">Type:</span>
+              <span className={`font-medium ${multiLender ? 'text-cosmic' : 'text-chalk'}`}>
+                {multiLender ? 'Multi-Lender' : 'Single-Lender'}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* ROI Preview Math */}
-        {roiInfo && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="flex items-center gap-4">
-              <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap">Preview Specifications</span>
-              <div className="h-px w-full bg-edge/20" />
-            </div>
-            
-            <Card className="border-star/20 bg-star/[0.02] rounded-[32px] overflow-hidden granite-noise relative">
-              <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-star">
-                  <path d="M12 2v20M2 12h20M12 2l4.5 4.5M12 2L7.5 6.5M12 22l4.5-4.5M12 22l-4.5 4.5" />
+        {/* Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-edge/40 to-transparent" />
+
+        {/* ══════════════════════════════════════════════════
+            SECTION 2: ASSETS
+           ══════════════════════════════════════════════════ */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-lg bg-nebula/15 border border-nebula/25 flex items-center justify-center">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-nebula">
+                  <rect x="1" y="3" width="10" height="7" rx="1" />
+                  <path d="M3 3V2a1 1 0 011-1h4a1 1 0 011 1v1" />
                 </svg>
               </div>
-              <CardContent className="p-8 relative z-10">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Projected Yield for Lender</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-display text-star">+{roiInfo.yieldPct}%</span>
-                      <span className="text-dust text-sm">in {roiInfo.symbol}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 min-w-[140px]">
-                    <div className="bg-star/10 px-4 py-2 rounded-full border border-star/20 text-center">
-                      <span className="text-[10px] text-star uppercase tracking-widest font-bold block">Status</span>
-                      <span className="text-[10px] text-chalk font-bold uppercase tracking-widest">Open Draft</span>
-                    </div>
-                    <div className="bg-surface/60 px-4 py-2 rounded-full border border-edge/30 text-center">
-                      <span className="text-[10px] text-ash uppercase tracking-widest font-bold block">Type</span>
-                      <span className="text-[10px] text-dust font-bold uppercase tracking-widest">{multiLender ? 'Multi-Lender' : 'Single-Lender'}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-               {[
-                 { label: 'Duration', value: `${durationValue} ${DURATION_UNITS.find(u => u.value === durationUnit)?.label}`, mono: false },
-                 { label: 'Discovery', value: useCustomDeadline ? 'Custom' : deadlinePreset === '3600' ? '1 Hour' : deadlinePreset === '86400' ? '1 Day' : deadlinePreset === '259200' ? '3 Days' : '7 Days', mono: false },
-                 { label: 'Debt Assets', value: debtAssets.filter(a => a.asset).length, mono: true },
-                 { label: 'Collateral', value: collateralAssets.filter(a => a.asset).length, mono: true },
-               ].map((field, i) => (
-                 <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-4">
-                    <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">{field.label}</span>
-                    <span className={`text-xs text-chalk font-bold ${field.mono ? 'font-mono' : 'font-display'}`}>{field.value}</span>
-                 </div>
-               ))}
+              <div>
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-chalk">Assets</span>
+                {totalAssets > 0 && (
+                  <span className="ml-2 text-[10px] font-mono text-ash bg-surface px-1.5 py-0.5 rounded">
+                    {totalAssets} total
+                  </span>
+                )}
+              </div>
             </div>
+
+            {/* THE unified add button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddModalOpen(true)}
+              className="gap-1.5 border-dashed"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M6 2v8M2 6h8" />
+              </svg>
+              Add Token
+            </Button>
           </div>
+
+          {/* 3-column asset display */}
+          {totalAssets === 0 ? (
+            <button
+              type="button"
+              onClick={() => setAddModalOpen(true)}
+              className="w-full py-10 border-2 border-dashed border-edge/30 rounded-2xl hover:border-edge/50 transition-colors group"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-surface/60 border border-edge/30 flex items-center justify-center group-hover:border-star/30 group-hover:bg-star/5 transition-colors">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash group-hover:text-star transition-colors">
+                    <path d="M10 4v12M4 10h12" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <span className="text-sm text-dust block">Add your first token</span>
+                  <span className="text-[10px] text-ash">Select a token, set amount, and assign its role</span>
+                </div>
+              </div>
+            </button>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <AssetColumn
+                role="debt"
+                assets={debtAssets}
+                onRemove={(i) => setDebtAssets((prev) => prev.filter((_, j) => j !== i))}
+                required
+                showErrors={showErrors}
+              />
+              <AssetColumn
+                role="collateral"
+                assets={collateralAssets}
+                onRemove={(i) => setCollateralAssets((prev) => prev.filter((_, j) => j !== i))}
+                required
+                showErrors={showErrors}
+              />
+              <AssetColumn
+                role="interest"
+                assets={interestAssets}
+                onRemove={(i) => setInterestAssets((prev) => prev.filter((_, j) => j !== i))}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* ══════════════════════════════════════════════════
+            SECTION 3: ROI PREVIEW
+           ══════════════════════════════════════════════════ */}
+        {roiInfo && (
+          <>
+            <div className="h-px bg-gradient-to-r from-transparent via-edge/40 to-transparent" />
+            <div className="flex items-center justify-between p-5 bg-star/[0.03] border border-star/15 rounded-2xl">
+              <div>
+                <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">
+                  Projected Lender Yield
+                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-display text-star">+{roiInfo.yieldPct}%</span>
+                  <span className="text-dust text-sm">in {roiInfo.symbol}</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Over</span>
+                <span className="text-sm text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
+              </div>
+            </div>
+          </>
         )}
 
-        <Separator />
+        {/* ══════════════════════════════════════════════════
+            SECTION 4: SUBMIT
+           ══════════════════════════════════════════════════ */}
+        <div className="h-px bg-gradient-to-r from-transparent via-edge/40 to-transparent" />
 
-        {/* Submit */}
         <Web3ActionWrapper message="Connect your wallet to create an inscription">
           <Button
             variant="gold"
             size="xl"
-            className="w-full h-16 text-lg uppercase tracking-widest"
+            className="w-full h-14 text-base uppercase tracking-widest"
             onClick={handleSubmit}
             disabled={isPending}
           >
             {isPending ? 'Processing...' : 'Approve & Sign Order'}
           </Button>
+          {showErrors && !isValid && (
+            <p className="text-xs text-nova text-center mt-2">
+              {!hasDebt && 'Add at least one borrow asset. '}
+              {!hasCollateral && 'Add at least one collateral asset. '}
+              {!hasDuration && 'Set a loan duration.'}
+            </p>
+          )}
         </Web3ActionWrapper>
       </div>
+
+      {/* ── Modals ──────────────────────────────────────── */}
+      <AddAssetModal
+        open={addModalOpen}
+        onOpenChange={setAddModalOpen}
+        onAdd={handleAddAsset}
+        balances={balances}
+      />
 
       <TransactionProgressModal
         open={createProgress.open}
