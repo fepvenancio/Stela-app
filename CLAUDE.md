@@ -818,15 +818,17 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 
 | Contract | Address | Notes |
 |----------|---------|-------|
-| **Stela (genesis-fee-vault)** | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` | Current production |
-| **StelaGenesis NFT** | `0x05acfbb98a9f8d2e177886fa02f5f329b254f6e333ab430ef53e25f4bbfbc8a3` | ERC721, 500 supply |
-| **FeeVault** | `0x0111beaef1d9b13378b0dbf1be40c556ccf6886591f6b1b29ed790fa13606471` | Fee distribution |
-| **Privacy Pool** | `0x002579e670f80cca558236c95762dd5b94ae017b6ed92df65b74b61b539cdec7` | NOT linked to current contract |
+| **Stela** | `0x042e955a1905261e7afdba17518506c8f275759e1195bc19e2eca908658bf8e9` | Current production, ownership renounced |
+| **StelaGenesis NFT** | `0x02405de15c17aaf863bcf23c22706d73d142c8a81df29de9ef129666655847ca` | ERC721, 500 supply, 100 treasury, 5/wallet cap |
+| **FeeVault** | `0x065f7103f01474dcc860d200e9e8eb7c467dbe3f6dcf0af5b84cfa143fb264f6` | Fee distribution, snapshot-on-mint |
+| **Privacy Pool** | `0x05852d427e3fabd544a1f2aca11f8b139b4b9c2064236172defff80ca2d5ed44` | Linked via set_privacy_pool |
 
 ### Previous Contract Addresses (historical, do not use)
 
 | Contract | Address | Tag |
 |----------|---------|-----|
+| Stela (treasury-reserve) | `0x038fb9a3bbf84aef962c70bc0ed15744f4f3088bae73bed99031b6f2b7cfab01` | — |
+| Stela (genesis-fee-vault) | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` | — |
 | Stela (deposit-privacy) | `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a03ece0` | — |
 | Stela (privacy-enabled) | `0x00c667d12113011a05f6271cc4bd9e7f4c3c5b90a093708801955af5a5b1e6d5` | — |
 
