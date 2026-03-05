@@ -103,14 +103,16 @@ export async function POST(request: NextRequest) {
 
     const messageHash = starknetTypedData.getMessageHash(typedData, borrower)
 
-    // Verify the borrower's signature on-chain via their account contract
-    const sigValid = await verifyStarknetSignature(borrower, messageHash, borrower_signature)
+    // Verify signature + nonce in parallel (both are independent RPC calls)
+    const [sigValid, nonceCheck] = await Promise.all([
+      verifyStarknetSignature(borrower, messageHash, borrower_signature),
+      verifyNonce(borrower, BigInt(order_data.nonce)),
+    ])
+
     if (!sigValid) {
       return errorResponse('Invalid borrower signature', 401, request)
     }
 
-    // Verify nonce matches current on-chain nonce (prevents stale orders)
-    const nonceCheck = await verifyNonce(borrower, BigInt(order_data.nonce))
     if (!nonceCheck.valid) {
       return errorResponse(
         `Nonce mismatch: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}. Please hard-refresh the page and try again.`,
