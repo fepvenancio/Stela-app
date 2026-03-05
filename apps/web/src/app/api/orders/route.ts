@@ -122,14 +122,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Check no other pending order exists with the same borrower + nonce.
-    // If one exists, return it as success (the previous attempt likely saved but timed out).
+    // If one exists, check if the submitted order data matches (timeout retry = return success)
+    // or differs (genuinely new order blocked by nonce = return error with explanation).
     const existingOrders = await db.getOrders({ status: 'pending', address: borrower, page: 1, limit: 100 })
     const existingOrder = (existingOrders as Record<string, unknown>[]).find((o) => {
       const od = typeof o.order_data === 'string' ? JSON.parse(o.order_data as string) : o.order_data
       return String(od?.nonce) === String(order_data.nonce)
     })
     if (existingOrder) {
-      return jsonResponse({ ok: true, id: existingOrder.id, existing: true }, request)
+      // Same order retried after timeout — return the existing one as success
+      const existingData = typeof existingOrder.order_data === 'string'
+        ? JSON.parse(existingOrder.order_data as string)
+        : existingOrder.order_data
+      const sameOrder = existingData?.orderHash === messageHash
+      if (sameOrder) {
+        return jsonResponse({ ok: true, id: existingOrder.id, existing: true }, request)
+      }
+      // Different order with same nonce — user already has a pending order
+      return errorResponse(
+        'You already have a pending order. Cancel or wait for it to settle before creating a new one.',
+        409,
+        request,
+      )
     }
 
     // Verify asset hashes if provided (defense in depth)
