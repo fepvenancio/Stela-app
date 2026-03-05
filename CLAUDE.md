@@ -281,7 +281,7 @@ Variables are set in `wrangler.jsonc` for production:
 ```json
 "vars": {
   "NEXT_PUBLIC_NETWORK": "sepolia",
-  "NEXT_PUBLIC_STELA_ADDRESS": "0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973",
+  "NEXT_PUBLIC_STELA_ADDRESS": "0x042f27b5cf82781d8fffd7daeec9184ac4f14c9e86e87b880bd81ef5197345ed",
   "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia"
 }
 ```

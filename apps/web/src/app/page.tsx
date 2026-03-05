@@ -548,7 +548,7 @@ export default function LandingPage() {
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Discount</span>
-                <span className="text-chalk font-display text-sm tracking-wider">10% per NFT, applied automatically</span>
+                <span className="text-chalk font-display text-sm tracking-wider">15% base + volume + multi-NFT bonus</span>
               </div>
               <div className="flex justify-between items-center py-3">
                 <span className="text-dust text-sm">Transferable</span>
@@ -588,8 +588,8 @@ export default function LandingPage() {
               </div>
               <p className="text-dust text-sm leading-relaxed relative z-10">
                 Unlike GMX or BendDAO, Genesis holders do not need to lock or stake their NFTs.
-                Ownership is checked at claim time. Sell the NFT and all unclaimed rewards transfer
-                to the new owner -- making each Genesis NFT inherently valuable.
+                Discount is checked on-chain at transaction time. Sell the NFT and the discount
+                transfers to the new owner -- making each Genesis NFT inherently valuable.
               </p>
             </div>
           </div>
@@ -868,7 +868,7 @@ export default function LandingPage() {
         </h2>
         <p className="text-dust mb-10 max-w-lg mx-auto leading-relaxed">
           Join the protocol built for permanence. Create lending inscriptions,
-          provide liquidity, mint a Genesis NFT for perpetual fee share,
+          provide liquidity, mint a Genesis NFT for fee discounts,
           or explore existing positions on StarkNet.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">

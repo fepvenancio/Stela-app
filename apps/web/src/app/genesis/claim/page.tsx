@@ -11,14 +11,17 @@ const MAX_SUPPLY = 300
 
 /* ── Discount Tiers ────────────────────────────────────── */
 
-function getDiscountPercent(nftCount: number): number {
-  return Math.min(nftCount * 10, 50)
+/** Base NFT discount only (volume tiers computed on-chain) */
+function getBaseDiscountPercent(nftCount: number): number {
+  if (nftCount <= 0) return 0
+  // 15% base + 2% per additional NFT, capped at 50%
+  return Math.min(15 + (nftCount - 1) * 2, 50)
 }
 
 function getDiscountTier(nftCount: number): string {
-  if (nftCount >= 5) return 'Max'
-  if (nftCount >= 3) return 'Mid'
-  if (nftCount >= 1) return 'Entry'
+  if (nftCount >= 5) return 'Holder'
+  if (nftCount >= 3) return 'Collector'
+  if (nftCount >= 1) return 'Holder'
   return 'None'
 }
 
@@ -28,7 +31,7 @@ export default function GenesisClaimPage() {
   const { address } = useAccount()
   const pos = useGenesisPosition()
 
-  const discount = getDiscountPercent(Number(pos.balance))
+  const discount = getBaseDiscountPercent(Number(pos.balance))
   const tier = getDiscountTier(Number(pos.balance))
 
   return (
@@ -76,8 +79,8 @@ export default function GenesisClaimPage() {
                 <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
               </div>
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Fee Discount</span>
-                <span className="text-xl font-display text-star">{discount}%</span>
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">NFT Discount</span>
+                <span className="text-xl font-display text-star">{discount}%+</span>
               </div>
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
                 <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Tier</span>
@@ -90,17 +93,17 @@ export default function GenesisClaimPage() {
               <div className="px-6 py-5">
                 <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Discount Tiers</h2>
                 <p className="text-[10px] text-ash mt-0.5">
-                  More NFTs = bigger fee discounts on settle and redeem
+                  15% base + 2% per extra NFT (shown below) + 5% per volume tier (on-chain). 50% cap.
                 </p>
               </div>
 
               <div className="px-6 pb-5 space-y-2">
                 {[
-                  { nfts: 1, pct: 10, label: 'Entry' },
-                  { nfts: 2, pct: 20, label: 'Bronze' },
-                  { nfts: 3, pct: 30, label: 'Silver' },
-                  { nfts: 4, pct: 40, label: 'Gold' },
-                  { nfts: 5, pct: 50, label: 'Max' },
+                  { nfts: 1, pct: 15, label: 'Base (1 NFT)' },
+                  { nfts: 2, pct: 17, label: '+2% (2 NFTs)' },
+                  { nfts: 3, pct: 19, label: '+4% (3 NFTs)' },
+                  { nfts: 4, pct: 21, label: '+6% (4 NFTs)' },
+                  { nfts: 5, pct: 23, label: '+8% (5 NFTs)' },
                 ].map((t) => {
                   const isActive = Number(pos.balance) >= t.nfts
                   return (

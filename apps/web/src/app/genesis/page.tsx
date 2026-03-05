@@ -176,24 +176,25 @@ function FeeInfo() {
       <div className="p-6">
         <div className="grid sm:grid-cols-3 gap-3 mb-4">
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">1 NFT</span>
-            <span className="text-base font-display text-star">10% off</span>
-            <span className="text-[10px] text-ash block">Entry tier discount</span>
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Base</span>
+            <span className="text-base font-display text-star">15% off</span>
+            <span className="text-[10px] text-ash block">Hold 1+ Genesis NFT</span>
           </div>
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">3 NFTs</span>
-            <span className="text-base font-display text-star">30% off</span>
-            <span className="text-[10px] text-ash block">Mid tier discount</span>
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Volume</span>
+            <span className="text-base font-display text-star">+5% / tier</span>
+            <span className="text-[10px] text-ash block">7 tiers ($10K to $1M+)</span>
           </div>
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">5 NFTs</span>
-            <span className="text-base font-display text-star">50% off</span>
-            <span className="text-[10px] text-ash block">Max tier discount</span>
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Multi-NFT</span>
+            <span className="text-base font-display text-star">+2% / NFT</span>
+            <span className="text-[10px] text-ash block">Per additional NFT held</span>
           </div>
         </div>
         <p className="text-[11px] text-ash leading-relaxed">
-          Genesis NFT holders receive protocol fee discounts. The more NFTs you hold (up to 5),
-          the larger your discount on settle and redeem fees. Ownership is renounced; supply is immutable.
+          Genesis NFT holders receive protocol fee discounts up to 50%. Base 15% for holding any NFT,
+          +5% per volume tier, +2% per additional NFT. Applies to treasury fees only (floors: settle 10 BPS, redeem 5 BPS).
+          Ownership is renounced; supply is immutable.
         </p>
       </div>
     </section>
@@ -277,7 +278,7 @@ export default function GenesisPage() {
               <div className="px-6 py-5 border-b border-edge/20">
                 <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Your Position</h2>
                 <p className="text-[10px] text-ash mt-0.5">
-                  {Number(pos.balance)} NFT{Number(pos.balance) !== 1 ? 's' : ''} = {Math.min(Number(pos.balance) * 10, 50)}% fee discount
+                  {Number(pos.balance)} NFT{Number(pos.balance) !== 1 ? 's' : ''} -- 15% base{Number(pos.balance) > 1 ? ` + ${(Number(pos.balance) - 1) * 2}% multi-NFT bonus` : ''} + volume tiers
                 </p>
               </div>
               {pos.tokenIds.length > 0 && (

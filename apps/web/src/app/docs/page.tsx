@@ -286,7 +286,7 @@ export default function DocsPage() {
               </div>
             </div>
             <p className="text-ash text-xs mt-4 leading-relaxed">
-              All fees are hardcoded in the immutable contract. Non-relayer fees go to the protocol treasury. Genesis NFT holders receive automatic fee discounts (10% per NFT, up to 50%) on settle and redeem operations.
+              All fees are hardcoded in the immutable contract. Non-relayer fees go to the protocol treasury. Genesis NFT holders receive automatic fee discounts (15% base + volume tiers + multi-NFT bonus, up to 50%) on settle and redeem operations.
             </p>
           </div>
 
@@ -650,11 +650,11 @@ export default function DocsPage() {
                 <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
                     <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
-                    <span className="text-star font-mono">25 BPS (0.25%)</span>
+                    <span className="text-star font-mono">20 BPS (0.20%)</span>
                   </div>
                   <div>
                     <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
-                    <span className="text-chalk font-mono">5 relayer / 20 genesis vault</span>
+                    <span className="text-chalk font-mono">5 relayer / 15 treasury</span>
                   </div>
                   <div>
                     <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>
