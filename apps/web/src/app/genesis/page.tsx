@@ -1,26 +1,19 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useAccount, useReadContract, useSendTransaction } from '@starknet-react/core'
+import { useAccount, useSendTransaction } from '@starknet-react/core'
 import { toU256 } from '@fepvenancio/stela-sdk'
-import type { Abi } from 'starknet'
-import genesisAbi from '@stela/core/abi/genesis.json'
 import { GENESIS_ADDRESS, STRK_ADDRESS } from '@/lib/config'
+import { useGenesisPosition, type ClaimableToken } from '@/hooks/useGenesisPosition'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
-import { Card } from '@/components/ui/card'
+import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { formatTokenValue } from '@/lib/format'
 import { getErrorMessage } from '@/lib/tx'
-import { readU256 } from '@/lib/format'
-
-const MINT_STEPS = [
-  { label: 'Approve STRK', description: 'Approve token spend for mint' },
-  { label: 'Mint NFT', description: 'Mint Genesis NFT to your wallet' },
-  { label: 'Confirming', description: 'Waiting for confirmation' },
-]
 
 const MAX_SUPPLY = 500
 const MAX_QUANTITY = 5
@@ -31,273 +24,275 @@ function formatStrk(raw: bigint): string {
   return whole.toLocaleString()
 }
 
-export default function GenesisPage() {
-  const { address } = useAccount()
+/* ── Claimable Token Row (Convex pattern) ──────────────── */
+
+function ClaimableRow({ token }: { token: ClaimableToken }) {
+  return (
+    <div className="flex items-center justify-between py-2.5 px-1">
+      <div className="flex items-center gap-2.5">
+        <TokenAvatarByAddress address={token.address} size={20} />
+        <span className="text-sm text-chalk font-medium">{token.symbol}</span>
+      </div>
+      <span className="text-sm font-mono text-chalk">
+        {formatTokenValue(token.amount.toString(), token.decimals)}
+      </span>
+    </div>
+  )
+}
+
+/* ── Claim Section (GMX Total Rewards pattern) ─────────── */
+
+function ClaimSection({
+  claimable,
+  hasClaimable,
+  tokenIds,
+  balance,
+  isLoading,
+  onClaimed,
+}: {
+  claimable: ClaimableToken[]
+  hasClaimable: boolean
+  tokenIds: bigint[]
+  balance: bigint
+  isLoading: boolean
+  onClaimed: () => void
+}) {
   const { sendAsync, isPending } = useSendTransaction({})
-  const [quantity, setQuantity] = useState(1)
-  const progress = useTransactionProgress(MINT_STEPS)
+  const progress = useTransactionProgress([
+    { label: 'Claim Fees', description: 'Claiming accumulated fees from vault' },
+    { label: 'Confirming', description: 'Waiting for confirmation' },
+  ])
 
-  const { data: totalMintedRaw, isLoading: mintedLoading } = useReadContract({
-    abi: genesisAbi as Abi,
-    address: GENESIS_ADDRESS,
-    functionName: 'total_minted',
-    args: [],
-    watch: true,
-  })
-
-  const { data: mintPriceRaw, isLoading: priceLoading } = useReadContract({
-    abi: genesisAbi as Abi,
-    address: GENESIS_ADDRESS,
-    functionName: 'mint_price',
-    args: [],
-  })
-
-  const { data: mintEnabledRaw } = useReadContract({
-    abi: genesisAbi as Abi,
-    address: GENESIS_ADDRESS,
-    functionName: 'mint_enabled',
-    args: [],
-  })
-
-  const { data: balanceRaw } = useReadContract({
-    abi: genesisAbi as Abi,
-    address: GENESIS_ADDRESS,
-    functionName: 'balance_of',
-    args: address ? [address] : [],
-    watch: true,
-  })
-
-  const totalMinted = readU256(totalMintedRaw)
-  const mintPrice = readU256(mintPriceRaw)
-  const mintEnabled = mintEnabledRaw !== false && mintEnabledRaw !== 0n && mintEnabledRaw != null
-  const balance = readU256(balanceRaw)
-  const totalCost = mintPrice * BigInt(quantity)
-  const soldOut = totalMinted >= BigInt(MAX_SUPPLY)
-  const mintPercentage = (Number(totalMinted) / MAX_SUPPLY) * 100
-  const remaining = MAX_SUPPLY - Number(totalMinted)
-
-  const canMint = useMemo(() => {
-    return mintEnabled && !soldOut && !isPending && !!address
-  }, [mintEnabled, soldOut, isPending, address])
-
-  async function handleMint() {
-    if (!address || !canMint) return
-
+  async function handleClaimAll() {
+    if (tokenIds.length === 0) return
     progress.start()
-
     try {
-      // Step 1: Approve STRK spend
-      const approveCalls = [{
-        contractAddress: STRK_ADDRESS,
-        entrypoint: 'approve',
-        calldata: [GENESIS_ADDRESS, ...toU256(totalCost)],
-      }]
-
-      await sendAsync(approveCalls)
-      progress.advance()
-
-      // Step 2: Mint
-      const mintCalls = quantity === 1
-        ? [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint', calldata: [] as string[] }]
-        : [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint_batch', calldata: toU256(BigInt(quantity)) }]
-
-      const result = await sendAsync(mintCalls)
+      const calldata: string[] = [String(tokenIds.length)]
+      for (const id of tokenIds) {
+        calldata.push(...toU256(id))
+      }
+      const result = await sendAsync([{
+        contractAddress: '0x065f7103f01474dcc860d200e9e8eb7c467dbe3f6dcf0af5b84cfa143fb264f6',
+        entrypoint: 'claim_batch',
+        calldata,
+      }])
       progress.setTxHash(result.transaction_hash)
       progress.advance()
-
-      // Step 3: Done
       progress.advance()
+      onClaimed()
     } catch (err: unknown) {
       progress.fail(getErrorMessage(err))
     }
   }
 
   return (
-    <div className="animate-fade-up max-w-2xl">
-      <div className="mb-10">
-        <h1 className="font-display text-3xl tracking-wide text-chalk mb-3">
-          Genesis Collection
-        </h1>
-        <p className="text-dust leading-relaxed">
-          {MAX_SUPPLY} Genesis NFTs — 100 reserved for the protocol treasury, 400 available for public mint.
-          Each earns a perpetual share of all protocol fees.
-          Settle fees (20 BPS) and redeem fees (10 BPS) are split across all {MAX_SUPPLY} holders.
-        </p>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <Card className="p-5 bg-surface/20 border-edge/30">
-          <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Minted</span>
-          {mintedLoading ? (
-            <Skeleton className="h-8 w-20 bg-edge/20" />
-          ) : (
-            <span className="text-2xl font-display text-chalk">
-              {totalMinted.toString()} <span className="text-sm text-dust">/ {MAX_SUPPLY}</span>
-            </span>
-          )}
-        </Card>
-        <Card className="p-5 bg-surface/20 border-edge/30">
-          <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Price</span>
-          {priceLoading ? (
-            <Skeleton className="h-8 w-20 bg-edge/20" />
-          ) : (
-            <span className="text-2xl font-display text-star">{formatStrk(mintPrice)} <span className="text-sm text-dust">STRK</span></span>
-          )}
-        </Card>
-        <Card className="p-5 bg-surface/20 border-edge/30">
-          <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Your NFTs</span>
-          <span className="text-2xl font-display text-chalk">{address ? balance.toString() : '--'}</span>
-        </Card>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mb-8">
-        <div className="h-2 bg-surface/30 rounded-full overflow-hidden border border-edge/20">
-          <div
-            className="h-full bg-gradient-to-r from-star to-star-bright rounded-full transition-all duration-500"
-            style={{ width: `${Math.min(mintPercentage, 100)}%` }}
-          />
+    <>
+      <section className="bg-surface/15 border border-edge/25 rounded-2xl overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-edge/20 flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Claimable Fees</h2>
+            <p className="text-[10px] text-ash mt-0.5">
+              {Number(balance)} NFT{Number(balance) !== 1 ? 's' : ''} = {((Number(balance) / MAX_SUPPLY) * 100).toFixed(2)}% of protocol fees
+            </p>
+          </div>
+          <Button
+            variant="gold"
+            size="sm"
+            className="rounded-full px-6"
+            onClick={handleClaimAll}
+            disabled={!hasClaimable || isPending || isLoading}
+          >
+            {isPending ? 'Claiming...' : 'Claim All'}
+          </Button>
         </div>
-        <div className="flex justify-between mt-2">
-          <span className="text-[10px] text-ash">{mintPercentage.toFixed(1)}% minted</span>
-          <span className="text-[10px] text-ash">{remaining} remaining</span>
-        </div>
-      </div>
 
-      <Web3ActionWrapper message="Connect your wallet to mint Genesis NFTs">
-        {/* Mint card */}
-        <Card className="border-star/20 bg-star/[0.02] rounded-[32px] overflow-hidden mb-8">
-          <div className="p-8 space-y-6">
-            <div className="space-y-2">
-              <h3 className="font-display text-lg text-star uppercase tracking-widest">Mint</h3>
-              {!mintEnabled && !soldOut && (
-                <p className="text-sm text-nova">Minting is currently paused.</p>
-              )}
-              {soldOut && (
-                <p className="text-sm text-nova">Sold out! All {MAX_SUPPLY} Genesis NFTs have been minted.</p>
-              )}
-            </div>
-
-            {!soldOut && (
-              <>
-                <div className="space-y-3">
-                  <label className="text-[10px] text-ash uppercase tracking-widest font-bold block">
-                    Quantity
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={quantity <= 1}
-                      className="text-dust hover:text-chalk"
-                      aria-label="Decrease quantity"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M5 12h14" />
-                      </svg>
-                    </Button>
-                    <span className="text-2xl font-display text-chalk w-12 text-center">{quantity}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setQuantity(Math.min(MAX_QUANTITY, quantity + 1))}
-                      disabled={quantity >= MAX_QUANTITY}
-                      className="text-dust hover:text-chalk"
-                      aria-label="Increase quantity"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 5v14M5 12h14" />
-                      </svg>
-                    </Button>
+        {/* Token rows */}
+        <div className="px-6 py-4">
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <Skeleton className="w-5 h-5 rounded-full bg-edge/20" />
+                    <Skeleton className="h-4 w-16 bg-edge/20" />
                   </div>
+                  <Skeleton className="h-4 w-20 bg-edge/20" />
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-                  <span className="text-sm text-dust">Total Cost</span>
-                  <span className="text-lg font-display text-star">{formatStrk(totalCost)} STRK</span>
-                </div>
-
-                <Button
-                  variant="gold"
-                  className="w-full"
-                  onClick={handleMint}
-                  disabled={!canMint}
-                >
-                  {isPending ? 'Processing...' : `Mint ${quantity} NFT${quantity > 1 ? 's' : ''}`}
-                </Button>
-              </>
-            )}
-
-            {balance > 0n && (
-              <Link
-                href="/genesis/claim"
-                className="flex items-center justify-center gap-2 text-sm text-star hover:text-star-bright transition-colors"
-              >
-                Claim Fees
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Link>
-            )}
-          </div>
-        </Card>
-      </Web3ActionWrapper>
-
-      {/* Info section */}
-      <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-edge/20 bg-surface/30">
-          <h3 className="text-xs uppercase tracking-widest text-dust font-bold">Fee Distribution</h3>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Settle Fee</span>
-              <span className="text-lg font-display text-star">20 BPS</span>
-              <span className="text-xs text-dust block mt-1">0.20% of each settled inscription</span>
+              ))}
             </div>
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Redeem Fee</span>
-              <span className="text-lg font-display text-star">10 BPS</span>
-              <span className="text-xs text-dust block mt-1">0.10% of each share redemption</span>
+          ) : hasClaimable ? (
+            <div className="divide-y divide-edge/15">
+              {claimable.map((token) => (
+                <ClaimableRow key={token.address} token={token} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-6 text-center">
+              <p className="text-sm text-dust">No fees to claim yet</p>
+              <p className="text-[10px] text-ash mt-1">
+                Fees accumulate as inscriptions are settled and redeemed on the protocol.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* NFT IDs footer */}
+        {tokenIds.length > 0 && (
+          <div className="px-6 py-3 border-t border-edge/15 bg-surface/10">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[9px] text-ash uppercase tracking-widest">Your NFTs:</span>
+              {tokenIds.map((id) => (
+                <span key={id.toString()} className="text-[10px] font-mono text-chalk bg-surface/50 px-2 py-0.5 rounded-md border border-edge/20">
+                  #{id.toString()}
+                </span>
+              ))}
             </div>
           </div>
-          <p className="text-xs text-dust leading-relaxed">
-            Fees accumulate in the vault and are split equally across all {MAX_SUPPLY} Genesis NFTs.
-            Claim anytime — there is no expiry on accumulated fees.
-          </p>
-        </div>
+        )}
       </section>
 
-      {/* Treasury & Transparency */}
-      <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden mt-6">
-        <div className="px-6 py-4 border-b border-edge/20 bg-surface/30">
-          <h3 className="text-xs uppercase tracking-widest text-dust font-bold">Treasury &amp; Transparency</h3>
+      <TransactionProgressModal
+        open={progress.open}
+        steps={progress.steps}
+        txHash={progress.txHash}
+        onClose={progress.close}
+      />
+    </>
+  )
+}
+
+/* ── Mint Section ──────────────────────────────────────── */
+
+function MintSection({
+  totalMinted,
+  mintPrice,
+  mintEnabled,
+  soldOut,
+}: {
+  totalMinted: bigint
+  mintPrice: bigint
+  mintEnabled: boolean
+  soldOut: boolean
+}) {
+  const { address } = useAccount()
+  const { sendAsync, isPending } = useSendTransaction({})
+  const [quantity, setQuantity] = useState(1)
+  const progress = useTransactionProgress([
+    { label: 'Approve STRK', description: 'Approve token spend for mint' },
+    { label: 'Mint NFT', description: 'Mint Genesis NFT to your wallet' },
+    { label: 'Confirming', description: 'Waiting for confirmation' },
+  ])
+
+  const totalCost = mintPrice * BigInt(quantity)
+  const remaining = MAX_SUPPLY - Number(totalMinted)
+  const mintPercentage = (Number(totalMinted) / MAX_SUPPLY) * 100
+  const canMint = mintEnabled && !soldOut && !isPending && !!address
+
+  async function handleMint() {
+    if (!address || !canMint) return
+    progress.start()
+    try {
+      await sendAsync([{
+        contractAddress: STRK_ADDRESS,
+        entrypoint: 'approve',
+        calldata: [GENESIS_ADDRESS, ...toU256(totalCost)],
+      }])
+      progress.advance()
+      const mintCalls = quantity === 1
+        ? [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint', calldata: [] as string[] }]
+        : [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint_batch', calldata: toU256(BigInt(quantity)) }]
+      const result = await sendAsync(mintCalls)
+      progress.setTxHash(result.transaction_hash)
+      progress.advance()
+      progress.advance()
+    } catch (err: unknown) {
+      progress.fail(getErrorMessage(err))
+    }
+  }
+
+  if (soldOut) {
+    return (
+      <section className="bg-surface/10 border border-edge/20 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Mint</h3>
+          <span className="text-[10px] text-star font-bold uppercase tracking-widest">Sold Out</span>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Treasury Reserve</span>
-              <span className="text-lg font-display text-star">100 NFTs</span>
-              <span className="text-xs text-dust block mt-1">Minted to the protocol treasury at deployment. Funds audits, upgrades, and licensing. Hardcoded in the contract constructor.</span>
-            </div>
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Public Supply</span>
-              <span className="text-lg font-display text-star">400 NFTs</span>
-              <span className="text-xs text-dust block mt-1">Available for public minting at 5,000 STRK each after the treasury reserve.</span>
-            </div>
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Per-Wallet Cap</span>
-              <span className="text-lg font-display text-star">5 Max</span>
-              <span className="text-xs text-dust block mt-1">Public minting is capped at 5 NFTs per wallet to prevent concentration.</span>
-            </div>
-            <div className="p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
-              <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Ownership</span>
-              <span className="text-lg font-display text-star">Renounced</span>
-              <span className="text-xs text-dust block mt-1">After deployment, contract ownership is permanently renounced. No admin can mint more NFTs, change the price, or pause minting. Fully immutable.</span>
-            </div>
+        <div className="h-1.5 bg-surface/30 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-star to-star-bright rounded-full w-full" />
+        </div>
+        <p className="text-[10px] text-ash mt-2 text-center">All {MAX_SUPPLY} Genesis NFTs have been minted.</p>
+      </section>
+    )
+  }
+
+  return (
+    <>
+      <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-edge/15">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Mint Genesis NFT</h3>
+            <span className="text-[10px] text-ash">{remaining} remaining</span>
           </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-surface/30 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-star to-star-bright rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(mintPercentage, 100)}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[9px] text-ash">{Number(totalMinted)} / {MAX_SUPPLY} minted</span>
+            <span className="text-[9px] text-star font-medium">{formatStrk(mintPrice)} STRK each</span>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {!mintEnabled ? (
+            <p className="text-sm text-nova text-center py-2">Minting is currently paused.</p>
+          ) : (
+            <>
+              {/* Quantity + Cost */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                    className="text-dust hover:text-chalk h-8 w-8"
+                    aria-label="Decrease quantity"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14" /></svg>
+                  </Button>
+                  <span className="text-xl font-display text-chalk w-8 text-center">{quantity}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setQuantity(Math.min(MAX_QUANTITY, quantity + 1))}
+                    disabled={quantity >= MAX_QUANTITY}
+                    className="text-dust hover:text-chalk h-8 w-8"
+                    aria-label="Increase quantity"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+                  </Button>
+                </div>
+                <div className="text-right">
+                  <span className="text-[9px] text-ash uppercase tracking-widest block">Total</span>
+                  <span className="text-lg font-display text-star">{formatStrk(totalCost)} STRK</span>
+                </div>
+              </div>
+
+              <Button
+                variant="gold"
+                className="w-full"
+                onClick={handleMint}
+                disabled={!canMint}
+              >
+                {isPending ? 'Processing...' : `Mint ${quantity} NFT${quantity > 1 ? 's' : ''}`}
+              </Button>
+            </>
+          )}
         </div>
       </section>
 
@@ -307,6 +302,138 @@ export default function GenesisPage() {
         txHash={progress.txHash}
         onClose={progress.close}
       />
+    </>
+  )
+}
+
+/* ── Fee Info Section ──────────────────────────────────── */
+
+function FeeInfo() {
+  return (
+    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+      <div className="px-6 py-3 border-b border-edge/15">
+        <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">How Fees Work</h3>
+      </div>
+      <div className="p-6">
+        <div className="grid sm:grid-cols-2 gap-3 mb-4">
+          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Settle Fee</span>
+            <span className="text-base font-display text-star">20 BPS</span>
+            <span className="text-[10px] text-ash block">0.20% of each settled inscription</span>
+          </div>
+          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Redeem Fee</span>
+            <span className="text-base font-display text-star">10 BPS</span>
+            <span className="text-[10px] text-ash block">0.10% of each share redemption</span>
+          </div>
+        </div>
+        <p className="text-[11px] text-ash leading-relaxed">
+          Fees accumulate in the vault and are split equally across all {MAX_SUPPLY} Genesis NFTs.
+          Claim anytime — there is no expiry. Ownership is renounced; supply is immutable.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+/* ── Transparency Section ─────────────────────────────── */
+
+function TransparencyInfo() {
+  return (
+    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+      <div className="px-6 py-3 border-b border-edge/15">
+        <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Treasury & Transparency</h3>
+      </div>
+      <div className="p-6">
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[
+            { label: 'Treasury Reserve', value: '100 NFTs', desc: 'Protocol treasury. Funds audits, upgrades, licensing.' },
+            { label: 'Public Supply', value: '400 NFTs', desc: 'Available for public mint at 5,000 STRK each.' },
+            { label: 'Per-Wallet Cap', value: '5 Max', desc: 'Prevents concentration of fee-earning power.' },
+            { label: 'Ownership', value: 'Renounced', desc: 'Fully immutable. No admin can change supply or price.' },
+          ].map((item) => (
+            <div key={item.label} className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+              <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">{item.label}</span>
+              <span className="text-base font-display text-star">{item.value}</span>
+              <span className="text-[10px] text-ash block mt-0.5">{item.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Main Page ─────────────────────────────────────────── */
+
+export default function GenesisPage() {
+  const pos = useGenesisPosition()
+  const soldOut = pos.totalMinted >= BigInt(MAX_SUPPLY)
+  const isHolder = pos.balance > 0n
+
+  return (
+    <div className="animate-fade-up max-w-2xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="font-display text-3xl tracking-widest text-chalk mb-2 uppercase">
+          Genesis Collection
+        </h1>
+        <p className="text-dust text-sm leading-relaxed">
+          {MAX_SUPPLY} Genesis NFTs — each earns a perpetual share of all protocol fees.
+        </p>
+      </div>
+
+      {/* Stats row — compact */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
+          <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Minted</span>
+          {pos.isLoading ? (
+            <Skeleton className="h-7 w-16 bg-edge/20" />
+          ) : (
+            <span className="text-xl font-display text-chalk">
+              {pos.totalMinted.toString()}<span className="text-xs text-dust">/{MAX_SUPPLY}</span>
+            </span>
+          )}
+        </div>
+        <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
+          <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Price</span>
+          <span className="text-xl font-display text-star">{formatStrk(pos.mintPrice)}<span className="text-xs text-dust"> STRK</span></span>
+        </div>
+        <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
+          <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">You Hold</span>
+          <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
+        </div>
+      </div>
+
+      <Web3ActionWrapper message="Connect your wallet to mint or claim fees">
+        <div className="space-y-5">
+          {/* Claim section — FIRST if holder (primary action) */}
+          {isHolder && (
+            <ClaimSection
+              claimable={pos.claimable}
+              hasClaimable={pos.hasClaimable}
+              tokenIds={pos.tokenIds}
+              balance={pos.balance}
+              isLoading={pos.isLoadingTokenIds || pos.isLoadingClaimable}
+              onClaimed={pos.refreshClaimable}
+            />
+          )}
+
+          {/* Mint section — secondary if holder, primary if not */}
+          <MintSection
+            totalMinted={pos.totalMinted}
+            mintPrice={pos.mintPrice}
+            mintEnabled={pos.mintEnabled}
+            soldOut={soldOut}
+          />
+
+          {/* Fee info */}
+          <FeeInfo />
+
+          {/* Transparency */}
+          <TransparencyInfo />
+        </div>
+      </Web3ActionWrapper>
     </div>
   )
 }

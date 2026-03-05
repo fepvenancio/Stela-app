@@ -1,235 +1,77 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useAccount, useReadContract, useSendTransaction } from '@starknet-react/core'
-import { RpcProvider, type Abi } from 'starknet'
+import { useAccount, useSendTransaction } from '@starknet-react/core'
 import { toU256 } from '@fepvenancio/stela-sdk'
-import { findTokenByAddress } from '@fepvenancio/stela-sdk'
-import genesisAbi from '@stela/core/abi/genesis.json'
-import feeVaultAbi from '@stela/core/abi/fee-vault.json'
-import { GENESIS_ADDRESS, FEE_VAULT_ADDRESS, RPC_URL } from '@/lib/config'
+import { FEE_VAULT_ADDRESS } from '@/lib/config'
+import { useGenesisPosition, type ClaimableToken } from '@/hooks/useGenesisPosition'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
-import { Card } from '@/components/ui/card'
+import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { formatTokenValue } from '@/lib/format'
 import { getErrorMessage } from '@/lib/tx'
-import { formatTokenValue, readU256 } from '@/lib/format'
+
+const MAX_SUPPLY = 500
 
 const CLAIM_STEPS = [
   { label: 'Claim Fees', description: 'Claiming accumulated fees from vault' },
   { label: 'Confirming', description: 'Waiting for confirmation' },
 ]
 
-interface OwnedNft {
-  tokenId: bigint
-  claimable: { token: string; amount: bigint }[]
-}
+/* ── Token Row ─────────────────────────────────────────── */
 
-function useOwnedTokenIds(owner: string | undefined, totalMinted: bigint) {
-  const [tokenIds, setTokenIds] = useState<bigint[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    if (!owner || totalMinted === 0n) {
-      setTokenIds([])
-      return
-    }
-
-    let cancelled = false
-    setIsLoading(true)
-
-    async function fetchOwned() {
-      const provider = new RpcProvider({ nodeUrl: RPC_URL })
-      const owned: bigint[] = []
-
-      // Sequential iteration to avoid overwhelming RPC
-      for (let i = 1n; i <= totalMinted; i++) {
-        if (cancelled) return
-        try {
-          const result = await provider.callContract({
-            contractAddress: GENESIS_ADDRESS,
-            entrypoint: 'owner_of',
-            calldata: toU256(i),
-          })
-          // result is [felt252] — the owner address
-          if (result && result.length > 0) {
-            const tokenOwner = BigInt(result[0])
-            if (tokenOwner === BigInt(owner!)) {
-              owned.push(i)
-            }
-          }
-        } catch {
-          // Token might not exist yet or RPC error — skip
-        }
-      }
-
-      if (!cancelled) {
-        setTokenIds(owned)
-        setIsLoading(false)
-      }
-    }
-
-    fetchOwned()
-    return () => { cancelled = true }
-  }, [owner, totalMinted])
-
-  return { tokenIds, isLoading }
-}
-
-function useClaimableAmounts(tokenIds: bigint[]) {
-  const [nfts, setNfts] = useState<OwnedNft[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-
-  const refresh = useCallback(async () => {
-    if (tokenIds.length === 0) {
-      setNfts([])
-      return
-    }
-
-    setIsLoading(true)
-    const provider = new RpcProvider({ nodeUrl: RPC_URL })
-    const results: OwnedNft[] = []
-
-    for (const tokenId of tokenIds) {
-      try {
-        const result = await provider.callContract({
-          contractAddress: FEE_VAULT_ADDRESS,
-          entrypoint: 'claimable_all',
-          calldata: toU256(tokenId),
-        })
-
-        // Parse response: first element is tokens array length, then addresses,
-        // then amounts array length, then u256 pairs
-        const data = result.map(BigInt)
-        const tokensLen = Number(data[0])
-        const tokens: string[] = []
-        let offset = 1
-
-        for (let i = 0; i < tokensLen; i++) {
-          tokens.push('0x' + data[offset].toString(16))
-          offset++
-        }
-
-        const amountsLen = Number(data[offset])
-        offset++
-        const claimable: { token: string; amount: bigint }[] = []
-
-        for (let i = 0; i < amountsLen; i++) {
-          const low = data[offset]
-          const high = data[offset + 1]
-          const amount = low + (high << 128n)
-          offset += 2
-          if (amount > 0n) {
-            claimable.push({ token: tokens[i], amount })
-          }
-        }
-
-        results.push({ tokenId, claimable })
-      } catch {
-        results.push({ tokenId, claimable: [] })
-      }
-    }
-
-    setNfts(results)
-    setIsLoading(false)
-  }, [tokenIds])
-
-  useEffect(() => {
-    refresh()
-  }, [refresh])
-
-  return { nfts, isLoading, refresh }
-}
-
-function NftClaimCard({
-  nft,
-  onClaim,
-  claiming,
-}: {
-  nft: OwnedNft
-  onClaim: (tokenId: bigint) => void
-  claiming: boolean
-}) {
-  const hasClaimable = nft.claimable.length > 0
-
+function TokenRow({ token }: { token: ClaimableToken }) {
   return (
-    <Card className="p-5 bg-surface/20 border-edge/30">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-star/10 border border-star/20 flex items-center justify-center">
-            <span className="text-sm font-display text-star">#{nft.tokenId.toString()}</span>
-          </div>
-          <div>
-            <span className="text-sm font-display text-chalk block">Genesis #{nft.tokenId.toString()}</span>
-            <span className="text-[10px] text-ash uppercase tracking-widest">
-              {hasClaimable ? `${nft.claimable.length} token${nft.claimable.length > 1 ? 's' : ''} claimable` : 'No fees to claim'}
-            </span>
-          </div>
+    <div className="flex items-center justify-between py-3 px-1">
+      <div className="flex items-center gap-3">
+        <TokenAvatarByAddress address={token.address} size={24} />
+        <div>
+          <span className="text-sm text-chalk font-medium block">{token.symbol}</span>
+          <span className="text-[10px] text-ash font-mono">{token.address.slice(0, 10)}...{token.address.slice(-4)}</span>
         </div>
-        <Button
-          variant="gold"
-          size="sm"
-          onClick={() => onClaim(nft.tokenId)}
-          disabled={!hasClaimable || claiming}
-        >
-          {claiming ? 'Claiming...' : 'Claim'}
-        </Button>
       </div>
-
-      {hasClaimable && (
-        <div className="space-y-2">
-          {nft.claimable.map(({ token, amount }) => {
-            const tokenInfo = findTokenByAddress(token)
-            const symbol = tokenInfo?.symbol ?? token.slice(0, 10) + '...'
-            const decimals = tokenInfo?.decimals ?? 18
-            return (
-              <div key={token} className="flex items-center justify-between p-3 bg-abyss/40 border border-edge/20 rounded-xl">
-                <span className="text-xs text-dust">{symbol}</span>
-                <span className="text-sm font-mono text-star">{formatTokenValue(amount.toString(), decimals)}</span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </Card>
+      <span className="text-base font-mono text-star font-medium">
+        {formatTokenValue(token.amount.toString(), token.decimals)}
+      </span>
+    </div>
   )
 }
 
+/* ── Main Page ─────────────────────────────────────────── */
+
 export default function GenesisClaimPage() {
   const { address } = useAccount()
+  const pos = useGenesisPosition()
   const { sendAsync, isPending } = useSendTransaction({})
   const progress = useTransactionProgress(CLAIM_STEPS)
 
-  const { data: balanceRaw, isLoading: balanceLoading } = useReadContract({
-    abi: genesisAbi as Abi,
-    address: GENESIS_ADDRESS,
-    functionName: 'balance_of',
-    args: address ? [address] : [],
-    watch: true,
-  })
+  async function handleClaimAll() {
+    if (!address || pos.tokenIds.length === 0) return
+    progress.start()
+    try {
+      const calldata: string[] = [String(pos.tokenIds.length)]
+      for (const id of pos.tokenIds) {
+        calldata.push(...toU256(id))
+      }
+      const result = await sendAsync([{
+        contractAddress: FEE_VAULT_ADDRESS,
+        entrypoint: 'claim_batch',
+        calldata,
+      }])
+      progress.setTxHash(result.transaction_hash)
+      progress.advance()
+      progress.advance()
+      pos.refreshClaimable()
+    } catch (err: unknown) {
+      progress.fail(getErrorMessage(err))
+    }
+  }
 
-  const { data: totalMintedRaw } = useReadContract({
-    abi: genesisAbi as Abi,
-    address: GENESIS_ADDRESS,
-    functionName: 'total_minted',
-    args: [],
-  })
-
-  const balance = readU256(balanceRaw)
-  const totalMinted = readU256(totalMintedRaw)
-
-  const { tokenIds, isLoading: idsLoading } = useOwnedTokenIds(address, totalMinted)
-  const { nfts, isLoading: claimLoading, refresh } = useClaimableAmounts(tokenIds)
-
-  const totalClaimable = nfts.some(n => n.claimable.length > 0)
-  const isLoading = balanceLoading || idsLoading || claimLoading
-
-  async function handleClaim(tokenId: bigint) {
+  async function handleClaimSingle(tokenId: bigint) {
     if (!address) return
-
     progress.start()
     try {
       const result = await sendAsync([{
@@ -240,107 +82,161 @@ export default function GenesisClaimPage() {
       progress.setTxHash(result.transaction_hash)
       progress.advance()
       progress.advance()
-      refresh()
+      pos.refreshClaimable()
     } catch (err: unknown) {
       progress.fail(getErrorMessage(err))
     }
   }
 
-  async function handleClaimAll() {
-    if (!address || tokenIds.length === 0) return
-
-    progress.start()
-    try {
-      // Build calldata: [len, ...u256 pairs]
-      const calldata: string[] = [String(tokenIds.length)]
-      for (const id of tokenIds) {
-        calldata.push(...toU256(id))
-      }
-
-      const result = await sendAsync([{
-        contractAddress: FEE_VAULT_ADDRESS,
-        entrypoint: 'claim_batch',
-        calldata,
-      }])
-      progress.setTxHash(result.transaction_hash)
-      progress.advance()
-      progress.advance()
-      refresh()
-    } catch (err: unknown) {
-      progress.fail(getErrorMessage(err))
-    }
-  }
+  const isClaimLoading = pos.isLoadingTokenIds || pos.isLoadingClaimable
+  const sharePercent = pos.balance > 0n ? ((Number(pos.balance) / MAX_SUPPLY) * 100).toFixed(2) : '0'
 
   return (
     <div className="animate-fade-up max-w-2xl">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex items-center gap-2 mb-6">
         <Link href="/genesis" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          Back to Genesis
+          Genesis
         </Link>
       </div>
 
-      <div className="mb-10">
-        <h1 className="font-display text-3xl tracking-wide text-chalk mb-3">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="font-display text-3xl tracking-widest text-chalk mb-2 uppercase">
           Claim Fees
         </h1>
-        <p className="text-dust leading-relaxed">
+        <p className="text-dust text-sm leading-relaxed">
           View and claim accumulated protocol fees for your Genesis NFTs.
         </p>
       </div>
 
       <Web3ActionWrapper message="Connect your wallet to view claimable fees">
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-32 w-full bg-edge/20 rounded-2xl" />
-            <Skeleton className="h-32 w-full bg-edge/20 rounded-2xl" />
+        {pos.balance === 0n && !pos.isLoading ? (
+          /* No NFTs */
+          <div className="bg-surface/15 border border-edge/25 rounded-2xl p-10 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-star/5 border border-star/15 flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star/50">
+                <path d="M12 2l8 4.5v7L12 22l-8-8.5v-7L12 2z" />
+              </svg>
+            </div>
+            <p className="text-dust text-sm mb-4">You don&apos;t own any Genesis NFTs yet.</p>
+            <Button asChild variant="gold" className="rounded-full px-8">
+              <Link href="/genesis">Mint Genesis NFT</Link>
+            </Button>
           </div>
-        ) : balance === 0n ? (
-          <Card className="p-8 bg-surface/20 border-edge/30 text-center">
-            <p className="text-dust mb-4">You don&apos;t own any Genesis NFTs yet.</p>
-            <Link href="/genesis">
-              <Button variant="gold">Mint Genesis NFT</Button>
-            </Link>
-          </Card>
         ) : (
-          <div className="space-y-6">
-            {/* Claim all header */}
-            {tokenIds.length > 1 && totalClaimable && (
-              <div className="flex items-center justify-between p-4 bg-star/[0.02] border border-star/20 rounded-2xl">
+          <div className="space-y-5">
+            {/* ── Position Summary ──────────────────────── */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">NFTs Held</span>
+                <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
+              </div>
+              <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Fee Share</span>
+                <span className="text-xl font-display text-star">{sharePercent}%</span>
+              </div>
+              <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
+                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Tokens</span>
+                <span className="text-xl font-display text-chalk">
+                  {isClaimLoading ? <Skeleton className="h-7 w-6 bg-edge/20 inline-block" /> : pos.claimable.length}
+                </span>
+              </div>
+            </div>
+
+            {/* ── Total Rewards Card (GMX pattern) ─────── */}
+            <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden">
+              <div className="px-6 py-5 flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-display text-star block">Claim All</span>
-                  <span className="text-[10px] text-ash">Claim fees for all {tokenIds.length} NFTs in one transaction</span>
+                  <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Total Claimable</h2>
+                  <p className="text-[10px] text-ash mt-0.5">
+                    Aggregated across {pos.tokenIds.length > 0 ? pos.tokenIds.length : '...'} NFT{pos.tokenIds.length !== 1 ? 's' : ''}
+                  </p>
                 </div>
                 <Button
                   variant="gold"
+                  className="rounded-full px-8 shadow-[0_0_20px_rgba(232,168,37,0.15)]"
                   onClick={handleClaimAll}
-                  disabled={isPending}
+                  disabled={!pos.hasClaimable || isPending || isClaimLoading}
                 >
                   {isPending ? 'Claiming...' : 'Claim All'}
                 </Button>
               </div>
-            )}
 
-            {/* Per-NFT cards */}
-            <div className="space-y-4">
-              {nfts.map((nft) => (
-                <NftClaimCard
-                  key={nft.tokenId.toString()}
-                  nft={nft}
-                  onClaim={handleClaim}
-                  claiming={isPending}
-                />
-              ))}
-            </div>
-
-            {!totalClaimable && nfts.length > 0 && (
-              <div className="p-4 bg-surface/20 border border-edge/20 rounded-2xl text-center">
-                <p className="text-sm text-dust">No fees to claim yet. Fees accumulate as inscriptions are settled and redeemed.</p>
+              <div className="px-6 pb-5">
+                {isClaimLoading ? (
+                  <div className="space-y-3 pt-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center justify-between py-3">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="w-6 h-6 rounded-full bg-edge/20" />
+                          <Skeleton className="h-4 w-20 bg-edge/20" />
+                        </div>
+                        <Skeleton className="h-4 w-24 bg-edge/20" />
+                      </div>
+                    ))}
+                  </div>
+                ) : pos.hasClaimable ? (
+                  <div className="divide-y divide-star/10">
+                    {pos.claimable.map((token) => (
+                      <TokenRow key={token.address} token={token} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-dust">No fees to claim yet</p>
+                    <p className="text-[10px] text-ash mt-1 max-w-xs mx-auto leading-relaxed">
+                      Fees accumulate as inscriptions are settled and redeemed. Check back after protocol activity.
+                    </p>
+                  </div>
+                )}
               </div>
+            </section>
+
+            {/* ── Per-NFT Breakdown ────────────────────── */}
+            {pos.tokenIds.length > 1 && pos.hasClaimable && (
+              <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+                <div className="px-6 py-3 border-b border-edge/15">
+                  <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Per-NFT Actions</h3>
+                </div>
+                <div className="px-6 py-4 space-y-2">
+                  {pos.tokenIds.map((id) => (
+                    <div key={id.toString()} className="flex items-center justify-between p-3 bg-abyss/30 border border-edge/15 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-star/8 border border-star/15 flex items-center justify-center">
+                          <span className="text-[10px] font-display text-star">#{id.toString()}</span>
+                        </div>
+                        <span className="text-sm text-chalk font-medium">Genesis #{id.toString()}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-[10px] h-7 px-3"
+                        onClick={() => handleClaimSingle(id)}
+                        disabled={isPending}
+                      >
+                        Claim
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
+
+            {/* ── Info footer ──────────────────────────── */}
+            <div className="flex items-center gap-3 px-1">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash shrink-0">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+              <p className="text-[10px] text-ash leading-relaxed">
+                Fees accumulate indefinitely — no expiry, no penalty for late claiming.
+                &quot;Claim All&quot; collects all fee tokens for all your NFTs in a single transaction.
+              </p>
+            </div>
           </div>
         )}
       </Web3ActionWrapper>

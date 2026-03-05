@@ -214,8 +214,9 @@ function BrowseContent() {
 
           <Link
             href="/create"
-            className="px-4 py-2 rounded-xl text-sm text-dust border border-transparent hover:text-chalk hover:bg-surface/50 transition-colors shrink-0"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
           >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
             Inscribe
           </Link>
         </div>
