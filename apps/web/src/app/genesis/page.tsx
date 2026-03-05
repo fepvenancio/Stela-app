@@ -212,7 +212,7 @@ function TransparencyInfo() {
         <div className="grid sm:grid-cols-2 gap-3">
           {[
             { label: 'Treasury Reserve', value: '50 NFTs', desc: 'Protocol treasury. Funds audits, upgrades, licensing.' },
-            { label: 'Public Supply', value: '250 NFTs', desc: 'Available for public mint at 5,000 STRK each.' },
+            { label: 'Public Supply', value: '250 NFTs', desc: 'Available for public mint at 1,000 STRK each.' },
             { label: 'Per-Wallet Cap', value: '5 Max', desc: 'Prevents concentration of discount power.' },
             { label: 'Ownership', value: 'Renounced', desc: 'Fully immutable. No admin can change supply or price.' },
           ].map((item) => (

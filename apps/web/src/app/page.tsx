@@ -214,7 +214,7 @@ export default function LandingPage() {
           <p className="text-dust text-lg md:text-xl leading-relaxed mb-12 max-w-2xl mx-auto">
             A decentralized, peer-to-peer lending protocol on StarkNet.
             Direct, private, and carved into the blockchain through digital inscriptions.
-            Genesis NFT holders earn a perpetual share of all protocol fees.
+            Genesis NFT holders get fee discounts up to 50%.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-10 h-14 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(232,168,37,0.4)] text-lg">
@@ -540,7 +540,7 @@ export default function LandingPage() {
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Mint Price</span>
-                <span className="text-star font-display text-lg tracking-wider">5,000 STRK</span>
+                <span className="text-star font-display text-lg tracking-wider">1,000 STRK</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-edge/15">
                 <span className="text-dust text-sm">Max Discount</span>

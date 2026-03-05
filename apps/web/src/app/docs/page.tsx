@@ -317,7 +317,7 @@ export default function DocsPage() {
               <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
                 <h4 className="font-display text-star text-lg mb-3">NFT Fee Discounts</h4>
                 <p className="text-dust text-sm leading-relaxed">
-                  Genesis NFT holders receive automatic protocol fee discounts. Each NFT grants <span className="text-chalk font-semibold">10% off</span> settle and redeem fees, up to a maximum of <span className="text-chalk font-semibold">50% off</span> with 5 NFTs. Discounts are applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 5,000 STRK each.
+                  Genesis NFT holders receive automatic protocol fee discounts. Each NFT grants <span className="text-chalk font-semibold">10% off</span> settle and redeem fees, up to a maximum of <span className="text-chalk font-semibold">50% off</span> with 5 NFTs. Discounts are applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
                 </p>
               </div>
               <div className="bg-abyss/60 border border-star/20 rounded-3xl p-8 granite-noise">
@@ -328,7 +328,7 @@ export default function DocsPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
                     <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Mint Price</span>
-                    <span className="text-sm text-chalk font-semibold">5,000 STRK</span>
+                    <span className="text-sm text-chalk font-semibold">1,000 STRK</span>
                   </div>
                   <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
                     <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Mint Enabled</span>
