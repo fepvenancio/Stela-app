@@ -372,7 +372,7 @@ export default function GenesisPage() {
   const isHolder = pos.balance > 0n
 
   return (
-    <div className="animate-fade-up max-w-2xl">
+    <div className="animate-fade-up max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-display text-3xl tracking-widest text-chalk mb-2 uppercase">
@@ -384,7 +384,7 @@ export default function GenesisPage() {
       </div>
 
       {/* Stats row — compact */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
           <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Minted</span>
           {pos.isLoading ? (

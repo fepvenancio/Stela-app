@@ -29,7 +29,7 @@ export function OrderListRow({ order }: OrderListRowProps) {
 
   return (
     <Link href={`/stela/${order.id}`} className="block" aria-label={`View order ${order.id.slice(0, 8)}`}>
-      <div className="group flex items-center gap-3 px-3 py-1.5 border-b transition-colors duration-100 border-edge/20 hover:bg-surface/30">
+      <div className="group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 border-edge/20 hover:bg-surface/30">
 
         {/* Desktop: single-line grid, no inline labels */}
         <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">

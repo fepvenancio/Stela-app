@@ -257,7 +257,7 @@ function BrowseContent() {
 
       {/* Content */}
       {!isLoading && !error && data.length > 0 && (
-        <div className="rounded-lg border border-edge/30 overflow-hidden">
+        <div className="rounded-lg border border-edge/30 overflow-clip">
           <ListingTableHeader />
           <div className="flex flex-col">
             {data.map((a, i) => {
@@ -300,7 +300,7 @@ function BrowseContent() {
             </span>
             <div className="h-px w-full bg-edge/20" />
           </div>
-          <div className="rounded-lg border border-edge/30 overflow-hidden">
+          <div className="rounded-lg border border-edge/30 overflow-clip">
             <ListingTableHeader />
             <div className="flex flex-col">
               {filteredOrders.map((order) => (

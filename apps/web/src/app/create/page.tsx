@@ -738,7 +738,7 @@ export default function CreatePage() {
   /* ── Render ────────────────────────────────────────────── */
 
   return (
-    <div className="animate-fade-up max-w-2xl">
+    <div className="animate-fade-up max-w-2xl mx-auto">
       {/* ── Header ──────────────────────────────────────── */}
       <div className="mb-10">
         <h1 className="font-display text-3xl tracking-widest text-chalk mb-3 uppercase">
@@ -1003,7 +1003,7 @@ export default function CreatePage() {
               </div>
             </button>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <AssetColumn
                 role="debt"
                 assets={debtAssets}

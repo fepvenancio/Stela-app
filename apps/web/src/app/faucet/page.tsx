@@ -148,7 +148,7 @@ function MintCard({
 
 export default function FaucetPage() {
   return (
-    <div className="animate-fade-up max-w-2xl">
+    <div className="animate-fade-up max-w-2xl mx-auto">
       <div className="mb-10">
         <h1 className="font-display text-3xl tracking-wide text-chalk mb-3">
           Sepolia Faucet
