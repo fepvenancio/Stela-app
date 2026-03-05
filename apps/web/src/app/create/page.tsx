@@ -10,8 +10,7 @@ import { getInscriptionOrderTypedData, hashAssets, getNonce } from '@/lib/offcha
 import { parseAmount } from '@/lib/amount'
 import type { AssetInputValue } from '@/components/AssetInput'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
-import { TokenAvatar } from '@/components/TokenAvatar'
-import { TokenAvatarByAddress } from '@/components/TokenAvatar'
+import { TokenAvatar, TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
@@ -29,7 +28,7 @@ import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 
 type AssetRole = 'debt' | 'collateral' | 'interest'
 
-const ROLE_META: Record<AssetRole, { label: string; short: string; color: string; bgClass: string; borderClass: string; textClass: string; description: string }> = {
+const ROLE_META: Record<AssetRole, { label: string; short: string; color: string; bgClass: string; borderClass: string; textClass: string }> = {
   debt: {
     label: 'Borrow',
     short: 'Debt',
@@ -37,7 +36,6 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
     bgClass: 'bg-nebula/10',
     borderClass: 'border-nebula/25',
     textClass: 'text-nebula',
-    description: 'Assets you want to receive',
   },
   collateral: {
     label: 'Collateral',
@@ -46,7 +44,6 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
     bgClass: 'bg-star/10',
     borderClass: 'border-star/25',
     textClass: 'text-star',
-    description: 'Assets you lock as guarantee',
   },
   interest: {
     label: 'Interest',
@@ -55,7 +52,6 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
     bgClass: 'bg-aurora/10',
     borderClass: 'border-aurora/25',
     textClass: 'text-aurora',
-    description: 'Reward paid to lender',
   },
 }
 
@@ -741,7 +737,7 @@ export default function CreatePage() {
             <div>
               {allAssets.map((item, i) => (
                 <AssetRow
-                  key={`${item.role}-${item.index}`}
+                  key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
                   asset={item.asset}
                   role={item.role}
                   onRemove={() => handleRemoveAsset(item.role, item.index)}
