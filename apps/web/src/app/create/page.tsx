@@ -11,12 +11,12 @@ import { parseAmount } from '@/lib/amount'
 import type { AssetInputValue } from '@/components/AssetInput'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 import { TokenAvatar } from '@/components/TokenAvatar'
+import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
@@ -29,9 +29,10 @@ import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 
 type AssetRole = 'debt' | 'collateral' | 'interest'
 
-const ROLE_META: Record<AssetRole, { label: string; color: string; bgClass: string; borderClass: string; textClass: string; description: string }> = {
+const ROLE_META: Record<AssetRole, { label: string; short: string; color: string; bgClass: string; borderClass: string; textClass: string; description: string }> = {
   debt: {
     label: 'Borrow',
+    short: 'Debt',
     color: 'nebula',
     bgClass: 'bg-nebula/10',
     borderClass: 'border-nebula/25',
@@ -40,6 +41,7 @@ const ROLE_META: Record<AssetRole, { label: string; color: string; bgClass: stri
   },
   collateral: {
     label: 'Collateral',
+    short: 'Collat.',
     color: 'star',
     bgClass: 'bg-star/10',
     borderClass: 'border-star/25',
@@ -48,6 +50,7 @@ const ROLE_META: Record<AssetRole, { label: string; color: string; bgClass: stri
   },
   interest: {
     label: 'Interest',
+    short: 'Interest',
     color: 'aurora',
     bgClass: 'bg-aurora/10',
     borderClass: 'border-aurora/25',
@@ -60,14 +63,6 @@ const ROLES: AssetRole[] = ['debt', 'collateral', 'interest']
 
 /* ── Helpers ────────────────────────────────────────────── */
 
-const emptyAsset = (): AssetInputValue => ({
-  asset: '',
-  asset_type: 'ERC20',
-  value: '',
-  token_id: '0',
-  decimals: 18,
-})
-
 const networkTokens = getTokensForNetwork(NETWORK)
 
 function getSelectedToken(address: string): TokenInfo | undefined {
@@ -77,13 +72,13 @@ function getSelectedToken(address: string): TokenInfo | undefined {
 }
 
 const DURATION_PRESETS = [
-  { label: '1 Day', seconds: 86400 },
-  { label: '7 Days', seconds: 604800 },
-  { label: '14 Days', seconds: 1209600 },
-  { label: '30 Days', seconds: 2592000 },
-  { label: '90 Days', seconds: 7776000 },
-  { label: '180 Days', seconds: 15552000 },
-  { label: '1 Year', seconds: 31536000 },
+  { label: '1d', seconds: 86400 },
+  { label: '7d', seconds: 604800 },
+  { label: '14d', seconds: 1209600 },
+  { label: '30d', seconds: 2592000 },
+  { label: '90d', seconds: 7776000 },
+  { label: '180d', seconds: 15552000 },
+  { label: '1y', seconds: 31536000 },
 ]
 
 const DEADLINE_PRESETS = [
@@ -98,7 +93,6 @@ const CUSTOM_DURATION_UNITS = [
   { label: 'Days', multiplier: 86400 },
   { label: 'Weeks', multiplier: 604800 },
   { label: 'Months', multiplier: 2592000 },
-  { label: 'Years', multiplier: 31536000 },
 ]
 
 function formatDurationHuman(seconds: number): string {
@@ -108,9 +102,9 @@ function formatDurationHuman(seconds: number): string {
   return `${days} day${days !== 1 ? 's' : ''}`
 }
 
-/* ── Asset Pill ─────────────────────────────────────────── */
+/* ── Asset Row (list-style, like browse/portfolio) ─────── */
 
-function AssetPill({
+function AssetRow({
   asset,
   role,
   onRemove,
@@ -124,31 +118,37 @@ function AssetPill({
   const isNft = asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155'
 
   return (
-    <div
-      className={`group flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-full border ${meta.borderClass} ${meta.bgClass} transition-all hover:border-opacity-60`}
-    >
-      {token ? (
-        <TokenAvatar token={token} size={22} />
-      ) : (
-        <div className="w-[22px] h-[22px] rounded-full bg-edge-bright flex items-center justify-center text-[9px] text-dust shrink-0">
-          ?
-        </div>
-      )}
-      <span className="text-xs text-chalk font-medium truncate max-w-[80px]">
-        {isNft ? (
-          <>{token?.symbol || 'NFT'} #{asset.token_id}</>
+    <div className="group flex items-center gap-3 px-3 py-2.5 border-b border-edge/20 last:border-b-0 hover:bg-surface/20 transition-colors">
+      {/* Token icon + amount */}
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {token ? (
+          <TokenAvatar token={token} size={20} />
         ) : (
-          <>{asset.value || '0'} <span className="text-dust">{token?.symbol || formatAddress(asset.asset)}</span></>
+          <TokenAvatarByAddress address={asset.asset} size={20} />
         )}
+        <span className="text-sm text-chalk font-medium truncate">
+          {isNft ? (
+            <>{token?.symbol || 'NFT'} #{asset.token_id}</>
+          ) : (
+            <>{asset.value || '0'} <span className="text-dust">{token?.symbol || formatAddress(asset.asset)}</span></>
+          )}
+        </span>
+      </div>
+
+      {/* Role badge */}
+      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${meta.bgClass} ${meta.textClass} shrink-0`}>
+        {meta.short}
       </span>
+
+      {/* Remove */}
       <button
         type="button"
         onClick={onRemove}
-        className="w-5 h-5 rounded-full flex items-center justify-center text-ash hover:text-nova hover:bg-nova/15 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+        className="w-6 h-6 rounded-md flex items-center justify-center text-ash hover:text-nova hover:bg-nova/10 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
         aria-label="Remove asset"
       >
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M2 2l6 6M8 2l-6 6" />
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 3l6 6M9 3l-6 6" />
         </svg>
       </button>
     </div>
@@ -224,7 +224,7 @@ function AddAssetModal({
 
   return (
     <>
-      {/* Step 1: Token selection — reuses existing modal */}
+      {/* Step 1: Token selection */}
       <TokenSelectorModal
         open={open && step === 'token'}
         onOpenChange={(o) => {
@@ -253,12 +253,12 @@ function AddAssetModal({
           }
         }}
       >
-        <DialogContent className="bg-abyss border-edge text-chalk p-0 gap-0 max-w-md overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-0">
-            <DialogTitle className="text-chalk text-lg font-semibold flex items-center gap-3">
+        <DialogContent className="bg-abyss border-edge text-chalk p-0 gap-0 max-w-sm overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-0">
+            <DialogTitle className="text-chalk text-base font-semibold flex items-center gap-2.5">
               {selectedToken ? (
                 <>
-                  <TokenAvatar token={selectedToken} size={28} />
+                  <TokenAvatar token={selectedToken} size={24} />
                   {selectedToken.symbol}
                 </>
               ) : (
@@ -267,7 +267,7 @@ function AddAssetModal({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="px-6 pt-5 pb-6 space-y-5">
+          <div className="px-5 pt-4 pb-5 space-y-4">
             {/* Custom address input */}
             {isCustom && (
               <div className="space-y-2">
@@ -279,14 +279,13 @@ function AddAssetModal({
                   onChange={(e) => setCustomAddress(e.target.value)}
                   className="font-mono text-sm"
                 />
-                {/* Asset type selector for custom tokens */}
                 <div className="flex gap-1.5 pt-1">
                   {(['ERC20', 'ERC721', 'ERC1155', 'ERC4626'] as AssetType[]).map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setAssetType(t)}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-colors ${
+                      className={`px-2 py-1 rounded-lg text-[10px] font-mono border transition-colors ${
                         assetType === t
                           ? 'border-star/40 bg-star/10 text-star'
                           : 'border-edge text-ash hover:text-chalk hover:border-edge-bright'
@@ -300,7 +299,7 @@ function AddAssetModal({
             )}
 
             {/* Amount / Token ID */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
                 {isNft ? 'Token ID' : 'Amount'}
               </Label>
@@ -336,10 +335,10 @@ function AddAssetModal({
               )}
             </div>
 
-            {/* Role selector — the key UX improvement */}
-            <div className="space-y-2.5">
-              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Assign Role</Label>
-              <div className="grid grid-cols-3 gap-2">
+            {/* Role selector */}
+            <div className="space-y-2">
+              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Role</Label>
+              <div className="grid grid-cols-3 gap-1.5">
                 {ROLES.map((r) => {
                   const meta = ROLE_META[r]
                   const selected = role === r
@@ -348,36 +347,26 @@ function AddAssetModal({
                       key={r}
                       type="button"
                       onClick={() => setRole(r)}
-                      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                      className={`py-2 rounded-lg border text-xs font-semibold transition-all ${
                         selected
-                          ? `${meta.borderClass} ${meta.bgClass}`
-                          : 'border-edge/50 hover:border-edge-bright bg-surface/30'
+                          ? `${meta.borderClass} ${meta.bgClass} ${meta.textClass}`
+                          : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
                       }`}
                     >
-                      {selected && (
-                        <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-${meta.color}`} />
-                      )}
-                      <span className={`text-sm font-semibold ${selected ? meta.textClass : 'text-chalk'}`}>
-                        {meta.label}
-                      </span>
-                      <span className="text-[9px] text-ash leading-tight text-center">
-                        {meta.description}
-                      </span>
+                      {meta.label}
                     </button>
                   )
                 })}
               </div>
             </div>
 
-            {/* Add button */}
             <Button
               variant="gold"
-              size="lg"
-              className="w-full uppercase tracking-widest"
+              className="w-full"
               onClick={handleAdd}
               disabled={!canAdd}
             >
-              Add {ROLE_META[role].label} Asset
+              Add {ROLE_META[role].label}
             </Button>
           </div>
         </DialogContent>
@@ -385,57 +374,6 @@ function AddAssetModal({
     </>
   )
 }
-
-/* ── Asset Column ───────────────────────────────────────── */
-
-function AssetColumn({
-  role,
-  assets,
-  onRemove,
-  required,
-  showErrors,
-}: {
-  role: AssetRole
-  assets: AssetInputValue[]
-  onRemove: (index: number) => void
-  required?: boolean
-  showErrors?: boolean
-}) {
-  const meta = ROLE_META[role]
-  const validAssets = assets.filter((a) => a.asset)
-  const missing = required && showErrors && validAssets.length === 0
-
-  return (
-    <div className="space-y-2.5">
-      {/* Column header */}
-      <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full bg-${meta.color}`} />
-        <span className={`text-xs font-semibold uppercase tracking-wider ${meta.textClass}`}>
-          {meta.label}
-        </span>
-        {validAssets.length > 0 && (
-          <span className="text-[10px] font-mono text-ash bg-surface px-1.5 py-0.5 rounded-md">
-            {validAssets.length}
-          </span>
-        )}
-        {required && <span className="text-star text-[10px]">*</span>}
-      </div>
-
-      {/* Asset pills */}
-      <div className="flex flex-wrap gap-1.5 min-h-[36px]">
-        {validAssets.map((asset, i) => (
-          <AssetPill key={i} asset={asset} role={role} onRemove={() => onRemove(i)} />
-        ))}
-        {validAssets.length === 0 && (
-          <span className={`text-[11px] italic ${missing ? 'text-nova' : 'text-ash/50'}`}>
-            {missing ? 'Required' : 'None added'}
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
 
 /* ════════════════════════════════════════════════════════════
    MAIN PAGE
@@ -457,7 +395,7 @@ export default function CreatePage() {
   // Duration
   const [durationPreset, setDurationPreset] = useState('86400')
   const [customDurationValue, setCustomDurationValue] = useState('')
-  const [customDurationUnit, setCustomDurationUnit] = useState(86400) // days
+  const [customDurationUnit, setCustomDurationUnit] = useState(86400)
   const [useCustomDuration, setUseCustomDuration] = useState(false)
 
   const duration = useMemo(() => {
@@ -494,11 +432,13 @@ export default function CreatePage() {
   const hasDuration = Boolean(duration && Number(duration) > 0)
   const isValid = hasDebt && hasCollateral && hasDuration
 
-  const totalAssets = [
-    ...debtAssets.filter((a) => a.asset),
-    ...interestAssets.filter((a) => a.asset),
-    ...collateralAssets.filter((a) => a.asset),
-  ].length
+  const allAssets = useMemo(() => {
+    const items: { asset: AssetInputValue; role: AssetRole; index: number }[] = []
+    debtAssets.forEach((a, i) => { if (a.asset) items.push({ asset: a, role: 'debt', index: i }) })
+    collateralAssets.forEach((a, i) => { if (a.asset) items.push({ asset: a, role: 'collateral', index: i }) })
+    interestAssets.forEach((a, i) => { if (a.asset) items.push({ asset: a, role: 'interest', index: i }) })
+    return items
+  }, [debtAssets, collateralAssets, interestAssets])
 
   // ROI Math
   const roiInfo = useMemo(() => {
@@ -535,7 +475,21 @@ export default function CreatePage() {
     }
   }, [])
 
-  /* ── Submit (unchanged logic) ──────────────────────────── */
+  const handleRemoveAsset = useCallback((role: AssetRole, index: number) => {
+    switch (role) {
+      case 'debt':
+        setDebtAssets((prev) => prev.filter((_, j) => j !== index))
+        break
+      case 'collateral':
+        setCollateralAssets((prev) => prev.filter((_, j) => j !== index))
+        break
+      case 'interest':
+        setInterestAssets((prev) => prev.filter((_, j) => j !== index))
+        break
+    }
+  }, [])
+
+  /* ── Submit ──────────────────────────────────────────── */
 
   async function handleSubmit() {
     if (!address || !account) return
@@ -569,13 +523,11 @@ export default function CreatePage() {
     setIsPending(true)
     createProgress.start()
     try {
-      // Check existing allowances and only request approvals where needed
       const erc20Collateral = sdkCollateralAssets.filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
       const nftCollateral = sdkCollateralAssets.filter(a => a.asset_type === 'ERC721' || a.asset_type === 'ERC1155')
 
       const pendingApprovals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
 
-      // Check ERC20 allowances in parallel
       if (erc20Collateral.length > 0) {
         const checks = await Promise.all(
           erc20Collateral.map(async (asset) => {
@@ -603,7 +555,6 @@ export default function CreatePage() {
         }
       }
 
-      // Check NFT approvals in parallel
       if (nftCollateral.length > 0) {
         const checks = await Promise.all(
           nftCollateral.map(async (asset) => {
@@ -738,101 +689,98 @@ export default function CreatePage() {
   /* ── Render ────────────────────────────────────────────── */
 
   return (
-    <div className="animate-fade-up max-w-2xl mx-auto">
-      {/* ── Header ──────────────────────────────────────── */}
-      <div className="mb-10">
-        <h1 className="font-display text-3xl tracking-widest text-chalk mb-3 uppercase">
-          Inscribe the Stela
+    <div className="animate-fade-up max-w-xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="font-display text-2xl sm:text-3xl tracking-widest text-chalk mb-2 uppercase">
+          Inscribe
         </h1>
-        <p className="text-dust leading-relaxed text-sm">
-          Define the terms of your lending inscription. No gas until settlement.
+        <p className="text-dust text-sm">
+          Define your loan terms. Signing is gasless — no cost until settlement.
         </p>
       </div>
 
-      <div className="space-y-6">
-
-        {/* ══════════════════════════════════════════════════
-            SECTION 1: LOAN SETTINGS
-           ══════════════════════════════════════════════════ */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-lg bg-star/15 border border-star/25 flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star">
-                <path d="M6 1v10M1 6h10" />
+      <div className="space-y-4">
+        {/* ── ASSETS ─────────────────────────────────────── */}
+        <section className="rounded-xl border border-edge/30 overflow-clip">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-edge/30 bg-surface/10">
+            <span className="text-[10px] text-ash uppercase tracking-[0.15em] font-bold">
+              Assets
+              {allAssets.length > 0 && (
+                <span className="ml-1.5 text-chalk font-mono">{allAssets.length}</span>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={() => setAddModalOpen(true)}
+              className="flex items-center gap-1 text-[11px] text-star hover:text-star-bright transition-colors font-medium"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M6 2v8M2 6h8" />
               </svg>
-            </div>
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-chalk">Loan Settings</span>
+              Add
+            </button>
           </div>
 
-          {/* Multi-lender toggle */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Lender Mode</Label>
-              <div className="group relative">
-                <button type="button" className="w-4 h-4 rounded-full border border-edge text-ash hover:text-star hover:border-star/40 flex items-center justify-center transition-colors" aria-label="What is multi-lender?">
-                  <span className="text-[9px] font-bold">i</span>
-                </button>
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-3 bg-elevated border border-edge-bright rounded-xl text-xs text-dust leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50 shadow-lg">
-                  <span className="text-chalk font-medium block mb-1">Single vs Multi-Lender</span>
-                  <span className="block mb-1"><strong className="text-chalk">Single:</strong> One lender funds the entire loan. Faster settlement.</span>
-                  <span className="block"><strong className="text-chalk">Multi:</strong> Multiple lenders can each fund a portion. Better for large loans — each lender chooses how much to contribute.</span>
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-elevated border-r border-b border-edge-bright rotate-45 -mt-1" />
+          {allAssets.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => setAddModalOpen(true)}
+              className="w-full py-10 hover:bg-surface/10 transition-colors"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-surface/40 border border-edge/30 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+                    <path d="M8 3v10M3 8h10" />
+                  </svg>
                 </div>
+                <span className="text-xs text-dust">Add your first token</span>
               </div>
+            </button>
+          ) : (
+            <div>
+              {allAssets.map((item, i) => (
+                <AssetRow
+                  key={`${item.role}-${item.index}`}
+                  asset={item.asset}
+                  role={item.role}
+                  onRemove={() => handleRemoveAsset(item.role, item.index)}
+                />
+              ))}
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setMultiLender(false)}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
-                  !multiLender
-                    ? 'border-star/40 bg-star/10 shadow-[0_0_12px_rgba(232,168,37,0.08)]'
-                    : 'border-edge/30 bg-surface/40 hover:border-edge/50'
-                }`}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={!multiLender ? 'text-star' : 'text-ash'}>
-                  <circle cx="8" cy="5" r="2.5" />
-                  <path d="M3 14c0-2.5 2-4 5-4s5 1.5 5 4" />
-                </svg>
-                <span className={`text-xs font-semibold ${!multiLender ? 'text-star' : 'text-chalk'}`}>Single Lender</span>
-                <span className="text-[9px] text-ash leading-tight text-center">One lender funds all</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMultiLender(true)}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
-                  multiLender
-                    ? 'border-star/40 bg-star/10 shadow-[0_0_12px_rgba(232,168,37,0.08)]'
-                    : 'border-edge/30 bg-surface/40 hover:border-edge/50'
-                }`}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={multiLender ? 'text-star' : 'text-ash'}>
-                  <circle cx="5" cy="5" r="2" />
-                  <circle cx="11" cy="5" r="2" />
-                  <path d="M1 14c0-2 1.5-3 4-3s4 1 4 3" />
-                  <path d="M7 14c0-2 1.5-3 4-3s4 1 4 3" />
-                </svg>
-                <span className={`text-xs font-semibold ${multiLender ? 'text-star' : 'text-chalk'}`}>Multi-Lender</span>
-                <span className="text-[9px] text-ash leading-tight text-center">Partial funding allowed</span>
-              </button>
+          )}
+
+          {/* Validation hints */}
+          {showErrors && (!hasDebt || !hasCollateral) && (
+            <div className="px-3 py-2 border-t border-edge/20 bg-nova/5">
+              <p className="text-[11px] text-nova">
+                {!hasDebt && 'Add at least one borrow asset. '}
+                {!hasCollateral && 'Add at least one collateral asset.'}
+              </p>
             </div>
+          )}
+        </section>
+
+        {/* ── TERMS ──────────────────────────────────────── */}
+        <section className="rounded-xl border border-edge/30 overflow-clip">
+          <div className="px-3 py-2 border-b border-edge/30 bg-surface/10">
+            <span className="text-[10px] text-ash uppercase tracking-[0.15em] font-bold">Terms</span>
           </div>
 
-          {/* Duration + Deadline — side by side */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="p-3 space-y-4">
             {/* Duration */}
-            <div className="p-4 bg-abyss/60 border border-edge/20 rounded-2xl space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
-                  Loan Duration <span className="text-star">*</span>
+                  Loan Duration
                 </Label>
-                {useCustomDuration && (
-                  <button
-                    type="button"
-                    onClick={() => setUseCustomDuration(false)}
-                    className="text-[10px] text-star hover:text-star-bright transition-colors"
-                  >
+                {useCustomDuration ? (
+                  <button type="button" onClick={() => setUseCustomDuration(false)} className="text-[10px] text-star hover:text-star-bright transition-colors">
                     Presets
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => setUseCustomDuration(true)} className="text-[10px] text-ash hover:text-star transition-colors">
+                    Custom
                   </button>
                 )}
               </div>
@@ -843,10 +791,9 @@ export default function CreatePage() {
                     type="number"
                     value={customDurationValue}
                     onChange={(e) => setCustomDurationValue(e.target.value)}
-                    className="flex-1 bg-surface/50 border-edge/50 font-mono"
+                    className="flex-1 bg-surface/50 border-edge/50 font-mono h-9"
                     placeholder="Amount"
                     min="1"
-                    step="any"
                   />
                   <div className="flex gap-1">
                     {CUSTOM_DURATION_UNITS.map((u) => (
@@ -854,10 +801,10 @@ export default function CreatePage() {
                         key={u.multiplier}
                         type="button"
                         onClick={() => setCustomDurationUnit(u.multiplier)}
-                        className={`px-2.5 py-1.5 rounded-lg text-[10px] border transition-all whitespace-nowrap ${
+                        className={`px-2 py-1.5 rounded-lg text-[10px] border transition-all ${
                           customDurationUnit === u.multiplier
-                            ? 'border-star/40 bg-star/10 text-star font-medium'
-                            : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                            ? 'border-star/40 bg-star/10 text-star'
+                            : 'border-edge/50 text-dust hover:text-chalk'
                         }`}
                       >
                         {u.label}
@@ -866,38 +813,29 @@ export default function CreatePage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-1.5">
-                    {DURATION_PRESETS.map((p) => (
-                      <button
-                        key={p.seconds}
-                        type="button"
-                        onClick={() => setDurationPreset(p.seconds.toString())}
-                        className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                          durationPreset === p.seconds.toString()
-                            ? 'border-star/40 bg-star/10 text-star font-medium'
-                            : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setUseCustomDuration(true)}
-                    className="text-[10px] text-ash hover:text-star transition-colors uppercase tracking-widest"
-                  >
-                    Custom duration
-                  </button>
+                <div className="flex flex-wrap gap-1.5">
+                  {DURATION_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      type="button"
+                      onClick={() => setDurationPreset(p.seconds.toString())}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
+                        durationPreset === p.seconds.toString()
+                          ? 'border-star/40 bg-star/10 text-star font-medium'
+                          : 'border-edge/50 text-dust hover:text-chalk'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
             {/* Deadline */}
-            <div className="p-4 bg-abyss/60 border border-edge/20 rounded-2xl space-y-3">
+            <div className="space-y-2">
               <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
-                Offer Expires In
+                Offer Expires
               </Label>
               <div className="flex flex-wrap gap-1.5">
                 {DEADLINE_PRESETS.map((p) => (
@@ -905,178 +843,80 @@ export default function CreatePage() {
                     key={p.seconds}
                     type="button"
                     onClick={() => setDeadlinePreset(p.seconds.toString())}
-                    className={`px-3 py-1.5 rounded-lg text-xs border transition-all flex-1 text-center ${
+                    className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
                       deadlinePreset === p.seconds.toString()
                         ? 'border-star/40 bg-star/10 text-star font-medium'
-                        : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                        : 'border-edge/50 text-dust hover:text-chalk'
                     }`}
                   >
                     {p.label}
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-2 text-[10px] text-ash">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2" className="shrink-0">
-                  <circle cx="5" cy="5" r="4" />
-                  <path d="M5 3v2.5l1.5 1" />
-                </svg>
-                <span>Expires {formatTimestamp(BigInt(deadline))}</span>
+            </div>
+
+            {/* Mode */}
+            <div className="space-y-2">
+              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
+                Lender Mode
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMultiLender(false)}
+                  className={`py-2 rounded-lg border text-xs font-medium transition-all ${
+                    !multiLender
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk'
+                  }`}
+                >
+                  Single Lender
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMultiLender(true)}
+                  className={`py-2 rounded-lg border text-xs font-medium transition-all ${
+                    multiLender
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk'
+                  }`}
+                >
+                  Multi-Lender
+                </button>
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Quick summary chips */}
-          <div className="flex flex-wrap gap-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/40 border border-edge/20 text-[11px]">
-              <span className="text-ash">Duration:</span>
-              <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
+        {/* ── SUMMARY ────────────────────────────────────── */}
+        {(allAssets.length > 0 || roiInfo) && (
+          <section className="rounded-xl border border-edge/20 bg-surface/5 px-3 py-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
+              <span className="text-ash">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
+              <span className="text-ash">Expires: <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span></span>
+              <span className="text-ash">Mode: <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span></span>
+              {roiInfo && (
+                <span className="text-ash">Yield: <span className="text-star font-medium">+{roiInfo.yieldPct}% {roiInfo.symbol}</span></span>
+              )}
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/40 border border-edge/20 text-[11px]">
-              <span className="text-ash">Repay by:</span>
-              <span className="text-chalk font-medium">{formatTimestamp(BigInt(Number(deadline) + Number(duration)))}</span>
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/40 border border-edge/20 text-[11px]">
-              <span className="text-ash">Type:</span>
-              <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>
-                {multiLender ? 'Multi-Lender' : 'Single-Lender'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-edge/40 to-transparent" />
-
-        {/* ══════════════════════════════════════════════════
-            SECTION 2: ASSETS
-           ══════════════════════════════════════════════════ */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-lg bg-nebula/15 border border-nebula/25 flex items-center justify-center">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-nebula">
-                  <rect x="1" y="3" width="10" height="7" rx="1" />
-                  <path d="M3 3V2a1 1 0 011-1h4a1 1 0 011 1v1" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-chalk">Assets</span>
-                {totalAssets > 0 && (
-                  <span className="ml-2 text-[10px] font-mono text-ash bg-surface px-1.5 py-0.5 rounded">
-                    {totalAssets} total
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* THE unified add button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAddModalOpen(true)}
-              className="gap-1.5 border-dashed"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M6 2v8M2 6h8" />
-              </svg>
-              Add Token
-            </Button>
-          </div>
-
-          {/* 3-column asset display */}
-          {totalAssets === 0 ? (
-            <button
-              type="button"
-              onClick={() => setAddModalOpen(true)}
-              className="w-full py-10 border-2 border-dashed border-edge/30 rounded-2xl hover:border-edge/50 transition-colors group"
-            >
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-surface/60 border border-edge/30 flex items-center justify-center group-hover:border-star/30 group-hover:bg-star/5 transition-colors">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash group-hover:text-star transition-colors">
-                    <path d="M10 4v12M4 10h12" />
-                  </svg>
-                </div>
-                <div className="text-center">
-                  <span className="text-sm text-dust block">Add your first token</span>
-                  <span className="text-[10px] text-ash">Select a token, set amount, and assign its role</span>
-                </div>
-              </div>
-            </button>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <AssetColumn
-                role="debt"
-                assets={debtAssets}
-                onRemove={(i) => setDebtAssets((prev) => prev.filter((_, j) => j !== i))}
-                required
-                showErrors={showErrors}
-              />
-              <AssetColumn
-                role="collateral"
-                assets={collateralAssets}
-                onRemove={(i) => setCollateralAssets((prev) => prev.filter((_, j) => j !== i))}
-                required
-                showErrors={showErrors}
-              />
-              <AssetColumn
-                role="interest"
-                assets={interestAssets}
-                onRemove={(i) => setInterestAssets((prev) => prev.filter((_, j) => j !== i))}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* ══════════════════════════════════════════════════
-            SECTION 3: ROI PREVIEW
-           ══════════════════════════════════════════════════ */}
-        {roiInfo && (
-          <>
-            <div className="h-px bg-gradient-to-r from-transparent via-edge/40 to-transparent" />
-            <div className="flex items-center justify-between p-5 bg-star/[0.03] border border-star/15 rounded-2xl">
-              <div>
-                <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">
-                  Projected Lender Yield
-                </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-display text-star">+{roiInfo.yieldPct}%</span>
-                  <span className="text-dust text-sm">in {roiInfo.symbol}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-ash uppercase tracking-widest block mb-1">Over</span>
-                <span className="text-sm text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
-              </div>
-            </div>
-          </>
+          </section>
         )}
 
-        {/* ══════════════════════════════════════════════════
-            SECTION 4: SUBMIT
-           ══════════════════════════════════════════════════ */}
-        <div className="h-px bg-gradient-to-r from-transparent via-edge/40 to-transparent" />
-
+        {/* ── SUBMIT ─────────────────────────────────────── */}
         <Web3ActionWrapper message="Connect your wallet to create an inscription">
           <Button
             variant="gold"
-            size="xl"
-            className="w-full h-14 text-base uppercase tracking-widest"
+            size="lg"
+            className="w-full h-12 uppercase tracking-widest"
             onClick={handleSubmit}
             disabled={isPending}
           >
-            {isPending ? 'Processing...' : 'Approve & Sign Order'}
+            {isPending ? 'Processing...' : 'Sign & Create Order'}
           </Button>
-          {showErrors && !isValid && (
-            <p className="text-xs text-nova text-center mt-2">
-              {!hasDebt && 'Add at least one borrow asset. '}
-              {!hasCollateral && 'Add at least one collateral asset. '}
-              {!hasDuration && 'Set a loan duration.'}
-            </p>
-          )}
         </Web3ActionWrapper>
       </div>
 
-      {/* ── Modals ──────────────────────────────────────── */}
+      {/* Modals */}
       <AddAssetModal
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
