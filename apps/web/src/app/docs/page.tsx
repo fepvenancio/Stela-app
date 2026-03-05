@@ -786,6 +786,43 @@ export default function DocsPage() {
             </StepCard>
           </div>
 
+          {/* Order Book */}
+          <div className="mt-16 mb-16">
+            <SubHeading>Order Book Model</SubHeading>
+            <p className="text-dust mb-8 leading-relaxed max-w-3xl">
+              Borrowers can create <span className="text-chalk font-semibold">multiple orders simultaneously</span> with
+              different terms — varying collateral, interest rates, or durations. This effectively creates a
+              <span className="text-star"> peer-to-peer order book</span> where lenders browse and choose the
+              offer that best suits them.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">Compete on Terms</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  Post multiple orders with different rates, collateral ratios, or durations.
+                  Lenders pick the terms they prefer — the market decides which fills.
+                </p>
+              </div>
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">First Fill Wins</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  All orders from the same borrower share a <span className="text-chalk font-mono text-xs">nonce</span>.
+                  When one settles on-chain and consumes the nonce, all sibling orders are
+                  automatically expired — like <span className="text-chalk font-medium">cancel-on-fill</span> limit orders.
+                </p>
+              </div>
+              <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
+                <h4 className="font-display text-star text-lg mb-3">No Double Settlement</h4>
+                <p className="text-dust text-sm leading-relaxed">
+                  The on-chain <span className="text-chalk font-mono text-xs">NoncesComponent</span> enforces strict
+                  equality — even if multiple orders exist, only one can ever settle.
+                  The contract guarantees this cryptographically.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Off-chain flow diagram */}
           <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-16 overflow-hidden relative shadow-2xl mt-16">
             <h4 className="font-display text-xs text-ash uppercase tracking-[0.2em] text-center mb-12 font-bold">Off-Chain Settlement Flow</h4>
@@ -876,6 +913,10 @@ export default function DocsPage() {
               {
                 q: 'Is there an oracle or price feed?',
                 a: 'No. Stela is oracle-free. It does not liquidate based on price fluctuations, only on time. This eliminates oracle manipulation risks.',
+              },
+              {
+                q: 'Can I create multiple orders at once?',
+                a: 'Yes. You can post several orders with different terms simultaneously — like limit orders on an exchange. Lenders choose which to fund. When one settles, all others from the same nonce are automatically cancelled. Only one can ever fill.',
               },
               {
                 q: 'Are shares transferable?',
