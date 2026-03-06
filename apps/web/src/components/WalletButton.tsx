@@ -16,7 +16,7 @@ import {
 
 // Download URLs for wallets that aren't installed
 const WALLET_DOWNLOAD_URLS: Record<string, string> = {
-  argentX: 'https://chrome.google.com/webstore/detail/argent-x/dlcobpjiigpikoobohmabehhmhfoodbb',
+  argentX: 'https://www.argent.xyz/argent-x',
   braavos: 'https://braavos.app/download-braavos-wallet/',
 }
 
