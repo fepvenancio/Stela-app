@@ -149,7 +149,7 @@ export default function LandingPage() {
 
         {/* Stats bar */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-edge/15">
-          <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-between gap-6 sm:gap-8">
+          <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-center gap-8 sm:gap-12">
             <Stat value="0.20%" label="Lending Fee" />
             <Stat value="0.10%" label="Swap Fee" />
             <Stat value="0.10%" label="Redemption Fee" />
@@ -220,7 +220,7 @@ export default function LandingPage() {
 
           <div className="grid sm:grid-cols-2 gap-x-12 gap-y-16 lg:gap-y-20">
             {/* Step I */}
-            <div className="flex items-end gap-6">
+            <div className="flex items-center gap-6">
               <Numeral>I</Numeral>
               <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Inscribe</h3>
@@ -232,7 +232,7 @@ export default function LandingPage() {
             </div>
 
             {/* Step II */}
-            <div className="flex items-end gap-6">
+            <div className="flex items-center gap-6">
               <Numeral>II</Numeral>
               <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Fund</h3>
@@ -244,7 +244,7 @@ export default function LandingPage() {
             </div>
 
             {/* Step III */}
-            <div className="flex items-end gap-6">
+            <div className="flex items-center gap-6">
               <Numeral>III</Numeral>
               <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Repay</h3>
@@ -256,7 +256,7 @@ export default function LandingPage() {
             </div>
 
             {/* Step IV */}
-            <div className="flex items-end gap-6">
+            <div className="flex items-center gap-6">
               <Numeral>IV</Numeral>
               <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Redeem</h3>

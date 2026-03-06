@@ -42,12 +42,12 @@ function SubHeading({ children }: { children: React.ReactNode }) {
 
 function StepCard({ numeral, title, children }: { numeral: string; title: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-8 group">
+    <div className="flex gap-8 group items-start">
       <div className="flex-shrink-0 w-16 h-16 rounded-[20px] bg-abyss border border-edge/50 flex items-center justify-center text-star font-display text-2xl group-hover:border-star/50 transition-all shadow-xl shadow-black/40 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-star/5 to-transparent pointer-events-none" />
         {numeral}
       </div>
-      <div className="pt-2">
+      <div className="pt-3">
         <h4 className="text-star font-display text-lg uppercase tracking-widest mb-3 group-hover:text-star-bright transition-colors">{title}</h4>
         <div className="text-dust text-sm leading-relaxed space-y-3 max-w-2xl">{children}</div>
       </div>
