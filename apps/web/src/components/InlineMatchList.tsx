@@ -167,7 +167,7 @@ export function InlineMatchList({
 
       {/* Table container — same style as browse page */}
       <div className="rounded-lg border border-edge/30 overflow-clip">
-        {/* Aggregate summary for multi-settle */}
+        {/* Aggregate summary for multi-settle — stays visible above scroll */}
         {showMultiSettle && (
           <MultiSettleSummary
             selection={multiSettleSelection}
@@ -178,8 +178,8 @@ export function InlineMatchList({
           />
         )}
 
-        {/* Table header — reuse from browse */}
-        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 bg-void/95">
+        {/* Table header — sticky within scroll container */}
+        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 bg-void/95 sticky top-0 z-10">
           <div className="grid grid-cols-12 gap-3 flex-1">
             <div className="col-span-2">Type</div>
             <div className="col-span-3">They Borrow</div>
@@ -189,8 +189,8 @@ export function InlineMatchList({
           </div>
         </div>
 
-        {/* Match rows */}
-        <div className="flex flex-col max-h-[40vh] overflow-y-auto">
+        {/* Match rows — scrollable, generous height for many matches */}
+        <div className="flex flex-col max-h-[50vh] overflow-y-auto">
           {offchainMatches.map((match) => (
             <OffchainMatchListRow
               key={match.id}
@@ -210,6 +210,15 @@ export function InlineMatchList({
             />
           ))}
         </div>
+
+        {/* Footer with count when many matches */}
+        {totalMatches > 3 && (
+          <div className="px-3 py-2 border-t border-edge/20 bg-surface/5 text-center">
+            <span className="text-[10px] text-dust">
+              Showing {totalMatches} {isSwap ? 'swap' : 'order'}{totalMatches !== 1 ? 's' : ''} — scroll to see all
+            </span>
+          </div>
+        )}
       </div>
     </section>
   )

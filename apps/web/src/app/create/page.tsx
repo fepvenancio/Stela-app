@@ -108,7 +108,7 @@ function formatDurationHuman(seconds: number): string {
   return `${days} day${days !== 1 ? 's' : ''}`
 }
 
-/* ── Asset Row (list-style, like browse/portfolio) ─────── */
+/* ── Asset Row ──────────────────────────────────────────── */
 
 function AssetRow({
   asset,
@@ -293,7 +293,7 @@ function AddAssetModal({
                       key={t}
                       type="button"
                       onClick={() => setAssetType(t)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-mono border transition-colors ${
+                      className={`px-2 py-1 rounded-lg text-[10px] font-mono border transition-colors cursor-pointer ${
                         assetType === t
                           ? 'border-star/40 bg-star/10 text-star'
                           : 'border-edge text-ash hover:text-chalk hover:border-edge-bright'
@@ -329,7 +329,6 @@ function AddAssetModal({
                     value={amount}
                     onChange={(e) => {
                       const raw = e.target.value
-                      // Allow digits with optional dot and up to 3 decimal places
                       if (raw === '' || /^\d*\.?\d{0,3}$/.test(raw)) setAmount(raw)
                     }}
                     onPaste={(e) => {
@@ -360,7 +359,7 @@ function AddAssetModal({
                       key={r}
                       type="button"
                       onClick={() => setRole(r)}
-                      className={`py-2 rounded-lg border text-xs font-semibold transition-all ${
+                      className={`py-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
                         selected
                           ? `${meta.borderClass} ${meta.bgClass} ${meta.textClass}`
                           : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
@@ -536,7 +535,7 @@ export default function CreatePage() {
     return null
   }, [debtAssets, interestAssets])
 
-  // Multi-settle selection: compute userGiveAmount from collateral (what user gives = matched orders' debt)
+  // Multi-settle selection
   const userGiveAmount = useMemo(() => {
     if (!isSwap || collateralAssets.length !== 1 || !collateralAssets[0].asset) return 0n
     const a = collateralAssets[0]
@@ -549,7 +548,6 @@ export default function CreatePage() {
     return selectOrders(offchainMatches, onchainMatches, userGiveAmount)
   }, [isSwap, offchainMatches, onchainMatches, userGiveAmount])
 
-  // Token symbols for multi-settle summary
   const giveSymbol = useMemo(() => {
     if (collateralAssets.length !== 1 || !collateralAssets[0].asset) return undefined
     return findTokenByAddress(collateralAssets[0].asset)?.symbol
@@ -566,7 +564,6 @@ export default function CreatePage() {
   const filteredCollateralForMatch = useMemo(() => collateralAssets.filter(a => a.asset), [collateralAssets])
 
   useEffect(() => {
-    // Reset matches when inputs change
     setMatchesVisible(false)
     setMatchSkipped(false)
 
@@ -591,7 +588,6 @@ export default function CreatePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredDebtForMatch, filteredCollateralForMatch, duration, address, multiLender])
 
-  // Show matches when detection completes
   useEffect(() => {
     if (hasMatches && !matchSkipped) {
       setMatchesVisible(true)
@@ -668,15 +664,12 @@ export default function CreatePage() {
     resetMatches()
   }
 
-  /** Main submit handler — checks for matches, then routes to appropriate flow */
   async function handleSubmit() {
     if (!address || !account) return
     setShowErrors(true)
     if (!isValid) return
 
-    // If matches are visible and not skipped, user needs to pick or skip
     if (matchesVisible && hasMatches && !matchSkipped) {
-      // Matches are already shown inline — don't submit
       return
     }
 
@@ -687,7 +680,6 @@ export default function CreatePage() {
     }
   }
 
-  /** Handle instant settlement of a matched off-chain order */
   async function handleInstantSettle(match: MatchedOrder) {
     closeAllProgress()
     try {
@@ -698,7 +690,6 @@ export default function CreatePage() {
     }
   }
 
-  /** Handle settlement of a matched on-chain inscription */
   async function handleOnchainSettle(match: OnChainMatch) {
     closeAllProgress()
     try {
@@ -713,7 +704,6 @@ export default function CreatePage() {
     }
   }
 
-  /** Handle aggregate multi-settle of multiple matched off-chain orders */
   async function handleMultiSettle() {
     if (!multiSettleSelection || multiSettleSelection.selected.length < 2) return
     closeAllProgress()
@@ -726,7 +716,6 @@ export default function CreatePage() {
     }
   }
 
-  /** On-chain inscription creation flow */
   async function createOnChainInscription() {
     if (!address || !account) return
     closeAllProgress()
@@ -758,7 +747,6 @@ export default function CreatePage() {
     }
   }
 
-  /** Normal order creation flow (approve collateral, sign, post) */
   async function createOrder() {
     if (!address || !account) return
     closeAllProgress()
@@ -936,10 +924,122 @@ export default function CreatePage() {
         </p>
       </div>
 
-      <div className="space-y-4">
-        {/* ── ASSETS ─────────────────────────────────────── */}
+      <div className="space-y-5">
+
+        {/* ═══════════════════════════════════════════════════
+           1. MODE TOGGLES — order type, inscription mode, lender
+           ═══════════════════════════════════════════════════ */}
         <section className="rounded-xl border border-edge/30 overflow-clip">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-edge/30 bg-surface/10">
+          <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
+            <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">Configuration</span>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* Order Type: Lending vs Swap */}
+            <div className="space-y-2">
+              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Order Type</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderType('lending')
+                    if (durationPreset === '0') setDurationPreset('86400')
+                  }}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    orderType === 'lending'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >
+                  <span className="block font-semibold">Lending</span>
+                  <span className={`text-[10px] ${orderType === 'lending' ? 'text-star/60' : 'text-ash'}`}>Duration + Interest</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderType('swap')
+                    setInterestAssets([])
+                    setUseCustomDuration(false)
+                  }}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    orderType === 'swap'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >
+                  <span className="block font-semibold">Swap</span>
+                  <span className={`text-[10px] ${orderType === 'swap' ? 'text-star/60' : 'text-ash'}`}>Instant exchange</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Inscription Mode: Off-chain vs On-chain */}
+            <div className="space-y-2">
+              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Inscription Mode</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMode('offchain')}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    mode === 'offchain'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >
+                  <span className="block font-semibold">Off-Chain</span>
+                  <span className={`text-[10px] ${mode === 'offchain' ? 'text-star/60' : 'text-ash'}`}>Gasless signing</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('onchain')}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    mode === 'onchain'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >
+                  <span className="block font-semibold">On-Chain</span>
+                  <span className={`text-[10px] ${mode === 'onchain' ? 'text-star/60' : 'text-ash'}`}>Locks collateral now</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Lender Mode: Single vs Multi */}
+            <div className="space-y-2">
+              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Lender Mode</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMultiLender(false)}
+                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    !multiLender
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >
+                  Single Lender
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMultiLender(true)}
+                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    multiLender
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >
+                  Multi-Lender
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════
+           2. ASSETS
+           ═══════════════════════════════════════════════════ */}
+        <section className="rounded-xl border border-edge/30 overflow-clip">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-edge/30 bg-surface/10">
             <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
               Assets
               {allAssets.length > 0 && (
@@ -949,7 +1049,7 @@ export default function CreatePage() {
             <button
               type="button"
               onClick={() => setAddModalOpen(true)}
-              className="flex items-center gap-1 text-[11px] text-star hover:text-star-bright transition-colors font-medium"
+              className="flex items-center gap-1 text-[11px] text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M6 2v8M2 6h8" />
@@ -962,7 +1062,7 @@ export default function CreatePage() {
             <button
               type="button"
               onClick={() => setAddModalOpen(true)}
-              className="w-full py-10 hover:bg-surface/10 transition-colors"
+              className="w-full py-10 hover:bg-surface/10 transition-colors cursor-pointer"
             >
               <div className="flex flex-col items-center gap-2">
                 <div className="w-10 h-10 rounded-xl bg-surface/40 border border-edge/30 flex items-center justify-center">
@@ -975,7 +1075,7 @@ export default function CreatePage() {
             </button>
           ) : (
             <div>
-              {allAssets.map((item, i) => (
+              {allAssets.map((item) => (
                 <AssetRow
                   key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
                   asset={item.asset}
@@ -997,77 +1097,79 @@ export default function CreatePage() {
           )}
         </section>
 
-        {/* ── TERMS ──────────────────────────────────────── */}
+        {/* ═══════════════════════════════════════════════════
+           3. TERMS — Duration + Deadline
+           ═══════════════════════════════════════════════════ */}
         <section className="rounded-xl border border-edge/30 overflow-clip">
-          <div className="px-3 py-2 border-b border-edge/30 bg-surface/10">
+          <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
             <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">Terms</span>
           </div>
 
-          <div className="p-3 space-y-4">
+          <div className="p-4 space-y-4">
             {/* Duration (hidden for swaps) */}
             {!isSwap && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
-                  Loan Duration
-                </Label>
-                {useCustomDuration ? (
-                  <button type="button" onClick={() => setUseCustomDuration(false)} className="text-[10px] text-star hover:text-star-bright transition-colors">
-                    Presets
-                  </button>
-                ) : (
-                  <button type="button" onClick={() => setUseCustomDuration(true)} className="text-[10px] text-ash hover:text-star transition-colors">
-                    Custom
-                  </button>
-                )}
-              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
+                    Loan Duration
+                  </Label>
+                  {useCustomDuration ? (
+                    <button type="button" onClick={() => setUseCustomDuration(false)} className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer">
+                      Presets
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => setUseCustomDuration(true)} className="text-[10px] text-ash hover:text-star transition-colors cursor-pointer">
+                      Custom
+                    </button>
+                  )}
+                </div>
 
-              {useCustomDuration ? (
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    value={customDurationValue}
-                    onChange={(e) => setCustomDurationValue(e.target.value)}
-                    className="flex-1 bg-surface/50 border-edge/50 font-mono h-9"
-                    placeholder="Amount"
-                    min="1"
-                  />
-                  <div className="flex gap-1">
-                    {CUSTOM_DURATION_UNITS.map((u) => (
+                {useCustomDuration ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={customDurationValue}
+                      onChange={(e) => setCustomDurationValue(e.target.value)}
+                      className="flex-1 bg-surface/50 border-edge/50 font-mono h-9"
+                      placeholder="Amount"
+                      min="1"
+                    />
+                    <div className="flex gap-1">
+                      {CUSTOM_DURATION_UNITS.map((u) => (
+                        <button
+                          key={u.multiplier}
+                          type="button"
+                          onClick={() => setCustomDurationUnit(u.multiplier)}
+                          className={`px-2 py-1.5 rounded-lg text-[10px] border transition-all cursor-pointer ${
+                            customDurationUnit === u.multiplier
+                              ? 'border-star/40 bg-star/10 text-star'
+                              : 'border-edge/50 text-dust hover:text-chalk'
+                          }`}
+                        >
+                          {u.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {DURATION_PRESETS.map((p) => (
                       <button
-                        key={u.multiplier}
+                        key={p.seconds}
                         type="button"
-                        onClick={() => setCustomDurationUnit(u.multiplier)}
-                        className={`px-2 py-1.5 rounded-lg text-[10px] border transition-all ${
-                          customDurationUnit === u.multiplier
-                            ? 'border-star/40 bg-star/10 text-star'
+                        onClick={() => setDurationPreset(p.seconds.toString())}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all cursor-pointer ${
+                          durationPreset === p.seconds.toString()
+                            ? 'border-star/40 bg-star/10 text-star font-medium'
                             : 'border-edge/50 text-dust hover:text-chalk'
                         }`}
                       >
-                        {u.label}
+                        {p.label}
                       </button>
                     ))}
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {DURATION_PRESETS.map((p) => (
-                    <button
-                      key={p.seconds}
-                      type="button"
-                      onClick={() => setDurationPreset(p.seconds.toString())}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
-                        durationPreset === p.seconds.toString()
-                          ? 'border-star/40 bg-star/10 text-star font-medium'
-                          : 'border-edge/50 text-dust hover:text-chalk'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             )}
 
             {/* Deadline */}
@@ -1081,7 +1183,7 @@ export default function CreatePage() {
                     key={p.seconds}
                     type="button"
                     onClick={() => setDeadlinePreset(p.seconds.toString())}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
+                    className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all cursor-pointer ${
                       deadlinePreset === p.seconds.toString()
                         ? 'border-star/40 bg-star/10 text-star font-medium'
                         : 'border-edge/50 text-dust hover:text-chalk'
@@ -1092,136 +1194,75 @@ export default function CreatePage() {
                 ))}
               </div>
             </div>
-
-            {/* Order Type */}
-            <div className="space-y-2">
-              <span className="text-star font-mono text-xs uppercase tracking-[0.3em] block">
-                Type
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrderType('lending')
-                    if (durationPreset === '0') setDurationPreset('86400')
-                  }}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    orderType === 'lending'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk'
-                  }`}
-                >
-                  <span className="block">Lending</span>
-                  <span className={`text-[10px] ${orderType === 'lending' ? 'text-star/60' : 'text-ash'}`}>Duration + Interest</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrderType('swap')
-                    setInterestAssets([])
-                    setUseCustomDuration(false)
-                  }}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    orderType === 'swap'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk'
-                  }`}
-                >
-                  <span className="block">Swap</span>
-                  <span className={`text-[10px] ${orderType === 'swap' ? 'text-star/60' : 'text-ash'}`}>Instant exchange</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Inscription Mode */}
-            <div className="space-y-2">
-              <span className="text-star font-mono text-xs uppercase tracking-[0.3em] block">
-                Inscription Mode
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMode('offchain')}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    mode === 'offchain'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk'
-                  }`}
-                >
-                  <span className="block">Off-Chain</span>
-                  <span className={`text-[10px] ${mode === 'offchain' ? 'text-star/60' : 'text-ash'}`}>Gasless</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('onchain')}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    mode === 'onchain'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk'
-                  }`}
-                >
-                  <span className="block">On-Chain</span>
-                  <span className={`text-[10px] ${mode === 'onchain' ? 'text-star/60' : 'text-ash'}`}>Locks collateral</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Lender Mode */}
-            <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
-                Lender Mode
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMultiLender(false)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    !multiLender
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk'
-                  }`}
-                >
-                  Single Lender
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMultiLender(true)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    multiLender
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk'
-                  }`}
-                >
-                  Multi-Lender
-                </button>
-              </div>
-            </div>
           </div>
         </section>
 
-        {/* ── SUMMARY ────────────────────────────────────── */}
-        {(allAssets.length > 0 || roiInfo) && (
-          <section className="rounded-xl border border-edge/20 bg-surface/5 px-3 py-3">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
-              {isSwap ? (
-                <span className="text-aurora font-medium">Instant Swap</span>
-              ) : (
-                <span className="text-dust">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
-              )}
-              <span className="text-dust">Expires: <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span></span>
-              <span className="text-dust">Lender: <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span></span>
-              <span className="text-dust">Mode: <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>{mode === 'offchain' ? 'Gasless' : 'On-Chain'}</span></span>
-              {roiInfo && (
-                <span className="text-dust">Yield: <span className="text-star font-medium">+{roiInfo.yieldPct}% {roiInfo.symbol}</span></span>
+        {/* ═══════════════════════════════════════════════════
+           4. SUMMARY CARD
+           ═══════════════════════════════════════════════════ */}
+        {allAssets.length > 0 && (
+          <section className="rounded-xl border border-edge/30 overflow-clip">
+            <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
+              <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">Summary</span>
+            </div>
+
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+                {/* Type */}
+                <div>
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Type</span>
+                  <span className={`font-medium ${isSwap ? 'text-aurora' : 'text-chalk'}`}>
+                    {isSwap ? 'Instant Swap' : 'Lending'}
+                  </span>
+                </div>
+
+                {/* Mode */}
+                <div>
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Mode</span>
+                  <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
+                    {mode === 'offchain' ? 'Gasless' : 'On-Chain'}
+                  </span>
+                </div>
+
+                {/* Duration */}
+                {!isSwap && (
+                  <div>
+                    <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Duration</span>
+                    <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
+                  </div>
+                )}
+
+                {/* Deadline */}
+                <div>
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Expires</span>
+                  <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span>
+                </div>
+
+                {/* Lender */}
+                <div>
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Lender</span>
+                  <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span>
+                </div>
+
+                {/* Yield */}
+                {roiInfo && (
+                  <div>
+                    <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Yield</span>
+                    <span className="text-aurora font-medium">+{roiInfo.yieldPct}% {roiInfo.symbol}</span>
+                  </div>
+                )}
+              </div>
+
+              {isSwap && (
+                <p className="text-[10px] text-dust mt-3 pt-3 border-t border-edge/20">Swaps settle instantly with 0.10% fee (5 BPS relayer + 5 BPS treasury)</p>
               )}
             </div>
-            {isSwap && (
-              <p className="text-[10px] text-dust mt-1.5">Swaps settle instantly with 0.10% fee</p>
-            )}
           </section>
         )}
 
-        {/* ── INLINE MATCHES ────────────────────────────── */}
+        {/* ═══════════════════════════════════════════════════
+           5. MATCHED STELAS — table/list format
+           ═══════════════════════════════════════════════════ */}
         {matchesVisible && !matchSkipped && hasMatches && (
           <InlineMatchList
             offchainMatches={offchainMatches}
@@ -1241,7 +1282,9 @@ export default function CreatePage() {
           />
         )}
 
-        {/* ── SUBMIT ─────────────────────────────────────── */}
+        {/* ═══════════════════════════════════════════════════
+           6. SUBMIT
+           ═══════════════════════════════════════════════════ */}
         <Web3ActionWrapper message="Connect your wallet to create an inscription">
           <Button
             variant="gold"
@@ -1264,7 +1307,7 @@ export default function CreatePage() {
         availableRoles={isSwap ? (['debt', 'collateral'] as AssetRole[]) : ROLES}
       />
 
-      {/* Single progress modal — show whichever flow is active (prevents stacking) */}
+      {/* Single progress modal */}
       {(() => {
         const active = [createProgress, settleProgress, onchainProgress, onchainSettleProgress].find(p => p.open)
         return active ? (
