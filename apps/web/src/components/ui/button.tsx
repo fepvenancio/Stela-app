@@ -19,7 +19,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        gold: "bg-gradient-to-b from-star to-star-dim text-void hover:from-star-bright hover:to-star shadow-[0_0_20px_-5px_rgba(232,168,37,0.3)] hover:shadow-[0_0_25px_-5px_rgba(232,168,37,0.45)]",
+        gold: "bg-gradient-to-b from-star to-star-dim text-void hover:from-star-bright hover:to-star shadow-[0_0_16px_-4px_rgba(232,168,37,0.35)] hover:shadow-[0_0_20px_-4px_rgba(232,168,37,0.5)]",
         aurora:
           "bg-gradient-to-b from-aurora to-aurora/80 text-void hover:shadow-[0_0_20px_-5px_rgba(45,212,191,0.35)]",
         nova: "bg-gradient-to-b from-nova to-nova/80 text-white hover:shadow-[0_0_20px_-5px_rgba(240,101,101,0.35)]",

@@ -92,7 +92,7 @@ export default function LandingPage() {
               0.30% total fees.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(232,168,37,0.35)] cursor-pointer">
+              <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-2px_rgba(232,168,37,0.4)] cursor-pointer">
                 <Link href="/browse">Browse Stelas</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/40 hover:bg-surface text-chalk px-8 h-13 rounded-full transition-all cursor-pointer">
@@ -107,7 +107,7 @@ export default function LandingPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-star/[0.06] rounded-full blur-[60px] pointer-events-none" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
-                  <span className="text-[10px] text-dust uppercase tracking-[0.25em] font-mono">Stela #0042</span>
+                  <span className="text-[10px] text-chalk/60 uppercase tracking-[0.25em] font-mono">Stela #0042</span>
                   <span className="text-[10px] bg-aurora/10 text-aurora px-2.5 py-1 rounded-full font-mono uppercase tracking-wider">Open</span>
                 </div>
 
@@ -133,9 +133,9 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-edge/20">
+                <div className="flex items-end justify-between pt-4 border-t border-edge/20">
                   <div>
-                    <span className="text-[10px] text-dust uppercase tracking-widest">APY</span>
+                    <span className="text-[10px] text-chalk/60 uppercase tracking-widest">APY</span>
                     <div className="text-star font-display text-xl tracking-wide">60.83%</div>
                   </div>
                   <div className="w-28 h-9 rounded-full bg-star/10 border border-star/30 flex items-center justify-center text-star text-xs font-semibold cursor-pointer hover:bg-star/20 transition-colors" tabIndex={-1} aria-hidden="true">
@@ -220,9 +220,9 @@ export default function LandingPage() {
 
           <div className="grid sm:grid-cols-2 gap-x-12 gap-y-16 lg:gap-y-20">
             {/* Step I */}
-            <div className="flex gap-6">
+            <div className="flex items-end gap-6">
               <Numeral>I</Numeral>
-              <div className="pt-3">
+              <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Inscribe</h3>
                 <p className="text-dust text-sm leading-relaxed">
                   Define your terms: debt, interest, collateral, and duration.
@@ -232,9 +232,9 @@ export default function LandingPage() {
             </div>
 
             {/* Step II */}
-            <div className="flex gap-6">
+            <div className="flex items-end gap-6">
               <Numeral>II</Numeral>
-              <div className="pt-3">
+              <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Fund</h3>
                 <p className="text-dust text-sm leading-relaxed">
                   A lender provides the debt assets and receives ERC1155 shares as proof of their claim.
@@ -244,9 +244,9 @@ export default function LandingPage() {
             </div>
 
             {/* Step III */}
-            <div className="flex gap-6">
+            <div className="flex items-end gap-6">
               <Numeral>III</Numeral>
-              <div className="pt-3">
+              <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Repay</h3>
                 <p className="text-dust text-sm leading-relaxed">
                   Return the debt plus interest before the duration expires.
@@ -256,9 +256,9 @@ export default function LandingPage() {
             </div>
 
             {/* Step IV */}
-            <div className="flex gap-6">
+            <div className="flex items-end gap-6">
               <Numeral>IV</Numeral>
-              <div className="pt-3">
+              <div>
                 <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Redeem</h3>
                 <p className="text-dust text-sm leading-relaxed">
                   After repayment or liquidation, shareholders burn their ERC1155 tokens
@@ -459,7 +459,7 @@ export default function LandingPage() {
           Or mint a Genesis NFT for fee discounts.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg shadow-[0_0_40px_rgba(232,168,37,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
+          <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
             <Link href="/browse">Explore Stelas</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/30 hover:bg-surface text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer">

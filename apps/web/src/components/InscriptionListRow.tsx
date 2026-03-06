@@ -86,7 +86,7 @@ export function InscriptionListRow({
           <Link
             href={`/stela/${id}`}
             onClick={(e) => e.stopPropagation()}
-            className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors truncate"
+            className="font-mono text-[10px] text-dust tracking-wider uppercase hover:text-star transition-colors truncate"
           >
             #{id.slice(2, 8)}
           </Link>
@@ -129,7 +129,7 @@ export function InscriptionListRow({
             <Link
               href={`/stela/${id}`}
               onClick={(e) => e.stopPropagation()}
-              className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
+              className="font-mono text-[10px] text-dust tracking-wider uppercase hover:text-star transition-colors"
             >
               #{id.slice(2, 8)}
             </Link>

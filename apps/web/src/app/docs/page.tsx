@@ -955,7 +955,7 @@ export default function DocsPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link
               href="/browse"
-              className="bg-star hover:bg-star-bright text-void font-bold px-12 py-4 rounded-full text-lg shadow-[0_0_40px_rgba(232,168,37,0.4)] transition-all hover:scale-105"
+              className="bg-star hover:bg-star-bright text-void font-bold px-12 py-4 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105"
             >
               Explore Stelas
             </Link>
