@@ -23,11 +23,13 @@ export const metadata: Metadata = {
     description: 'Peer-to-peer lending inscriptions on StarkNet. Gasless order signing, collateral locking, and multi-lender vaults.',
     siteName: 'Stela Protocol',
     type: 'website',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Stela Protocol — P2P Lending on StarkNet' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Stela Protocol',
     description: 'P2P lending inscriptions on StarkNet — gasless, permissionless, immutable.',
+    images: ['/og.png'],
   },
   icons: {
     icon: '/icon.svg',
