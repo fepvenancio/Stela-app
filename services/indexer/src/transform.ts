@@ -94,7 +94,7 @@ export function extractInnerCalldata(
       const cdLen = Number(BigInt(calldata[pos + 2]))
       const cdStart = pos + 3
 
-      if (selector === createSelector) {
+      if (normalizeSelector(selector) === normalizeSelector(createSelector)) {
         return calldata.slice(cdStart, cdStart + cdLen)
       }
 
@@ -159,6 +159,9 @@ export async function transformEvent(
           const innerCd = extractInnerCalldata(event.transaction.calldata, createSelector)
           if (innerCd) {
             assets = parseCreateInscriptionCalldata(innerCd)
+            if (!assets) console.warn(`Failed to parse calldata for inscription ${inscriptionId}`)
+          } else {
+            console.warn(`create_inscription selector not found in multicall for ${inscriptionId}`)
           }
         }
 
