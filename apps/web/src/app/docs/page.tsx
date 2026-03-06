@@ -325,27 +325,19 @@ export default function DocsPage() {
                 <p className="text-dust text-sm leading-relaxed mb-4">
                   After ownership is renounced, the following parameters are permanent and can never be modified by anyone:
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
-                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Mint Price</span>
-                    <span className="text-sm text-chalk font-semibold">1,000 STRK</span>
-                  </div>
-                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
-                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Mint Enabled</span>
-                    <span className="text-sm text-chalk font-semibold">True</span>
-                  </div>
-                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
-                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Max Supply</span>
-                    <span className="text-sm text-chalk font-semibold">300</span>
-                  </div>
-                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
-                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Treasury</span>
-                    <span className="text-sm text-chalk font-semibold">50</span>
-                  </div>
-                  <div className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center">
-                    <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">Per Wallet</span>
-                    <span className="text-sm text-chalk font-semibold">5</span>
-                  </div>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {[
+                    { label: 'Mint Price', value: '1,000 STRK' },
+                    { label: 'Mint Enabled', value: 'True' },
+                    { label: 'Max Supply', value: '300' },
+                    { label: 'Treasury', value: '50' },
+                    { label: 'Per Wallet', value: '5' },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center min-w-[100px] flex-1 max-w-[160px]">
+                      <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">{item.label}</span>
+                      <span className="text-sm text-chalk font-semibold">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
