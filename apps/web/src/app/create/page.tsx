@@ -23,6 +23,8 @@ import { formatTimestamp, formatDisplayAmount } from '@/lib/format'
 import { formatAddress } from '@/lib/address'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
+import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
+import { MatchFoundModal } from '@/components/MatchFoundModal'
 
 /* ── Types ──────────────────────────────────────────────── */
 
@@ -426,6 +428,17 @@ export default function CreatePage() {
     { label: 'Submitting order', description: 'Recording your order on the network' },
   ])
 
+  // Instant match state
+  const [matchModalOpen, setMatchModalOpen] = useState(false)
+  const [matches, setMatches] = useState<MatchedOrder[]>([])
+  const { settle: instantSettle, isPending: isSettling } = useInstantSettle()
+  const settleProgress = useTransactionProgress([
+    { label: 'Signing lend offer', description: 'Sign the SNIP-12 typed data (no gas)' },
+    { label: 'Settling on-chain', description: 'Approve tokens & execute settlement' },
+    { label: 'Confirming', description: 'Waiting for block confirmation' },
+    { label: 'Recording', description: 'Saving settlement details' },
+  ])
+
   /* ── Derived State ─────────────────────────────────────── */
 
   const hasDebt = debtAssets.some((a) => a.asset)
@@ -492,30 +505,94 @@ export default function CreatePage() {
 
   /* ── Submit ──────────────────────────────────────────── */
 
+  const toSdkAssets = useCallback((inputs: AssetInputValue[]): Asset[] =>
+    inputs
+      .filter((a) => {
+        if (!a.asset) return false
+        if (a.asset_type === 'ERC721' || a.asset_type === 'ERC1155') return true
+        const raw = a.value ? parseAmount(a.value, a.decimals) : 0n
+        return raw > 0n
+      })
+      .map((a) => ({
+        asset_address: a.asset,
+        asset_type: a.asset_type as AssetType,
+        value:
+          a.asset_type === 'ERC721'
+            ? 0n
+            : a.value
+              ? parseAmount(a.value, a.decimals)
+              : 0n,
+        token_id: BigInt(a.token_id || '0'),
+      })),
+  [])
+
+  function resetForm() {
+    setDebtAssets([])
+    setInterestAssets([])
+    setCollateralAssets([])
+    setDurationPreset('86400')
+    setCustomDurationValue('')
+    setCustomDurationUnit(86400)
+    setUseCustomDuration(false)
+    setDeadlinePreset('604800')
+    setMultiLender(false)
+    setShowErrors(false)
+  }
+
+  /** Check for compatible orders before creating. Shows match modal if found. */
   async function handleSubmit() {
     if (!address || !account) return
     setShowErrors(true)
     if (!isValid) return
 
-    const toSdkAssets = (inputs: AssetInputValue[]): Asset[] =>
-      inputs
-        .filter((a) => {
-          if (!a.asset) return false
-          if (a.asset_type === 'ERC721' || a.asset_type === 'ERC1155') return true
-          const raw = a.value ? parseAmount(a.value, a.decimals) : 0n
-          return raw > 0n
+    // Only check for single-lender, single-debt-token + single-collateral-token orders
+    const filteredDebt = debtAssets.filter(a => a.asset)
+    const filteredCollateral = collateralAssets.filter(a => a.asset)
+    const canMatch = !multiLender && filteredDebt.length === 1 && filteredCollateral.length === 1
+
+    if (canMatch) {
+      try {
+        setIsPending(true)
+        const params = new URLSearchParams({
+          debtToken: filteredDebt[0].asset,
+          collateralToken: filteredCollateral[0].asset,
+          duration: duration || '0',
+          borrower: address,
         })
-        .map((a) => ({
-          asset_address: a.asset,
-          asset_type: a.asset_type as AssetType,
-          value:
-            a.asset_type === 'ERC721'
-              ? 0n
-              : a.value
-                ? parseAmount(a.value, a.decimals)
-                : 0n,
-          token_id: BigInt(a.token_id || '0'),
-        }))
+        const res = await fetch(`/api/orders/match?${params}`)
+        if (res.ok) {
+          const { data } = await res.json() as { data: MatchedOrder[] }
+          if (data && data.length > 0) {
+            setMatches(data)
+            setMatchModalOpen(true)
+            setIsPending(false)
+            return
+          }
+        }
+      } catch {
+        // Match check failed — proceed with normal flow
+      }
+      setIsPending(false)
+    }
+
+    // No matches or not eligible — proceed with normal order creation
+    await createOrder()
+  }
+
+  /** Handle instant settlement of a matched order */
+  async function handleInstantSettle(match: MatchedOrder) {
+    setMatchModalOpen(false)
+    try {
+      await instantSettle(match, settleProgress)
+      resetForm()
+    } catch {
+      // Error already toasted in hook
+    }
+  }
+
+  /** Normal order creation flow (approve collateral, sign, post) */
+  async function createOrder() {
+    if (!address || !account) return
 
     const sdkDebtAssets = toSdkAssets(debtAssets)
     const sdkInterestAssets = toSdkAssets(interestAssets)
@@ -667,18 +744,7 @@ export default function CreatePage() {
       toast.success('Order signed & submitted', {
         description: 'Your inscription order is now live. No gas was spent!',
       })
-
-      // Reset
-      setDebtAssets([])
-      setInterestAssets([])
-      setCollateralAssets([])
-      setDurationPreset('86400')
-      setCustomDurationValue('')
-      setCustomDurationUnit(86400)
-      setUseCustomDuration(false)
-      setDeadlinePreset('604800')
-      setMultiLender(false)
-      setShowErrors(false)
+      resetForm()
     } catch (err: unknown) {
       createProgress.fail(getErrorMessage(err))
       toast.error('Failed to sign order', { description: getErrorMessage(err) })
@@ -930,6 +996,22 @@ export default function CreatePage() {
         steps={createProgress.steps}
         txHash={createProgress.txHash}
         onClose={createProgress.close}
+      />
+
+      <MatchFoundModal
+        open={matchModalOpen}
+        onOpenChange={setMatchModalOpen}
+        matches={matches}
+        onSettle={handleInstantSettle}
+        onSkip={() => { setMatchModalOpen(false); createOrder() }}
+        isPending={isSettling}
+      />
+
+      <TransactionProgressModal
+        open={settleProgress.open}
+        steps={settleProgress.steps}
+        txHash={settleProgress.txHash}
+        onClose={settleProgress.close}
       />
     </div>
   )

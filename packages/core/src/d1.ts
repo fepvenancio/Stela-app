@@ -561,13 +561,16 @@ export function createD1Queries(db: D1Database) {
       nonce: string
       deadline: number
       created_at: number
+      debt_token?: string | null
+      collateral_token?: string | null
+      duration_seconds?: number | null
     }) {
       await db
         .prepare(
-          `INSERT INTO orders (id, borrower, order_data, borrower_signature, nonce, status, deadline, created_at)
-           VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`
+          `INSERT INTO orders (id, borrower, order_data, borrower_signature, nonce, status, deadline, created_at, debt_token, collateral_token, duration_seconds)
+           VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`
         )
-        .bind(order.id, normalizeAddress(order.borrower), order.order_data, order.borrower_signature, order.nonce, order.deadline, order.created_at)
+        .bind(order.id, normalizeAddress(order.borrower), order.order_data, order.borrower_signature, order.nonce, order.deadline, order.created_at, order.debt_token ?? null, order.collateral_token ?? null, order.duration_seconds ?? null)
         .run()
     },
 
@@ -576,6 +579,42 @@ export function createD1Queries(db: D1Database) {
         .prepare('SELECT * FROM orders WHERE id = ?')
         .bind(id)
         .first()
+    },
+
+    async findCompatibleOrders(params: {
+      myDebtToken: string
+      myCollateralToken: string
+      duration: number
+      borrower: string
+      nowSeconds: number
+    }): Promise<Record<string, unknown>[]> {
+      // My debt token = their collateral (what they locked, what I want to borrow)
+      // My collateral token = their debt (what they want to borrow, what I can lend)
+      const normalizedDebt = normalizeAddress(params.myDebtToken)
+      const normalizedCollateral = normalizeAddress(params.myCollateralToken)
+      const normalizedBorrower = normalizeAddress(params.borrower)
+
+      const result = await db
+        .prepare(
+          `SELECT id, borrower, order_data, borrower_signature, nonce, deadline, created_at
+           FROM orders
+           WHERE status = 'pending'
+             AND deadline > ?
+             AND LOWER(debt_token) = LOWER(?)
+             AND LOWER(collateral_token) = LOWER(?)
+             AND LOWER(borrower) != LOWER(?)
+             AND borrower_signature IS NOT NULL
+           ORDER BY created_at ASC
+           LIMIT 10`
+        )
+        .bind(
+          params.nowSeconds,
+          normalizedCollateral,  // matches their debt_token (they want what I offer)
+          normalizedDebt,        // matches their collateral_token (they offer what I want)
+          normalizedBorrower,
+        )
+        .all<Record<string, unknown>>()
+      return result.results
     },
 
     async getOrders({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {

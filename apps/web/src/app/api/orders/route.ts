@@ -7,12 +7,15 @@ import { getInscriptionOrderTypedData, hashAssets } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
 import { verifyNonce } from '@/lib/verify-nonce'
 import { createOrderSchema } from '@/lib/validation'
+import { parseOrderRow } from '@/lib/order-utils'
+
+function normalizeAddr(address: string): string {
+  return '0x' + address.replace(/^0x/i, '').toLowerCase().padStart(64, '0')
+}
 
 export function OPTIONS(request: NextRequest) {
   return handleOptions(request)
 }
-
-import { parseOrderRow } from '@/lib/order-utils'
 
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request)
@@ -157,6 +160,15 @@ export async function POST(request: NextRequest) {
       orderHash: messageHash,
     }
 
+    // Extract denormalized fields for instant-match queries
+    const debtToken = order_data.debtAssets?.[0]?.asset_address
+      ? normalizeAddr(order_data.debtAssets[0].asset_address)
+      : null
+    const collateralToken = order_data.collateralAssets?.[0]?.asset_address
+      ? normalizeAddr(order_data.collateralAssets[0].asset_address)
+      : null
+    const durationSeconds = Number(order_data.duration ?? 0)
+
     await db.createOrder({
       id: String(id),
       borrower: String(borrower),
@@ -165,6 +177,9 @@ export async function POST(request: NextRequest) {
       nonce: String(nonce),
       deadline: Number(deadline),
       created_at: now,
+      debt_token: debtToken,
+      collateral_token: collateralToken,
+      duration_seconds: durationSeconds,
     })
 
     return jsonResponse({ ok: true, id }, request)

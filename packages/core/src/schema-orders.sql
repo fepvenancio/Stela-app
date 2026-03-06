@@ -4,11 +4,14 @@ CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
   borrower TEXT NOT NULL,
   order_data TEXT NOT NULL,
-  borrower_signature TEXT NOT NULL,
+  borrower_signature TEXT,
   nonce TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',
   deadline INTEGER NOT NULL,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  debt_token TEXT,
+  collateral_token TEXT,
+  duration_seconds INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS order_offers (
@@ -28,3 +31,6 @@ CREATE INDEX IF NOT EXISTS idx_orders_deadline ON orders(deadline);
 CREATE INDEX IF NOT EXISTS idx_order_offers_order_id ON order_offers(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_offers_lender ON order_offers(lender);
 CREATE INDEX IF NOT EXISTS idx_order_offers_status ON order_offers(status);
+
+-- Denormalized columns for instant-match queries (populated at order creation)
+CREATE INDEX IF NOT EXISTS idx_orders_match ON orders(status, debt_token, collateral_token);

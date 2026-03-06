@@ -82,11 +82,15 @@ export function parseOrderRow(row: Record<string, unknown>): Record<string, unkn
   const interestAssets = sanitizeAssets(parsed.interestAssets ?? parsed.interest_assets)
   const collateralAssets = sanitizeAssets(parsed.collateralAssets ?? parsed.collateral_assets)
 
-  // Strip sensitive fields before spreading into the response
-  const { borrower_signature: _bs, ...safeRow } = row
+  // Include borrower_signature only for pending orders (needed by settlement calldata).
+  // Once settled/expired/cancelled, signatures are purged (NULL) so nothing leaks.
+  // This is by design: the relayer model allows anyone to call settle().
+  const { borrower_signature: rawSig, ...safeRow } = row
+  const includeSig = row.status === 'pending' && rawSig != null
 
   return {
     ...safeRow,
+    ...(includeSig ? { borrower_signature: rawSig } : {}),
     order_data: {
       borrower: parsed.borrower ?? '',
       debtAssets,
