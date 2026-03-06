@@ -54,7 +54,6 @@ Order status: pending
 ```
 1. Lender navigates to /order/[id] page
    - Sees order details: debt/interest/collateral assets, duration, ROI, borrower
-   - Privacy toggle defaults to OFF for this flow
 
 2. For single-lender orders:
    --> "Sign & Settle 100%" button (bps = 10000)
@@ -87,58 +86,6 @@ Order status: pending
 
 Order status: settled
 On-chain: inscription created + funded in one tx
-```
-
----
-
-## Browse & Lend — Private Settlement
-
-**Page:** `/order/[id]`
-**Actor:** Lender (identity hidden)
-**Gas cost:** approve + shield deposit transaction
-**Prerequisite:** `PRIVACY_POOL_ADDRESS` configured
-
-```
-1. Lender navigates to /order/[id] page
-   - Privacy toggle defaults to ON when pool is deployed
-
-2. Lender clicks "Shield & Lend" button
-   --> TransactionProgressModal opens (4 steps)
-
-3. Step 1 — "Shield deposit"
-   a. Fetch order data
-   b. Self-lending check, nonce verification (same as public)
-   c. Generate random salt via generateSalt()
-   d. Compute deposit commitment via computeDepositCommitment(address, token, amount, salt)
-   e. Build multicall:
-      - Approve primary debt token to PRIVACY_POOL_ADDRESS
-      - Shield deposit via InscriptionClient.buildShieldDeposit()
-      - (Additional tokens: approve + transfer to pool)
-   f. Wallet prompts for approval
-
-4. Step 2 — "Confirming shield"
-   a. Wait for shield tx confirmation on-chain
-
-5. Step 3 — "Signing offer"
-   a. Build anonymous LendOffer typed data with lender='0x0' and lenderCommitment=commitment
-   b. Wallet signs the offer
-
-6. Step 4 — "Submitting offer"
-   a. POST /api/orders/:id/offer with:
-      - lender: '0x0'
-      - depositor: actual address (for sig verification)
-      - lender_commitment: commitment hash
-      - No tx_hash (bot will settle)
-   b. Save private note to localStorage:
-      - owner, inscriptionId (0n — not yet known), shares (bps), salt, commitment
-   c. Order status: matched
-
-7. Bot settlement (async, workers/bot cron):
-   a. Bot picks up matched order
-   b. Detects private settlement (lender_commitment != 0, lender = 0x0)
-   c. Builds settle() calldata with lender_commitment in offer struct
-   d. Executes on-chain — shares committed to privacy pool Merkle tree
-   e. Order status: settled
 ```
 
 ---

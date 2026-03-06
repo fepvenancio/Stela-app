@@ -1,6 +1,6 @@
 # Stela
 
-P2P lending protocol on StarkNet. Borrowers inscribe collateral, lenders fund loans, and settlement happens on-chain with optional privacy via zero-knowledge proofs.
+P2P lending protocol on StarkNet. Borrowers inscribe collateral, lenders fund loans, and settlement happens on-chain.
 
 This monorepo contains the full application stack: a Next.js frontend, Cloudflare Workers for indexing and automated settlement/liquidation, and shared protocol types.
 
@@ -209,21 +209,12 @@ The protocol supports gasless order creation via SNIP-12 typed data signatures:
 2. **Lender** signs a `LendOffer` and submits it as an offer
 3. The **bot worker** picks up matched orders and settles them on-chain with both signatures
 
-### Privacy Pool
-
-Lenders can opt into private lending by generating a commitment hash. When an order with a `lender_commitment` is settled:
-
-- Shares are committed to a Merkle tree in the privacy pool (instead of minting visible ERC1155 tokens)
-- Lenders redeem privately using a ZK proof via the `private_redeem` entrypoint
-- Private notes (salt, commitment, nullifier) are stored in the browser's localStorage
-
 ## Related Repositories
 
 | Repository | Description |
 |---|---|
 | [fepvenancio/Stela](https://github.com/fepvenancio/Stela) | Cairo smart contracts |
 | [fepvenancio/stela-sdk-ts](https://github.com/fepvenancio/stela-sdk-ts) | TypeScript SDK (`@fepvenancio/stela-sdk` on npm) |
-| [fepvenancio/stela-privacy](https://github.com/fepvenancio/stela-privacy) | Privacy pool contracts (commitment tree, shielded pool, ZK verifier) |
 
 ## Documentation
 

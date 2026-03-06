@@ -48,8 +48,6 @@ If any individual event handler fails, processing continues and errors are accum
 | `redeemed` | `handleRedeemed` | `insertEvent` (with redeemer, shares) |
 | `transfer_single` | `handleTransferSingle` | `insertEventReturning` (dedup), `incrementShareBalance` / `decrementShareBalance` |
 | `order_settled` | `handleOrderSettled` | `updateOrderStatus('settled')` |
-| `private_settled` | `handlePrivateSettled` | `insertEvent` (with lender_commitment, shares, private flag) |
-| `private_redeemed` | `handlePrivateRedeemed` | `insertEvent` (with nullifier, recipient, shares, private flag) |
 
 The `transfer_single` handler uses `insertEventReturning()` for dedup -- if the event was already processed (unique index on `inscription_id, event_type, tx_hash`), balance mutations are skipped to prevent double-counting.
 
@@ -136,17 +134,15 @@ For each matched order:
 
 1. Load order + offer from D1
 2. Parse `order_data` JSON
-3. **Detect private settlement**: if `lender_commitment != 0` and `lender == 0x0`
-4. **Pre-settle nonce checks**:
+3. **Pre-settle nonce checks**:
    - Verify borrower's on-chain nonce matches order nonce (expire order if stale)
-   - For public settlements: verify lender's on-chain nonce matches offer nonce (expire offer if stale)
-   - For private settlements: skip lender nonce check (contract doesn't consume lender nonce in private path)
+   - Verify lender's on-chain nonce matches offer nonce (expire offer if stale)
 5. Compute asset hashes via Poseidon (`hash.computePoseidonHashOnElements`)
 6. Build settle calldata:
    - Order struct (11 fields): borrower, debt_hash, interest_hash, collateral_hash, counts, duration, deadline, multi_lender, nonce
    - Serialized asset arrays: `[len, ...per-asset(address, type_enum, value_low, value_high, token_id_low, token_id_high)]`
    - Borrower signature: `[len, ...elements]`
-   - Offer struct (6 fields): order_hash, lender, bps_low, bps_high, nonce, lender_commitment
+   - Offer struct (5 fields): order_hash, lender, bps_low, bps_high, nonce
    - Lender signature: `[len, ...elements]`
 7. Execute `settle()` via `Account.execute()` with 120s timeout
 8. On success: update both order and offer status to `settled`
@@ -246,8 +242,6 @@ For each block with events:
 - InscriptionLiquidated
 - SharesRedeemed
 - TransferSingle
-- PrivateSettled
-- PrivateSharesRedeemed
 
 ### Retry Strategy
 

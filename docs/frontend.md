@@ -16,7 +16,7 @@ Design philosophy: the frontend is a **pure rendering layer**. All protocol logi
 | `/browse` | `src/app/browse/page.tsx` | Browse all inscriptions with status filters (open/partial/filled/expired/all), search, sort, batch selection, and off-chain orders section |
 | `/create` | `src/app/create/page.tsx` | Create a new inscription order via off-chain SNIP-12 signing. Form for debt/interest/collateral assets, duration, deadline, multi-lender toggle. ROI preview. TransactionProgressModal with 3 steps. |
 | `/inscription/[id]` | `src/app/inscription/[id]/page.tsx` | Inscription detail page. Shows yield, duration, borrower/lender info, assets table, timeline. Sidebar with context-aware action buttons (sign, repay, cancel, liquidate, redeem). |
-| `/order/[id]` | `src/app/order/[id]/page.tsx` | Off-chain order detail page. Shows order data, assets, offers. Lenders can sign offers with optional privacy toggle; borrowers can cancel. TransactionProgressModal for settlement. |
+| `/order/[id]` | `src/app/order/[id]/page.tsx` | Off-chain order detail page. Shows order data, assets, offers. Lenders can sign offers; borrowers can cancel. TransactionProgressModal for settlement. |
 | `/portfolio` | `src/app/portfolio/page.tsx` | Dashboard with tabs for Orders/Lending/Borrowing/Redeemable positions. Summary bar with aggregate metrics. |
 | `/faucet` | `src/app/faucet/page.tsx` | Mint mock tokens (mUSDC, mWETH, mDAI, StelaNFT) for Sepolia testing. |
 | `/docs` | `src/app/docs/page.tsx` | In-app protocol documentation page with terminology, lifecycle, status flow diagram, mechanics, and SDK info. |
@@ -38,7 +38,7 @@ All API routes query D1 directly via the Cloudflare Worker binding. They use the
 | `/api/orders` | POST | Create a new off-chain order (borrower signature + order data). Server-side SNIP-12 signature verification and on-chain nonce validation. |
 | `/api/orders/[id]` | GET | Single order detail with attached offers. |
 | `/api/orders/[id]` | DELETE | Cancel a pending order (borrower only, requires signed CancelOrder typed data). |
-| `/api/orders/[id]/offer` | POST | Submit a lender offer against an order. Supports private offers with `lender_commitment` and `depositor` fields. |
+| `/api/orders/[id]/offer` | POST | Submit a lender offer against an order. |
 | `/api/sync` | POST | Immediate sync: waits for a tx receipt, parses Stela events, and writes to D1. |
 | `/api/health` | GET | D1 connectivity check. |
 
@@ -54,7 +54,7 @@ All API routes include:
 - **CORS** headers for `stela-dapp.xyz` and `www.stela-dapp.xyz` (reflected origin).
 - **Zod validation** of request bodies (`src/lib/validation.ts`):
   - `createOrderSchema` -- validates order creation (felt252 format, asset arrays, addresses, signatures)
-  - `createOfferSchema` -- validates lender offers (BPS range 1-10000, signature, nonce, optional lender_commitment, depositor)
+  - `createOfferSchema` -- validates lender offers (BPS range 1-10000, signature, nonce)
   - `cancelOrderSchema` -- validates cancellation (borrower address, signature)
   - Signature inputs accept array `[r, s]`, JSON string, or `{r, s}` object format
 - **Signature verification** (`src/lib/verify-signature.ts`):
@@ -96,7 +96,7 @@ All API routes include:
 
   When a `txHash` is present, a footer panel shows the truncated hash with a "Voyager" link to `https://sepolia.voyager.online/tx/{txHash}`. The modal cannot be closed until all steps complete or an error occurs. The close button text changes to "Done" on success and "Close" on error.
 
-  Used by the `/create` page (3 steps: sign order, submit to API, confirmation) and the `/order/[id]` page (3-4 steps depending on private mode).
+  Used by the `/create` page (3 steps: sign order, submit to API, confirmation) and the `/order/[id]` page (3 steps: approve & settle, confirming on-chain, saving offer).
 
 ### Inscription Display
 
@@ -163,7 +163,7 @@ All API routes include:
 | `useLiquidateInscription(id)` | `hooks/transactions.ts` | Sends `liquidate` call. |
 | `useRedeemShares(id)` | `hooks/transactions.ts` | Sends `redeem` call with the user's share amount. |
 | `useBatchSign()` | `hooks/useBatchSign.ts` | Aggregates ERC20 approvals across multiple inscriptions (using U128_MAX for approval efficiency) + multiple `sign_inscription` calls. Single atomic multicall. |
-| `useSignOrder(orderId)` | `hooks/useSignOrder.ts` | Two settlement paths: **public** (approve tokens + on-chain `settle()` via SDK's `InscriptionClient.buildSettle()`) and **private** (shield deposit to privacy pool + anonymous LendOffer signing + API POST for bot settlement). Accepts `(bps, privateMode, progress?)` and uses `TransactionProgress` for step tracking. |
+| `useSignOrder(orderId)` | `hooks/useSignOrder.ts` | Approve tokens + on-chain `settle()` via SDK's `InscriptionClient.buildSettle()`. Accepts `(bps, progress?)` and uses `TransactionProgress` for step tracking. |
 | `useTransactionProgress(steps)` | `hooks/useTransactionProgress.ts` | State machine managing step-by-step transaction UI. Exposes `start()`, `advance()`, `fail(message)`, `setTxHash(hash)`, `close()`. Steps transition: `idle` -> `active` -> `success` or `error`. |
 | `useSync()` | `hooks/useSync.ts` | POSTs to `/api/sync` after transactions to immediately index events. Dispatches `stela:sync` custom event to trigger refetches across all `useFetchApi` consumers. |
 
@@ -216,33 +216,6 @@ This ensures the UI updates immediately after a transaction, without waiting for
 
 ---
 
-## Privacy Features
-
-### Privacy Toggle
-
-The `/order/[id]` page includes a privacy toggle when `PRIVACY_POOL_ADDRESS` is configured. Default: ON when pool is deployed. The toggle controls two different settlement flows:
-
-- **Public mode:** Lender approves debt tokens and calls `settle()` on-chain directly. Identity is visible.
-- **Private mode:** Lender shields tokens into the privacy pool, signs an anonymous offer, and a bot settles without revealing the lender's identity.
-
-### Private Notes
-
-When lending privately, a private note is stored in localStorage (`stela_private_notes` key) via `src/lib/private-notes.ts`. Notes contain:
-
-- `owner`: the depositor address
-- `inscriptionId`: the inscription this note relates to
-- `shares`: the share amount committed
-- `salt`: random salt used in commitment
-- `commitment`: the Poseidon commitment hash
-
-Functions: `savePrivateNote()`, `getPrivateNotes()`, `getPrivateNote(commitment)`, `deletePrivateNote(commitment)`, `exportNotesAsJSON()`.
-
-### Private Lender Display
-
-Offers with a non-zero `lender_commitment` display "Private Lender" with a lock icon instead of the lender address.
-
----
-
 ## Wallet Integration
 
 ### Configuration
@@ -282,11 +255,11 @@ All write transactions follow this pattern:
 
 | File | Exports | Purpose |
 |---|---|---|
-| `lib/config.ts` | `NETWORK`, `CONTRACT_ADDRESS`, `RPC_URL`, `PRIVACY_POOL_ADDRESS` | Resolved from environment variables and SDK defaults |
+| `lib/config.ts` | `NETWORK`, `CONTRACT_ADDRESS`, `RPC_URL` | Resolved from environment variables and SDK defaults |
 | `lib/connectors.ts` | `connectors` | Wallet connector instances (Argent, Braavos) |
 | `lib/status.ts` | `computeStatus()`, `enrichStatus()` | Delegates to SDK's `computeStatus` for canonical status computation |
 | `lib/tx.ts` | `sendTxWithToast()`, `getErrorMessage()` | Centralized transaction execution with toast notifications |
-| `lib/offchain.ts` | `getInscriptionOrderTypedData()`, `getLendOfferTypedData()`, `getPrivateLendOfferTypedData()`, `hashAssets()`, `getNonce()`, `getCancelOrderTypedData()`, `computeCommitment()`, `computeDepositCommitment()`, `computeNullifier()`, `generateSalt()`, `createPrivateNote()` | Re-exports from SDK for SNIP-12 typed data construction, app-local cancel typed data, and privacy primitives |
+| `lib/offchain.ts` | `getInscriptionOrderTypedData()`, `getLendOfferTypedData()`, `hashAssets()`, `getNonce()`, `getCancelOrderTypedData()` | Re-exports from SDK for SNIP-12 typed data construction and app-local cancel typed data |
 | `lib/format.ts` | `formatTokenValue()`, `formatDuration()`, `formatTimestamp()` | Display formatting for token values, durations, and timestamps |
 | `lib/amount.ts` | `parseAmount()` | Convert human-readable amounts (e.g., "1.5") to on-chain bigint values |
 | `lib/address.ts` | `formatAddress()`, `normalizeAddress()`, `addressesEqual()` | StarkNet address formatting, normalization, and comparison |
@@ -298,6 +271,5 @@ All write transactions follow this pattern:
 | `lib/verify-signature.ts` | `verifyStarknetSignature()` | Server-side SNIP-12 signature verification via raw JSON-RPC |
 | `lib/verify-nonce.ts` | `verifyNonce()` | Server-side on-chain nonce verification via raw JSON-RPC |
 | `lib/order-utils.ts` | `normalizeOrderData()`, `parseOrderRow()` | Shared order_data JSON normalization (camelCase/snake_case variants) |
-| `lib/private-notes.ts` | `savePrivateNote()`, `getPrivateNotes()`, `getPrivateNote()`, `deletePrivateNote()`, `exportNotesAsJSON()` | Browser localStorage management for private lending notes |
 | `lib/filter-utils.ts` | Filter/search utilities | Shared filtering logic for browse page |
 | `lib/utils.ts` | `cn()` | Tailwind CSS class merging utility (clsx + tailwind-merge) |

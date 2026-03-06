@@ -96,7 +96,6 @@ Set in `apps/web/wrangler.jsonc` under `vars`:
 | `NEXT_PUBLIC_NETWORK` | StarkNet network | `sepolia` |
 | `NEXT_PUBLIC_STELA_ADDRESS` | Stela contract address | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` |
 | `NEXT_PUBLIC_RPC_URL` | StarkNet RPC endpoint | `https://api.cartridge.gg/x/starknet/sepolia` |
-| `NEXT_PUBLIC_PRIVACY_POOL_ADDRESS` | Privacy pool contract address (empty to disable) | `0x002579e670f80cca558236c95762dd5b94ae017b6ed92df65b74b61b539cdec7` |
 
 ### Custom Domain
 
@@ -237,7 +236,7 @@ Every 2 minutes, the bot:
 
 1. **Acquires D1 distributed lock** -- Uses `_meta` table key `bot_lock` with 5-minute TTL. Skips if another instance holds the lock.
 2. **Expires stale orders** -- Updates off-chain orders past their deadline to `expired` status.
-3. **Settles matched orders** -- Finds orders with status `matched` and pending offers, builds the full `settle` calldata (order struct, asset arrays, borrower signature, offer struct including `lender_commitment`, lender signature), and executes the on-chain transaction. Supports private settlement when `lender_commitment != 0`.
+3. **Settles matched orders** -- Finds orders with status `matched` and pending offers, builds the full `settle` calldata (order struct, asset arrays, borrower signature, offer struct, lender signature), and executes the on-chain transaction.
 4. **Liquidates expired inscriptions** -- Queries D1 for inscriptions where `status = 'filled'` and `signed_at + duration < now`, then calls `liquidate` on each.
 
 Operations are serialized to avoid StarkNet nonce conflicts. The lock is released on completion or error.
@@ -292,7 +291,7 @@ The service:
 2. Connects to Apibara DNA (Sepolia) via gRPC at `https://sepolia.starknet.a5a.ch`
 3. Streams events matching the Stela contract address with `finality: 'accepted'`
 4. For each block with events:
-   - Parses event selectors (InscriptionCreated, InscriptionSigned, InscriptionCancelled, InscriptionRepaid, InscriptionLiquidated, SharesRedeemed, TransferSingle, PrivateSettled, PrivateSharesRedeemed)
+   - Parses event selectors (InscriptionCreated, InscriptionSigned, InscriptionCancelled, InscriptionRepaid, InscriptionLiquidated, SharesRedeemed, TransferSingle)
    - Enriches via RPC (fetches on-chain inscription data, locker addresses)
    - Extracts asset details from transaction calldata (for create events)
    - Batches events into a `WebhookPayload` and POSTs to the CF Worker
@@ -316,10 +315,10 @@ When adding new tables or columns:
 
 All DDL statements use `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS`, making them safe to re-run.
 
-For column additions (e.g., `lender_commitment` on `order_offers`), use `ALTER TABLE` statements applied directly:
+For column additions, use `ALTER TABLE` statements applied directly:
 
 ```bash
-npx wrangler d1 execute stela-db --command "ALTER TABLE order_offers ADD COLUMN lender_commitment TEXT DEFAULT '0x0'"
+npx wrangler d1 execute stela-db --command "ALTER TABLE order_offers ADD COLUMN new_column TEXT DEFAULT ''"
 ```
 
 ---
@@ -336,7 +335,7 @@ npx wrangler d1 execute stela-db --command "ALTER TABLE order_offers ADD COLUMN 
 | `services/indexer` | `WEBHOOK_SECRET` | `.env` file or container env vars |
 | `services/indexer` | `RPC_URL` | `.env` file or container env vars |
 
-Non-secret variables (contract address, network, privacy pool address) are set in `wrangler.jsonc` under `vars`.
+Non-secret variables (contract address, network) are set in `wrangler.jsonc` under `vars`.
 
 ---
 

@@ -83,7 +83,7 @@ StarkNet (Sepolia)
 1. **Apibara DNA** streams StarkNet events matching the Stela contract address via gRPC.
 2. **services/indexer** (Node.js process) receives raw events, parses them, enriches data via StarkNet RPC calls (`get_inscription`, `get_locker`), and extracts asset details from transaction calldata.
 3. The service POSTs batched `WebhookPayload` objects to the CF Worker's `/webhook/events` endpoint, authenticated with a shared Bearer token.
-4. **workers/indexer** validates the payload with Zod schemas, checks idempotency via block cursor, and dispatches each event to its handler (created, signed, cancelled, repaid, liquidated, redeemed, transfer_single, order_settled, private_settled, private_redeemed).
+4. **workers/indexer** validates the payload with Zod schemas, checks idempotency via block cursor, and dispatches each event to its handler (created, signed, cancelled, repaid, liquidated, redeemed, transfer_single, order_settled).
 5. Handlers write to D1 tables: `inscriptions`, `inscription_assets`, `inscription_events`, `lockers`, `share_balances`.
 
 ### Write Flow (User Transactions)
@@ -110,17 +110,6 @@ The protocol supports gasless order creation via off-chain SNIP-12 typed data si
 3. The order status transitions: `pending` -> `matched`.
 4. **workers/bot** picks up matched orders on its cron schedule and calls the on-chain `settle` entrypoint with both signatures and full calldata.
 5. The settlement creates the inscription on-chain in a single transaction.
-
-### Private Settlement Flow
-
-When the privacy pool is enabled, lenders can settle privately:
-
-1. **Lender** shields debt tokens into the privacy pool via `approve` + `shield_deposit` on-chain.
-2. **Lender** signs an anonymous `LendOffer` with `lender = 0x0` and a `lender_commitment` (Poseidon hash).
-3. The offer is POSTed to `/api/orders/:id/offer` with `depositor` set to the actual depositor address (for signature verification).
-4. A private note (salt, commitment, shares) is saved to the browser's localStorage for future redemption.
-5. **workers/bot** settles the matched order on-chain. The shares are committed to the privacy pool Merkle tree instead of minting ERC1155 tokens.
-6. Redemption requires a ZK proof via `private_redeem()`.
 
 ---
 
@@ -151,7 +140,7 @@ All Workers and the Next.js API routes share the same D1 database via Wrangler b
 | `lockers` | Mapping of inscription_id to locker TBA contract address |
 | `share_balances` | ERC1155 share balances per account per inscription |
 | `orders` | Off-chain SNIP-12 signed orders (borrower signatures, order data JSON) |
-| `order_offers` | Lender offers against orders (lender signatures, BPS amounts, lender_commitment) |
+| `order_offers` | Lender offers against orders (lender signatures, BPS amounts) |
 | `_meta` | Key-value store for indexer block cursor and bot distributed lock |
 
 Schema files:
@@ -199,7 +188,7 @@ stela-apibara-indexer (services/indexer)
 
 ### Key External Dependencies
 
-- **`@fepvenancio/stela-sdk`** -- TypeScript SDK published on npm. Provides `InscriptionClient`, `ShareClient`, `LockerClient`, `computeStatus()`, `parseEvents()`, typed data builders for SNIP-12 signing, token registry, u256 utilities, and privacy primitives (`computeCommitment`, `computeNullifier`, `generateSalt`, `createPrivateNote`). The frontend delegates all protocol logic to this SDK.
+- **`@fepvenancio/stela-sdk`** -- TypeScript SDK published on npm. Provides `InscriptionClient`, `ShareClient`, `LockerClient`, `computeStatus()`, `parseEvents()`, typed data builders for SNIP-12 signing, token registry, and u256 utilities. The frontend delegates all protocol logic to this SDK.
 - **`@stela/core`** -- Internal workspace package. Contains D1 query module (`createD1Queries`), shared types, ABI JSON, constants, u256 helpers, and token registry. Consumed by all workers and the frontend API routes.
 - **`@opennextjs/cloudflare`** -- Adapter that compiles Next.js output into a Cloudflare Worker with D1 bindings and static asset serving.
 - **`@apibara/indexer` / `@apibara/starknet`** -- Apibara v2 beta SDK for gRPC-based StarkNet event streaming.

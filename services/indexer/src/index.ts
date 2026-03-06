@@ -34,7 +34,7 @@ function requireHexAddress(name: string): `0x${string}` {
   return value as `0x${string}`
 }
 
-const DNA_STREAM_URL = 'https://sepolia.starknet.a5a.ch'
+const DNA_STREAM_URL = requireEnv('DNA_STREAM_URL')
 
 // ---------------------------------------------------------------------------
 // Fetch last indexed block from CF Worker /health endpoint
@@ -115,6 +115,26 @@ async function runOnce(): Promise<void> {
 
       console.log(`Block ${blockNumber}: processing ${events.length} event(s)`)
 
+      // Build txHash → calldata lookup map once per block
+      const calldataByTxHash = new Map<string, string[]>()
+      if (block.transactions) {
+        for (const tx of block.transactions) {
+          const txHash = (tx as Record<string, unknown> & { meta?: { transactionHash?: string } })
+            .meta?.transactionHash as string | undefined
+          if (!txHash) continue
+          const txBody = (tx as Record<string, unknown> & { transaction?: Record<string, unknown> })
+            .transaction
+          if (!txBody) continue
+          for (const variant of ['invokeV1', 'invokeV3', 'invokeV0'] as const) {
+            const inner = txBody[variant] as Record<string, unknown> | undefined
+            if (inner?.calldata) {
+              calldataByTxHash.set(txHash, inner.calldata as string[])
+              break
+            }
+          }
+        }
+      }
+
       const webhookEvents = []
 
       for (const streamEvent of events) {
@@ -124,19 +144,10 @@ async function runOnce(): Promise<void> {
           transactionHash: streamEvent.transactionHash as string,
         }
 
-        // If transaction is included, try to find calldata
-        if (block.transactions) {
-          for (const tx of block.transactions) {
-            const txRecord = tx as Record<string, unknown>
-            // Apibara includes transaction variants with calldata
-            for (const variant of ['invokeV1', 'invokeV3', 'invokeV0'] as const) {
-              const inner = txRecord[variant] as Record<string, unknown> | undefined
-              if (inner?.calldata) {
-                rawEvent.transaction = { calldata: inner.calldata as string[] }
-                break
-              }
-            }
-          }
+        // Look up calldata for this event's transaction
+        const calldata = calldataByTxHash.get(rawEvent.transactionHash)
+        if (calldata) {
+          rawEvent.transaction = { calldata }
         }
 
         const webhookEvent = await transformEvent(

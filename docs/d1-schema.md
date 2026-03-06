@@ -137,12 +137,10 @@ Lender offers against off-chain orders.
 |---|---|---|---|
 | `id` | TEXT | PRIMARY KEY | UUID |
 | `order_id` | TEXT | NOT NULL, FK -> orders(id) | Parent order |
-| `lender` | TEXT | NOT NULL | Lender address (`0x0` for private offers) |
+| `lender` | TEXT | NOT NULL | Lender address |
 | `bps` | INTEGER | NOT NULL | Basis points to lend (1-10000) |
 | `lender_signature` | TEXT | NOT NULL | JSON: signature array |
 | `nonce` | TEXT | NOT NULL | Lender's on-chain nonce at time of signing |
-| `lender_commitment` | TEXT | NOT NULL DEFAULT '0' | Poseidon commitment hash (non-zero for private offers) |
-| `depositor` | TEXT | | Actual depositor address for private offers |
 | `status` | TEXT | NOT NULL DEFAULT 'pending' | `pending`, `settled`, `expired` |
 | `created_at` | INTEGER | NOT NULL | Unix timestamp |
 
@@ -189,7 +187,7 @@ All database access goes through the `createD1Queries(db)` factory from `@stela/
 | `getOrder(id)` | Single order | `SELECT * FROM orders WHERE id = ?` |
 | `getOrders({ status, address, page, limit })` | Paginated order list. Address search checks both `orders.borrower` and `order_offers.lender` (subquery). | `SELECT * FROM orders WHERE ... ORDER BY created_at DESC` |
 | `getOrderOffers(orderId)` | All offers for an order | `SELECT * FROM order_offers WHERE order_id = ? ORDER BY created_at DESC` |
-| `getMatchedOrders()` | Orders ready for bot settlement (matched + pending offer + not expired). Limited to 20. | `SELECT o.id, oo.id, oo.lender_commitment FROM orders o JOIN order_offers oo ON ... WHERE o.status = 'matched' AND oo.status = 'pending' AND o.deadline > ?` |
+| `getMatchedOrders()` | Orders ready for bot settlement (matched + pending offer + not expired). Limited to 20. | `SELECT o.id, oo.id FROM orders o JOIN order_offers oo ON ... WHERE o.status = 'matched' AND oo.status = 'pending' AND o.deadline > ?` |
 | `findLiquidatable(nowSeconds)` | Filled inscriptions past their duration. Limited to 50. | `SELECT id FROM inscriptions WHERE status = 'filled' AND signed_at IS NOT NULL AND (signed_at + duration) < ?` |
 
 ### Write Methods

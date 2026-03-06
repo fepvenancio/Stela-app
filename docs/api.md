@@ -32,7 +32,7 @@ Origin-reflected CORS for `stela-dapp.xyz` and `www.stela-dapp.xyz`. All routes 
 Write endpoints validate request bodies with Zod schemas:
 
 - **`createOrderSchema`** -- Order creation: felt252 fields, asset arrays, addresses, signatures, nonce, deadline
-- **`createOfferSchema`** -- Lender offers: BPS (1-10000), signature, nonce, optional `lender_commitment`, optional `depositor`
+- **`createOfferSchema`** -- Lender offers: BPS (1-10000), signature, nonce
 - **`cancelOrderSchema`** -- Order cancellation: borrower address, signature
 
 Read endpoints validate query/path params with schemas from `src/lib/schemas.ts`:
@@ -332,7 +332,6 @@ Single order detail with attached offers.
         "id": "uuid",
         "lender": "0x...",
         "bps": 10000,
-        "lender_commitment": "0x0",
         "status": "pending",
         "created_at": 1740000000
       }
@@ -380,8 +379,6 @@ Submit a lender offer against an order.
   "bps": 10000,
   "lender_signature": ["0x...", "0x..."],
   "nonce": "0",
-  "lender_commitment": "0x0",
-  "depositor": "0x...",
   "tx_hash": "0x..."
 }
 ```
@@ -391,25 +388,16 @@ Submit a lender offer against an order.
 | Field | Required | Description |
 |---|---|---|
 | `id` | yes | Unique offer ID |
-| `lender` | yes | Lender address (`0x0` for private offers) |
+| `lender` | yes | Lender address |
 | `bps` | yes | Basis points to lend (1-10000) |
 | `lender_signature` | yes | SNIP-12 LendOffer signature |
 | `nonce` | yes | Lender's on-chain nonce |
-| `lender_commitment` | no | Poseidon commitment hash (default `0x0`) |
-| `depositor` | no | Actual depositor address for private offers (required when `lender=0x0`) |
 | `tx_hash` | no | If present, settlement already happened on-chain |
 
 **Status transition logic:**
 
 - If `tx_hash` is provided: order -> `settled`, offer -> `settled` (user already settled on-chain, skip sig verification)
 - If no `tx_hash`: order -> `matched`, offer -> `pending` (bot will settle later)
-
-**Private offer handling:**
-
-When `lender` is `0x0`:
-- The `depositor` field identifies the actual signer
-- Signature is verified against the depositor's account contract
-- `lender_commitment` is stored for the bot's settle calldata
 
 **Response:** `{ "ok": true, "id": "uuid", "status": "matched" | "settled" }`
 

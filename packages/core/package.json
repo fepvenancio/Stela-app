@@ -11,8 +11,7 @@
       "import": "./dist/index.js"
     },
     "./abi/stela.json": "./src/abi/stela.json",
-    "./abi/genesis.json": "./src/abi/genesis.json",
-    "./abi/fee-vault.json": "./src/abi/fee-vault.json"
+    "./abi/genesis.json": "./src/abi/genesis.json"
   },
   "scripts": {
     "build": "tsc",
