@@ -118,6 +118,11 @@ export interface RawStreamEvent {
  * Transform a single raw Starknet event into a WebhookEvent.
  * Returns null if the event selector is unrecognized or parsing fails.
  */
+/** Normalize a hex selector to match starknet.js format (strip leading zeros after 0x) */
+function normalizeSelector(hex: string): string {
+  return '0x' + hex.replace(/^0x0*/, '')
+}
+
 export async function transformEvent(
   event: RawStreamEvent,
   blockNumber: number,
@@ -126,7 +131,7 @@ export async function transformEvent(
   stelaAddress: string,
   abi: unknown[]
 ): Promise<WebhookEvent | null> {
-  const selector = event.keys[0]
+  const selector = normalizeSelector(event.keys[0])
 
   try {
     switch (selector) {
