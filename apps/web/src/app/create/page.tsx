@@ -910,167 +910,85 @@ export default function CreatePage() {
 
   /* ── Render ────────────────────────────────────────────── */
 
+  const pillClass = (active: boolean) =>
+    `px-3 py-1.5 rounded-full text-[11px] font-medium transition-all cursor-pointer ${
+      active
+        ? 'bg-star/15 text-star border border-star/30'
+        : 'text-dust border border-transparent hover:text-chalk hover:bg-surface/50'
+    }`
+
   return (
     <div className="animate-fade-up max-w-xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-display text-2xl sm:text-3xl tracking-widest text-chalk mb-2 uppercase">
+      <div className="mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl tracking-widest text-chalk mb-1 uppercase">
           Inscribe
         </h1>
         <p className="text-dust text-sm">
-          {mode === 'offchain'
-            ? 'Define your terms. Signing is gasless — no cost until settlement.'
-            : 'Define your terms. Collateral will be locked on-chain immediately.'}
+          {mode === 'offchain' ? 'Gasless signing — no cost until settlement.' : 'Collateral locked on-chain immediately.'}
         </p>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-4">
 
-        {/* ═══════════════════════════════════════════════════
-           1. MODE TOGGLES — order type, inscription mode, lender
-           ═══════════════════════════════════════════════════ */}
+        {/* ── TOGGLES — single compact row ──────────────── */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Order type */}
+          <button type="button" onClick={() => { setOrderType('lending'); if (durationPreset === '0') setDurationPreset('86400') }} className={pillClass(orderType === 'lending')}>
+            Lending
+          </button>
+          <button type="button" onClick={() => { setOrderType('swap'); setInterestAssets([]); setUseCustomDuration(false) }} className={pillClass(orderType === 'swap')}>
+            Swap
+          </button>
+
+          <div className="w-px h-4 bg-edge/40 mx-1" />
+
+          {/* Mode */}
+          <button type="button" onClick={() => setMode('offchain')} className={pillClass(mode === 'offchain')}>
+            Off-Chain
+          </button>
+          <button type="button" onClick={() => setMode('onchain')} className={pillClass(mode === 'onchain')}>
+            On-Chain
+          </button>
+
+          <div className="w-px h-4 bg-edge/40 mx-1" />
+
+          {/* Lender mode */}
+          <button type="button" onClick={() => setMultiLender(false)} className={pillClass(!multiLender)}>
+            Single
+          </button>
+          <button type="button" onClick={() => setMultiLender(true)} className={pillClass(multiLender)}>
+            Multi
+          </button>
+        </div>
+
+        {/* ── ASSETS + TERMS (single card) ──────────────── */}
         <section className="rounded-xl border border-edge/30 overflow-clip">
-          <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
-            <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">Configuration</span>
-          </div>
-
-          <div className="p-4 space-y-4">
-            {/* Order Type: Lending vs Swap */}
-            <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Order Type</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrderType('lending')
-                    if (durationPreset === '0') setDurationPreset('86400')
-                  }}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    orderType === 'lending'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                  }`}
-                >
-                  <span className="block font-semibold">Lending</span>
-                  <span className={`text-[10px] ${orderType === 'lending' ? 'text-star/60' : 'text-ash'}`}>Duration + Interest</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrderType('swap')
-                    setInterestAssets([])
-                    setUseCustomDuration(false)
-                  }}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    orderType === 'swap'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                  }`}
-                >
-                  <span className="block font-semibold">Swap</span>
-                  <span className={`text-[10px] ${orderType === 'swap' ? 'text-star/60' : 'text-ash'}`}>Instant exchange</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Inscription Mode: Off-chain vs On-chain */}
-            <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Inscription Mode</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMode('offchain')}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    mode === 'offchain'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                  }`}
-                >
-                  <span className="block font-semibold">Off-Chain</span>
-                  <span className={`text-[10px] ${mode === 'offchain' ? 'text-star/60' : 'text-ash'}`}>Gasless signing</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('onchain')}
-                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    mode === 'onchain'
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                  }`}
-                >
-                  <span className="block font-semibold">On-Chain</span>
-                  <span className={`text-[10px] ${mode === 'onchain' ? 'text-star/60' : 'text-ash'}`}>Locks collateral now</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Lender Mode: Single vs Multi */}
-            <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Lender Mode</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMultiLender(false)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    !multiLender
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                  }`}
-                >
-                  Single Lender
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMultiLender(true)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    multiLender
-                      ? 'border-star/40 bg-star/10 text-star'
-                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                  }`}
-                >
-                  Multi-Lender
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════════════
-           2. ASSETS
-           ═══════════════════════════════════════════════════ */}
-        <section className="rounded-xl border border-edge/30 overflow-clip">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-edge/30 bg-surface/10">
-            <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
-              Assets
-              {allAssets.length > 0 && (
-                <span className="ml-1.5 text-chalk">{allAssets.length}</span>
-              )}
+          {/* Asset header + add */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-edge/30 bg-surface/10">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold">
+              Assets{allAssets.length > 0 && <span className="ml-1 text-chalk">{allAssets.length}</span>}
             </span>
             <button
               type="button"
               onClick={() => setAddModalOpen(true)}
               className="flex items-center gap-1 text-[11px] text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M6 2v8M2 6h8" />
-              </svg>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
               Add
             </button>
           </div>
 
+          {/* Asset list */}
           {allAssets.length === 0 ? (
             <button
               type="button"
               onClick={() => setAddModalOpen(true)}
-              className="w-full py-10 hover:bg-surface/10 transition-colors cursor-pointer"
+              className="w-full py-8 hover:bg-surface/10 transition-colors cursor-pointer"
             >
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-surface/40 border border-edge/30 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
-                    <path d="M8 3v10M3 8h10" />
-                  </svg>
-                </div>
-                <span className="text-xs text-dust">Add your first token</span>
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
+                <span className="text-xs text-dust">Add tokens</span>
               </div>
             </button>
           ) : (
@@ -1086,51 +1004,35 @@ export default function CreatePage() {
             </div>
           )}
 
-          {/* Validation hints */}
           {showErrors && (!hasDebt || !hasCollateral) && (
-            <div className="px-3 py-2 border-t border-edge/20 bg-nova/5">
+            <div className="px-3 py-1.5 border-t border-edge/20 bg-nova/5">
               <p className="text-[11px] text-nova">
                 {!hasDebt && 'Add at least one borrow asset. '}
                 {!hasCollateral && 'Add at least one collateral asset.'}
               </p>
             </div>
           )}
-        </section>
 
-        {/* ═══════════════════════════════════════════════════
-           3. TERMS — Duration + Deadline
-           ═══════════════════════════════════════════════════ */}
-        <section className="rounded-xl border border-edge/30 overflow-clip">
-          <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
-            <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">Terms</span>
-          </div>
-
-          <div className="p-4 space-y-4">
-            {/* Duration (hidden for swaps) */}
+          {/* Terms — inline inside the same card */}
+          <div className="px-3 py-3 border-t border-edge/20 space-y-3">
+            {/* Duration (lending only) */}
             {!isSwap && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
-                    Loan Duration
-                  </Label>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Duration</span>
                   {useCustomDuration ? (
-                    <button type="button" onClick={() => setUseCustomDuration(false)} className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer">
-                      Presets
-                    </button>
+                    <button type="button" onClick={() => setUseCustomDuration(false)} className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer">Presets</button>
                   ) : (
-                    <button type="button" onClick={() => setUseCustomDuration(true)} className="text-[10px] text-ash hover:text-star transition-colors cursor-pointer">
-                      Custom
-                    </button>
+                    <button type="button" onClick={() => setUseCustomDuration(true)} className="text-[10px] text-ash hover:text-star transition-colors cursor-pointer">Custom</button>
                   )}
                 </div>
-
                 {useCustomDuration ? (
                   <div className="flex gap-2">
                     <Input
                       type="number"
                       value={customDurationValue}
                       onChange={(e) => setCustomDurationValue(e.target.value)}
-                      className="flex-1 bg-surface/50 border-edge/50 font-mono h-9"
+                      className="flex-1 bg-surface/50 border-edge/50 font-mono h-8 text-sm"
                       placeholder="Amount"
                       min="1"
                     />
@@ -1140,14 +1042,10 @@ export default function CreatePage() {
                           key={u.multiplier}
                           type="button"
                           onClick={() => setCustomDurationUnit(u.multiplier)}
-                          className={`px-2 py-1.5 rounded-lg text-[10px] border transition-all cursor-pointer ${
-                            customDurationUnit === u.multiplier
-                              ? 'border-star/40 bg-star/10 text-star'
-                              : 'border-edge/50 text-dust hover:text-chalk'
+                          className={`px-2 py-1 rounded-lg text-[10px] border transition-all cursor-pointer ${
+                            customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
                           }`}
-                        >
-                          {u.label}
-                        </button>
+                        >{u.label}</button>
                       ))}
                     </div>
                   </div>
@@ -1158,14 +1056,10 @@ export default function CreatePage() {
                         key={p.seconds}
                         type="button"
                         onClick={() => setDurationPreset(p.seconds.toString())}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all cursor-pointer ${
-                          durationPreset === p.seconds.toString()
-                            ? 'border-star/40 bg-star/10 text-star font-medium'
-                            : 'border-edge/50 text-dust hover:text-chalk'
+                        className={`px-2.5 py-1 rounded-lg text-xs border transition-all cursor-pointer ${
+                          durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star font-medium' : 'border-edge/50 text-dust hover:text-chalk'
                         }`}
-                      >
-                        {p.label}
-                      </button>
+                      >{p.label}</button>
                     ))}
                   </div>
                 )}
@@ -1173,96 +1067,44 @@ export default function CreatePage() {
             )}
 
             {/* Deadline */}
-            <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
-                Offer Expires
-              </Label>
+            <div>
+              <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-1.5">Expires in</span>
               <div className="flex flex-wrap gap-1.5">
                 {DEADLINE_PRESETS.map((p) => (
                   <button
                     key={p.seconds}
                     type="button"
                     onClick={() => setDeadlinePreset(p.seconds.toString())}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all cursor-pointer ${
-                      deadlinePreset === p.seconds.toString()
-                        ? 'border-star/40 bg-star/10 text-star font-medium'
-                        : 'border-edge/50 text-dust hover:text-chalk'
+                    className={`px-2.5 py-1 rounded-lg text-xs border transition-all cursor-pointer ${
+                      deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star font-medium' : 'border-edge/50 text-dust hover:text-chalk'
                     }`}
-                  >
-                    {p.label}
-                  </button>
+                  >{p.label}</button>
                 ))}
               </div>
             </div>
           </div>
+
+          {/* Summary bar — thin inline strip */}
+          {allAssets.length > 0 && (
+            <div className="px-3 py-2 border-t border-edge/20 bg-surface/5">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
+                {isSwap ? (
+                  <span className="text-aurora font-medium">Swap</span>
+                ) : (
+                  <span className="text-dust">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
+                )}
+                <span className="text-dust">Expires: <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span></span>
+                <span className="text-dust">Mode: <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>{mode === 'offchain' ? 'Gasless' : 'On-Chain'}</span></span>
+                {roiInfo && (
+                  <span className="text-dust">Yield: <span className="text-aurora font-medium">+{roiInfo.yieldPct}%</span></span>
+                )}
+                {isSwap && <span className="text-dust/60">0.10% fee</span>}
+              </div>
+            </div>
+          )}
         </section>
 
-        {/* ═══════════════════════════════════════════════════
-           4. SUMMARY CARD
-           ═══════════════════════════════════════════════════ */}
-        {allAssets.length > 0 && (
-          <section className="rounded-xl border border-edge/30 overflow-clip">
-            <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
-              <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">Summary</span>
-            </div>
-
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
-                {/* Type */}
-                <div>
-                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Type</span>
-                  <span className={`font-medium ${isSwap ? 'text-aurora' : 'text-chalk'}`}>
-                    {isSwap ? 'Instant Swap' : 'Lending'}
-                  </span>
-                </div>
-
-                {/* Mode */}
-                <div>
-                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Mode</span>
-                  <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
-                    {mode === 'offchain' ? 'Gasless' : 'On-Chain'}
-                  </span>
-                </div>
-
-                {/* Duration */}
-                {!isSwap && (
-                  <div>
-                    <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Duration</span>
-                    <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
-                  </div>
-                )}
-
-                {/* Deadline */}
-                <div>
-                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Expires</span>
-                  <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span>
-                </div>
-
-                {/* Lender */}
-                <div>
-                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Lender</span>
-                  <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span>
-                </div>
-
-                {/* Yield */}
-                {roiInfo && (
-                  <div>
-                    <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-0.5">Yield</span>
-                    <span className="text-aurora font-medium">+{roiInfo.yieldPct}% {roiInfo.symbol}</span>
-                  </div>
-                )}
-              </div>
-
-              {isSwap && (
-                <p className="text-[10px] text-dust mt-3 pt-3 border-t border-edge/20">Swaps settle instantly with 0.10% fee (5 BPS relayer + 5 BPS treasury)</p>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ═══════════════════════════════════════════════════
-           5. MATCHED STELAS — table/list format
-           ═══════════════════════════════════════════════════ */}
+        {/* ── MATCHED STELAS — table list ───────────────── */}
         {matchesVisible && !matchSkipped && hasMatches && (
           <InlineMatchList
             offchainMatches={offchainMatches}
@@ -1282,9 +1124,7 @@ export default function CreatePage() {
           />
         )}
 
-        {/* ═══════════════════════════════════════════════════
-           6. SUBMIT
-           ═══════════════════════════════════════════════════ */}
+        {/* ── SUBMIT ────────────────────────────────────── */}
         <Web3ActionWrapper message="Connect your wallet to create an inscription">
           <Button
             variant="gold"
@@ -1307,7 +1147,6 @@ export default function CreatePage() {
         availableRoles={isSwap ? (['debt', 'collateral'] as AssetRole[]) : ROLES}
       />
 
-      {/* Single progress modal */}
       {(() => {
         const active = [createProgress, settleProgress, onchainProgress, onchainSettleProgress].find(p => p.open)
         return active ? (
@@ -1320,7 +1159,6 @@ export default function CreatePage() {
         ) : null
       })()}
 
-      {/* Multi-settle progress modal */}
       <MultiSettleProgressModal
         open={multiSettleModalOpen && multiSettleState.phase !== 'idle'}
         state={multiSettleState}
