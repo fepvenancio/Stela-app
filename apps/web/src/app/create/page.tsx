@@ -454,9 +454,8 @@ export default function CreatePage() {
   // On-chain inscription creation
   const { createInscription, isPending: isCreatingOnChain } = useCreateInscription()
   const onchainProgress = useTransactionProgress([
-    { label: 'Approving collateral', description: 'Confirm token approvals in your wallet' },
-    { label: 'Creating inscription', description: 'Submit on-chain inscription transaction' },
-    { label: 'Confirming', description: 'Waiting for block confirmation' },
+    { label: 'Confirm in wallet', description: 'Approve collateral + create inscription' },
+    { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
   ])
 
   // On-chain match settlement

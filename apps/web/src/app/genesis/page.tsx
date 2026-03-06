@@ -38,9 +38,8 @@ function MintSection({
   const { sendAsync, isPending } = useSendTransaction({})
   const [quantity, setQuantity] = useState(1)
   const progress = useTransactionProgress([
-    { label: 'Approve STRK', description: 'Approve token spend for mint' },
-    { label: 'Mint NFT', description: 'Mint Genesis NFT to your wallet' },
-    { label: 'Confirming', description: 'Waiting for confirmation' },
+    { label: 'Confirm in wallet', description: 'Approve STRK + mint in one transaction' },
+    { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
   ])
 
   const totalCost = mintPrice * BigInt(quantity)
@@ -60,7 +59,6 @@ function MintSection({
       const mintCalls = quantity === 1
         ? [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint', calldata: [] as string[] }]
         : [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint_batch', calldata: toU256(BigInt(quantity)) }]
-      progress.advance()
       const result = await sendAsync([...approveCalls, ...mintCalls])
       progress.setTxHash(result.transaction_hash)
       progress.advance()

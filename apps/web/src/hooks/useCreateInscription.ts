@@ -96,10 +96,16 @@ export function useCreateInscription() {
         progress?.setTxHash(result.transaction_hash)
         progress?.advance() // approvals + create done
 
-        // Wait for confirmation
+        // Wait for confirmation and check receipt
         toast.info('Waiting for transaction confirmation...')
         const provider = new RpcProvider({ nodeUrl: RPC_URL })
-        await provider.waitForTransaction(result.transaction_hash)
+        const receipt = await provider.waitForTransaction(result.transaction_hash)
+
+        if ('execution_status' in receipt && receipt.execution_status === 'REVERTED') {
+          const reason = ('revert_reason' in receipt ? receipt.revert_reason : undefined) as string | undefined
+          throw new Error(reason || 'Transaction reverted on-chain')
+        }
+
         progress?.advance() // confirmed
 
         toast.success('Inscription created on-chain!', {
