@@ -95,20 +95,21 @@ async function runOnce(): Promise<void> {
     startingBlock: BigInt(startingBlock),
     finality: 'accepted',
     filter: {
-      events: [
-        {
-          address: STELA_ADDRESS,
-          keys: ALL_SELECTORS as `0x${string}`[],
-          includeTransaction: true,
-        },
-      ],
+      events: ALL_SELECTORS.map((selector) => ({
+        address: STELA_ADDRESS,
+        keys: [selector as `0x${string}`],
+        includeTransaction: true,
+      })),
     },
     async transform({ block }) {
       const header = block.header
       if (!header) return
 
       const blockNumber = Number(header.blockNumber)
-      const timestamp = Number(header.timestamp)
+      const rawTs = header.timestamp
+      const timestamp = rawTs instanceof Date
+        ? Math.floor(rawTs.getTime() / 1000)
+        : Number(rawTs)
 
       const events = block.events ?? []
       if (events.length === 0) return
