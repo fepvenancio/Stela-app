@@ -46,7 +46,7 @@ export function useBatchSign() {
 
       for (const item of items) {
         if (item.bps < 1 || item.bps > 10000) {
-          throw new Error('Percentage must be between 1 and 10000 BPS')
+          throw new Error('Percentage must be between 0.01% and 100%')
         }
         for (const asset of item.debtAssets) {
           const totalValue = BigInt(asset.value || '0')

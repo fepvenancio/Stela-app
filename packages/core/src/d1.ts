@@ -669,7 +669,7 @@ export function createD1Queries(db: D1Database) {
              AND LOWER(borrower) != LOWER(?)
              AND borrower_signature IS NOT NULL
            ORDER BY created_at ASC
-           LIMIT 10`
+           LIMIT 20`
         )
         .bind(
           params.nowSeconds,

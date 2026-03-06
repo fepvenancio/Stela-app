@@ -3,11 +3,11 @@
 import { useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
 import { findTokenByAddress, formatTokenValue } from '@fepvenancio/stela-sdk'
-import { TokenAvatarByAddress } from '@/components/TokenAvatar'
-import { formatAddress } from '@/lib/address'
-import { formatDuration, formatTimestamp } from '@/lib/format'
+import { ListingTableHeader } from '@/components/ListingTableHeader'
+import { OffchainMatchListRow, OnchainMatchListRow } from '@/components/MatchListRow'
 import type { MatchedOrder } from '@/hooks/useInstantSettle'
 import type { OnChainMatch } from '@/hooks/useMatchDetection'
+import type { SelectedOrders } from '@/lib/multi-match'
 
 /* ── Types ──────────────────────────────────────────────── */
 
@@ -17,137 +17,94 @@ interface InlineMatchListProps {
   isSwap: boolean
   onSettleOffchain: (match: MatchedOrder) => void
   onSettleOnchain: (match: OnChainMatch) => void
+  onSettleMultiple?: () => void
   onSkip: () => void
   isSettling: boolean
+  multiSettleSelection?: SelectedOrders | null
+  /** Symbol of the token the user gives (their collateral = matched orders' debt) */
+  giveSymbol?: string
+  /** Symbol of the token the user receives (their debt = matched orders' collateral) */
+  receiveSymbol?: string
 }
 
-interface AssetDisplay {
-  address: string
-  type: string
-  value: string
-  tokenId: string
-  symbol: string
-  decimals: number
-  formatted: string
-}
+/* ── Multi-Settle Summary ───────────────────────────────── */
 
-/* ── Helpers ────────────────────────────────────────────── */
-
-function parseAssets(raw: unknown): AssetDisplay[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((a: Record<string, string>) => {
-    const token = findTokenByAddress(a.asset_address)
-    const decimals = token?.decimals ?? 18
-    const isNft = a.asset_type === 'ERC721' || a.asset_type === 'ERC1155'
-    return {
-      address: a.asset_address,
-      type: a.asset_type,
-      value: a.value || '0',
-      tokenId: a.token_id || '0',
-      symbol: token?.symbol ?? formatAddress(a.asset_address),
-      decimals,
-      formatted: isNft ? `#${a.token_id}` : formatTokenValue(a.value || '0', decimals),
-    }
-  })
-}
-
-/* ── Asset Summary Line ─────────────────────────────────── */
-
-function AssetSummary({ label, assets, labelClass }: { label: string; assets: AssetDisplay[]; labelClass: string }) {
-  if (assets.length === 0) return null
-  return (
-    <div>
-      <span className={`text-[9px] uppercase tracking-widest font-bold ${labelClass}`}>{label}</span>
-      <div className="mt-1 space-y-1">
-        {assets.map((a, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <TokenAvatarByAddress address={a.address} size={16} />
-            <span className="text-sm text-chalk font-medium">
-              {a.formatted} <span className="text-dust">{a.symbol}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ── Off-Chain Match Card ───────────────────────────────── */
-
-function OffchainMatchCard({
-  match,
-  isSwap,
+function MultiSettleSummary({
+  selection,
+  giveSymbol,
+  receiveSymbol,
   onSettle,
   isSettling,
 }: {
-  match: MatchedOrder
-  isSwap: boolean
+  selection: SelectedOrders
+  giveSymbol: string
+  receiveSymbol: string
   onSettle: () => void
   isSettling: boolean
 }) {
-  const orderData = match.order_data
-  const debtAssets = useMemo(
-    () => parseAssets(orderData.debtAssets ?? orderData.debt_assets),
-    [orderData],
-  )
-  const collateralAssets = useMemo(
-    () => parseAssets(orderData.collateralAssets ?? orderData.collateral_assets),
-    [orderData],
-  )
-  const interestAssets = useMemo(
-    () => parseAssets(orderData.interestAssets ?? orderData.interest_assets),
-    [orderData],
-  )
+  const count = selection.selected.length
 
-  const duration = Number(orderData.duration ?? '0')
-  const deadline = Number(orderData.deadline ?? match.deadline ?? '0')
-  const secondsLeft = deadline - Math.floor(Date.now() / 1000)
+  const firstDebtToken = useMemo(() => {
+    for (const s of selection.selected) {
+      if (s.type === 'offchain') {
+        const d = s.order.order_data
+        const assets = (d.debtAssets ?? d.debt_assets) as Record<string, string>[] | undefined
+        if (assets?.[0]) return findTokenByAddress(assets[0].asset_address)
+      } else {
+        if (s.match.debtAssets?.[0]) return findTokenByAddress(s.match.debtAssets[0].asset_address)
+      }
+    }
+    return null
+  }, [selection.selected])
 
-  const ctaText = isSwap ? 'Swap Now & Earn 5 BPS' : 'Settle Now & Earn 5 BPS'
+  const firstCollateralToken = useMemo(() => {
+    for (const s of selection.selected) {
+      if (s.type === 'offchain') {
+        const d = s.order.order_data
+        const assets = (d.collateralAssets ?? d.collateral_assets) as Record<string, string>[] | undefined
+        if (assets?.[0]) return findTokenByAddress(assets[0].asset_address)
+      } else {
+        if (s.match.collateralAssets?.[0]) return findTokenByAddress(s.match.collateralAssets[0].asset_address)
+      }
+    }
+    return null
+  }, [selection.selected])
+
+  const giveFormatted = formatTokenValue(selection.totalGive.toString(), firstDebtToken?.decimals ?? 18)
+  const receiveFormatted = formatTokenValue(selection.totalReceive.toString(), firstCollateralToken?.decimals ?? 18)
+
+  const { onchainCount, offchainCount } = selection
+  const breakdownText = onchainCount > 0 && offchainCount > 0
+    ? `${onchainCount} on-chain + ${offchainCount} off-chain`
+    : `${count} orders`
 
   return (
-    <div className="bg-abyss/60 border border-edge/30 rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-edge/20">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-surface/20 text-dust border border-edge/20">
-            Off-chain
-          </span>
-          <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
-            isSwap ? 'bg-aurora/10 text-aurora' : 'bg-nebula/10 text-nebula'
-          }`}>
-            {isSwap ? 'Swap' : 'Loan'}
-          </span>
-          <span className="text-[10px] text-dust font-mono">{formatAddress(match.borrower)}</span>
-        </div>
-        {secondsLeft > 0 && (
-          <span className="text-[10px] text-dust">
-            expires {formatTimestamp(BigInt(deadline))}
-          </span>
-        )}
-      </div>
-
-      {/* Assets */}
-      <div className="px-4 py-3 space-y-2">
-        <AssetSummary label="They borrow (you lend)" assets={debtAssets} labelClass="text-dust" />
-        <AssetSummary label="Their collateral" assets={collateralAssets} labelClass="text-star" />
-        {interestAssets.length > 0 && (
-          <AssetSummary label="Interest you earn" assets={interestAssets} labelClass="text-aurora" />
-        )}
-        {!isSwap && duration > 0 && (
-          <div className="flex items-center gap-4 text-[11px] text-dust pt-1">
-            <span>Duration: <span className="text-chalk">{formatDuration(duration)}</span></span>
+    <div className="px-3 py-3 border-b border-edge/20 bg-star/5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="space-y-1 text-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-dust">You give:</span>
+            <span className="text-chalk font-medium">
+              {giveFormatted} <span className="text-dust">{giveSymbol}</span>
+            </span>
           </div>
-        )}
-      </div>
+          <div className="flex items-center gap-3">
+            <span className="text-dust">You get:</span>
+            <span className="text-chalk font-medium">
+              {receiveFormatted} <span className="text-dust">{receiveSymbol}</span>
+            </span>
+          </div>
+          <div className="text-[10px] text-dust">
+            {breakdownText}
+            {selection.coverage < 100 && ` — covers ${selection.coverage}% of desired amount`}
+          </div>
+        </div>
 
-      {/* CTA */}
-      <div className="px-4 pb-3">
         <button
           type="button"
           onClick={onSettle}
           disabled={isSettling}
-          className="w-full h-10 bg-star hover:bg-star-bright text-void font-semibold rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 text-sm"
+          className="h-9 px-5 bg-star hover:bg-star-bright text-void font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 text-sm shrink-0"
         >
           {isSettling ? (
             <>
@@ -155,88 +112,7 @@ function OffchainMatchCard({
               Settling...
             </>
           ) : (
-            ctaText
-          )}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-/* ── On-Chain Match Card ────────────────────────────────── */
-
-function OnchainMatchCard({
-  match,
-  isSwap,
-  onSettle,
-  isSettling,
-}: {
-  match: OnChainMatch
-  isSwap: boolean
-  onSettle: () => void
-  isSettling: boolean
-}) {
-  const debtAssets = useMemo(() => parseAssets(match.debtAssets), [match.debtAssets])
-  const collateralAssets = useMemo(() => parseAssets(match.collateralAssets), [match.collateralAssets])
-  const interestAssets = useMemo(() => parseAssets(match.interestAssets), [match.interestAssets])
-
-  const duration = Number(match.duration ?? '0')
-  const deadline = Number(match.deadline ?? '0')
-  const secondsLeft = deadline - Math.floor(Date.now() / 1000)
-
-  const ctaText = isSwap ? 'Swap Now' : 'Lend Now'
-
-  return (
-    <div className="bg-abyss/60 border border-star/20 rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-edge/20">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-star/10 text-star border border-star/25">
-            On-chain
-          </span>
-          <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
-            isSwap ? 'bg-aurora/10 text-aurora' : 'bg-nebula/10 text-nebula'
-          }`}>
-            {isSwap ? 'Swap' : 'Loan'}
-          </span>
-          <span className="text-[10px] text-dust font-mono">{formatAddress(match.borrower)}</span>
-        </div>
-        {secondsLeft > 0 && (
-          <span className="text-[10px] text-dust">
-            expires {formatTimestamp(BigInt(deadline))}
-          </span>
-        )}
-      </div>
-
-      {/* Assets */}
-      <div className="px-4 py-3 space-y-2">
-        <AssetSummary label="They borrow (you lend)" assets={debtAssets} labelClass="text-dust" />
-        <AssetSummary label="Their collateral" assets={collateralAssets} labelClass="text-star" />
-        {interestAssets.length > 0 && (
-          <AssetSummary label="Interest you earn" assets={interestAssets} labelClass="text-aurora" />
-        )}
-        {!isSwap && duration > 0 && (
-          <div className="flex items-center gap-4 text-[11px] text-dust pt-1">
-            <span>Duration: <span className="text-chalk">{formatDuration(duration)}</span></span>
-          </div>
-        )}
-      </div>
-
-      {/* CTA */}
-      <div className="px-4 pb-3">
-        <button
-          type="button"
-          onClick={onSettle}
-          disabled={isSettling}
-          className="w-full h-10 bg-star hover:bg-star-bright text-void font-semibold rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 text-sm"
-        >
-          {isSettling ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            ctaText
+            `Settle All ${count}`
           )}
         </button>
       </div>
@@ -252,61 +128,89 @@ export function InlineMatchList({
   isSwap,
   onSettleOffchain,
   onSettleOnchain,
+  onSettleMultiple,
   onSkip,
   isSettling,
+  multiSettleSelection,
+  giveSymbol,
+  receiveSymbol,
 }: InlineMatchListProps) {
   const totalMatches = offchainMatches.length + onchainMatches.length
   if (totalMatches === 0) return null
+
+  const showMultiSettle = isSwap
+    && multiSettleSelection
+    && multiSettleSelection.selected.length > 1
+    && onSettleMultiple
 
   return (
     <section className="space-y-3">
       {/* Section header */}
       <div className="flex items-center justify-between">
-        <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
-          {isSwap ? 'Instant Swap Available' : 'Compatible Orders Found'}
-        </span>
-        <span className="text-[10px] text-dust">
-          {totalMatches} match{totalMatches !== 1 ? 'es' : ''}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
+            {isSwap ? 'Instant Swaps' : 'Compatible Orders'}
+          </span>
+          <span className="text-[10px] text-dust">
+            {totalMatches} match{totalMatches !== 1 ? 'es' : ''}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onSkip}
+          disabled={isSettling}
+          className="text-[11px] text-dust hover:text-chalk transition-colors cursor-pointer disabled:opacity-40"
+        >
+          Skip
+        </button>
       </div>
 
-      {isSwap && (
-        <p className="text-[11px] text-dust -mt-1">
-          Swaps settle instantly with 0.10% fee
-        </p>
-      )}
+      {/* Table container — same style as browse page */}
+      <div className="rounded-lg border border-edge/30 overflow-clip">
+        {/* Aggregate summary for multi-settle */}
+        {showMultiSettle && (
+          <MultiSettleSummary
+            selection={multiSettleSelection}
+            giveSymbol={giveSymbol ?? '???'}
+            receiveSymbol={receiveSymbol ?? '???'}
+            onSettle={onSettleMultiple}
+            isSettling={isSettling}
+          />
+        )}
 
-      {/* Match cards */}
-      <div className="space-y-3 max-h-[50vh] overflow-y-auto">
-        {offchainMatches.map((match) => (
-          <OffchainMatchCard
-            key={match.id}
-            match={match}
-            isSwap={isSwap}
-            onSettle={() => onSettleOffchain(match)}
-            isSettling={isSettling}
-          />
-        ))}
-        {onchainMatches.map((match) => (
-          <OnchainMatchCard
-            key={match.id}
-            match={match}
-            isSwap={isSwap}
-            onSettle={() => onSettleOnchain(match)}
-            isSettling={isSettling}
-          />
-        ))}
+        {/* Table header — reuse from browse */}
+        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 bg-void/95">
+          <div className="grid grid-cols-12 gap-3 flex-1">
+            <div className="col-span-2">Type</div>
+            <div className="col-span-3">They Borrow</div>
+            <div className="col-span-2">Interest</div>
+            <div className="col-span-3">Collateral</div>
+            <div className="col-span-2 text-right">Action</div>
+          </div>
+        </div>
+
+        {/* Match rows */}
+        <div className="flex flex-col max-h-[40vh] overflow-y-auto">
+          {offchainMatches.map((match) => (
+            <OffchainMatchListRow
+              key={match.id}
+              match={match}
+              isSwap={isSwap}
+              onSettle={() => onSettleOffchain(match)}
+              isSettling={isSettling}
+            />
+          ))}
+          {onchainMatches.map((match) => (
+            <OnchainMatchListRow
+              key={match.id}
+              match={match}
+              isSwap={isSwap}
+              onSettle={() => onSettleOnchain(match)}
+              isSettling={isSettling}
+            />
+          ))}
+        </div>
       </div>
-
-      {/* Skip link */}
-      <button
-        type="button"
-        onClick={onSkip}
-        disabled={isSettling}
-        className="w-full text-center text-dust hover:text-chalk text-sm transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed py-1"
-      >
-        Skip — Create my own order instead
-      </button>
     </section>
   )
 }

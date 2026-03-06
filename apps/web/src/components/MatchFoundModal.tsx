@@ -164,7 +164,7 @@ function MatchCard({
           onClick={onSettle}
           disabled={isPending}
         >
-          {isPending ? 'Settling...' : 'Settle Now & Earn 5 BPS'}
+          {isPending ? 'Settling...' : 'Settle Now & Earn 0.05%'}
         </Button>
       </div>
     </div>

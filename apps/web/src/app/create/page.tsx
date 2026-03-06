@@ -30,6 +30,9 @@ import { useCreateInscription } from '@/hooks/useCreateInscription'
 import { useWalletSign } from '@/hooks/useWalletSign'
 import { useSignOnChainMatch } from '@/hooks/useSignOnChainMatch'
 import { InlineMatchList } from '@/components/InlineMatchList'
+import { useMultiSettle } from '@/hooks/useMultiSettle'
+import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
+import { selectOrders } from '@/lib/multi-match'
 
 /* ── Types ──────────────────────────────────────────────── */
 
@@ -460,6 +463,10 @@ export default function CreatePage() {
     { label: 'Confirming on-chain', description: 'Waiting for block confirmation' },
   ])
 
+  // Multi-settle (aggregate swaps)
+  const { settleMultiple, state: multiSettleState, reset: resetMultiSettle } = useMultiSettle()
+  const [multiSettleModalOpen, setMultiSettleModalOpen] = useState(false)
+
   // On-chain match settlement
   const { signOnChainMatch: settleOnChainMatch, isPending: isSettlingOnChain } = useSignOnChainMatch()
   const onchainSettleProgress = useTransactionProgress([
@@ -474,7 +481,9 @@ export default function CreatePage() {
     settleProgress.close()
     onchainProgress.close()
     onchainSettleProgress.close()
-  }, [createProgress, settleProgress, onchainProgress, onchainSettleProgress])
+    setMultiSettleModalOpen(false)
+    resetMultiSettle()
+  }, [createProgress, settleProgress, onchainProgress, onchainSettleProgress, resetMultiSettle])
 
   /* ── Derived State ─────────────────────────────────────── */
 
@@ -526,6 +535,30 @@ export default function CreatePage() {
     }
     return null
   }, [debtAssets, interestAssets])
+
+  // Multi-settle selection: compute userGiveAmount from collateral (what user gives = matched orders' debt)
+  const userGiveAmount = useMemo(() => {
+    if (!isSwap || collateralAssets.length !== 1 || !collateralAssets[0].asset) return 0n
+    const a = collateralAssets[0]
+    return a.value ? parseAmount(a.value, a.decimals) : 0n
+  }, [isSwap, collateralAssets])
+
+  const multiSettleSelection = useMemo(() => {
+    const totalMatches = offchainMatches.length + onchainMatches.length
+    if (!isSwap || totalMatches < 2 || userGiveAmount <= 0n) return null
+    return selectOrders(offchainMatches, onchainMatches, userGiveAmount)
+  }, [isSwap, offchainMatches, onchainMatches, userGiveAmount])
+
+  // Token symbols for multi-settle summary
+  const giveSymbol = useMemo(() => {
+    if (collateralAssets.length !== 1 || !collateralAssets[0].asset) return undefined
+    return findTokenByAddress(collateralAssets[0].asset)?.symbol
+  }, [collateralAssets])
+
+  const receiveSymbol = useMemo(() => {
+    if (debtAssets.length !== 1 || !debtAssets[0].asset) return undefined
+    return findTokenByAddress(debtAssets[0].asset)?.symbol
+  }, [debtAssets])
 
   /* ── Debounced Match Detection ─────────────────────────── */
 
@@ -674,6 +707,19 @@ export default function CreatePage() {
         value: a.value,
       }))
       await settleOnChainMatch(match.id, debtAssetInfos, 10000, onchainSettleProgress)
+      resetForm()
+    } catch {
+      // Error already toasted in hook
+    }
+  }
+
+  /** Handle aggregate multi-settle of multiple matched off-chain orders */
+  async function handleMultiSettle() {
+    if (!multiSettleSelection || multiSettleSelection.selected.length < 2) return
+    closeAllProgress()
+    setMultiSettleModalOpen(true)
+    try {
+      await settleMultiple(multiSettleSelection.selected)
       resetForm()
     } catch {
       // Error already toasted in hook
@@ -1183,11 +1229,15 @@ export default function CreatePage() {
             isSwap={isSwap}
             onSettleOffchain={handleInstantSettle}
             onSettleOnchain={handleOnchainSettle}
+            onSettleMultiple={handleMultiSettle}
             onSkip={() => {
               setMatchSkipped(true)
               setMatchesVisible(false)
             }}
-            isSettling={isSettling || isSettlingOnChain}
+            isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
+            multiSettleSelection={multiSettleSelection}
+            giveSymbol={giveSymbol}
+            receiveSymbol={receiveSymbol}
           />
         )}
 
@@ -1226,6 +1276,16 @@ export default function CreatePage() {
           />
         ) : null
       })()}
+
+      {/* Multi-settle progress modal */}
+      <MultiSettleProgressModal
+        open={multiSettleModalOpen && multiSettleState.phase !== 'idle'}
+        state={multiSettleState}
+        onClose={() => {
+          setMultiSettleModalOpen(false)
+          resetMultiSettle()
+        }}
+      />
     </div>
   )
 }

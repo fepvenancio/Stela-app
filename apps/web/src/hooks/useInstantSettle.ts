@@ -227,7 +227,7 @@ export function useInstantSettle() {
         }
 
         toast.success('Instant settlement complete!', {
-          description: `You earned the 5 BPS relayer fee. Tx: ${transaction_hash.slice(0, 16)}...`,
+          description: `You earned the 0.05% relayer fee. Tx: ${transaction_hash.slice(0, 16)}...`,
         })
         progress?.advance()
       } catch (err: unknown) {

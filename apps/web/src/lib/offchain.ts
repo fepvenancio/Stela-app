@@ -9,12 +9,14 @@
 export {
   getInscriptionOrderTypedData,
   getLendOfferTypedData,
+  getBatchLendOfferTypedData,
   hashAssets,
+  hashBatchEntries,
   serializeSignature,
   deserializeSignature,
 } from '@fepvenancio/stela-sdk'
 
-export type { StoredSignature } from '@fepvenancio/stela-sdk'
+export type { StoredSignature, BatchEntry } from '@fepvenancio/stela-sdk'
 
 import type { RpcProvider, TypedData } from 'starknet'
 

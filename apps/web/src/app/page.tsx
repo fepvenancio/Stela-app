@@ -306,7 +306,7 @@ export default function LandingPage() {
                   <h4 className="text-chalk text-sm font-semibold mb-1">Permissionless Relayers</h4>
                   <p className="text-dust text-sm leading-relaxed">
                     Anyone can call <span className="font-mono text-xs text-star">settle()</span> and
-                    earn 5 BPS per trade. No whitelist needed.
+                    earn 0.05% per trade. No whitelist needed.
                   </p>
                 </div>
               </div>
@@ -324,29 +324,29 @@ export default function LandingPage() {
                 <div className="space-y-5 mb-8">
                   <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Settlement</span>
-                    <span className="font-display text-xl text-chalk">20 <span className="text-sm text-dust">BPS</span></span>
+                    <span className="font-display text-xl text-chalk">0.20<span className="text-sm text-dust">%</span></span>
                   </div>
                   <div className="w-full h-px bg-edge/20" />
                   <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Swap</span>
-                    <span className="font-display text-xl text-chalk">10 <span className="text-sm text-dust">BPS</span></span>
+                    <span className="font-display text-xl text-chalk">0.10<span className="text-sm text-dust">%</span></span>
                   </div>
                   <div className="w-full h-px bg-edge/20" />
                   <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Redemption</span>
-                    <span className="font-display text-xl text-chalk">10 <span className="text-sm text-dust">BPS</span></span>
+                    <span className="font-display text-xl text-chalk">0.10<span className="text-sm text-dust">%</span></span>
                   </div>
                   <div className="w-full h-px bg-edge/20" />
                   <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Liquidation</span>
-                    <span className="font-display text-xl text-chalk">0 <span className="text-sm text-dust">BPS</span></span>
+                    <span className="font-display text-xl text-chalk">0<span className="text-sm text-dust">%</span></span>
                   </div>
                 </div>
 
                 <div className="bg-void/60 rounded-2xl p-5 border border-edge/15">
                   <div className="font-display text-2xl text-star mb-1">0.30%</div>
                   <p className="text-dust text-xs leading-relaxed">
-                    Total round-trip. Aave and Compound charge 50-100 BPS.
+                    Total round-trip. Aave and Compound charge 0.50–1.00%.
                     Genesis NFT holders pay up to 50% less.
                   </p>
                 </div>

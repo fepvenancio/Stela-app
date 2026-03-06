@@ -62,3 +62,53 @@ export async function findDebtBalanceShortfall(
 
   return null
 }
+
+/**
+ * Aggregated balance check across multiple orders.
+ * Groups debt assets by token address, sums proportional amounts (value * bps / 10000),
+ * then checks balance once per token.
+ */
+export async function findAggregatedBalanceShortfall(
+  provider: RpcProvider,
+  owner: string,
+  orderAssets: { debtAssets: Asset[]; bps: number }[],
+): Promise<BalanceShortfall | null> {
+  // Aggregate needed amounts per token address
+  const neededByToken = new Map<string, { needed: bigint; asset: Asset }>()
+
+  for (const { debtAssets, bps } of orderAssets) {
+    for (const asset of debtAssets) {
+      if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
+      const needed = (asset.value * BigInt(bps)) / 10000n
+      if (needed === 0n) continue
+
+      const key = asset.asset_address.toLowerCase()
+      const existing = neededByToken.get(key)
+      if (existing) {
+        existing.needed += needed
+      } else {
+        neededByToken.set(key, { needed, asset })
+      }
+    }
+  }
+
+  // Check balance once per token
+  for (const [, { needed, asset }] of neededByToken) {
+    const balance = await getErc20Balance(provider, asset.asset_address, owner)
+    if (balance < needed) {
+      const token = findTokenByAddress(asset.asset_address)
+      const symbol = token?.symbol ?? asset.asset_address.slice(0, 10) + '...'
+      const decimals = token?.decimals ?? 18
+      return {
+        asset,
+        symbol,
+        needed,
+        balance,
+        neededFormatted: formatTokenValue(needed.toString(), decimals),
+        balanceFormatted: formatTokenValue(balance.toString(), decimals),
+      }
+    }
+  }
+
+  return null
+}

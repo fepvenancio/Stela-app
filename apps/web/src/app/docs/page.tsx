@@ -208,7 +208,7 @@ export default function DocsPage() {
                     Earn by Running a Relayer
                   </h4>
                   <p className="text-dust text-sm leading-relaxed mb-3">
-                    Anyone can run a relayer bot to settle matched lending orders on-chain. Relayers earn <span className="text-chalk font-semibold">5 BPS (0.05%)</span> of each debt asset on every successful settlement.
+                    Anyone can run a relayer bot to settle matched lending orders on-chain. Relayers earn <span className="text-chalk font-semibold">0.05%</span> of each debt asset on every successful settlement.
                   </p>
                   <span className="inline-flex items-center gap-2 text-xs text-star font-display uppercase tracking-widest">
                     View on GitHub
@@ -245,13 +245,13 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement (Lending)</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">20 BPS</span>
+                  <span className="text-sm text-star font-semibold">0.20%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">5</span>
+                  <span className="text-sm text-dust">0.05%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">15</span>
+                  <span className="text-sm text-dust">0.15%</span>
                 </div>
               </div>
               {/* Swap */}
@@ -260,13 +260,13 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Swap</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">10 BPS</span>
+                  <span className="text-sm text-star font-semibold">0.10%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">5</span>
+                  <span className="text-sm text-dust">0.05%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">5</span>
+                  <span className="text-sm text-dust">0.05%</span>
                 </div>
               </div>
               {/* Redemption */}
@@ -275,13 +275,13 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Redemption</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">10 BPS</span>
+                  <span className="text-sm text-star font-semibold">0.10%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">0</span>
+                  <span className="text-sm text-dust">0%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">10</span>
+                  <span className="text-sm text-dust">0.10%</span>
                 </div>
               </div>
               {/* Liquidation */}
@@ -290,7 +290,7 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Liquidation</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">0 BPS</span>
+                  <span className="text-sm text-star font-semibold">0%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-dust">0</span>
@@ -332,7 +332,7 @@ export default function DocsPage() {
               <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
                 <h4 className="font-display text-star text-lg mb-3">NFT Fee Discounts</h4>
                 <p className="text-dust text-sm leading-relaxed">
-                  Genesis NFT holders receive automatic protocol fee discounts. Holding 1+ NFT grants a <span className="text-chalk font-semibold">15% base discount</span>, plus <span className="text-chalk font-semibold">+5% per volume tier</span> (7 tiers from $10K to $1M+) and <span className="text-chalk font-semibold">+2% per additional NFT</span>, capped at <span className="text-chalk font-semibold">50% off</span>. Discounts apply to the treasury portion of fees only — the 5 BPS relayer fee is never discounted. Applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
+                  Genesis NFT holders receive automatic protocol fee discounts. Holding 1+ NFT grants a <span className="text-chalk font-semibold">15% base discount</span>, plus <span className="text-chalk font-semibold">+5% per volume tier</span> (7 tiers from $10K to $1M+) and <span className="text-chalk font-semibold">+2% per additional NFT</span>, capped at <span className="text-chalk font-semibold">50% off</span>. Discounts apply to the treasury portion of fees only — the 0.05% relayer fee is never discounted. Applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
                 </p>
               </div>
               <div className="bg-abyss/60 border border-star/20 rounded-3xl p-8 granite-noise">
@@ -579,10 +579,10 @@ export default function DocsPage() {
               </div>
 
               <div>
-                <SubHeading>Basis Points (BPS)</SubHeading>
+                <SubHeading>Percentage Precision</SubHeading>
                 <p className="text-dust text-sm leading-relaxed">
-                  The protocol operates with <span className="text-chalk font-mono">1/10,000</span> precision. 
-                  Interest rates and multi-lender contributions are all calculated in basis points (BPS) 
+                  The protocol operates with <span className="text-chalk font-mono">0.01%</span> precision (1/10,000).
+                  Interest rates and multi-lender contributions are all calculated with this granularity
                   to ensure maximum accuracy without floating-point errors.
                 </p>
               </div>
@@ -640,14 +640,14 @@ export default function DocsPage() {
               <p>
                 A <span className="text-chalk font-medium">lender</span> signs a
                 <span className="text-star"> SNIP-12 LendOffer</span> specifying the order ID and the
-                BPS (basis points) of debt they want to provide. The signed offer is stored off-chain
+                percentage of debt they want to provide. The signed offer is stored off-chain
                 alongside the order.
               </p>
             </StepCard>
 
             <StepCard numeral="III" title="Bot Settlement (On-Chain)">
               <p>
-                When an order is fully matched (offers total 10,000 BPS), the
+                When an order is fully matched (offers total 100%), the
                 <span className="text-star font-medium"> relayer bot</span> calls
                 <span className="text-chalk font-mono"> settle()</span> on the Stela contract with both signatures.
                 The contract verifies each signature on-chain via SNIP-12 typed data hashing, then
@@ -657,11 +657,11 @@ export default function DocsPage() {
                 <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
                     <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
-                    <span className="text-star font-mono">20 BPS lending / 10 BPS swap</span>
+                    <span className="text-star font-mono">0.20% lending / 0.10% swap</span>
                   </div>
                   <div>
                     <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
-                    <span className="text-chalk font-mono">5 relayer / 15 treasury (lending) or 5+5 (swap)</span>
+                    <span className="text-chalk font-mono">0.05% relayer / 0.15% treasury (lending) or 0.05%+0.05% (swap)</span>
                   </div>
                   <div>
                     <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>

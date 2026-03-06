@@ -281,7 +281,7 @@ Variables are set in `wrangler.jsonc` for production:
 ```json
 "vars": {
   "NEXT_PUBLIC_NETWORK": "sepolia",
-  "NEXT_PUBLIC_STELA_ADDRESS": "0x0400ed08d0507b1f229c3283ecfc8567fb7240a7d0d99d5af9167993c51d062e",
+  "NEXT_PUBLIC_STELA_ADDRESS": "0x012998e49cc8205d0bb56b5c10202bd32994091b1cacdb7bcbd03dc6781d4974",
   "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia"
 }
 ```
@@ -376,7 +376,7 @@ cd workers/indexer && pnpm wrangler deploy
 ### Purpose
 Runs a cron every 2 minutes to perform three tasks in sequence:
 1. **Expire stale orders** — mark off-chain orders past their deadline as expired
-2. **Settle matched orders** — call `settle()` on-chain with both borrower + lender signatures
+2. **Settle matched orders** — call `settle()` or `batch_settle()` on-chain with borrower + lender signatures
 3. **Liquidate expired inscriptions** — call `liquidate()` on filled inscriptions past their duration
 
 ### Stack
@@ -406,6 +406,9 @@ scheduled() handler:
       - Account.execute({ entrypoint: 'settle', calldata })
       - On success: update both order and offer status to 'settled'
       - On failure: leave as 'matched' for retry on next cron run
+   Note: batch_settle() is available for settling multiple orders atomically
+   with 1 lender signature (BatchLendOffer SNIP-12 type), used by the frontend
+   useMultiSettle hook. The bot currently uses individual settle() calls.
 
 4. Liquidate expired inscriptions:
    a. queries.findLiquidatable(now) → filled inscriptions where signed_at+duration < now
@@ -509,7 +512,7 @@ Event fields are split between `keys[]` and `data[]` based on `kind` in the ABI:
 | Create off-chain order | Sign SNIP-12 off-chain → POST /api/orders |
 | Submit lend offer | Sign SNIP-12 off-chain → POST /api/orders/:id/offer |
 | Cancel off-chain order | Sign SNIP-12 off-chain → DELETE /api/orders/:id |
-| Settle matched orders on-chain | Bot Worker calls `settle()` with both signatures |
+| Settle matched orders on-chain | Bot Worker calls `settle()` with both signatures; frontend uses `batch_settle()` for multi-order aggregate settlement |
 | Auto-liquidate expired inscriptions | Bot Worker calls `liquidate()` |
 | Expire stale off-chain orders | Bot Worker cron marks orders past deadline as expired |
 | Index events from chain | Apibara service → webhook → Indexer Worker → D1 |
@@ -768,7 +771,7 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 
 | Contract | Address | Notes |
 |----------|---------|-------|
-| **Stela** | `0x0400ed08d0507b1f229c3283ecfc8567fb7240a7d0d99d5af9167993c51d062e` | protocol-overhaul-2026-03-05 |
+| **Stela** | `0x012998e49cc8205d0bb56b5c10202bd32994091b1cacdb7bcbd03dc6781d4974` | batch-settle-2026-03-06 |
 | **StelaGenesis NFT** | `0x0265ea52ffbf1b7e1a029b94fe1a2023899dd0bc02eb1f11c9b04ea90e957d28` | ERC721, 300 supply, 50 treasury, 5/wallet cap, 1000 STRK |
 
 ### D1 Access Security
@@ -785,6 +788,7 @@ D1 databases are accessible to anyone with Cloudflare dashboard access. For prod
 
 | Contract | Address | Tag |
 |----------|---------|-----|
+| Stela (swap-fee) | `0x0400ed08d0507b1f229c3283ecfc8567fb7240a7d0d99d5af9167993c51d062e` | 2026-03-06 |
 | Stela (treasury-reserve) | `0x038fb9a3bbf84aef962c70bc0ed15744f4f3088bae73bed99031b6f2b7cfab01` | — |
 | Stela (genesis-fee-vault) | `0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973` | — |
 | Stela (deposit-privacy) | `0x00b7deedb4ab03d94f54da2e7c911c2336b19c2a4610eb98f55cd7be5a03ece0` | — |
