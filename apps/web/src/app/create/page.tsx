@@ -771,10 +771,10 @@ export default function CreatePage() {
         {/* ── ASSETS ─────────────────────────────────────── */}
         <section className="rounded-xl border border-edge/30 overflow-clip">
           <div className="flex items-center justify-between px-3 py-2 border-b border-edge/30 bg-surface/10">
-            <span className="text-[10px] text-ash uppercase tracking-[0.15em] font-bold">
+            <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
               Assets
               {allAssets.length > 0 && (
-                <span className="ml-1.5 text-chalk font-mono">{allAssets.length}</span>
+                <span className="ml-1.5 text-chalk">{allAssets.length}</span>
               )}
             </span>
             <button
@@ -831,7 +831,7 @@ export default function CreatePage() {
         {/* ── TERMS ──────────────────────────────────────── */}
         <section className="rounded-xl border border-edge/30 overflow-clip">
           <div className="px-3 py-2 border-b border-edge/30 bg-surface/10">
-            <span className="text-[10px] text-ash uppercase tracking-[0.15em] font-bold">Terms</span>
+            <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">Terms</span>
           </div>
 
           <div className="p-3 space-y-4">

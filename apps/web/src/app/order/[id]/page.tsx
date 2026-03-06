@@ -169,7 +169,7 @@ export default function OrderPage({ params }: OrderPageProps) {
           {/* Assets view */}
           <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
             <div className="px-6 py-4 border-b border-edge/20 bg-surface/30">
-              <h3 className="text-xs uppercase tracking-widest text-dust font-bold">Order Assets</h3>
+              <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Order Assets</h3>
             </div>
             <div className="p-6 space-y-8">
               {([
@@ -366,7 +366,7 @@ export default function OrderPage({ params }: OrderPageProps) {
 
           {/* Timeline */}
           <section className="bg-surface/20 border border-edge/20 rounded-3xl p-6 space-y-4">
-            <h4 className="text-[10px] uppercase tracking-widest text-ash font-bold">Timeline</h4>
+            <h4 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Timeline</h4>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] text-dust uppercase">Created</span>

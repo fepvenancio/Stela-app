@@ -175,7 +175,7 @@ function OrderView({ id }: { id: string }) {
       extraContent={
         hasOffers ? (
           <section className="space-y-3">
-            <h3 className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold pl-1">Lending Offers</h3>
+            <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em] pl-1">Lending Offers</h3>
             <div className="space-y-2">
               {order?.offers?.map((offer) => (
                 <div key={offer.id} className="flex items-center justify-between p-4 bg-surface/20 border border-edge/20 rounded-2xl">
@@ -443,7 +443,7 @@ function StelaLayout({
           {/* Assets */}
           <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
             <div className="px-5 py-3 border-b border-edge/20 bg-surface/25">
-              <h3 className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold">Assets</h3>
+              <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Assets</h3>
             </div>
             <div className="p-5 space-y-5">
               {assets}

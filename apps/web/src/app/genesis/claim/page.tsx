@@ -135,7 +135,7 @@ export default function GenesisClaimPage() {
             {pos.tokenIds.length > 0 && (
               <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
                 <div className="px-6 py-3 border-b border-edge/15">
-                  <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Your Token IDs</h3>
+                  <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Your Token IDs</h3>
                 </div>
                 <div className="px-6 py-4">
                   <div className="flex items-center gap-2 flex-wrap">

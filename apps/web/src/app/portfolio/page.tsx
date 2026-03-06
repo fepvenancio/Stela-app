@@ -235,7 +235,7 @@ export default function PortfolioPage() {
               </div>
             ) : (
               <Tabs defaultValue={defaultTab}>
-                <TabsList variant="line" className="mb-4">
+                <TabsList variant="line" className="mb-4 overflow-x-auto">
                   {TAB_CONFIG.map((tab) => (
                     <TabsTrigger
                       key={tab.value}

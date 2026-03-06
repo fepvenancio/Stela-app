@@ -190,7 +190,7 @@ function BrowseContent() {
       {/* Hero */}
       <div className="mb-10">
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
-          The <span className="text-star">Stela</span> Library
+          The Stela Library
         </h1>
         <p className="text-dust max-w-lg leading-relaxed">
           Explore active lending inscriptions on StarkNet. Sign as a lender to earn interest, or inscribe your own.
@@ -294,7 +294,7 @@ function BrowseContent() {
       {!ordersLoading && filteredOrders.length > 0 && (
         <div className="mt-8">
           <div className="flex items-center gap-4 mb-4">
-            <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold whitespace-nowrap flex items-center gap-1.5">
+            <span className="text-star font-mono text-xs uppercase tracking-[0.3em] whitespace-nowrap flex items-center gap-1.5">
               Off-chain Orders
               <InfoTooltip content={CONCEPT_DESCRIPTIONS.offChain} side="right" />
             </span>
@@ -320,7 +320,11 @@ function BrowseContent() {
             </svg>
           </div>
           <p className="text-dust text-sm">No inscriptions found</p>
-          <p className="text-ash text-xs mt-1">Try a different filter or search query</p>
+          <p className="text-ash text-xs mt-1 mb-4">Try a different filter or search query</p>
+          <Link href="/create" className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm text-void bg-star hover:bg-star-bright transition-colors font-medium">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
+            Create Inscription
+          </Link>
         </div>
       )}
 

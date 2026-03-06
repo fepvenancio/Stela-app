@@ -74,7 +74,7 @@ function MintSection({
     return (
       <section className="bg-surface/10 border border-edge/20 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Mint</h3>
+          <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Mint</h3>
           <span className="text-[10px] text-star font-bold uppercase tracking-widest">Sold Out</span>
         </div>
         <div className="h-1.5 bg-surface/30 rounded-full overflow-hidden">
@@ -87,10 +87,10 @@ function MintSection({
 
   return (
     <>
-      <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-edge/15">
+      <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-star/10">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Mint Genesis NFT</h3>
+            <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Mint Genesis NFT</h3>
             <span className="text-[10px] text-ash">{remaining} remaining</span>
           </div>
           {/* Progress bar */}
@@ -171,7 +171,7 @@ function FeeInfo() {
   return (
     <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
       <div className="px-6 py-3 border-b border-edge/15">
-        <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">NFT Fee Discounts</h3>
+        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">NFT Fee Discounts</h3>
       </div>
       <div className="p-6">
         <div className="grid sm:grid-cols-3 gap-3 mb-4">
@@ -207,7 +207,7 @@ function TransparencyInfo() {
   return (
     <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
       <div className="px-6 py-3 border-b border-edge/15">
-        <h3 className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Treasury & Transparency</h3>
+        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Treasury & Transparency</h3>
       </div>
       <div className="p-6">
         <div className="grid sm:grid-cols-2 gap-3">
