@@ -12,8 +12,26 @@ const ibmMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], vari
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['400', '600', '700'], variable: '--font-cinzel' })
 
 export const metadata: Metadata = {
-  title: 'Stela Protocol',
-  description: 'P2P lending protocol on StarkNet',
+  title: {
+    default: 'Stela Protocol',
+    template: '%s | Stela',
+  },
+  description: 'Peer-to-peer lending inscriptions on StarkNet. Gasless order signing, collateral locking, and multi-lender vaults.',
+  metadataBase: new URL('https://stela-dapp.xyz'),
+  openGraph: {
+    title: 'Stela Protocol',
+    description: 'Peer-to-peer lending inscriptions on StarkNet. Gasless order signing, collateral locking, and multi-lender vaults.',
+    siteName: 'Stela Protocol',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Stela Protocol',
+    description: 'P2P lending inscriptions on StarkNet — gasless, permissionless, immutable.',
+  },
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
