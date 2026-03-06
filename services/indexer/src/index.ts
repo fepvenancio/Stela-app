@@ -120,18 +120,32 @@ async function runOnce(): Promise<void> {
       const calldataByTxHash = new Map<string, string[]>()
       if (block.transactions) {
         for (const tx of block.transactions) {
-          const txHash = (tx as Record<string, unknown> & { meta?: { transactionHash?: string } })
-            .meta?.transactionHash as string | undefined
+          const txAny = tx as Record<string, unknown>
+          const meta = txAny.meta as { transactionHash?: string } | undefined
+          const txHash = meta?.transactionHash as string | undefined
           if (!txHash) continue
-          const txBody = (tx as Record<string, unknown> & { transaction?: Record<string, unknown> })
-            .transaction
+
+          // Apibara v2 uses a $case discriminated union for transaction variants
+          const txBody = txAny.transaction as { $case?: string; [key: string]: unknown } | undefined
           if (!txBody) continue
-          for (const variant of ['invokeV1', 'invokeV3', 'invokeV0'] as const) {
-            const inner = txBody[variant] as Record<string, unknown> | undefined
-            if (inner?.calldata) {
-              calldataByTxHash.set(txHash, inner.calldata as string[])
-              break
+
+          // Try $case pattern first (Apibara v2), then direct access (fallback)
+          let calldata: string[] | undefined
+          if (txBody.$case) {
+            const inner = txBody[txBody.$case] as { calldata?: string[] } | undefined
+            calldata = inner?.calldata as string[] | undefined
+          } else {
+            for (const variant of ['invokeV3', 'invokeV1', 'invokeV0'] as const) {
+              const inner = txBody[variant] as { calldata?: string[] } | undefined
+              if (inner?.calldata) {
+                calldata = inner.calldata as string[]
+                break
+              }
             }
+          }
+
+          if (calldata) {
+            calldataByTxHash.set(txHash, calldata)
           }
         }
       }
@@ -149,6 +163,8 @@ async function runOnce(): Promise<void> {
         const calldata = calldataByTxHash.get(rawEvent.transactionHash)
         if (calldata) {
           rawEvent.transaction = { calldata }
+        } else {
+          console.warn(`No calldata found for tx ${rawEvent.transactionHash} (${calldataByTxHash.size} txs in block)`)
         }
 
         const webhookEvent = await transformEvent(
