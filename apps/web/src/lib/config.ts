@@ -11,7 +11,7 @@ const DEFAULT_RPC: Record<Network, string> = {
 }
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || DEFAULT_RPC[NETWORK]
 
-export const GENESIS_ADDRESS = '0x07b1579dd61bbbaaea402d93c272a0a1b4d8e1a06a57743f509fbd6cb9b53fb2' as `0x${string}`
+export const GENESIS_ADDRESS = '0x0265ea52ffbf1b7e1a029b94fe1a2023899dd0bc02eb1f11c9b04ea90e957d28' as `0x${string}`
 export const STRK_ADDRESS = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d' as `0x${string}`
 
 /** SNIP-12 chain ID shortstrings - mirrors SDK's CHAIN_ID */

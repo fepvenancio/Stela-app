@@ -20,7 +20,7 @@ This monorepo contains the full application stack for the Stela protocol: a Next
 
 - **Live domain:** `stela-dapp.xyz`
 - **Network:** StarkNet Sepolia (testnet)
-- **Contract:** `0x042f27b5cf82781d8fffd7daeec9184ac4f14c9e86e87b880bd81ef5197345ed`
+- **Contract:** `0x0400ed08d0507b1f229c3283ecfc8567fb7240a7d0d99d5af9167993c51d062e`
 - **Package manager:** pnpm 10.28.0
 - **Build system:** Turborepo
 - **Runtime:** Cloudflare Workers (workerd)

@@ -281,7 +281,7 @@ Variables are set in `wrangler.jsonc` for production:
 ```json
 "vars": {
   "NEXT_PUBLIC_NETWORK": "sepolia",
-  "NEXT_PUBLIC_STELA_ADDRESS": "0x042f27b5cf82781d8fffd7daeec9184ac4f14c9e86e87b880bd81ef5197345ed",
+  "NEXT_PUBLIC_STELA_ADDRESS": "0x0400ed08d0507b1f229c3283ecfc8567fb7240a7d0d99d5af9167993c51d062e",
   "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia"
 }
 ```
@@ -768,8 +768,8 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 
 | Contract | Address | Notes |
 |----------|---------|-------|
-| **Stela** | `0x042f27b5cf82781d8fffd7daeec9184ac4f14c9e86e87b880bd81ef5197345ed` | protocol-overhaul-2026-03-05 |
-| **StelaGenesis NFT** | `0x07b1579dd61bbbaaea402d93c272a0a1b4d8e1a06a57743f509fbd6cb9b53fb2` | ERC721, 300 supply, 50 treasury, 5/wallet cap, 1000 STRK |
+| **Stela** | `0x0400ed08d0507b1f229c3283ecfc8567fb7240a7d0d99d5af9167993c51d062e` | protocol-overhaul-2026-03-05 |
+| **StelaGenesis NFT** | `0x0265ea52ffbf1b7e1a029b94fe1a2023899dd0bc02eb1f11c9b04ea90e957d28` | ERC721, 300 supply, 50 treasury, 5/wallet cap, 1000 STRK |
 
 ### D1 Access Security
 
