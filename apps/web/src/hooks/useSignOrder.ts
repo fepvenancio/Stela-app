@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { findDebtBalanceShortfall } from '@/lib/balance'
 import type { TransactionProgress } from '@/hooks/useTransactionProgress'
+import { useWalletSign } from '@/hooks/useWalletSign'
 
 function toSdkAssets(arr: Record<string, string>[] | undefined): Asset[] {
   return (arr || []).map((a) => ({
@@ -44,6 +45,7 @@ function formatSig(signature: unknown): string[] {
 
 export function useSignOrder(orderId: string) {
   const { address, account } = useAccount()
+  const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
 
   const signOrder = useCallback(
@@ -127,7 +129,7 @@ export function useSignOrder(orderId: string) {
         }
 
         await settlePublic({
-          account, address, provider, nonce, orderHash, orderId, order, orderData,
+          signTypedData, account, address, provider, nonce, orderHash, orderId, order, orderData,
           orderNonceRaw, sdkDebtAssets, sdkInterestAssets, sdkCollateralAssets,
           bps, progress,
         })
@@ -140,7 +142,7 @@ export function useSignOrder(orderId: string) {
         setIsPending(false)
       }
     },
-    [address, account, orderId],
+    [address, account, orderId, signTypedData],
   )
 
   return { signOrder, isPending }
@@ -151,6 +153,7 @@ export function useSignOrder(orderId: string) {
 // ---------------------------------------------------------------------------
 
 async function settlePublic(params: {
+  signTypedData: (typedData: import('starknet').TypedData) => Promise<string[]>
   account: NonNullable<ReturnType<typeof useAccount>['account']>
   address: string
   provider: RpcProvider
@@ -167,7 +170,7 @@ async function settlePublic(params: {
   progress?: TransactionProgress
 }) {
   const {
-    account, address, provider, nonce, orderHash, orderId, order, orderData,
+    signTypedData, account, address, provider, nonce, orderHash, orderId, order, orderData,
     orderNonceRaw, sdkDebtAssets, sdkInterestAssets, sdkCollateralAssets,
     bps, progress,
   } = params
@@ -181,8 +184,8 @@ async function settlePublic(params: {
     chainId: CHAIN_ID,
   })
 
-  const signature = await account.signMessage(typedData)
-  const lenderSig = formatSig(signature)
+  const signature = await signTypedData(typedData)
+  const lenderSig = signature.map(String)
 
   // 8. Parse borrower signature from stored order
   const borrowerSig = parseSigToArray(order.borrower_signature as string | string[])

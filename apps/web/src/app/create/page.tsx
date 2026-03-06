@@ -27,6 +27,7 @@ import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
 import { useMatchDetection } from '@/hooks/useMatchDetection'
 import type { OnChainMatch } from '@/hooks/useMatchDetection'
 import { useCreateInscription } from '@/hooks/useCreateInscription'
+import { useWalletSign } from '@/hooks/useWalletSign'
 import { useSignOnChainMatch } from '@/hooks/useSignOnChainMatch'
 import { InlineMatchList } from '@/components/InlineMatchList'
 
@@ -390,6 +391,7 @@ function AddAssetModal({
 
 export default function CreatePage() {
   const { address, account } = useAccount()
+  const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
 
   const provider = useMemo(() => new RpcProvider({ nodeUrl: RPC_URL }), [])
@@ -795,7 +797,7 @@ export default function CreatePage() {
       })
 
       const orderMessageHash = starknetTypedData.getMessageHash(typedData, address)
-      const signature = await account.signMessage(typedData)
+      const signature = await signTypedData(typedData)
       const orderId = crypto.randomUUID()
 
       const orderData = {
@@ -836,9 +838,7 @@ export default function CreatePage() {
           id: orderId,
           borrower: address,
           order_data: orderData,
-          borrower_signature: Array.isArray(signature)
-            ? signature.map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s))
-            : [signature.r, signature.s].map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s)),
+          borrower_signature: signature.map(String),
           nonce: nonce.toString(),
           deadline: Number(deadline),
         }),

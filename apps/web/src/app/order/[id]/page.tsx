@@ -3,6 +3,7 @@
 import { use, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useAccount } from '@starknet-react/core'
+import { useWalletSign } from '@/hooks/useWalletSign'
 import { useOrder } from '@/hooks/useOrders'
 import { useSignOrder } from '@/hooks/useSignOrder'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
@@ -33,6 +34,7 @@ import { normalizeOrderData, type RawOrderData, type ParsedOrderData } from '@/l
 export default function OrderPage({ params }: OrderPageProps) {
   const { id } = use(params)
   const { address, account } = useAccount()
+  const { signTypedData } = useWalletSign()
   const { data: order, isLoading, error } = useOrder(id)
   const { signOrder, isPending: signPending } = useSignOrder(id)
   const [lendAmount, setLendAmount] = useState('')
@@ -327,9 +329,8 @@ export default function OrderPage({ params }: OrderPageProps) {
                             try {
                               // Sign a cancellation typed data to prove ownership
                               const cancelTypedData = getCancelOrderTypedData(id, CHAIN_ID)
-                              const sig = await account.signMessage(cancelTypedData)
-                              const toHex = (s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s)
-                              const sigArray = Array.isArray(sig) ? sig.map(toHex) : [sig.r, sig.s].map(toHex)
+                              const sig = await signTypedData(cancelTypedData)
+                              const sigArray = sig.map(String)
 
                               const res = await fetch(`/api/orders/${id}`, {
                                 method: 'DELETE',

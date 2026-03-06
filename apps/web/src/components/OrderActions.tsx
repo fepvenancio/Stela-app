@@ -11,6 +11,7 @@ import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getCancelOrderTypedData } from '@/lib/offchain'
+import { useWalletSign } from '@/hooks/useWalletSign'
 import { CHAIN_ID } from '@/lib/config'
 import { parseAmount } from '@/lib/amount'
 import { addressesEqual } from '@/lib/address'
@@ -31,6 +32,7 @@ export function OrderActions({
   orderId, status, borrower, debtAssets, multiLender, offers,
 }: OrderActionsProps) {
   const { address, account } = useAccount()
+  const { signTypedData } = useWalletSign()
   const { signOrder, isPending: signPending } = useSignOrder(orderId)
   const [lendAmount, setLendAmount] = useState('')
 
@@ -149,9 +151,8 @@ export function OrderActions({
                 if (!account || !address) return
                 try {
                   const cancelTypedData = getCancelOrderTypedData(orderId, CHAIN_ID)
-                  const sig = await account.signMessage(cancelTypedData)
-                  const toHex = (s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s)
-                  const sigArray = Array.isArray(sig) ? sig.map(toHex) : [sig.r, sig.s].map(toHex)
+                  const sig = await signTypedData(cancelTypedData)
+                  const sigArray = sig.map(String)
 
                   const res = await fetch(`/api/orders/${orderId}`, {
                     method: 'DELETE',

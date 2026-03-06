@@ -11,6 +11,7 @@ import { findDebtBalanceShortfall } from '@/lib/balance'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import type { TransactionProgress } from '@/hooks/useTransactionProgress'
+import { useWalletSign } from '@/hooks/useWalletSign'
 
 function toSdkAssets(arr: Record<string, string>[] | undefined): Asset[] {
   return (arr || []).map((a) => ({
@@ -59,6 +60,7 @@ export interface MatchedOrder {
  */
 export function useInstantSettle() {
   const { address, account } = useAccount()
+  const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
 
   const settle = useCallback(
@@ -136,8 +138,8 @@ export function useInstantSettle() {
           chainId: CHAIN_ID,
         })
 
-        const signature = await account.signMessage(lendOfferTypedData)
-        const lenderSig = formatSig(signature)
+        const signature = await signTypedData(lendOfferTypedData)
+        const lenderSig = signature.map(String)
         progress?.advance()
 
         // 7. Parse borrower signature
