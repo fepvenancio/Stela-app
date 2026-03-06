@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, toU256, getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
@@ -24,7 +24,11 @@ import { formatAddress } from '@/lib/address'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
-import { MatchFoundModal } from '@/components/MatchFoundModal'
+import { useMatchDetection } from '@/hooks/useMatchDetection'
+import type { OnChainMatch } from '@/hooks/useMatchDetection'
+import { useCreateInscription } from '@/hooks/useCreateInscription'
+import { useSignOnChainMatch } from '@/hooks/useSignOnChainMatch'
+import { InlineMatchList } from '@/components/InlineMatchList'
 
 /* ── Types ──────────────────────────────────────────────── */
 
@@ -390,6 +394,7 @@ export default function CreatePage() {
 
   /* ── Form State ────────────────────────────────────────── */
 
+  const [mode, setMode] = useState<'offchain' | 'onchain'>('offchain')
   const [multiLender, setMultiLender] = useState(false)
   const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([])
   const [interestAssets, setInterestAssets] = useState<AssetInputValue[]>([])
@@ -428,9 +433,12 @@ export default function CreatePage() {
     { label: 'Submitting order', description: 'Recording your order on the network' },
   ])
 
-  // Instant match state
-  const [matchModalOpen, setMatchModalOpen] = useState(false)
-  const [matches, setMatches] = useState<MatchedOrder[]>([])
+  // Match detection
+  const { offchainMatches, onchainMatches, isChecking, checkForMatches, hasMatches, reset: resetMatches } = useMatchDetection()
+  const [matchesVisible, setMatchesVisible] = useState(false)
+  const [matchSkipped, setMatchSkipped] = useState(false)
+
+  // Instant settle (off-chain matches)
   const { settle: instantSettle, isPending: isSettling } = useInstantSettle()
   const settleProgress = useTransactionProgress([
     { label: 'Signing lend offer', description: 'Sign the SNIP-12 typed data (no gas)' },
@@ -439,12 +447,43 @@ export default function CreatePage() {
     { label: 'Recording', description: 'Saving settlement details' },
   ])
 
+  // On-chain inscription creation
+  const { createInscription, isPending: isCreatingOnChain } = useCreateInscription()
+  const onchainProgress = useTransactionProgress([
+    { label: 'Approving collateral', description: 'Confirm token approvals in your wallet' },
+    { label: 'Creating inscription', description: 'Submit on-chain inscription transaction' },
+    { label: 'Confirming', description: 'Waiting for block confirmation' },
+  ])
+
+  // On-chain match settlement
+  const { signOnChainMatch: settleOnChainMatch, isPending: isSettlingOnChain } = useSignOnChainMatch()
+  const onchainSettleProgress = useTransactionProgress([
+    { label: 'Signing lend offer', description: 'Sign the transaction in your wallet' },
+    { label: 'Settling on-chain', description: 'Approve tokens & execute settlement' },
+    { label: 'Confirming', description: 'Waiting for block confirmation' },
+  ])
+
   /* ── Derived State ─────────────────────────────────────── */
 
   const hasDebt = debtAssets.some((a) => a.asset)
   const hasCollateral = collateralAssets.some((a) => a.asset)
   const hasDuration = Boolean(duration && Number(duration) > 0)
   const isValid = hasDebt && hasCollateral && hasDuration
+  const isSwap = Number(duration) === 0
+
+  const submitButtonText = useMemo(() => {
+    const showingMatches = matchesVisible && hasMatches && !matchSkipped
+    if (showingMatches) {
+      if (mode === 'offchain') {
+        return isSwap ? 'Skip Matches — Create Swap' : 'Skip Matches — Create Order'
+      }
+      return isSwap ? 'Skip Matches — Create On-Chain Swap' : 'Skip Matches — Create Inscription'
+    }
+    if (mode === 'offchain') {
+      return isSwap ? 'Sign & Create Swap' : 'Sign & Create Order'
+    }
+    return isSwap ? 'Create On-Chain Swap' : 'Create On-Chain Inscription'
+  }, [mode, isSwap, matchesVisible, hasMatches, matchSkipped])
 
   const allAssets = useMemo(() => {
     const items: { asset: AssetInputValue; role: AssetRole; index: number }[] = []
@@ -472,6 +511,44 @@ export default function CreatePage() {
     }
     return null
   }, [debtAssets, interestAssets])
+
+  /* ── Debounced Match Detection ─────────────────────────── */
+
+  const filteredDebtForMatch = useMemo(() => debtAssets.filter(a => a.asset), [debtAssets])
+  const filteredCollateralForMatch = useMemo(() => collateralAssets.filter(a => a.asset), [collateralAssets])
+
+  useEffect(() => {
+    // Reset matches when inputs change
+    setMatchesVisible(false)
+    setMatchSkipped(false)
+
+    if (!address) return
+    if (filteredDebtForMatch.length !== 1 || filteredCollateralForMatch.length !== 1) return
+    if (multiLender) return
+
+    const debtToken = filteredDebtForMatch[0].asset
+    const collateralToken = filteredCollateralForMatch[0].asset
+    if (!debtToken || !collateralToken) return
+
+    const timer = setTimeout(() => {
+      checkForMatches({
+        debtToken,
+        collateralToken,
+        duration: duration || '0',
+        borrowerAddress: address,
+      })
+    }, 500)
+
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredDebtForMatch, filteredCollateralForMatch, duration, address, multiLender])
+
+  // Show matches when detection completes
+  useEffect(() => {
+    if (hasMatches && !matchSkipped) {
+      setMatchesVisible(true)
+    }
+  }, [hasMatches, matchSkipped])
 
   /* ── Add Asset Handler ─────────────────────────────────── */
 
@@ -537,56 +614,82 @@ export default function CreatePage() {
     setDeadlinePreset('604800')
     setMultiLender(false)
     setShowErrors(false)
+    setMatchesVisible(false)
+    setMatchSkipped(false)
+    resetMatches()
   }
 
-  /** Check for compatible orders before creating. Shows match modal if found. */
+  /** Main submit handler — checks for matches, then routes to appropriate flow */
   async function handleSubmit() {
     if (!address || !account) return
     setShowErrors(true)
     if (!isValid) return
 
-    // Only check for single-lender, single-debt-token + single-collateral-token orders
-    const filteredDebt = debtAssets.filter(a => a.asset)
-    const filteredCollateral = collateralAssets.filter(a => a.asset)
-    const canMatch = !multiLender && filteredDebt.length === 1 && filteredCollateral.length === 1
-
-    if (canMatch) {
-      try {
-        setIsPending(true)
-        const params = new URLSearchParams({
-          debtToken: filteredDebt[0].asset,
-          collateralToken: filteredCollateral[0].asset,
-          duration: duration || '0',
-          borrower: address,
-        })
-        const res = await fetch(`/api/orders/match?${params}`)
-        if (res.ok) {
-          const { data } = await res.json() as { data: MatchedOrder[] }
-          if (data && data.length > 0) {
-            setMatches(data)
-            setMatchModalOpen(true)
-            setIsPending(false)
-            return
-          }
-        }
-      } catch {
-        // Match check failed — proceed with normal flow
-      }
-      setIsPending(false)
+    // If matches are visible and not skipped, user needs to pick or skip
+    if (matchesVisible && hasMatches && !matchSkipped) {
+      // Matches are already shown inline — don't submit
+      return
     }
 
-    // No matches or not eligible — proceed with normal order creation
-    await createOrder()
+    if (mode === 'offchain') {
+      await createOrder()
+    } else {
+      await createOnChainInscription()
+    }
   }
 
-  /** Handle instant settlement of a matched order */
+  /** Handle instant settlement of a matched off-chain order */
   async function handleInstantSettle(match: MatchedOrder) {
-    setMatchModalOpen(false)
     try {
       await instantSettle(match, settleProgress)
       resetForm()
     } catch {
       // Error already toasted in hook
+    }
+  }
+
+  /** Handle settlement of a matched on-chain inscription */
+  async function handleOnchainSettle(match: OnChainMatch) {
+    try {
+      const debtAssetInfos = (match.debtAssets ?? []).map(a => ({
+        address: a.asset_address,
+        value: a.value,
+      }))
+      await settleOnChainMatch(match.id, debtAssetInfos, 10000, onchainSettleProgress)
+      resetForm()
+    } catch {
+      // Error already toasted in hook
+    }
+  }
+
+  /** On-chain inscription creation flow */
+  async function createOnChainInscription() {
+    if (!address || !account) return
+
+    const sdkDebtAssets = toSdkAssets(debtAssets)
+    const sdkInterestAssets = toSdkAssets(interestAssets)
+    const sdkCollateralAssets = toSdkAssets(collateralAssets)
+
+    setIsPending(true)
+    try {
+      await createInscription({
+        isBorrow: true,
+        debtAssets: sdkDebtAssets,
+        interestAssets: sdkInterestAssets,
+        collateralAssets: sdkCollateralAssets,
+        duration: BigInt(duration || '0'),
+        deadline: BigInt(deadline || '0'),
+        multiLender,
+      }, onchainProgress)
+      toast.success(isSwap ? 'On-chain swap created!' : 'On-chain inscription created!', {
+        description: 'Your collateral has been locked on-chain.',
+      })
+      resetForm()
+    } catch (err: unknown) {
+      onchainProgress.fail(getErrorMessage(err))
+      toast.error('Failed to create inscription', { description: getErrorMessage(err) })
+    } finally {
+      setIsPending(false)
     }
   }
 
@@ -763,7 +866,9 @@ export default function CreatePage() {
           Inscribe
         </h1>
         <p className="text-dust text-sm">
-          Define your loan terms. Signing is gasless — no cost until settlement.
+          {mode === 'offchain'
+            ? 'Define your terms. Signing is gasless — no cost until settlement.'
+            : 'Define your terms. Collateral will be locked on-chain immediately.'}
         </p>
       </div>
 
@@ -922,7 +1027,40 @@ export default function CreatePage() {
               </div>
             </div>
 
-            {/* Mode */}
+            {/* Inscription Mode */}
+            <div className="space-y-2">
+              <span className="text-star font-mono text-xs uppercase tracking-[0.3em] block">
+                Inscription Mode
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMode('offchain')}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    mode === 'offchain'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk'
+                  }`}
+                >
+                  <span className="block">Off-Chain</span>
+                  <span className={`text-[10px] ${mode === 'offchain' ? 'text-star/60' : 'text-ash'}`}>Gasless</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('onchain')}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    mode === 'onchain'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk'
+                  }`}
+                >
+                  <span className="block">On-Chain</span>
+                  <span className={`text-[10px] ${mode === 'onchain' ? 'text-star/60' : 'text-ash'}`}>Locks collateral</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Lender Mode */}
             <div className="space-y-2">
               <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
                 Lender Mode
@@ -931,7 +1069,7 @@ export default function CreatePage() {
                 <button
                   type="button"
                   onClick={() => setMultiLender(false)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all ${
+                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
                     !multiLender
                       ? 'border-star/40 bg-star/10 text-star'
                       : 'border-edge/50 text-dust hover:text-chalk'
@@ -942,7 +1080,7 @@ export default function CreatePage() {
                 <button
                   type="button"
                   onClick={() => setMultiLender(true)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all ${
+                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
                     multiLender
                       ? 'border-star/40 bg-star/10 text-star'
                       : 'border-edge/50 text-dust hover:text-chalk'
@@ -959,14 +1097,38 @@ export default function CreatePage() {
         {(allAssets.length > 0 || roiInfo) && (
           <section className="rounded-xl border border-edge/20 bg-surface/5 px-3 py-3">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
-              <span className="text-dust">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
+              {isSwap ? (
+                <span className="text-aurora font-medium">Instant Swap</span>
+              ) : (
+                <span className="text-dust">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
+              )}
               <span className="text-dust">Expires: <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span></span>
-              <span className="text-dust">Mode: <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span></span>
+              <span className="text-dust">Lender: <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span></span>
+              <span className="text-dust">Mode: <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>{mode === 'offchain' ? 'Gasless' : 'On-Chain'}</span></span>
               {roiInfo && (
                 <span className="text-dust">Yield: <span className="text-star font-medium">+{roiInfo.yieldPct}% {roiInfo.symbol}</span></span>
               )}
             </div>
+            {isSwap && (
+              <p className="text-[10px] text-dust mt-1.5">Swaps settle instantly with 0.10% fee</p>
+            )}
           </section>
+        )}
+
+        {/* ── INLINE MATCHES ────────────────────────────── */}
+        {matchesVisible && !matchSkipped && hasMatches && (
+          <InlineMatchList
+            offchainMatches={offchainMatches}
+            onchainMatches={onchainMatches}
+            isSwap={isSwap}
+            onSettleOffchain={handleInstantSettle}
+            onSettleOnchain={handleOnchainSettle}
+            onSkip={() => {
+              setMatchSkipped(true)
+              setMatchesVisible(false)
+            }}
+            isSettling={isSettling || isSettlingOnChain}
+          />
         )}
 
         {/* ── SUBMIT ─────────────────────────────────────── */}
@@ -976,9 +1138,9 @@ export default function CreatePage() {
             size="lg"
             className="w-full h-12 uppercase tracking-widest"
             onClick={handleSubmit}
-            disabled={isPending}
+            disabled={isPending || isCreatingOnChain || isChecking}
           >
-            {isPending ? 'Processing...' : 'Sign & Create Order'}
+            {isPending || isCreatingOnChain ? 'Processing...' : isChecking ? 'Checking matches...' : submitButtonText}
           </Button>
         </Web3ActionWrapper>
       </div>
@@ -998,20 +1160,25 @@ export default function CreatePage() {
         onClose={createProgress.close}
       />
 
-      <MatchFoundModal
-        open={matchModalOpen}
-        onOpenChange={setMatchModalOpen}
-        matches={matches}
-        onSettle={handleInstantSettle}
-        onSkip={() => { setMatchModalOpen(false); createOrder() }}
-        isPending={isSettling}
-      />
-
       <TransactionProgressModal
         open={settleProgress.open}
         steps={settleProgress.steps}
         txHash={settleProgress.txHash}
         onClose={settleProgress.close}
+      />
+
+      <TransactionProgressModal
+        open={onchainProgress.open}
+        steps={onchainProgress.steps}
+        txHash={onchainProgress.txHash}
+        onClose={onchainProgress.close}
+      />
+
+      <TransactionProgressModal
+        open={onchainSettleProgress.open}
+        steps={onchainSettleProgress.steps}
+        txHash={onchainSettleProgress.txHash}
+        onClose={onchainSettleProgress.close}
       />
     </div>
   )

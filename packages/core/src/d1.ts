@@ -550,6 +550,70 @@ export function createD1Queries(db: D1Database) {
     },
 
     // -----------------------------------------------------------------------
+    // Hybrid: find on-chain inscriptions compatible with off-chain lend offers
+    // -----------------------------------------------------------------------
+
+    async findCompatibleInscriptions(params: {
+      debtToken: string
+      collateralToken: string
+      duration?: number
+      excludeBorrower: string
+      limit?: number
+    }): Promise<Array<{
+      id: string
+      borrower: string
+      duration: number
+      deadline: number
+      status: string
+    }>> {
+      const normalizedDebt = normalizeAddress(params.debtToken)
+      const normalizedCollateral = normalizeAddress(params.collateralToken)
+      const normalizedBorrower = normalizeAddress(params.excludeBorrower)
+      const limit = Math.min(params.limit ?? 10, 50)
+
+      const conditions: string[] = [
+        `i.status = 'open'`,
+        `i.multi_lender = 0`,
+        `LOWER(i.borrower) != LOWER(?)`,
+      ]
+      const bindParams: unknown[] = [normalizedBorrower]
+
+      if (params.duration !== undefined) {
+        conditions.push(`CAST(i.duration AS INTEGER) = ?`)
+        bindParams.push(params.duration)
+      }
+
+      const where = conditions.join(' AND ')
+
+      const result = await db
+        .prepare(
+          `SELECT DISTINCT i.id, i.borrower, i.duration, i.deadline, i.status
+           FROM inscriptions i
+           JOIN inscription_assets ia_debt
+             ON ia_debt.inscription_id = i.id
+             AND ia_debt.asset_role = 'debt'
+             AND LOWER(ia_debt.asset_address) = LOWER(?)
+           JOIN inscription_assets ia_coll
+             ON ia_coll.inscription_id = i.id
+             AND ia_coll.asset_role = 'collateral'
+             AND LOWER(ia_coll.asset_address) = LOWER(?)
+           WHERE ${where}
+           ORDER BY i.created_at_ts DESC
+           LIMIT ?`
+        )
+        .bind(normalizedDebt, normalizedCollateral, ...bindParams, limit)
+        .all<{
+          id: string
+          borrower: string
+          duration: number
+          deadline: number
+          status: string
+        }>()
+
+      return result.results
+    },
+
+    // -----------------------------------------------------------------------
     // Off-chain orders
     // -----------------------------------------------------------------------
 

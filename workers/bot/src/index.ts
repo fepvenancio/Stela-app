@@ -190,13 +190,37 @@ async function settleOrders(
     return
   }
 
-  console.log(`Found ${matched.length} matched order(s) to settle`)
+  // Pre-load all orders to extract duration for sorting (swaps first)
+  const orderCache = new Map<string, Record<string, unknown>>()
+  for (const { order_id } of matched) {
+    const order = await queries.getOrder(order_id) as Record<string, unknown> | null
+    if (order) orderCache.set(order_id, order)
+  }
 
-  for (const { order_id, offer_id } of matched) {
+  // Sort: duration=0 (swaps) first, then by creation order
+  const sorted = matched.sort((a, b) => {
+    const oA = orderCache.get(a.order_id)
+    const oB = orderCache.get(b.order_id)
+    let durA = Infinity
+    let durB = Infinity
+    try { durA = Number(JSON.parse(oA?.order_data as string).duration) } catch { /* keep Infinity */ }
+    try { durB = Number(JSON.parse(oB?.order_data as string).duration) } catch { /* keep Infinity */ }
+    return durA - durB
+  })
+
+  console.log(`Found ${sorted.length} matched order(s) to settle`)
+
+  for (const { order_id, offer_id } of sorted) {
     try {
+      // Re-read order status fresh (may have been settled by instant-match user since we fetched)
       const order = await queries.getOrder(order_id) as Record<string, unknown> | null
       if (!order) {
         console.warn(`Order ${order_id} not found, skipping`)
+        continue
+      }
+
+      if (order.status !== 'matched') {
+        console.log(`Order ${order_id} status is '${order.status}' (no longer matched), skipping`)
         continue
       }
 
