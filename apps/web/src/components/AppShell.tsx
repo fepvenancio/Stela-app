@@ -117,8 +117,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <Link
             href="/"
-            className="font-display text-xl tracking-[0.3em] text-star hover:text-star-bright transition-all group shrink-0"
+            className="flex items-center gap-2.5 font-display text-xl tracking-[0.3em] text-star hover:text-star-bright transition-all group shrink-0"
           >
+            <svg viewBox="0 0 512 512" className="w-7 h-7" fill="none" aria-hidden="true">
+              <path d="M176 160C176 93.7 210.7 40 256 40C301.3 40 336 93.7 336 160V432H176V160Z" fill="currentColor"/>
+              <rect x="208" y="160" width="96" height="10" rx="5" fill="#0a0a0e" fillOpacity="0.2"/>
+              <rect x="208" y="192" width="96" height="10" rx="5" fill="#0a0a0e" fillOpacity="0.2"/>
+              <rect x="208" y="224" width="64" height="10" rx="5" fill="#0a0a0e" fillOpacity="0.2"/>
+              <rect x="208" y="256" width="80" height="10" rx="5" fill="#0a0a0e" fillOpacity="0.2"/>
+              <rect x="152" y="432" width="208" height="40" rx="6" fill="currentColor"/>
+            </svg>
             <span className="relative">
               STELA
               <span className="absolute -bottom-1 left-0 w-0 h-px bg-star/50 transition-all group-hover:w-full" />

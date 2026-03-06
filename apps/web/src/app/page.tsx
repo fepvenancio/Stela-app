@@ -69,7 +69,7 @@ const icon = {
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col overflow-hidden">
+    <div className="flex flex-col overflow-hidden -mt-4 sm:-mt-8">
 
       {/* ── 1. HERO ─────────────────────────────────────────── */}
       <section className="relative min-h-[85vh] flex items-center pt-12 pb-24 px-4">
