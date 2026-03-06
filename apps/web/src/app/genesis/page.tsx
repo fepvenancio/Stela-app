@@ -52,16 +52,16 @@ function MintSection({
     if (!address || !canMint) return
     progress.start()
     try {
-      await sendAsync([{
+      const approveCalls = [{
         contractAddress: STRK_ADDRESS,
         entrypoint: 'approve',
         calldata: [GENESIS_ADDRESS, ...toU256(totalCost)],
-      }])
-      progress.advance()
+      }]
       const mintCalls = quantity === 1
         ? [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint', calldata: [] as string[] }]
         : [{ contractAddress: GENESIS_ADDRESS, entrypoint: 'mint_batch', calldata: toU256(BigInt(quantity)) }]
-      const result = await sendAsync(mintCalls)
+      progress.advance()
+      const result = await sendAsync([...approveCalls, ...mintCalls])
       progress.setTxHash(result.transaction_hash)
       progress.advance()
       progress.advance()

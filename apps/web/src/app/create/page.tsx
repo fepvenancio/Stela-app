@@ -164,11 +164,13 @@ function AddAssetModal({
   onOpenChange,
   onAdd,
   balances,
+  availableRoles = ROLES,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAdd: (asset: AssetInputValue, role: AssetRole) => void
   balances?: Map<string, bigint>
+  availableRoles?: AssetRole[]
 }) {
   const [step, setStep] = useState<'token' | 'configure'>('token')
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null)
@@ -345,8 +347,8 @@ function AddAssetModal({
             {/* Role selector */}
             <div className="space-y-2">
               <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Role</Label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {ROLES.map((r) => {
+              <div className={`grid gap-1.5 ${availableRoles.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {availableRoles.map((r) => {
                   const meta = ROLE_META[r]
                   const selected = role === r
                   return (
@@ -394,6 +396,7 @@ export default function CreatePage() {
 
   /* ── Form State ────────────────────────────────────────── */
 
+  const [orderType, setOrderType] = useState<'lending' | 'swap'>('lending')
   const [mode, setMode] = useState<'offchain' | 'onchain'>('offchain')
   const [multiLender, setMultiLender] = useState(false)
   const [debtAssets, setDebtAssets] = useState<AssetInputValue[]>([])
@@ -407,6 +410,7 @@ export default function CreatePage() {
   const [useCustomDuration, setUseCustomDuration] = useState(false)
 
   const duration = useMemo(() => {
+    if (orderType === 'swap') return '0'
     if (useCustomDuration && customDurationValue) {
       const parsed = parseFloat(customDurationValue)
       if (!Number.isNaN(parsed) && parsed > 0) {
@@ -414,7 +418,7 @@ export default function CreatePage() {
       }
     }
     return durationPreset
-  }, [durationPreset, customDurationValue, customDurationUnit, useCustomDuration])
+  }, [orderType, durationPreset, customDurationValue, customDurationUnit, useCustomDuration])
 
   // Deadline
   const [deadlinePreset, setDeadlinePreset] = useState('604800')
@@ -468,8 +472,8 @@ export default function CreatePage() {
   const hasDebt = debtAssets.some((a) => a.asset)
   const hasCollateral = collateralAssets.some((a) => a.asset)
   const hasDuration = Boolean(duration && Number(duration) > 0)
-  const isValid = hasDebt && hasCollateral && hasDuration
-  const isSwap = Number(duration) === 0
+  const isSwap = orderType === 'swap'
+  const isValid = hasDebt && hasCollateral && (isSwap || hasDuration)
 
   const submitButtonText = useMemo(() => {
     const showingMatches = matchesVisible && hasMatches && !matchSkipped
@@ -489,9 +493,11 @@ export default function CreatePage() {
     const items: { asset: AssetInputValue; role: AssetRole; index: number }[] = []
     debtAssets.forEach((a, i) => { if (a.asset) items.push({ asset: a, role: 'debt', index: i }) })
     collateralAssets.forEach((a, i) => { if (a.asset) items.push({ asset: a, role: 'collateral', index: i }) })
-    interestAssets.forEach((a, i) => { if (a.asset) items.push({ asset: a, role: 'interest', index: i }) })
+    if (!isSwap) {
+      interestAssets.forEach((a, i) => { if (a.asset) items.push({ asset: a, role: 'interest', index: i }) })
+    }
     return items
-  }, [debtAssets, collateralAssets, interestAssets])
+  }, [debtAssets, collateralAssets, interestAssets, isSwap])
 
   // ROI Math
   const roiInfo = useMemo(() => {
@@ -604,6 +610,7 @@ export default function CreatePage() {
   [])
 
   function resetForm() {
+    setOrderType('lending')
     setDebtAssets([])
     setInterestAssets([])
     setCollateralAssets([])
@@ -940,7 +947,8 @@ export default function CreatePage() {
           </div>
 
           <div className="p-3 space-y-4">
-            {/* Duration */}
+            {/* Duration (hidden for swaps) */}
+            {!isSwap && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
@@ -1003,6 +1011,7 @@ export default function CreatePage() {
                 </div>
               )}
             </div>
+            )}
 
             {/* Deadline */}
             <div className="space-y-2">
@@ -1024,6 +1033,46 @@ export default function CreatePage() {
                     {p.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Order Type */}
+            <div className="space-y-2">
+              <span className="text-star font-mono text-xs uppercase tracking-[0.3em] block">
+                Type
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderType('lending')
+                    if (durationPreset === '0') setDurationPreset('86400')
+                  }}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    orderType === 'lending'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk'
+                  }`}
+                >
+                  <span className="block">Lending</span>
+                  <span className={`text-[10px] ${orderType === 'lending' ? 'text-star/60' : 'text-ash'}`}>Duration + Interest</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderType('swap')
+                    setInterestAssets([])
+                    setUseCustomDuration(false)
+                  }}
+                  className={`py-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    orderType === 'swap'
+                      ? 'border-star/40 bg-star/10 text-star'
+                      : 'border-edge/50 text-dust hover:text-chalk'
+                  }`}
+                >
+                  <span className="block">Swap</span>
+                  <span className={`text-[10px] ${orderType === 'swap' ? 'text-star/60' : 'text-ash'}`}>Instant exchange</span>
+                </button>
               </div>
             </div>
 
@@ -1151,6 +1200,7 @@ export default function CreatePage() {
         onOpenChange={setAddModalOpen}
         onAdd={handleAddAsset}
         balances={balances}
+        availableRoles={isSwap ? (['debt', 'collateral'] as AssetRole[]) : ROLES}
       />
 
       <TransactionProgressModal

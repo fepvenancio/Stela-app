@@ -11,8 +11,6 @@ import { SelectionActionBar } from '@/components/SelectionActionBar'
 import { LendReviewModal } from '@/components/LendReviewModal'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { enrichStatus, mapInscriptionFilterToOrderFilter } from '@/lib/status'
-import { InfoTooltip } from '@/components/InfoTooltip'
-import { CONCEPT_DESCRIPTIONS } from '@/lib/status'
 import { addressesEqual } from '@/lib/address'
 import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
 import { toast } from 'sonner'
@@ -42,6 +40,7 @@ const MAX_SELECTIONS = 10
 
 function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'onchain' | 'offchain'>('all')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -212,6 +211,12 @@ function BrowseContent() {
             ))}
           </ToggleGroup>
 
+          <ToggleGroup type="single" value={sourceFilter} onValueChange={(v) => v && setSourceFilter(v as typeof sourceFilter)} className="flex gap-2" aria-label="Filter by source">
+            <ToggleGroupItem value="all" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">All</ToggleGroupItem>
+            <ToggleGroupItem value="onchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">On-chain</ToggleGroupItem>
+            <ToggleGroupItem value="offchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Off-chain</ToggleGroupItem>
+          </ToggleGroup>
+
           <Link
             href="/create"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
@@ -255,78 +260,76 @@ function BrowseContent() {
         </div>
       )}
 
-      {/* Content */}
-      {!isLoading && !error && data.length > 0 && (
-        <div className="rounded-lg border border-edge/30 overflow-clip">
-          <ListingTableHeader />
-          <div className="flex flex-col">
-            {data.map((a, i) => {
-              const enrichedStatus = a.status
-              const isOwn = address && a.creator && addressesEqual(address, a.creator)
-              const canSelect = enrichedStatus === 'open' && !a.multi_lender && !isOwn
+      {/* Content — unified table based on source filter */}
+      {(() => {
+        const showOnchain = sourceFilter !== 'offchain'
+        const showOffchain = sourceFilter !== 'onchain'
+        const onchainRows = showOnchain ? data : []
+        const offchainRows = showOffchain ? filteredOrders : []
+        const hasRows = onchainRows.length > 0 || offchainRows.length > 0
+        const isEmpty = !isLoading && !error && !hasRows
 
-              return (
-                <InscriptionListRow
-                  key={a.id}
-                  id={a.id}
-                  status={enrichedStatus}
-                  creator={a.creator}
-                  multiLender={a.multi_lender}
-                  duration={a.duration}
-                  assets={a.assets ?? []}
-                  selectable={canSelect}
-                  selected={canSelect && isSelected(a.id)}
-                  onSelect={canSelect ? () => {
-                    if (!isSelected(a.id) && count >= MAX_SELECTIONS) {
-                      toast.warning(`Maximum ${MAX_SELECTIONS} inscriptions per batch`)
-                      return
-                    }
-                    toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
-                  } : undefined}
-                />
-              )
-            })}
-          </div>
-        </div>
-      )}
+        return (
+          <>
+            {!isLoading && !error && hasRows && (
+              <div className="rounded-lg border border-edge/30 overflow-clip">
+                <ListingTableHeader />
+                <div className="flex flex-col">
+                  {onchainRows.map((a) => {
+                    const enrichedStatus = a.status
+                    const isOwn = address && a.creator && addressesEqual(address, a.creator)
+                    const canSelect = enrichedStatus === 'open' && !a.multi_lender && !isOwn
 
-      {/* Off-chain Orders Section */}
-      {!ordersLoading && filteredOrders.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-star font-mono text-xs uppercase tracking-[0.3em] whitespace-nowrap flex items-center gap-1.5">
-              Off-chain Orders
-              <InfoTooltip content={CONCEPT_DESCRIPTIONS.offChain} side="right" />
-            </span>
-            <div className="h-px w-full bg-edge/20" />
-          </div>
-          <div className="rounded-lg border border-edge/30 overflow-clip">
-            <ListingTableHeader />
-            <div className="flex flex-col">
-              {filteredOrders.map((order) => (
-                <OrderListRow key={order.id} order={order} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+                    return (
+                      <InscriptionListRow
+                        key={a.id}
+                        id={a.id}
+                        status={enrichedStatus}
+                        creator={a.creator}
+                        multiLender={a.multi_lender}
+                        duration={a.duration}
+                        assets={a.assets ?? []}
+                        selectable={canSelect}
+                        selected={canSelect && isSelected(a.id)}
+                        onSelect={canSelect ? () => {
+                          if (!isSelected(a.id) && count >= MAX_SELECTIONS) {
+                            toast.warning(`Maximum ${MAX_SELECTIONS} inscriptions per batch`)
+                            return
+                          }
+                          toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
+                        } : undefined}
+                      />
+                    )
+                  })}
+                  {offchainRows.map((order) => (
+                    <OrderListRow key={order.id} order={order} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-      {/* Empty */}
-      {!isLoading && !error && data.length === 0 && filteredOrders.length === 0 && (
-        <div className="text-center py-24">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
-              <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
-            </svg>
-          </div>
-          <p className="text-dust text-sm">No inscriptions found</p>
-          <p className="text-dust text-xs mt-1 mb-4">Try a different filter or search query</p>
-          <Link href="/create" className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm text-void bg-star hover:bg-star-bright transition-colors font-medium">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
-            Create Inscription
-          </Link>
-        </div>
-      )}
+            {isEmpty && (
+              <div className="text-center py-24">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
+                    <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
+                  </svg>
+                </div>
+                <p className="text-dust text-sm">
+                  {sourceFilter === 'onchain' ? 'No on-chain inscriptions found' :
+                   sourceFilter === 'offchain' ? 'No off-chain orders found' :
+                   'No inscriptions found'}
+                </p>
+                <p className="text-dust text-xs mt-1 mb-4">Try a different filter or search query</p>
+                <Link href="/create" className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm text-void bg-star hover:bg-star-bright transition-colors font-medium">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
+                  Create Inscription
+                </Link>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* Lend Review Modal */}
       <LendReviewModal open={reviewOpen} onOpenChange={setReviewOpen} />
