@@ -39,7 +39,7 @@ export async function fetchInscriptionFromContract(
 ): Promise<OnChainInscription | null> {
   try {
     const contract = new Contract(abi, stelaAddress, provider)
-    const result = await contract.call('get_inscription', [inscriptionId])
+    const result = await contract.call('get_inscription', [inscriptionId], { blockIdentifier: 'latest' })
     const r = result as Record<string, unknown>
 
     return {
@@ -65,7 +65,7 @@ export async function fetchLockerAddress(
 ): Promise<string | null> {
   try {
     const contract = new Contract(abi, stelaAddress, provider)
-    const result = await contract.call('get_locker', toU256(BigInt(inscriptionId)))
+    const result = await contract.call('get_locker', toU256(BigInt(inscriptionId)), { blockIdentifier: 'latest' })
     const addr = (result as unknown[])[0] as string | bigint | undefined
     return addr && BigInt(addr) !== 0n ? String(addr) : null
   } catch {
