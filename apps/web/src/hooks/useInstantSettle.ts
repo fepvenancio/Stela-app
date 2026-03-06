@@ -239,7 +239,7 @@ export function useInstantSettle() {
         setIsPending(false)
       }
     },
-    [address, account],
+    [address, account, signTypedData],
   )
 
   return { settle, isPending }

@@ -468,6 +468,14 @@ export default function CreatePage() {
     { label: 'Confirming', description: 'Waiting for block confirmation' },
   ])
 
+  /** Close any lingering progress modal before starting a new flow */
+  const closeAllProgress = useCallback(() => {
+    createProgress.close()
+    settleProgress.close()
+    onchainProgress.close()
+    onchainSettleProgress.close()
+  }, [createProgress, settleProgress, onchainProgress, onchainSettleProgress])
+
   /* ── Derived State ─────────────────────────────────────── */
 
   const hasDebt = debtAssets.some((a) => a.asset)
@@ -648,6 +656,7 @@ export default function CreatePage() {
 
   /** Handle instant settlement of a matched off-chain order */
   async function handleInstantSettle(match: MatchedOrder) {
+    closeAllProgress()
     try {
       await instantSettle(match, settleProgress)
       resetForm()
@@ -658,6 +667,7 @@ export default function CreatePage() {
 
   /** Handle settlement of a matched on-chain inscription */
   async function handleOnchainSettle(match: OnChainMatch) {
+    closeAllProgress()
     try {
       const debtAssetInfos = (match.debtAssets ?? []).map(a => ({
         address: a.asset_address,
@@ -673,6 +683,7 @@ export default function CreatePage() {
   /** On-chain inscription creation flow */
   async function createOnChainInscription() {
     if (!address || !account) return
+    closeAllProgress()
 
     const sdkDebtAssets = toSdkAssets(debtAssets)
     const sdkInterestAssets = toSdkAssets(interestAssets)
@@ -704,6 +715,7 @@ export default function CreatePage() {
   /** Normal order creation flow (approve collateral, sign, post) */
   async function createOrder() {
     if (!address || !account) return
+    closeAllProgress()
 
     const sdkDebtAssets = toSdkAssets(debtAssets)
     const sdkInterestAssets = toSdkAssets(interestAssets)
@@ -1202,33 +1214,18 @@ export default function CreatePage() {
         availableRoles={isSwap ? (['debt', 'collateral'] as AssetRole[]) : ROLES}
       />
 
-      <TransactionProgressModal
-        open={createProgress.open}
-        steps={createProgress.steps}
-        txHash={createProgress.txHash}
-        onClose={createProgress.close}
-      />
-
-      <TransactionProgressModal
-        open={settleProgress.open}
-        steps={settleProgress.steps}
-        txHash={settleProgress.txHash}
-        onClose={settleProgress.close}
-      />
-
-      <TransactionProgressModal
-        open={onchainProgress.open}
-        steps={onchainProgress.steps}
-        txHash={onchainProgress.txHash}
-        onClose={onchainProgress.close}
-      />
-
-      <TransactionProgressModal
-        open={onchainSettleProgress.open}
-        steps={onchainSettleProgress.steps}
-        txHash={onchainSettleProgress.txHash}
-        onClose={onchainSettleProgress.close}
-      />
+      {/* Single progress modal — show whichever flow is active (prevents stacking) */}
+      {(() => {
+        const active = [createProgress, settleProgress, onchainProgress, onchainSettleProgress].find(p => p.open)
+        return active ? (
+          <TransactionProgressModal
+            open
+            steps={active.steps}
+            txHash={active.txHash}
+            onClose={active.close}
+          />
+        ) : null
+      })()}
     </div>
   )
 }

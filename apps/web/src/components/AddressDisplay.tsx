@@ -16,8 +16,10 @@ export function AddressDisplay({ address, className }: { address: unknown; class
   return (
     <span className={cn("inline-flex items-center gap-1", className)}>
       <Tooltip>
-        <TooltipTrigger className="font-mono cursor-default">
-          {formatAddress(address)}
+        <TooltipTrigger asChild>
+          <span className="font-mono cursor-default">
+            {formatAddress(address)}
+          </span>
         </TooltipTrigger>
         <TooltipContent>
           <p className="font-mono text-xs">{fullAddress}</p>
