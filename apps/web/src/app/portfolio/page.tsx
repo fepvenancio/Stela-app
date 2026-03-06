@@ -91,13 +91,13 @@ function matchesOrderSearch(q: string, order: OrderRow): boolean {
   })
 }
 
-/* Tab config for cleaner rendering */
+/* Tab config — full static class strings so Tailwind doesn't purge them */
 const TAB_CONFIG = [
-  { value: 'orders', label: 'Orders', activeClass: 'text-star', afterClass: 'after:bg-star' },
-  { value: 'lending', label: 'Lending', activeClass: 'text-star', afterClass: 'after:bg-star' },
-  { value: 'borrowing', label: 'Borrowing', activeClass: 'text-nebula', afterClass: 'after:bg-nebula' },
-  { value: 'repaid', label: 'Repaid', activeClass: 'text-aurora', afterClass: 'after:bg-aurora' },
-  { value: 'redeemable', label: 'Redeemable', activeClass: 'text-cosmic', afterClass: 'after:bg-cosmic' },
+  { value: 'orders', label: 'Orders', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
+  { value: 'lending', label: 'Lending', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
+  { value: 'borrowing', label: 'Borrowing', activeClass: 'data-[state=active]:text-nebula data-[state=active]:after:bg-nebula' },
+  { value: 'repaid', label: 'Repaid', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-aurora' },
+  { value: 'redeemable', label: 'Redeemable', activeClass: 'data-[state=active]:text-cosmic data-[state=active]:after:bg-cosmic' },
 ] as const
 
 export default function PortfolioPage() {
@@ -240,7 +240,7 @@ export default function PortfolioPage() {
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className={`text-chalk data-[state=active]:${tab.activeClass} ${tab.afterClass}`}
+                      className={`text-chalk ${tab.activeClass}`}
                     >
                       {tab.label}
                       {tabCounts[tab.value] > 0 && (

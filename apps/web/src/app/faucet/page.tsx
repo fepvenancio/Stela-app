@@ -150,7 +150,7 @@ export default function FaucetPage() {
   return (
     <div className="animate-fade-up max-w-2xl mx-auto">
       <div className="mb-10">
-        <h1 className="font-display text-3xl tracking-wide text-chalk mb-3">
+        <h1 className="font-display text-3xl tracking-widest text-chalk mb-3 uppercase">
           Sepolia Faucet
         </h1>
         <p className="text-dust leading-relaxed">

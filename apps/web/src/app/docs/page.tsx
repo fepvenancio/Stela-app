@@ -317,7 +317,7 @@ export default function DocsPage() {
               <div className="bg-surface/20 border border-edge/20 rounded-3xl p-8 granite-noise">
                 <h4 className="font-display text-star text-lg mb-3">NFT Fee Discounts</h4>
                 <p className="text-dust text-sm leading-relaxed">
-                  Genesis NFT holders receive automatic protocol fee discounts. Each NFT grants <span className="text-chalk font-semibold">10% off</span> settle and redeem fees, up to a maximum of <span className="text-chalk font-semibold">50% off</span> with 5 NFTs. Discounts are applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
+                  Genesis NFT holders receive automatic protocol fee discounts. Holding 1+ NFT grants a <span className="text-chalk font-semibold">15% base discount</span>, plus <span className="text-chalk font-semibold">+5% per volume tier</span> (7 tiers from $10K to $1M+) and <span className="text-chalk font-semibold">+2% per additional NFT</span>, capped at <span className="text-chalk font-semibold">50% off</span>. Discounts apply to the treasury portion of fees only — the 5 BPS relayer fee is never discounted. Applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
                 </p>
               </div>
               <div className="bg-abyss/60 border border-star/20 rounded-3xl p-8 granite-noise">

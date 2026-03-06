@@ -19,7 +19,7 @@ function getBaseDiscountPercent(nftCount: number): number {
 }
 
 function getDiscountTier(nftCount: number): string {
-  if (nftCount >= 5) return 'Holder'
+  if (nftCount >= 5) return 'Patron'
   if (nftCount >= 3) return 'Collector'
   if (nftCount >= 1) return 'Holder'
   return 'None'
@@ -35,7 +35,7 @@ export default function GenesisClaimPage() {
   const tier = getDiscountTier(Number(pos.balance))
 
   return (
-    <div className="animate-fade-up max-w-2xl">
+    <div className="animate-fade-up max-w-2xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6">
         <Link href="/genesis" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
@@ -73,7 +73,7 @@ export default function GenesisClaimPage() {
         ) : (
           <div className="space-y-5">
             {/* ── Position Summary ──────────────────────── */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
                 <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">NFTs Held</span>
                 <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>

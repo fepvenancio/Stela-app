@@ -130,7 +130,7 @@ function OrderView({ id }: { id: string }) {
     return null
   }, [debtAssets, interestAssets])
 
-  if (error) return <div className="py-24 text-center text-nova">Failed to load order</div>
+  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load order</p><Link href="/browse" className="text-star text-sm hover:underline">Back to Browse</Link></div>
 
   const isPending = order?.status === 'pending'
   const hasOffers = (order?.offers?.length ?? 0) > 0
@@ -264,7 +264,7 @@ function InscriptionView({ id }: { id: string }) {
     return null
   }, [assets])
 
-  if (error) return <div className="py-24 text-center text-nova">Failed to load inscription</div>
+  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/browse" className="text-star text-sm hover:underline">Back to Browse</Link></div>
 
   const debtAssets = assets?.filter(r => r.asset_role === 'debt') ?? []
   const interestAssets = assets?.filter(r => r.asset_role === 'interest') ?? []
@@ -476,7 +476,7 @@ export default function StelaPage({ params }: StelaPageProps) {
   const idType = detectIdType(id)
 
   if (idType === 'invalid') {
-    return <div className="py-24 text-center text-nova">Invalid ID format</div>
+    return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Invalid ID format</p><Link href="/browse" className="text-star text-sm hover:underline">Back to Browse</Link></div>
   }
 
   if (idType === 'order') {
