@@ -96,7 +96,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
           Back to Library
         </Link>
         <div className="flex items-center gap-2 bg-surface/50 px-3 py-1.5 rounded-full border border-edge/30">
-          <span className="text-[10px] font-mono text-ash uppercase tracking-widest">ID: {id.slice(0,10)}...</span>
+          <span className="text-[10px] font-mono text-dust uppercase tracking-widest">ID: {id.slice(0,10)}...</span>
           <CopyButton value={id} />
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
 
              <div className="grid sm:grid-cols-2 gap-12">
                 <div className="space-y-1">
-                   <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
+                   <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
                    {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
                      <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-display text-star">
@@ -123,19 +123,19 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                         {roiInfo && <span className="text-dust text-sm">in {roiInfo.symbol}</span>}
                      </div>
                    )}
-                   <p className="text-xs text-ash leading-relaxed max-w-[200px] pt-2">
+                   <p className="text-xs text-dust leading-relaxed max-w-[200px] pt-2">
                      Calculated based on the debt vs interest inscription.
                    </p>
                 </div>
 
                 <div className="space-y-1">
-                   <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Time to Unlock</span>
+                   <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Time to Unlock</span>
                    {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
                      <div className="flex flex-col">
                         <span className="text-4xl font-display text-chalk">
                           {a?.duration ? formatDuration(BigInt(a.duration as string)) : '--'}
                         </span>
-                        <span className="text-[10px] text-ash uppercase tracking-widest mt-1">
+                        <span className="text-[10px] text-dust uppercase tracking-widest mt-1">
                           From moment of signing
                         </span>
                      </div>
@@ -158,7 +158,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                { label: 'Issued Debt', value: a?.issued_debt_percentage ? `${Number(BigInt(a.issued_debt_percentage as string)) / 100}%` : '0%', mono: false },
              ].map((field, i) => (
                <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-5">
-                  <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">{field.label}</span>
+                  <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">{field.label}</span>
                   <span className={`text-sm text-chalk ${field.mono ? 'font-mono' : 'font-display'}`}>{field.value}</span>
                </div>
              ))}
@@ -176,7 +176,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                     <div key={role} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3 shrink-0 w-32">
                          <div className={`w-2 h-2 rounded-full ${role === 'debt' ? 'bg-nebula' : role === 'interest' ? 'bg-aurora' : 'bg-star'}`} />
-                         <span className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold">{role}</span>
+                         <span className="text-[10px] uppercase tracking-[0.2em] text-dust font-bold">{role}</span>
                       </div>
                       <div className="flex flex-wrap gap-2 sm:justify-end flex-1">
                         {assetsLoading ? <Skeleton className="h-8 w-24 bg-edge/20" /> : roleAssets.length > 0 ? (
@@ -193,7 +193,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                               />
                             )
                           })
-                        ) : <span className="text-xs text-ash italic">None</span>}
+                        ) : <span className="text-xs text-dust italic">None</span>}
                       </div>
                     </div>
                   )

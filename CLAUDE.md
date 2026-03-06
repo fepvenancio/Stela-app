@@ -525,7 +525,8 @@ The Stela contract applies protocol fees at settle and redeem, split between a r
 
 | Event | Total BPS | Relayer | Treasury |
 |-------|-----------|---------|----------|
-| SETTLE | 20 (0.20%) | 5 | 15 |
+| SETTLE (Lending) | 20 (0.20%) | 5 | 15 |
+| SWAP (duration=0) | 10 (0.10%) | 5 | 5 |
 | REDEEM | 10 (0.1%) | 0 | 10 |
 | LIQUIDATE | 0 | 0 | 0 |
 
@@ -535,7 +536,7 @@ The Stela contract applies protocol fees at settle and redeem, split between a r
 - +2% per additional NFT held
 - Hard cap: 50% total discount
 - Discount applies to treasury portion only — relayer 5 BPS never discounted
-- Floors: settle treasury min 10 BPS, redeem treasury min 5 BPS
+- Floors: settle (lending) treasury min 10 BPS, swap treasury min 3 BPS, redeem treasury min 5 BPS
 
 **Mainnet deployment notes:**
 - Before renouncing ownership, `set_treasury()` and `set_genesis_contract()` MUST be called.

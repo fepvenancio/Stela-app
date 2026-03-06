@@ -101,7 +101,7 @@ export default function OrderPage({ params }: OrderPageProps) {
           {isOwner ? 'Back to Portfolio' : 'Back to Library'}
         </Link>
         <div className="flex items-center gap-2 bg-surface/50 px-3 py-1.5 rounded-full border border-edge/30">
-          <span className="text-[10px] font-mono text-ash uppercase tracking-widest">Order: {id.slice(0, 8)}...</span>
+          <span className="text-[10px] font-mono text-dust uppercase tracking-widest">Order: {id.slice(0, 8)}...</span>
           <CopyButton value={id} />
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function OrderPage({ params }: OrderPageProps) {
 
             <div className="grid sm:grid-cols-2 gap-12">
               <div className="space-y-1">
-                <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
+                <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
                 {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-display text-star">
@@ -131,19 +131,19 @@ export default function OrderPage({ params }: OrderPageProps) {
                     {roiInfo && <span className="text-dust text-sm">in {roiInfo.symbol}</span>}
                   </div>
                 )}
-                <p className="text-xs text-ash leading-relaxed max-w-[200px] pt-2">
+                <p className="text-xs text-dust leading-relaxed max-w-[200px] pt-2">
                   Calculated based on the debt vs interest inscription.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Loan Duration</span>
+                <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Loan Duration</span>
                 {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
                   <div className="flex flex-col">
                     <span className="text-4xl font-display text-chalk">
                       {formatDuration(Number(duration))}
                     </span>
-                    <span className="text-[10px] text-ash uppercase tracking-widest mt-1">
+                    <span className="text-[10px] text-dust uppercase tracking-widest mt-1">
                       From moment of settlement
                     </span>
                   </div>
@@ -160,7 +160,7 @@ export default function OrderPage({ params }: OrderPageProps) {
               { label: 'Type', value: isMultiLender ? 'Multi-Lender' : 'Single-Lender', mono: false },
             ].map((field, i) => (
               <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-5">
-                <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">{field.label}</span>
+                <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">{field.label}</span>
                 <span className={`text-sm text-chalk ${field.mono ? 'font-mono' : 'font-display'} capitalize`}>{field.value}</span>
               </div>
             ))}
@@ -180,7 +180,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                 <div key={role} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3 shrink-0 w-32">
                     <div className={`w-2 h-2 rounded-full ${role === 'debt' ? 'bg-nebula' : role === 'interest' ? 'bg-aurora' : 'bg-star'}`} />
-                    <span className="text-[10px] uppercase tracking-[0.2em] text-ash font-bold">{role}</span>
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-dust font-bold">{role}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 sm:justify-end flex-1">
                     {isLoading ? <Skeleton className="h-8 w-24 bg-edge/20" /> : assets.length > 0 ? (
@@ -197,7 +197,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                           />
                         )
                       })
-                    ) : <span className="text-xs text-ash italic">None</span>}
+                    ) : <span className="text-xs text-dust italic">None</span>}
                   </div>
                 </div>
               ))}
@@ -214,11 +214,11 @@ export default function OrderPage({ params }: OrderPageProps) {
                 {order?.offers?.map((offer) => (
                   <div key={offer.id} className="flex items-center justify-between p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
                     <div>
-                      <span className="text-[10px] text-ash uppercase tracking-widest block">Lender</span>
+                      <span className="text-[10px] text-dust uppercase tracking-widest block">Lender</span>
                       <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-ash uppercase tracking-widest block">Percentage</span>
+                      <span className="text-[10px] text-dust uppercase tracking-widest block">Percentage</span>
                       <span className="text-sm text-star font-display">{(offer.bps / 100).toFixed(2)}%</span>
                     </div>
                   </div>
@@ -275,7 +275,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                           className="space-y-4"
                         >
                           <div className="space-y-2">
-                            <label htmlFor="order-lend-amount" className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
+                            <label htmlFor="order-lend-amount" className="text-[10px] text-dust uppercase tracking-widest px-2">Your Contribution</label>
                             <Input
                               id="order-lend-amount"
                               type="number"
@@ -316,7 +316,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                       )
                     ) : isPending && isOwner ? (
                       <div className="space-y-3 text-center">
-                        <p className="text-xs text-ash italic uppercase tracking-widest">Your Order</p>
+                        <p className="text-xs text-dust italic uppercase tracking-widest">Your Order</p>
                         <p className="text-xs text-dust">Waiting for a lender to submit an offer.</p>
                         <Button
                           variant="outline"
@@ -354,7 +354,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                       </div>
                     ) : (
                       <div className="text-center py-4 bg-void/30 rounded-2xl border border-edge/20">
-                        <p className="text-xs text-ash uppercase tracking-widest">Order {order?.status ?? 'Closed'}</p>
+                        <p className="text-xs text-dust uppercase tracking-widest">Order {order?.status ?? 'Closed'}</p>
                         <p className="text-[10px] text-ash/60 mt-1">This order is no longer accepting offers.</p>
                       </div>
                     )}

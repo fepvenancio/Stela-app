@@ -75,15 +75,15 @@ export default function GenesisClaimPage() {
             {/* ── Position Summary ──────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">NFTs Held</span>
+                <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">NFTs Held</span>
                 <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
               </div>
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">NFT Discount</span>
+                <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">NFT Discount</span>
                 <span className="text-xl font-display text-star">{discount}%+</span>
               </div>
               <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Tier</span>
+                <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">Tier</span>
                 <span className="text-xl font-display text-chalk">{tier}</span>
               </div>
             </div>
@@ -92,7 +92,7 @@ export default function GenesisClaimPage() {
             <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden">
               <div className="px-6 py-5">
                 <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Discount Tiers</h2>
-                <p className="text-[10px] text-ash mt-0.5">
+                <p className="text-[10px] text-dust mt-0.5">
                   15% base + 2% per extra NFT (shown below) + 5% per volume tier (on-chain). 50% cap.
                 </p>
               </div>
@@ -121,10 +121,10 @@ export default function GenesisClaimPage() {
                         </div>
                         <div>
                           <span className={`text-sm font-medium ${isActive ? 'text-chalk' : 'text-dust'}`}>{t.label} Tier</span>
-                          <span className="text-[10px] text-ash block">{t.nfts} NFT{t.nfts > 1 ? 's' : ''}</span>
+                          <span className="text-[10px] text-dust block">{t.nfts} NFT{t.nfts > 1 ? 's' : ''}</span>
                         </div>
                       </div>
-                      <span className={`text-base font-display ${isActive ? 'text-star' : 'text-ash'}`}>{t.pct}% off</span>
+                      <span className={`text-base font-display ${isActive ? 'text-star' : 'text-dust'}`}>{t.pct}% off</span>
                     </div>
                   )
                 })}
@@ -161,7 +161,7 @@ export default function GenesisClaimPage() {
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
-              <p className="text-[10px] text-ash leading-relaxed">
+              <p className="text-[10px] text-dust leading-relaxed">
                 Fee discounts are applied automatically when you settle or redeem inscriptions.
                 The contract reads your NFT balance on-chain — no claiming needed.
               </p>

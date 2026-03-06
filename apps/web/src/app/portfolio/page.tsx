@@ -222,7 +222,7 @@ export default function PortfolioPage() {
                 </div>
                 <div className="text-center space-y-1.5">
                   <p className="text-chalk text-sm font-medium">No positions yet</p>
-                  <p className="text-ash text-xs max-w-xs leading-relaxed">
+                  <p className="text-dust text-xs max-w-xs leading-relaxed">
                     Inscribe a new agreement to begin your legacy on StarkNet.
                   </p>
                 </div>

@@ -63,12 +63,12 @@ export function TransactionProgressModal({ open, steps, txHash, onClose }: Trans
                 <span className={`text-sm font-display block ${
                   step.status === 'active' ? 'text-star' :
                   step.status === 'error' ? 'text-nova' :
-                  step.status === 'success' ? 'text-chalk' : 'text-ash'
+                  step.status === 'success' ? 'text-chalk' : 'text-dust'
                 }`}>
                   {step.label}
                 </span>
                 {step.description && step.status !== 'error' && (
-                  <span className="text-[10px] text-ash block mt-0.5">{step.description}</span>
+                  <span className="text-[10px] text-dust block mt-0.5">{step.description}</span>
                 )}
                 {step.status === 'error' && step.errorMessage && (
                   <span className="text-[10px] text-nova/80 block mt-0.5 break-words">{step.errorMessage}</span>
@@ -81,7 +81,7 @@ export function TransactionProgressModal({ open, steps, txHash, onClose }: Trans
         {txHash && (
           <div className="flex items-center justify-between p-3 bg-surface/20 border border-edge/20 rounded-xl">
             <div className="min-w-0">
-              <span className="text-[10px] text-ash uppercase tracking-widest block">Transaction</span>
+              <span className="text-[10px] text-dust uppercase tracking-widest block">Transaction</span>
               <span className="text-xs text-chalk font-mono truncate block">{txHash.slice(0, 20)}...</span>
             </div>
             <a

@@ -14,6 +14,12 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 
+// Download URLs for wallets that aren't installed
+const WALLET_DOWNLOAD_URLS: Record<string, string> = {
+  argentX: 'https://www.argent.xyz/argent-x/',
+  braavos: 'https://braavos.app/download-braavos-wallet/',
+}
+
 // Wallet metadata for icons and display names
 const WALLET_META: Record<string, { name: string; icon: string }> = {
   argentX: {
@@ -99,6 +105,14 @@ function ConnectWalletModal({
   }, [open, connectors])
 
   const handleConnect = (connector: Connector) => {
+    const isAvailable = availability[connector.id]
+    if (!isAvailable) {
+      const downloadUrl = WALLET_DOWNLOAD_URLS[connector.id]
+      if (downloadUrl) {
+        window.open(downloadUrl, '_blank', 'noopener,noreferrer')
+      }
+      return
+    }
     connect({ connector })
     onOpenChange(false)
   }
@@ -143,7 +157,7 @@ function ConnectWalletModal({
                     {name}
                   </span>
                   {!isChecking && !isAvailable && (
-                    <span className="block text-[10px] text-ash mt-0.5">Not installed</span>
+                    <span className="block text-[10px] text-star/60 mt-0.5">Install →</span>
                   )}
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-dust group-hover:text-star transition-colors shrink-0">

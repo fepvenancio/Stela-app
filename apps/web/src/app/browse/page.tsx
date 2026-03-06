@@ -320,7 +320,7 @@ function BrowseContent() {
             </svg>
           </div>
           <p className="text-dust text-sm">No inscriptions found</p>
-          <p className="text-ash text-xs mt-1 mb-4">Try a different filter or search query</p>
+          <p className="text-dust text-xs mt-1 mb-4">Try a different filter or search query</p>
           <Link href="/create" className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm text-void bg-star hover:bg-star-bright transition-colors font-medium">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
             Create Inscription

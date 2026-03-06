@@ -80,7 +80,7 @@ function MintSection({
         <div className="h-1.5 bg-surface/30 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-star to-star-bright rounded-full w-full" />
         </div>
-        <p className="text-[10px] text-ash mt-2 text-center">All {MAX_SUPPLY} Genesis NFTs have been minted.</p>
+        <p className="text-[10px] text-dust mt-2 text-center">All {MAX_SUPPLY} Genesis NFTs have been minted.</p>
       </section>
     )
   }
@@ -91,7 +91,7 @@ function MintSection({
         <div className="px-6 py-4 border-b border-star/10">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Mint Genesis NFT</h3>
-            <span className="text-[10px] text-ash">{remaining} remaining</span>
+            <span className="text-[10px] text-dust">{remaining} remaining</span>
           </div>
           {/* Progress bar */}
           <div className="h-1.5 bg-surface/30 rounded-full overflow-hidden">
@@ -101,7 +101,7 @@ function MintSection({
             />
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="text-[9px] text-ash">{Number(totalMinted)} / {MAX_SUPPLY} minted</span>
+            <span className="text-[9px] text-dust">{Number(totalMinted)} / {MAX_SUPPLY} minted</span>
             <span className="text-[9px] text-star font-medium">{formatStrk(mintPrice)} STRK each</span>
           </div>
         </div>
@@ -137,7 +137,7 @@ function MintSection({
                   </Button>
                 </div>
                 <div className="text-right">
-                  <span className="text-[9px] text-ash uppercase tracking-widest block">Total</span>
+                  <span className="text-[9px] text-dust uppercase tracking-widest block">Total</span>
                   <span className="text-lg font-display text-star">{formatStrk(totalCost)} STRK</span>
                 </div>
               </div>
@@ -176,22 +176,22 @@ function FeeInfo() {
       <div className="p-6">
         <div className="grid sm:grid-cols-3 gap-3 mb-4">
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Base</span>
+            <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">Base</span>
             <span className="text-base font-display text-star">15% off</span>
-            <span className="text-[10px] text-ash block">Hold 1+ Genesis NFT</span>
+            <span className="text-[10px] text-dust block">Hold 1+ Genesis NFT</span>
           </div>
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Volume</span>
+            <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">Volume</span>
             <span className="text-base font-display text-star">+5% / tier</span>
-            <span className="text-[10px] text-ash block">7 tiers ($10K to $1M+)</span>
+            <span className="text-[10px] text-dust block">7 tiers ($10K to $1M+)</span>
           </div>
           <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-            <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">Multi-NFT</span>
+            <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">Multi-NFT</span>
             <span className="text-base font-display text-star">+2% / NFT</span>
-            <span className="text-[10px] text-ash block">Per additional NFT held</span>
+            <span className="text-[10px] text-dust block">Per additional NFT held</span>
           </div>
         </div>
-        <p className="text-[11px] text-ash leading-relaxed">
+        <p className="text-[11px] text-dust leading-relaxed">
           Genesis NFT holders receive protocol fee discounts up to 50%. Base 15% for holding any NFT,
           +5% per volume tier, +2% per additional NFT. Applies to treasury fees only (floors: settle 10 BPS, redeem 5 BPS).
           Ownership is renounced; supply is immutable.
@@ -218,9 +218,9 @@ function TransparencyInfo() {
             { label: 'Ownership', value: 'Renounced', desc: 'Fully immutable. No admin can change supply or price.' },
           ].map((item) => (
             <div key={item.label} className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
-              <span className="text-[9px] text-ash uppercase tracking-widest block mb-1">{item.label}</span>
+              <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">{item.label}</span>
               <span className="text-base font-display text-star">{item.value}</span>
-              <span className="text-[10px] text-ash block mt-0.5">{item.desc}</span>
+              <span className="text-[10px] text-dust block mt-0.5">{item.desc}</span>
             </div>
           ))}
         </div>
@@ -251,7 +251,7 @@ export default function GenesisPage() {
       {/* Stats row — compact */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-          <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Minted</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">Minted</span>
           {pos.isLoading ? (
             <Skeleton className="h-7 w-16 bg-edge/20" />
           ) : (
@@ -261,11 +261,11 @@ export default function GenesisPage() {
           )}
         </div>
         <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-          <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">Price</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">Price</span>
           <span className="text-xl font-display text-star">{formatStrk(pos.mintPrice)}<span className="text-xs text-dust"> STRK</span></span>
         </div>
         <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-          <span className="text-[9px] text-ash uppercase tracking-widest block mb-1.5">You Hold</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">You Hold</span>
           <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
         </div>
       </div>
@@ -277,14 +277,14 @@ export default function GenesisPage() {
             <section className="bg-surface/15 border border-edge/25 rounded-2xl overflow-hidden">
               <div className="px-6 py-5 border-b border-edge/20">
                 <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Your Position</h2>
-                <p className="text-[10px] text-ash mt-0.5">
+                <p className="text-[10px] text-dust mt-0.5">
                   {Number(pos.balance)} NFT{Number(pos.balance) !== 1 ? 's' : ''} -- 15% base{Number(pos.balance) > 1 ? ` + ${(Number(pos.balance) - 1) * 2}% multi-NFT bonus` : ''} + volume tiers
                 </p>
               </div>
               {pos.tokenIds.length > 0 && (
                 <div className="px-6 py-3 bg-surface/10">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[9px] text-ash uppercase tracking-widest">Your NFTs:</span>
+                    <span className="text-[9px] text-dust uppercase tracking-widest">Your NFTs:</span>
                     {pos.tokenIds.map((id) => (
                       <span key={id.toString()} className="text-[10px] font-mono text-chalk bg-surface/50 px-2 py-0.5 rounded-md border border-edge/20">
                         #{id.toString()}

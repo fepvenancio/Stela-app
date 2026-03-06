@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
           scrolled
-            ? 'bg-void/80 backdrop-blur-xl border-b border-edge/20 shadow-lg shadow-black/10'
+            ? 'bg-void/80 backdrop-blur-xl border-b border-edge/20 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]'
             : 'bg-transparent'
         }`}
       >

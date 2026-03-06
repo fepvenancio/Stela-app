@@ -63,7 +63,7 @@ function InfoCard({ label, children, mono }: { label: string; children: React.Re
           <path d="M12 2L14.5 9.5H22L16 14L18.5 21.5L12 17L5.5 21.5L8 14L2 9.5H9.5L12 2Z" fill="currentColor" />
         </svg>
       </div>
-      <span className="text-[10px] text-ash uppercase tracking-[0.2em] block mb-3 font-bold">{label}</span>
+      <span className="text-[10px] text-dust uppercase tracking-[0.2em] block mb-3 font-bold">{label}</span>
       <div className={`text-sm text-chalk leading-relaxed ${mono ? 'font-mono break-all' : ''}`}>{children}</div>
     </div>
   )
@@ -227,22 +227,22 @@ export default function DocsPage() {
             <div className="bg-surface/20 border border-edge/20 rounded-3xl overflow-hidden granite-noise">
               <div className="grid grid-cols-4 gap-px bg-edge/10">
                 <div className="bg-abyss/60 p-5">
-                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Event</span>
+                  <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Event</span>
                 </div>
                 <div className="bg-abyss/60 p-5 text-center">
-                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Total</span>
+                  <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Total</span>
                 </div>
                 <div className="bg-abyss/60 p-5 text-center">
-                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Relayer</span>
+                  <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Relayer</span>
                 </div>
                 <div className="bg-abyss/60 p-5 text-center">
-                  <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold">Treasury</span>
+                  <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Treasury</span>
                 </div>
               </div>
-              {/* Settlement */}
+              {/* Settlement (Lending) */}
               <div className="grid grid-cols-4 gap-px bg-edge/10">
                 <div className="bg-surface/10 p-5">
-                  <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement</span>
+                  <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement (Lending)</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-star font-semibold">20 BPS</span>
@@ -252,6 +252,21 @@ export default function DocsPage() {
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-dust">15</span>
+                </div>
+              </div>
+              {/* Swap */}
+              <div className="grid grid-cols-4 gap-px bg-edge/10">
+                <div className="bg-surface/10 p-5">
+                  <span className="text-sm text-chalk font-display uppercase tracking-widest">Swap</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-star font-semibold">10 BPS</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">5</span>
+                </div>
+                <div className="bg-surface/10 p-5 text-center">
+                  <span className="text-sm text-dust">5</span>
                 </div>
               </div>
               {/* Redemption */}
@@ -285,7 +300,7 @@ export default function DocsPage() {
                 </div>
               </div>
             </div>
-            <p className="text-ash text-xs mt-4 leading-relaxed">
+            <p className="text-dust text-xs mt-4 leading-relaxed">
               All fees are hardcoded in the immutable contract. Non-relayer fees go to the protocol treasury. Genesis NFT holders receive automatic fee discounts (15% base + volume tiers + multi-NFT bonus, up to 50%) on settle and redeem operations.
             </p>
           </div>
@@ -334,7 +349,7 @@ export default function DocsPage() {
                     { label: 'Per Wallet', value: '5' },
                   ].map((item) => (
                     <div key={item.label} className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center min-w-[100px] flex-1 max-w-[160px]">
-                      <span className="text-[10px] text-ash uppercase tracking-[0.2em] font-bold block mb-1">{item.label}</span>
+                      <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold block mb-1">{item.label}</span>
                       <span className="text-sm text-chalk font-semibold">{item.value}</span>
                     </div>
                   ))}
@@ -373,7 +388,7 @@ export default function DocsPage() {
                   </div>
                   <div className="text-center space-y-2">
                     <div className="font-display text-star uppercase tracking-widest text-sm">Immutable Agreement</div>
-                    <div className="text-[10px] text-ash uppercase tracking-widest">Signed & Sealed</div>
+                    <div className="text-[10px] text-dust uppercase tracking-widest">Signed & Sealed</div>
                   </div>
                   <div className="space-y-2">
                      {[1,2,3].map(i => (
@@ -432,7 +447,7 @@ export default function DocsPage() {
                 debt requested, interest offered, and the duration of the lock.
               </p>
               <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
-                 <ul className="grid grid-cols-2 gap-4 text-xs font-display uppercase tracking-wider text-ash">
+                 <ul className="grid grid-cols-2 gap-4 text-xs font-display uppercase tracking-wider text-dust">
                     <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Collateral</li>
                     <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Debt</li>
                     <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Interest</li>
@@ -495,7 +510,7 @@ export default function DocsPage() {
             <div className="bg-abyss/40 border border-edge/30 rounded-3xl p-8 relative overflow-hidden granite-noise">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-full border border-edge/30 flex items-center justify-center text-ash font-display text-sm">X</div>
-                <span className="text-xs text-ash uppercase tracking-[0.2em] font-bold">Cancelled</span>
+                <span className="text-xs text-dust uppercase tracking-[0.2em] font-bold">Cancelled</span>
               </div>
               <p className="text-dust text-sm leading-relaxed">
                 Borrowers may cancel an open inscription at any time before it is signed.
@@ -613,7 +628,7 @@ export default function DocsPage() {
                 No transaction is sent, so <span className="text-chalk font-semibold">no gas is paid</span>.
               </p>
               <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
-                <span className="text-[10px] text-ash uppercase tracking-widest font-bold block mb-2">SNIP-12 Typed Data</span>
+                <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-2">SNIP-12 Typed Data</span>
                 <p className="text-xs text-dust">
                   StarkNet&apos;s typed data standard (like EIP-712 on Ethereum). The wallet shows the user exactly what
                   they are signing — asset types, amounts, and terms — before they approve.
@@ -641,15 +656,15 @@ export default function DocsPage() {
               <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
                 <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
-                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
-                    <span className="text-star font-mono">20 BPS (0.20%)</span>
+                    <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
+                    <span className="text-star font-mono">20 BPS lending / 10 BPS swap</span>
                   </div>
                   <div>
-                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
-                    <span className="text-chalk font-mono">5 relayer / 15 treasury</span>
+                    <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
+                    <span className="text-chalk font-mono">5 relayer / 15 treasury (lending) or 5+5 (swap)</span>
                   </div>
                   <div>
-                    <span className="text-ash uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>
+                    <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>
                     <span className="text-chalk font-mono">NoncesComponent</span>
                   </div>
                 </div>
@@ -705,7 +720,7 @@ export default function DocsPage() {
 
           {/* Off-chain flow diagram */}
           <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-16 overflow-hidden relative shadow-2xl mt-16">
-            <h4 className="font-display text-xs text-ash uppercase tracking-[0.2em] text-center mb-12 font-bold">Off-Chain Settlement Flow</h4>
+            <h4 className="font-display text-xs text-dust uppercase tracking-[0.2em] text-center mb-12 font-bold">Off-Chain Settlement Flow</h4>
             <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 w-full">
               <StatusNode label="Borrower" description="Signs order" />
               <FlowArrow label="SNIP-12" className="hidden lg:flex" />
@@ -766,11 +781,11 @@ export default function DocsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
                <div className="bg-void/50 border border-edge/20 rounded-2xl p-5">
-                  <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Network ID</span>
+                  <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">Network ID</span>
                   <span className="text-chalk font-mono text-sm">{NETWORK === 'mainnet' ? 'SN_MAIN' : 'SN_SEPOLIA'}</span>
                </div>
                <div className="bg-void/50 border border-edge/20 rounded-2xl p-5">
-                  <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">Status</span>
+                  <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">Status</span>
                   <span className="text-aurora font-mono text-sm uppercase">Active</span>
                </div>
             </div>
@@ -927,7 +942,7 @@ export default function DocsPage() {
                   </svg>
                   <span className="text-chalk text-sm font-semibold group-hover:text-star transition-colors">{label}</span>
                 </div>
-                <p className="text-ash text-xs">{desc}</p>
+                <p className="text-dust text-xs">{desc}</p>
               </a>
             ))}
           </div>

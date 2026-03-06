@@ -90,10 +90,10 @@ function MatchCard({
           }`}>
             {isSwap ? 'Swap' : 'Loan'}
           </span>
-          <span className="text-[10px] text-ash font-mono">{formatAddress(match.borrower)}</span>
+          <span className="text-[10px] text-dust font-mono">{formatAddress(match.borrower)}</span>
         </div>
         {secondsLeft > 0 && (
-          <span className="text-[10px] text-ash">
+          <span className="text-[10px] text-dust">
             expires {formatTimestamp(BigInt(deadline))}
           </span>
         )}
@@ -103,7 +103,7 @@ function MatchCard({
       <div className="px-4 py-3 space-y-2">
         {/* What they want to borrow (their debt = what you'll lend) */}
         <div>
-          <span className="text-[9px] text-ash uppercase tracking-widest font-bold">They borrow (you lend)</span>
+          <span className="text-[9px] text-dust uppercase tracking-widest font-bold">They borrow (you lend)</span>
           <div className="mt-1 space-y-1">
             {debtAssets.map((a, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -150,7 +150,7 @@ function MatchCard({
 
         {/* Duration */}
         {!isSwap && (
-          <div className="flex items-center gap-4 text-[11px] text-ash pt-1">
+          <div className="flex items-center gap-4 text-[11px] text-dust pt-1">
             <span>Duration: <span className="text-chalk">{formatDuration(duration)}</span></span>
           </div>
         )}

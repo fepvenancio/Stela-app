@@ -21,7 +21,7 @@ export function Web3ActionWrapper({ children, message }: Web3ActionWrapperProps)
     return (
       <div className="flex flex-col items-center gap-3 py-4">
         <WalletButton />
-        {message && <p className="text-xs text-ash">{message}</p>}
+        {message && <p className="text-xs text-dust">{message}</p>}
       </div>
     )
   }

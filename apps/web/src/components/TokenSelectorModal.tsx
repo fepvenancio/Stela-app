@@ -107,12 +107,12 @@ function TokenRow({
             <div className="text-sm text-chalk font-mono">
               {formatTokenValue(balance.toString(), token.decimals)}
             </div>
-            <div className="text-[10px] text-ash font-mono">
+            <div className="text-[10px] text-dust font-mono">
               {formatAddress(address)}
             </div>
           </>
         ) : (
-          <div className="text-xs text-ash font-mono">
+          <div className="text-xs text-dust font-mono">
             {balance !== undefined && balance === 0n ? (
               <span className="text-ash/50">0</span>
             ) : (
@@ -298,7 +298,7 @@ export function TokenSelectorModal({
         {/* Token List */}
         <div className="overflow-y-auto max-h-[340px] px-2 py-2 space-y-0.5">
           {filteredTokens.length === 0 && (
-            <div className="text-center py-8 text-ash text-sm">
+            <div className="text-center py-8 text-dust text-sm">
               {search.trim()
                 ? <>No tokens found for &ldquo;{search}&rdquo;</>
                 : walletConnected

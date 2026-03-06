@@ -38,7 +38,7 @@ export function OrderListRow({ order }: OrderListRowProps) {
             <Badge variant={statusVariant} className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
               {statusLabel}
             </Badge>
-            <span className="font-mono text-[10px] text-ash tracking-wider uppercase truncate">
+            <span className="font-mono text-[10px] text-dust tracking-wider uppercase truncate">
               #{order.id.slice(0, 8)}
             </span>
             <span className="text-[7px] text-ash/40 uppercase tracking-wider shrink-0">oc</span>
@@ -74,7 +74,7 @@ export function OrderListRow({ order }: OrderListRowProps) {
                 {statusLabel}
               </Badge>
               <span className="text-[7px] text-ash/40 uppercase tracking-wider">oc</span>
-              <span className="font-mono text-[10px] text-ash tracking-wider uppercase">
+              <span className="font-mono text-[10px] text-dust tracking-wider uppercase">
                 #{order.id.slice(0, 8)}
               </span>
             </div>

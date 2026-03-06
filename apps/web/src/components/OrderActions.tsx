@@ -91,7 +91,7 @@ export function OrderActions({
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <label htmlFor="order-lend-amount" className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
+                  <label htmlFor="order-lend-amount" className="text-[10px] text-dust uppercase tracking-widest px-2">Your Contribution</label>
                   <Input
                     id="order-lend-amount"
                     type="text"
@@ -139,7 +139,7 @@ export function OrderActions({
           </>
         ) : isPending && isOwner ? (
           <div className="space-y-3 text-center">
-            <p className="text-xs text-ash italic uppercase tracking-widest">Your Order</p>
+            <p className="text-xs text-dust italic uppercase tracking-widest">Your Order</p>
             <p className="text-xs text-dust">Waiting for a lender to submit an offer.</p>
             <Button
               variant="outline"
@@ -186,7 +186,7 @@ export function OrderActions({
           </div>
         ) : (
           <div className="text-center py-4 bg-void/30 rounded-2xl border border-edge/20">
-            <p className="text-xs text-ash uppercase tracking-widest">Order {status ?? 'Closed'}</p>
+            <p className="text-xs text-dust uppercase tracking-widest">Order {status ?? 'Closed'}</p>
             <p className="text-[10px] text-ash/60 mt-1">This order is no longer accepting offers.</p>
           </div>
         )}

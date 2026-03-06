@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 
 function Numeral({ children }: { children: React.ReactNode }) {
   return (
-    <span className="font-display text-6xl sm:text-7xl lg:text-8xl text-star/10 select-none leading-none">
+    <span className="font-display text-6xl sm:text-7xl lg:text-8xl text-star/10 select-none leading-none" aria-hidden="true">
       {children}
     </span>
   )
@@ -13,9 +13,9 @@ function Numeral({ children }: { children: React.ReactNode }) {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div>
+    <div className="text-center min-w-[100px]">
       <div className="font-display text-2xl sm:text-3xl text-chalk tracking-tight">{value}</div>
-      <div className="text-[11px] text-ash uppercase tracking-[0.2em] mt-1">{label}</div>
+      <div className="text-[11px] text-dust uppercase tracking-[0.2em] mt-1">{label}</div>
     </div>
   )
 }
@@ -107,7 +107,7 @@ export default function LandingPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-star/[0.06] rounded-full blur-[60px] pointer-events-none" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
-                  <span className="text-[10px] text-ash uppercase tracking-[0.25em] font-mono">Stela #0042</span>
+                  <span className="text-[10px] text-dust uppercase tracking-[0.25em] font-mono">Stela #0042</span>
                   <span className="text-[10px] bg-aurora/10 text-aurora px-2.5 py-1 rounded-full font-mono uppercase tracking-wider">Open</span>
                 </div>
 
@@ -135,10 +135,10 @@ export default function LandingPage() {
 
                 <div className="flex items-center justify-between pt-4 border-t border-edge/20">
                   <div>
-                    <span className="text-[10px] text-ash uppercase tracking-widest">APY</span>
+                    <span className="text-[10px] text-dust uppercase tracking-widest">APY</span>
                     <div className="text-star font-display text-xl tracking-wide">60.83%</div>
                   </div>
-                  <div className="w-28 h-9 rounded-full bg-star/10 border border-star/30 flex items-center justify-center text-star text-xs font-semibold cursor-pointer hover:bg-star/20 transition-colors">
+                  <div className="w-28 h-9 rounded-full bg-star/10 border border-star/30 flex items-center justify-center text-star text-xs font-semibold cursor-pointer hover:bg-star/20 transition-colors" tabIndex={-1} aria-hidden="true">
                     Fund this
                   </div>
                 </div>
@@ -150,7 +150,8 @@ export default function LandingPage() {
         {/* Stats bar */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-edge/15">
           <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-between gap-6 sm:gap-8">
-            <Stat value="0.20%" label="Settlement Fee" />
+            <Stat value="0.20%" label="Lending Fee" />
+            <Stat value="0.10%" label="Swap Fee" />
             <Stat value="0.10%" label="Redemption Fee" />
             <Stat value="0%" label="Liquidation Fee" />
             <Stat value="50%" label="Max NFT Discount" />
@@ -206,14 +207,12 @@ export default function LandingPage() {
       {/* ── 3. THE LIFECYCLE ─────────────────────────────────── */}
       <section className="px-4 py-24 sm:py-32 border-t border-edge/10">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-20">
-            <div>
-              <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">How It Works</p>
-              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-chalk tracking-tight max-w-lg">
-                Four steps, fully on-chain
-              </h2>
-            </div>
-            <p className="text-dust text-sm leading-relaxed max-w-sm">
+          <div className="mb-20">
+            <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">How It Works</p>
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-chalk tracking-tight max-w-lg mb-4">
+              Four steps, fully on-chain
+            </h2>
+            <p className="text-dust text-sm leading-relaxed max-w-xl">
               Every lending position follows the same clear lifecycle.
               From inscription to redemption, each step is transparent and verifiable.
             </p>
@@ -329,6 +328,11 @@ export default function LandingPage() {
                   </div>
                   <div className="w-full h-px bg-edge/20" />
                   <div className="flex justify-between items-baseline">
+                    <span className="text-dust text-sm">Swap</span>
+                    <span className="font-display text-xl text-chalk">10 <span className="text-sm text-dust">BPS</span></span>
+                  </div>
+                  <div className="w-full h-px bg-edge/20" />
+                  <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Redemption</span>
                     <span className="font-display text-xl text-chalk">10 <span className="text-sm text-dust">BPS</span></span>
                   </div>
@@ -366,7 +370,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="font-display text-xl text-star uppercase tracking-wider">Genesis NFT</h3>
-                  <p className="text-[10px] text-ash uppercase tracking-widest">ERC721 on StarkNet</p>
+                  <p className="text-[10px] text-dust uppercase tracking-widest">ERC721 on StarkNet</p>
                 </div>
               </div>
 

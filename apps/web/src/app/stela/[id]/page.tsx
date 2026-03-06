@@ -76,7 +76,7 @@ function AssetSection({ role, assets, isLoading }: { role: AssetRole; assets: Di
         <div className={`w-2 h-2 rounded-full ${meta.dot}`} />
         <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${meta.text}`}>{meta.label}</span>
         {assets.length > 1 && (
-          <span className="text-[10px] font-mono text-ash bg-surface/60 px-1.5 py-0.5 rounded-md">{assets.length}</span>
+          <span className="text-[10px] font-mono text-dust bg-surface/60 px-1.5 py-0.5 rounded-md">{assets.length}</span>
         )}
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -180,11 +180,11 @@ function OrderView({ id }: { id: string }) {
               {order?.offers?.map((offer) => (
                 <div key={offer.id} className="flex items-center justify-between p-4 bg-surface/20 border border-edge/20 rounded-2xl">
                   <div>
-                    <span className="text-[9px] text-ash uppercase tracking-widest block mb-0.5">Lender</span>
+                    <span className="text-[9px] text-dust uppercase tracking-widest block mb-0.5">Lender</span>
                     <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[9px] text-ash uppercase tracking-widest block mb-0.5">Share</span>
+                    <span className="text-[9px] text-dust uppercase tracking-widest block mb-0.5">Share</span>
                     <span className="text-sm text-star font-display">{(offer.bps / 100).toFixed(2)}%</span>
                   </div>
                 </div>
@@ -369,7 +369,7 @@ function StelaLayout({
           {isOwner ? 'Portfolio' : 'Library'}
         </Link>
         <div className="flex items-center gap-2 bg-surface/40 px-3 py-1 rounded-full border border-edge/25">
-          <span className="text-[10px] font-mono text-ash uppercase tracking-widest">{idLabel}</span>
+          <span className="text-[10px] font-mono text-dust uppercase tracking-widest">{idLabel}</span>
           <CopyButton value={id} />
         </div>
       </div>
@@ -398,7 +398,7 @@ function StelaLayout({
             {/* Key metrics — 2-col */}
             <div className="grid sm:grid-cols-2 gap-8">
               <div className="space-y-1">
-                <span className="text-[9px] text-ash uppercase tracking-[0.2em] font-bold">Lender Yield</span>
+                <span className="text-[9px] text-dust uppercase tracking-[0.2em] font-bold">Lender Yield</span>
                 {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-display text-star">
@@ -409,11 +409,11 @@ function StelaLayout({
                 )}
               </div>
               <div className="space-y-1">
-                <span className="text-[9px] text-ash uppercase tracking-[0.2em] font-bold">Duration</span>
+                <span className="text-[9px] text-dust uppercase tracking-[0.2em] font-bold">Duration</span>
                 {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
                   <div>
                     <span className="text-3xl font-display text-chalk">{duration ?? '--'}</span>
-                    <span className="text-[9px] text-ash uppercase tracking-widest block mt-0.5">{durationLabel}</span>
+                    <span className="text-[9px] text-dust uppercase tracking-widest block mt-0.5">{durationLabel}</span>
                   </div>
                 )}
               </div>
@@ -424,7 +424,7 @@ function StelaLayout({
           <div className="flex flex-wrap gap-2">
             {specs.map((field, i) => (
               <div key={i} className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface/20 border border-edge/20 rounded-xl">
-                <span className="text-[9px] text-ash uppercase tracking-widest">{field.label}</span>
+                <span className="text-[9px] text-dust uppercase tracking-widest">{field.label}</span>
                 {field.isPrivate ? (
                   <span className="text-xs text-chalk font-display flex items-center gap-1">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-star" aria-hidden="true">

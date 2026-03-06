@@ -70,7 +70,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
 
   return (
     <div className="flex items-start gap-3 p-3 rounded-xl bg-abyss/50 border border-edge">
-      <span className="mt-2.5 text-[11px] text-ash font-mono w-4 text-right shrink-0">
+      <span className="mt-2.5 text-[11px] text-dust font-mono w-4 text-right shrink-0">
         {index + 1}
       </span>
 
@@ -109,7 +109,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
                   <span className="text-chalk font-medium truncate">
                     {selectedToken.symbol}
                   </span>
-                  <span className="text-ash text-xs font-mono ml-auto hidden sm:block">
+                  <span className="text-dust text-xs font-mono ml-auto hidden sm:block">
                     {formatAddress(selectedToken.addresses[NETWORK] ?? '')}
                   </span>
                 </>

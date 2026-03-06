@@ -269,7 +269,7 @@ function AddAssetModal({
             {/* Custom address input */}
             {isCustom && (
               <div className="space-y-2">
-                <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Contract Address</Label>
+                <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Contract Address</Label>
                 <Input
                   type="text"
                   placeholder="0x..."
@@ -298,7 +298,7 @@ function AddAssetModal({
 
             {/* Amount / Token ID */}
             <div className="space-y-1.5">
-              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
+              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
                 {isNft ? 'Token ID' : 'Amount'}
               </Label>
               {isNft ? (
@@ -340,7 +340,7 @@ function AddAssetModal({
 
             {/* Role selector */}
             <div className="space-y-2">
-              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">Role</Label>
+              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Role</Label>
               <div className="grid grid-cols-3 gap-1.5">
                 {ROLES.map((r) => {
                   const meta = ROLE_META[r]
@@ -838,7 +838,7 @@ export default function CreatePage() {
             {/* Duration */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
+                <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
                   Loan Duration
                 </Label>
                 {useCustomDuration ? (
@@ -901,7 +901,7 @@ export default function CreatePage() {
 
             {/* Deadline */}
             <div className="space-y-2">
-              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
+              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
                 Offer Expires
               </Label>
               <div className="flex flex-wrap gap-1.5">
@@ -924,7 +924,7 @@ export default function CreatePage() {
 
             {/* Mode */}
             <div className="space-y-2">
-              <Label className="text-[10px] text-ash uppercase tracking-widest font-bold">
+              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
                 Lender Mode
               </Label>
               <div className="grid grid-cols-2 gap-2">
@@ -959,11 +959,11 @@ export default function CreatePage() {
         {(allAssets.length > 0 || roiInfo) && (
           <section className="rounded-xl border border-edge/20 bg-surface/5 px-3 py-3">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
-              <span className="text-ash">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
-              <span className="text-ash">Expires: <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span></span>
-              <span className="text-ash">Mode: <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span></span>
+              <span className="text-dust">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
+              <span className="text-dust">Expires: <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span></span>
+              <span className="text-dust">Mode: <span className={`font-medium ${multiLender ? 'text-star' : 'text-chalk'}`}>{multiLender ? 'Multi' : 'Single'}</span></span>
               {roiInfo && (
-                <span className="text-ash">Yield: <span className="text-star font-medium">+{roiInfo.yieldPct}% {roiInfo.symbol}</span></span>
+                <span className="text-dust">Yield: <span className="text-star font-medium">+{roiInfo.yieldPct}% {roiInfo.symbol}</span></span>
               )}
             </div>
           </section>

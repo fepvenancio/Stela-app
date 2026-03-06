@@ -56,7 +56,7 @@ export function InscriptionActions({
   const isPending = signPending || repayPending || cancelPending || liquidatePending || redeemPending
 
   if (!address) {
-    return <p className="text-sm text-ash">Connect your wallet to interact with this inscription.</p>
+    return <p className="text-sm text-dust">Connect your wallet to interact with this inscription.</p>
   }
 
   if (status === 'open' || status === 'partial') {
@@ -156,7 +156,7 @@ export function InscriptionActions({
             className="space-y-4"
           >
             <div className="space-y-2">
-              <label htmlFor={`lend-amount-${inscriptionId}`} className="text-[10px] text-ash uppercase tracking-widest px-2">Your Contribution</label>
+              <label htmlFor={`lend-amount-${inscriptionId}`} className="text-[10px] text-dust uppercase tracking-widest px-2">Your Contribution</label>
               <Input
                 id={`lend-amount-${inscriptionId}`}
                 type="text"
@@ -211,7 +211,7 @@ export function InscriptionActions({
     if (!wasSigned) {
       return (
         <div className="space-y-3 text-center">
-          <p className="text-xs text-ash italic uppercase tracking-widest">Vault Expired</p>
+          <p className="text-xs text-dust italic uppercase tracking-widest">Vault Expired</p>
           <p className="text-xs text-dust">This inscription expired without any lender signing. No assets are locked.</p>
         </div>
       )
@@ -259,7 +259,7 @@ export function InscriptionActions({
 
   return (
     <div className="text-center py-4 bg-void/30 rounded-2xl border border-edge/20">
-      <p className="text-xs text-ash uppercase tracking-widest">Vault Locked</p>
+      <p className="text-xs text-dust uppercase tracking-widest">Vault Locked</p>
       <p className="text-[10px] text-ash/60 mt-1">Waiting for terms to change or lock period to end.</p>
     </div>
   )

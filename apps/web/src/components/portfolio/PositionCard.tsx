@@ -42,7 +42,7 @@ const ROLE_TEXT: Record<PositionRole, string> = {
 
 function AssetList({ assets, role }: { assets: AssetRow[]; role: string }) {
   const filtered = assets.filter((a) => a.asset_role === role)
-  if (filtered.length === 0) return <span className="text-ash italic text-xs">none</span>
+  if (filtered.length === 0) return <span className="text-dust italic text-xs">none</span>
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -164,7 +164,7 @@ export function PositionCard({ inscription, role, shareBalance }: PositionCardPr
       <Card className={`granite-noise rounded-3xl border-edge bg-surface/40 backdrop-blur-sm p-6 transition-all duration-300 ${ROLE_HOVER[role]}`}>
         <CardHeader className="p-0 pb-4 gap-0 border-b border-edge/10">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-ash tracking-[0.2em] uppercase">
+            <span className="font-mono text-[10px] text-dust tracking-[0.2em] uppercase">
               #{inscription.id.slice(2, 8)}
             </span>
             <Badge variant={statusKey} className="rounded-full px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider">
