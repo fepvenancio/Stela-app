@@ -10,7 +10,6 @@ import { OrderListRow } from '@/components/OrderListRow'
 import { ListingTableHeader } from '@/components/ListingTableHeader'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Search, Plus } from 'lucide-react'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
@@ -30,12 +29,13 @@ function EmptyTab({ message, cta }: { message: string; cta?: { label: string; hr
       </div>
       <p className="text-dust text-sm text-center max-w-xs">{message}</p>
       {cta && (
-        <Button asChild variant="outline" size="sm" className="rounded-full px-6 gap-1.5">
-          <Link href={cta.href}>
-            <Plus className="w-3.5 h-3.5" />
-            {cta.label}
-          </Link>
-        </Button>
+        <Link
+          href={cta.href}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5 text-star" />
+          {cta.label}
+        </Link>
       )}
     </div>
   )
@@ -167,12 +167,13 @@ export default function PortfolioPage() {
             Your lending positions and borrowing history on StarkNet.
           </p>
         </div>
-        <Button asChild variant="gold" size="sm" className="shrink-0 gap-1.5 rounded-full px-5">
-          <Link href="/create">
-            <Plus className="w-3.5 h-3.5" />
-            Inscribe
-          </Link>
-        </Button>
+        <Link
+          href="/create"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5 text-star" />
+          Inscribe
+        </Link>
       </div>
 
       <Web3ActionWrapper message="to view your positions on StarkNet">
@@ -225,12 +226,13 @@ export default function PortfolioPage() {
                     Inscribe a new agreement to begin your legacy on StarkNet.
                   </p>
                 </div>
-                <Button asChild variant="gold" className="rounded-full px-8 gap-1.5">
-                  <Link href="/create">
-                    <Plus className="w-4 h-4" />
-                    Inscribe a Stela
-                  </Link>
-                </Button>
+                <Link
+                  href="/create"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+                >
+                  <Plus className="w-4 h-4 text-star" />
+                  Inscribe a Stela
+                </Link>
               </div>
             ) : (
               <Tabs defaultValue={defaultTab}>
