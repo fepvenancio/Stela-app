@@ -814,10 +814,10 @@ export default function CreatePage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Assets & Matches */}
-        <div className="lg:col-span-2 space-y-8">
-          <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+        {/* Left Column: Assets */}
+        <div className="lg:col-span-2 flex flex-col">
+          <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5 flex flex-col flex-1">
             <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
               <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
                 Inscription Assets
@@ -845,7 +845,7 @@ export default function CreatePage() {
             {allAssets.length === 0 ? (
               <div
                 onClick={() => setAddModalOpen(true)}
-                className="w-full py-20 hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4"
+                className="w-full flex-1 min-h-[200px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4"
               >
                 <div className="w-14 h-14 rounded-2xl bg-surface/30 border border-edge/50 flex items-center justify-center">
                   <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
@@ -858,7 +858,7 @@ export default function CreatePage() {
                 </div>
               </div>
             ) : (
-              <div className="divide-y divide-edge/10">
+              <div className="divide-y divide-edge/10 flex-1">
                 {allAssets.map((item) => (
                   <AssetRow
                     key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
@@ -879,31 +879,11 @@ export default function CreatePage() {
               </div>
             )}
           </section>
-
-          {/* Matched Stelas */}
-          {matchesVisible && !matchSkipped && hasMatches && (
-            <InlineMatchList
-              offchainMatches={offchainMatches}
-              onchainMatches={onchainMatches}
-              isSwap={isSwap}
-              onSettleOffchain={handleInstantSettle}
-              onSettleOnchain={handleOnchainSettle}
-              onSettleMultiple={handleMultiSettle}
-              onSkip={() => {
-                setMatchSkipped(true)
-                setMatchesVisible(false)
-              }}
-              isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
-              multiSettleSelection={multiSettleSelection}
-              giveSymbol={giveSymbol}
-              receiveSymbol={receiveSymbol}
-            />
-          )}
         </div>
 
         {/* Right Column: Summary & Submit */}
-        <div className="space-y-6">
-          <section className="rounded-xl border border-star/30 bg-star/5 p-5 space-y-5 lg:sticky lg:top-24">
+        <div>
+          <section className="rounded-xl border border-star/30 bg-star/5 p-5 space-y-5">
             <div className="space-y-3">
               <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
                 Agreement Summary
@@ -966,6 +946,28 @@ export default function CreatePage() {
           </section>
         </div>
       </div>
+
+      {/* ── Matching Stelas (full-width, below grid) ─────── */}
+      {matchesVisible && !matchSkipped && hasMatches && (
+        <div className="mt-8">
+          <InlineMatchList
+            offchainMatches={offchainMatches}
+            onchainMatches={onchainMatches}
+            isSwap={isSwap}
+            onSettleOffchain={handleInstantSettle}
+            onSettleOnchain={handleOnchainSettle}
+            onSettleMultiple={handleMultiSettle}
+            onSkip={() => {
+              setMatchSkipped(true)
+              setMatchesVisible(false)
+            }}
+            isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
+            multiSettleSelection={multiSettleSelection}
+            giveSymbol={giveSymbol}
+            receiveSymbol={receiveSymbol}
+          />
+        </div>
+      )}
 
       {/* Modals */}
       <AddAssetModal
