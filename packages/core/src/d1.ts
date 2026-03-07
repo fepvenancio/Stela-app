@@ -91,14 +91,19 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        // Compare all possible address forms: padded (66 chars), original, stripped (no leading zeros)
-        const lower = address.toLowerCase()
+        // Compare all possible address forms to handle old/unnormalized data in D1:
+        // 1. Padded (66 chars with zeros)
+        // 2. Stripped (no leading zeros)
+        // 3. Original lowercased
         const padded = normalizeAddress(address)
         const stripped = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
-        const variants = [...new Set([padded, lower, stripped])]
-        const creatorChecks = variants.map(() => 'LOWER(creator) = ?').join(' OR ')
-        const borrowerChecks = variants.map(() => 'LOWER(borrower) = ?').join(' OR ')
-        const lenderChecks = variants.map(() => 'LOWER(lender) = ?').join(' OR ')
+        const variants = [...new Set([padded, stripped, address.toLowerCase()])]
+        
+        // Build the OR checks for each variant across all three roles
+        const creatorChecks = variants.map(() => 'creator = ?').join(' OR ')
+        const borrowerChecks = variants.map(() => 'borrower = ?').join(' OR ')
+        const lenderChecks = variants.map(() => 'lender = ?').join(' OR ')
+        
         conditions.push(`(${creatorChecks} OR ${borrowerChecks} OR ${lenderChecks})`)
         params.push(...variants, ...variants, ...variants)
       }
@@ -664,9 +669,9 @@ export function createD1Queries(db: D1Database) {
            FROM orders
            WHERE status = 'pending'
              AND deadline > ?
-             AND LOWER(debt_token) = LOWER(?)
-             AND LOWER(collateral_token) = LOWER(?)
-             AND LOWER(borrower) != LOWER(?)
+             AND debt_token = ?
+             AND collateral_token = ?
+             AND borrower != ?
              AND borrower_signature IS NOT NULL
            ORDER BY created_at ASC
            LIMIT 20`
@@ -692,13 +697,14 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        // Compare all possible address forms: padded (66 chars), original, stripped (no leading zeros)
-        const lower = address.toLowerCase()
+        // Compare all possible address forms to handle old/unnormalized data in D1
         const padded = normalizeAddress(address)
         const stripped = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
-        const variants = [...new Set([padded, lower, stripped])]
-        const borrowerChecks = variants.map(() => 'LOWER(borrower) = ?').join(' OR ')
-        const lenderChecks = variants.map(() => 'LOWER(lender) = ?').join(' OR ')
+        const variants = [...new Set([padded, stripped, address.toLowerCase()])]
+        
+        const borrowerChecks = variants.map(() => 'borrower = ?').join(' OR ')
+        const lenderChecks = variants.map(() => 'lender = ?').join(' OR ')
+        
         conditions.push(
           `(${borrowerChecks} OR id IN (SELECT order_id FROM order_offers WHERE ${lenderChecks}))`
         )
