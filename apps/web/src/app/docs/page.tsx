@@ -300,7 +300,7 @@ export default function DocsPage() {
                 </div>
               </div>
             </div>
-            <p className="text-dust text-xs mt-4 leading-relaxed">
+            <p className="text-dust text-xs mt-4 mb-8 leading-relaxed">
               All fees are hardcoded in the immutable contract. Non-relayer fees go to the protocol treasury. Genesis NFT holders receive automatic fee discounts (15% base + volume tiers + multi-NFT bonus, up to 50%) on settle and redeem operations.
             </p>
           </div>
