@@ -36,6 +36,9 @@ function requireHexAddress(name: string): `0x${string}` {
 
 const DNA_STREAM_URL = requireEnv('DNA_STREAM_URL')
 
+// Sensible default: skip blocks before the contract existed
+const DEFAULT_START_BLOCK = Number(process.env.START_BLOCK || '7290000')
+
 // ---------------------------------------------------------------------------
 // Fetch last indexed block from CF Worker /health endpoint
 // ---------------------------------------------------------------------------
@@ -44,16 +47,21 @@ async function fetchLastBlock(): Promise<number> {
   try {
     const res = await fetch(`${WEBHOOK_URL}/health`)
     if (!res.ok) {
-      console.warn(`Health endpoint returned ${res.status}, starting from block 0`)
-      return 0
+      console.warn(`Health endpoint returned ${res.status}, using default start block ${DEFAULT_START_BLOCK}`)
+      return DEFAULT_START_BLOCK
     }
     const body = (await res.json()) as { last_block?: number }
     const lastBlock = body.last_block ?? 0
     console.log(`Last indexed block from worker: ${lastBlock}`)
+    // If worker reports 0 (empty DB), use sensible default instead of scanning from genesis
+    if (lastBlock === 0) {
+      console.log(`Worker returned 0, using default start block ${DEFAULT_START_BLOCK}`)
+      return DEFAULT_START_BLOCK
+    }
     return lastBlock
   } catch (err) {
-    console.warn('Failed to fetch last block from worker, starting from block 0:', err)
-    return 0
+    console.warn(`Failed to fetch last block from worker, using default start block ${DEFAULT_START_BLOCK}:`, err)
+    return DEFAULT_START_BLOCK
   }
 }
 

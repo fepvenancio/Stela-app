@@ -74,7 +74,9 @@ export function useTransactionProgress(definitions: StepDefinition[]): Transacti
 
   const close = useCallback(() => {
     setOpen(false)
-  }, [])
+    setStepStatuses(definitions.map(() => ({ status: 'idle' as StepStatus })))
+    setTxHashState(null)
+  }, [definitions])
 
   return { open, steps, txHash, start, advance, fail, setTxHash, close }
 }

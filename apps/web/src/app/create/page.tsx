@@ -1232,24 +1232,32 @@ export default function CreatePage() {
 
       {(() => {
         const active = [createProgress, settleProgress, onchainProgress, onchainSettleProgress].find(p => p.open)
-        return active ? (
-          <TransactionProgressModal
-            open
-            steps={active.steps}
-            txHash={active.txHash}
-            onClose={active.close}
-          />
-        ) : null
+        const multiOpen = multiSettleModalOpen && multiSettleState.phase !== 'idle'
+        // Only show TransactionProgressModal if no multi-settle modal is active
+        if (active && !multiOpen) {
+          return (
+            <TransactionProgressModal
+              open
+              steps={active.steps}
+              txHash={active.txHash}
+              onClose={active.close}
+            />
+          )
+        }
+        if (multiOpen) {
+          return (
+            <MultiSettleProgressModal
+              open
+              state={multiSettleState}
+              onClose={() => {
+                setMultiSettleModalOpen(false)
+                resetMultiSettle()
+              }}
+            />
+          )
+        }
+        return null
       })()}
-
-      <MultiSettleProgressModal
-        open={multiSettleModalOpen && multiSettleState.phase !== 'idle'}
-        state={multiSettleState}
-        onClose={() => {
-          setMultiSettleModalOpen(false)
-          resetMultiSettle()
-        }}
-      />
     </div>
   )
 }

@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
-import { RpcProvider, addAddressPadding } from 'starknet'
+import { RpcProvider } from 'starknet'
 import { InscriptionClient, parseEvents } from '@fepvenancio/stela-sdk'
 import type { RawEvent, StelaEvent } from '@fepvenancio/stela-sdk'
 import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, logError } from '@/lib/api'
 import type { D1Queries } from '@stela/core'
+import { normalizeAddress, standardizeHex, toU256 } from '@stela/core'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { syncRequestSchema } from '@/lib/schemas'
 
@@ -11,10 +12,6 @@ const MAX_BPS = 10000n
 
 function toIdHex(id: bigint): string {
   return '0x' + id.toString(16).padStart(64, '0')
-}
-
-function stripHex(addr: string): string {
-  return addr.replace(/^0x0*/i, '').toLowerCase()
 }
 
 interface SyncAssetItem {
@@ -72,16 +69,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Filter events to those emitted by the Stela contract
-  const contractStripped = stripHex(CONTRACT_ADDRESS)
+  const contractNormalized = normalizeAddress(CONTRACT_ADDRESS)
   const receiptEvents = (receipt.events ?? []) as ReceiptEvent[]
   const blockNumber = Number(receipt.block_number ?? 0)
 
   const rawEvents: RawEvent[] = receiptEvents
-    .filter((e) => stripHex(e.from_address ?? '') === contractStripped)
+    .filter((e) => normalizeAddress(e.from_address ?? '') === contractNormalized)
     .map((e) => ({
       keys: e.keys,
       data: e.data,
-      transaction_hash: tx_hash,
+      transaction_hash: standardizeHex(tx_hash),
       block_number: blockNumber,
     }))
 
@@ -160,7 +157,7 @@ async function handleCreated(
 
   await db.upsertInscription({
     id: idHex,
-    creator: event.creator,
+    creator: normalizeAddress(event.creator),
     status: 'open',
     issued_debt_percentage: 0,
     multi_lender: rpcData?.multi_lender ?? false,
@@ -184,7 +181,7 @@ async function handleCreated(
           inscription_id: idHex,
           asset_role: role,
           asset_index: i,
-          asset_address: addAddressPadding(items[i].asset_address),
+          asset_address: normalizeAddress(items[i].asset_address),
           asset_type: items[i].asset_type,
           value: items[i].value,
           token_id: items[i].token_id ?? '0',
@@ -196,7 +193,7 @@ async function handleCreated(
   await db.insertEvent({
     inscription_id: idHex,
     event_type: 'created',
-    tx_hash: txHash,
+    tx_hash: standardizeHex(txHash),
     block_number: blockNumber,
     timestamp: now,
   })
@@ -215,8 +212,8 @@ async function handleSigned(
 
   await db.upsertInscription({
     id: idHex,
-    borrower: event.borrower,
-    lender: event.lender,
+    borrower: normalizeAddress(event.borrower),
+    lender: normalizeAddress(event.lender),
     status,
     issued_debt_percentage: Number(event.issued_debt_percentage),
     signed_at: now,
@@ -227,7 +224,7 @@ async function handleSigned(
   try {
     const lockerAddress = await client.getLocker(event.inscription_id)
     if (lockerAddress) {
-      await db.upsertLocker(idHex, lockerAddress, now)
+      await db.upsertLocker(idHex, normalizeAddress(lockerAddress), now)
     }
   } catch {
     // Locker not available — indexer will fill in later
@@ -236,12 +233,12 @@ async function handleSigned(
   await db.insertEvent({
     inscription_id: idHex,
     event_type: 'signed',
-    tx_hash: txHash,
+    tx_hash: standardizeHex(txHash),
     block_number: blockNumber,
     timestamp: now,
     data: {
-      borrower: event.borrower,
-      lender: event.lender,
+      borrower: normalizeAddress(event.borrower),
+      lender: normalizeAddress(event.lender),
       issued_debt_percentage: Number(event.issued_debt_percentage),
     },
   })
@@ -259,10 +256,10 @@ async function handleCancelled(
   await db.insertEvent({
     inscription_id: idHex,
     event_type: 'cancelled',
-    tx_hash: txHash,
+    tx_hash: standardizeHex(txHash),
     block_number: blockNumber,
     timestamp: now,
-    data: { creator: event.creator },
+    data: { creator: normalizeAddress(event.creator) },
   })
 }
 
@@ -278,10 +275,10 @@ async function handleRepaid(
   await db.insertEvent({
     inscription_id: idHex,
     event_type: 'repaid',
-    tx_hash: txHash,
+    tx_hash: standardizeHex(txHash),
     block_number: blockNumber,
     timestamp: now,
-    data: { repayer: event.repayer },
+    data: { repayer: normalizeAddress(event.repayer) },
   })
 }
 
@@ -297,10 +294,10 @@ async function handleLiquidated(
   await db.insertEvent({
     inscription_id: idHex,
     event_type: 'liquidated',
-    tx_hash: txHash,
+    tx_hash: standardizeHex(txHash),
     block_number: blockNumber,
     timestamp: now,
-    data: { liquidator: event.liquidator },
+    data: { liquidator: normalizeAddress(event.liquidator) },
   })
 }
 
@@ -315,10 +312,10 @@ async function handleRedeemed(
   await db.insertEvent({
     inscription_id: idHex,
     event_type: 'redeemed',
-    tx_hash: txHash,
+    tx_hash: standardizeHex(txHash),
     block_number: blockNumber,
     timestamp: now,
-    data: { redeemer: event.redeemer, shares: event.shares.toString() },
+    data: { redeemer: normalizeAddress(event.redeemer), shares: event.shares.toString() },
   })
 }
 
@@ -335,17 +332,20 @@ async function handleTransferSingle(
   const inserted = await db.insertEventReturning({
     inscription_id: idHex,
     event_type: 'transfer_single',
-    tx_hash: txHash,
+    tx_hash: standardizeHex(txHash),
     block_number: blockNumber,
     timestamp: now,
-    data: { from: event.from, to: event.to, value: event.value.toString() },
+    data: { from: normalizeAddress(event.from), to: normalizeAddress(event.to), value: event.value.toString() },
   })
   if (!inserted) return
 
-  if (BigInt(event.from) !== 0n) {
-    await db.decrementShareBalance(event.from, idHex, event.value)
+  const fromNorm = normalizeAddress(event.from)
+  const toNorm = normalizeAddress(event.to)
+
+  if (BigInt(fromNorm) !== 0n) {
+    await db.decrementShareBalance(fromNorm, idHex, event.value)
   }
-  if (BigInt(event.to) !== 0n) {
-    await db.incrementShareBalance(event.to, idHex, event.value)
+  if (BigInt(toNorm) !== 0n) {
+    await db.incrementShareBalance(toNorm, idHex, event.value)
   }
 }

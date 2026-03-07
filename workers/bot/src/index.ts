@@ -1,6 +1,13 @@
-import { Account, RpcProvider, hash } from 'starknet'
-import { createD1Queries, toU256, ASSET_TYPE_ENUM } from '@stela/core'
-import type { D1Database, AssetType } from '@stela/core'
+import { Account, RpcProvider } from 'starknet'
+import {
+  createD1Queries,
+  toU256,
+  normalizeAddress,
+  serializeAssetCalldata,
+  hashAssets,
+  serializeSignatureCalldata,
+} from '@stela/core'
+import type { D1Database, StoredAsset } from '@stela/core'
 
 interface Env {
   DB: D1Database
@@ -15,13 +22,6 @@ const TX_TIMEOUT_MS = 120_000
 // ---------------------------------------------------------------------------
 // Asset serialization types (matching stored order_data JSON)
 // ---------------------------------------------------------------------------
-
-interface StoredAsset {
-  asset_address: string
-  asset_type: AssetType
-  value: string
-  token_id: string
-}
 
 interface OrderData {
   borrower: string
@@ -50,53 +50,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
       setTimeout(() => reject(new Error(`Transaction timed out after ${ms}ms`)), ms),
     ),
   ])
-}
-
-/** Serialize an asset array into calldata: [len, ...per-asset fields] */
-function serializeAssetCalldata(assets: StoredAsset[]): string[] {
-  const calldata: string[] = [String(assets.length)]
-  for (const asset of assets) {
-    const enumVal = ASSET_TYPE_ENUM[asset.asset_type] ?? 0
-    const [valueLow, valueHigh] = toU256(BigInt(asset.value))
-    const [tokenIdLow, tokenIdHigh] = toU256(BigInt(asset.token_id))
-    calldata.push(
-      asset.asset_address,
-      String(enumVal),
-      valueLow,
-      valueHigh,
-      tokenIdLow,
-      tokenIdHigh,
-    )
-  }
-  return calldata
-}
-
-/** Hash an array of assets using Poseidon — matches Cairo's hash_assets() */
-function hashAssets(assets: StoredAsset[]): string {
-  const elements: string[] = [String(assets.length)]
-  for (const asset of assets) {
-    elements.push(asset.asset_address)
-    elements.push(String(ASSET_TYPE_ENUM[asset.asset_type] ?? 0))
-    const [vLow, vHigh] = toU256(BigInt(asset.value))
-    elements.push(vLow, vHigh)
-    const [tidLow, tidHigh] = toU256(BigInt(asset.token_id))
-    elements.push(tidLow, tidHigh)
-  }
-  return hash.computePoseidonHashOnElements(elements)
-}
-
-/** Serialize a signature string "r,s" or JSON [r, s] into calldata: [len, r, s] */
-function serializeSignatureCalldata(sig: string): string[] {
-  let parts: string[]
-  if (sig.startsWith('[')) {
-    parts = JSON.parse(sig) as string[]
-  } else if (sig.startsWith('{')) {
-    const obj = JSON.parse(sig) as { r: string; s: string }
-    parts = [obj.r, obj.s]
-  } else {
-    parts = sig.split(',')
-  }
-  return [String(parts.length), ...parts]
 }
 
 // ---------------------------------------------------------------------------
@@ -210,6 +163,9 @@ async function settleOrders(
 
   console.log(`Found ${sorted.length} matched order(s) to settle`)
 
+  const calls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+  const settledPairs: { order_id: string; offer_id: string; orderData: OrderData }[] = []
+
   for (const { order_id, offer_id } of sorted) {
     try {
       // Re-read order status fresh (may have been settled by instant-match user since we fetched)
@@ -267,7 +223,7 @@ async function settleOrders(
       // debt_count, interest_count, collateral_count,
       // duration, deadline, multi_lender (0/1), nonce
       const orderCalldata: string[] = [
-        orderData.borrower,
+        normalizeAddress(orderData.borrower),
         debtHash,
         interestHash,
         collateralHash,
@@ -294,7 +250,7 @@ async function settleOrders(
       const orderHash = orderData.orderHash
       const offerCalldata: string[] = [
         orderHash,
-        offer.lender as string,
+        normalizeAddress(offer.lender as string),
         bpsLow,
         bpsHigh,
         offer.nonce as string,
@@ -314,16 +270,30 @@ async function settleOrders(
         ...lenderSigCalldata,
       ]
 
-      const { transaction_hash } = await account.execute({
+      calls.push({
         contractAddress,
         entrypoint: 'settle',
         calldata,
       })
+      settledPairs.push({ order_id, offer_id, orderData })
 
-      await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
-      console.log(`Settled order ${order_id} with offer ${offer_id}: ${transaction_hash}`)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`Failed to prepare settle for order ${order_id}: ${message}`)
+    }
+  }
 
-      // Update statuses on success
+  if (calls.length === 0) {
+    return
+  }
+
+  try {
+    const { transaction_hash } = await account.execute(calls)
+    console.log(`Submitted batch settlement of ${calls.length} orders: ${transaction_hash}`)
+    await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
+
+    // Update statuses on success
+    for (const { order_id, offer_id, orderData } of settledPairs) {
       await queries.updateOrderStatus(order_id, 'settled')
       await queries.updateOfferStatus(offer_id, 'settled')
 
@@ -336,11 +306,11 @@ async function settleOrders(
       // Purge signatures — no longer needed after on-chain verification
       await queries.purgeOrderSignature(order_id)
       await queries.purgeOfferSignature(offer_id)
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err)
-      console.error(`Failed to settle order ${order_id}: ${message}`)
-      // Leave as 'matched' so it can be retried on the next cron run
     }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error(`Failed to execute batch settlement: ${message}`)
+    // Leave as 'matched' so it can be retried on the next cron run
   }
 }
 
