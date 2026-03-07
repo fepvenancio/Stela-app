@@ -216,7 +216,7 @@ export default function DocsPage() {
           </div>
 
           {/* Fee Structure */}
-          <div>
+          <div className="mb-16">
             <SubHeading>Fee Structure</SubHeading>
             <div className="bg-abyss border border-edge/20 rounded-3xl overflow-hidden">
               <div className="grid grid-cols-4 gap-px bg-edge/10">
@@ -294,7 +294,7 @@ export default function DocsPage() {
                 </div>
               </div>
             </div>
-            <p className="text-dust text-xs mt-4 leading-relaxed">
+            <p className="text-dust text-xs mt-6 leading-relaxed">
               All fees are hardcoded in the immutable contract. Non-relayer fees go to the protocol treasury.
               Genesis NFT holders receive automatic fee discounts (up to 50%) on settle and redeem operations.
             </p>
