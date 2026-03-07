@@ -18,7 +18,6 @@ interface InlineMatchListProps {
   onSettleOffchain: (match: MatchedOrder) => void
   onSettleOnchain: (match: OnChainMatch) => void
   onSettleMultiple?: () => void
-  onSkip: () => void
   isSettling: boolean
   multiSettleSelection?: SelectedOrders | null
   /** Symbol of the token the user gives (their collateral = matched orders' debt) */
@@ -131,7 +130,6 @@ export function InlineMatchList({
   onSettleOffchain,
   onSettleOnchain,
   onSettleMultiple,
-  onSkip,
   isSettling,
   multiSettleSelection,
   giveSymbol,
@@ -148,29 +146,19 @@ export function InlineMatchList({
   return (
     <section className="space-y-3">
       {/* Section header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
-            {isSwap
-              ? multiSettleSelection && multiSettleSelection.coverage >= 100
-                ? 'Fully Matched'
-                : multiSettleSelection && multiSettleSelection.coverage > 0
-                  ? `${multiSettleSelection.coverage}% Matched`
-                  : 'Matches Found'
-              : 'Compatible Orders'}
-          </span>
-          <span className="text-[10px] text-dust">
-            {totalMatches} order{totalMatches !== 1 ? 's' : ''}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={onSkip}
-          disabled={isSettling}
-          className="text-[11px] text-dust hover:text-chalk transition-colors cursor-pointer disabled:opacity-40"
-        >
-          Skip
-        </button>
+      <div className="flex items-center gap-3">
+        <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
+          {isSwap
+            ? multiSettleSelection && multiSettleSelection.coverage >= 100
+              ? 'Fully Matched'
+              : multiSettleSelection && multiSettleSelection.coverage > 0
+                ? `${multiSettleSelection.coverage}% Matched`
+                : 'Matches Found'
+            : 'Compatible Orders'}
+        </span>
+        <span className="text-[10px] text-dust">
+          {totalMatches} order{totalMatches !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {/* Table container — same style as browse page */}

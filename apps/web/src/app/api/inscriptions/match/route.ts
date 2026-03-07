@@ -36,6 +36,37 @@ export async function GET(request: NextRequest) {
       limit: 10,
     })
 
+    // Enrich with assets
+    if (matches.length > 0) {
+      const ids = matches.map((m) => m.id)
+      const allAssets = await db.getAssetsForInscriptions(ids)
+
+      const assetsByInscription = new Map<string, { debt: unknown[]; interest: unknown[]; collateral: unknown[] }>()
+      for (const asset of allAssets) {
+        const iid = asset.inscription_id as string
+        if (!assetsByInscription.has(iid)) {
+          assetsByInscription.set(iid, { debt: [], interest: [], collateral: [] })
+        }
+        const group = assetsByInscription.get(iid)!
+        const role = asset.asset_role as string
+        if (role === 'debt') group.debt.push(asset)
+        else if (role === 'interest') group.interest.push(asset)
+        else if (role === 'collateral') group.collateral.push(asset)
+      }
+
+      const enriched = matches.map((m) => {
+        const assets = assetsByInscription.get(m.id)
+        return {
+          ...m,
+          debtAssets: assets?.debt ?? [],
+          interestAssets: assets?.interest ?? [],
+          collateralAssets: assets?.collateral ?? [],
+        }
+      })
+
+      return jsonResponse({ data: enriched }, request)
+    }
+
     return jsonResponse({ data: matches }, request)
   } catch (err) {
     logError('inscriptions/match', err)

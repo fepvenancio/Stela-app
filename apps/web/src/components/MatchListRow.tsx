@@ -196,7 +196,7 @@ export function OnchainMatchListRow({
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
           <span className="font-mono text-[10px] text-dust tracking-wider truncate">
-            {formatAddress(match.borrower)}
+            {formatAddress(match.creator || match.borrower)}
           </span>
         </div>
 
@@ -231,7 +231,7 @@ export function OnchainMatchListRow({
             <Badge variant="open" className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
               {isSwap ? 'Swap' : 'Loan'}
             </Badge>
-            <span className="font-mono text-[10px] text-dust">{formatAddress(match.borrower)}</span>
+            <span className="font-mono text-[10px] text-dust">{formatAddress(match.creator || match.borrower)}</span>
           </div>
           <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(duration)}</span>
         </div>

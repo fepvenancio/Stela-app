@@ -12,6 +12,7 @@ import type { AssetInputValue } from '@/components/AssetInput'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
@@ -137,7 +138,7 @@ export default function CreatePage() {
   // Match detection
   const { offchainMatches, onchainMatches, isChecking, checkForMatches, hasMatches, reset: resetMatches } = useMatchDetection()
   const [matchesVisible, setMatchesVisible] = useState(false)
-  const [matchSkipped, setMatchSkipped] = useState(false)
+  const [broadcastMode, setBroadcastMode] = useState(false)
 
   // Instant settle (off-chain matches)
   const { settle: instantSettle, isPending: isSettling } = useInstantSettle()
@@ -186,15 +187,15 @@ export default function CreatePage() {
   const isValid = hasDebt && hasCollateral && (isSwap || hasDuration)
 
   const submitButtonText = useMemo(() => {
-    const showingMatches = matchesVisible && hasMatches && !matchSkipped
+    const showingMatches = matchesVisible && hasMatches && !broadcastMode
     if (showingMatches) {
-      return isSwap ? 'Skip & Post Order' : 'Skip & Post Order'
+      return isSwap ? 'Swap Now' : 'Fill Match'
     }
     if (mode === 'offchain') {
       return isSwap ? 'Sign & Create Swap' : 'Sign & Create Order'
     }
     return isSwap ? 'Create On-Chain Swap' : 'Create On-Chain Inscription'
-  }, [mode, isSwap, matchesVisible, hasMatches, matchSkipped])
+  }, [mode, isSwap, matchesVisible, hasMatches, broadcastMode])
 
   const allAssets = useMemo(() => {
     const items: { asset: AssetInputValue; role: AssetRole; index: number }[] = []
@@ -255,7 +256,7 @@ export default function CreatePage() {
 
   useEffect(() => {
     setMatchesVisible(false)
-    setMatchSkipped(false)
+    setBroadcastMode(false)
 
     if (!address) return
     if (filteredDebtForMatch.length !== 1 || filteredCollateralForMatch.length !== 1) return
@@ -279,10 +280,10 @@ export default function CreatePage() {
   }, [filteredDebtForMatch, filteredCollateralForMatch, duration, address, multiLender])
 
   useEffect(() => {
-    if (hasMatches && !matchSkipped) {
+    if (hasMatches) {
       setMatchesVisible(true)
     }
-  }, [hasMatches, matchSkipped])
+  }, [hasMatches])
 
   /* ── Add Asset Handler ─────────────────────────────────── */
 
@@ -350,7 +351,7 @@ export default function CreatePage() {
     setMultiLender(false)
     setShowErrors(false)
     setMatchesVisible(false)
-    setMatchSkipped(false)
+    setBroadcastMode(false)
     resetMatches()
   }
 
@@ -359,8 +360,8 @@ export default function CreatePage() {
     setShowErrors(true)
     if (!isValid) return
 
-    // For swaps with matches, auto-settle the best match
-    if (isSwap && hasMatches && !matchSkipped) {
+    // When matches exist and broadcast mode is off, settle with matches
+    if (hasMatches && !broadcastMode) {
       // Multi-settle if optimal selection covers multiple orders
       if (multiSettleSelection && multiSettleSelection.selected.length >= 2) {
         await handleMultiSettle()
@@ -375,12 +376,6 @@ export default function CreatePage() {
         await handleOnchainSettle(onchainMatches[0])
         return
       }
-    }
-
-    // For lending with matches, show the match list (user picks)
-    if (matchesVisible && hasMatches && !matchSkipped) {
-      setMatchSkipped(true)
-      setMatchesVisible(false)
     }
 
     if (mode === 'offchain') {
@@ -967,6 +962,17 @@ export default function CreatePage() {
                     <span className="text-chalk font-medium">0.15%</span>
                   </div>
                 )}
+                {matchesVisible && hasMatches && (
+                  <div className="flex justify-between items-center text-sm pt-1 border-t border-star/10">
+                    <span className="text-dust">Broadcast</span>
+                    <Switch
+                      size="sm"
+                      checked={broadcastMode}
+                      onCheckedChange={setBroadcastMode}
+                      className="data-[state=checked]:bg-star"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -997,7 +1003,7 @@ export default function CreatePage() {
       </div>
 
       {/* ── Match Detection ──────────────────────────────── */}
-      {matchesVisible && !matchSkipped && hasMatches && (
+      {matchesVisible && hasMatches && !broadcastMode && (
         <div className="mt-10">
           <div className="mb-4 flex items-center gap-3 px-1">
             <div className="w-2 h-2 rounded-full bg-star animate-ping" />
@@ -1016,10 +1022,6 @@ export default function CreatePage() {
             onSettleOffchain={handleInstantSettle}
             onSettleOnchain={handleOnchainSettle}
             onSettleMultiple={handleMultiSettle}
-            onSkip={() => {
-              setMatchSkipped(true)
-              setMatchesVisible(false)
-            }}
             isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
             multiSettleSelection={multiSettleSelection}
             giveSymbol={giveSymbol}
