@@ -125,7 +125,7 @@ export function OffchainMatchListRow({
             {isSettling ? (
               <Loader2 className="w-3 h-3 animate-spin" />
             ) : (
-              isSwap ? 'Swap' : 'Settle'
+              isSwap ? 'Swap' : 'Fill'
             )}
           </button>
         </div>
@@ -161,7 +161,7 @@ export function OffchainMatchListRow({
             disabled={isSettling}
             className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
           >
-            {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Settle'}
+            {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Fill'}
           </button>
         </div>
       </div>
@@ -219,7 +219,7 @@ export function OnchainMatchListRow({
             disabled={isSettling}
             className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
           >
-            {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+            {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Fill'}
           </button>
         </div>
       </div>
@@ -253,7 +253,7 @@ export function OnchainMatchListRow({
             disabled={isSettling}
             className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
           >
-            {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+            {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Fill'}
           </button>
         </div>
       </div>

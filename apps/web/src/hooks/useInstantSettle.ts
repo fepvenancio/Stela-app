@@ -164,13 +164,29 @@ export function useInstantSettle() {
         }
 
         // 10. Build approve calls for debt tokens (we are lending these)
-        const approveCalls = sdkDebtAssets
-          .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
-          .map(asset => ({
-            contractAddress: asset.asset_address,
-            entrypoint: 'approve',
-            calldata: [CONTRACT_ADDRESS, ...toU256(asset.value)],
-          }))
+        // Check existing allowance and only approve if needed (prevents wasted gas)
+        const approveCalls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+        for (const asset of sdkDebtAssets) {
+          if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
+          const needed = (asset.value * BigInt(bps) + 9999n) / 10000n
+          if (needed === 0n) continue
+          let currentAllowance = 0n
+          try {
+            const result = await provider.callContract({
+              contractAddress: asset.asset_address,
+              entrypoint: 'allowance',
+              calldata: [address, CONTRACT_ADDRESS],
+            })
+            currentAllowance = BigInt(result[0]) + (BigInt(result[1] ?? '0') << 128n)
+          } catch { /* default to 0, will approve */ }
+          if (currentAllowance < needed) {
+            approveCalls.push({
+              contractAddress: asset.asset_address,
+              entrypoint: 'approve',
+              calldata: [CONTRACT_ADDRESS, ...toU256(needed)],
+            })
+          }
+        }
 
         // 11. Build settle call
         const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })

@@ -111,8 +111,10 @@ function MultiSettleSummary({
               <Loader2 className="w-4 h-4 animate-spin" />
               Settling...
             </>
+          ) : selection.coverage >= 100 ? (
+            `Swap All ${count}`
           ) : (
-            `Settle All ${count}`
+            `Swap ${selection.coverage}%`
           )}
         </button>
       </div>
@@ -149,10 +151,16 @@ export function InlineMatchList({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
-            {isSwap ? 'Instant Swaps' : 'Compatible Orders'}
+            {isSwap
+              ? multiSettleSelection && multiSettleSelection.coverage >= 100
+                ? 'Fully Matched'
+                : multiSettleSelection && multiSettleSelection.coverage > 0
+                  ? `${multiSettleSelection.coverage}% Matched`
+                  : 'Matches Found'
+              : 'Compatible Orders'}
           </span>
           <span className="text-[10px] text-dust">
-            {totalMatches} match{totalMatches !== 1 ? 'es' : ''}
+            {totalMatches} order{totalMatches !== 1 ? 's' : ''}
           </span>
         </div>
         <button

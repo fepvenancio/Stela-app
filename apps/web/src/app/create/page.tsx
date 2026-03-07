@@ -188,10 +188,7 @@ export default function CreatePage() {
   const submitButtonText = useMemo(() => {
     const showingMatches = matchesVisible && hasMatches && !matchSkipped
     if (showingMatches) {
-      if (mode === 'offchain') {
-        return isSwap ? 'Skip Matches — Create Swap' : 'Skip Matches — Create Order'
-      }
-      return isSwap ? 'Skip Matches — Create On-Chain Swap' : 'Skip Matches — Create Inscription'
+      return isSwap ? 'Skip & Post Order' : 'Skip & Post Order'
     }
     if (mode === 'offchain') {
       return isSwap ? 'Sign & Create Swap' : 'Sign & Create Order'
@@ -1001,7 +998,13 @@ export default function CreatePage() {
         <div className="mt-10">
           <div className="mb-4 flex items-center gap-3 px-1">
             <div className="w-2 h-2 rounded-full bg-star animate-ping" />
-            <span className="text-[10px] font-display tracking-[0.25em] text-star uppercase">Match Detected</span>
+            <span className="text-[10px] font-display tracking-[0.25em] text-star uppercase">
+              {isSwap && multiSettleSelection
+                ? multiSettleSelection.coverage >= 100
+                  ? 'Fully Matched'
+                  : `${multiSettleSelection.coverage}% Matched`
+                : 'Match Detected'}
+            </span>
           </div>
           <InlineMatchList
             offchainMatches={offchainMatches}

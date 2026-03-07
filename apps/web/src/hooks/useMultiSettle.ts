@@ -248,16 +248,18 @@ export function useMultiSettle() {
         // 8. Build unified multicall
         setState((s) => ({ ...s, phase: 'executing' }))
 
-        // Aggregate approve amounts per token across ALL orders
-        const approveAmounts = new Map<string, bigint>()
+        // Aggregate approve amounts per token across ALL orders (ceiling division)
+        const approveAmounts = new Map<string, { amount: bigint; address: string }>()
 
         for (const p of preparedOrders) {
           for (const asset of p.sdkDebtAssets) {
             if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
             const needed = (asset.value * BigInt(p.so.bps) + 9999n) / 10000n
             if (needed === 0n) continue
-            const key = asset.asset_address
-            approveAmounts.set(key, (approveAmounts.get(key) ?? 0n) + needed)
+            const key = asset.asset_address.toLowerCase()
+            const existing = approveAmounts.get(key)
+            if (existing) existing.amount += needed
+            else approveAmounts.set(key, { amount: needed, address: asset.asset_address })
           }
         }
 
@@ -267,12 +269,15 @@ export function useMultiSettle() {
             if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
             const needed = (asset.value * BigInt(so.bps) + 9999n) / 10000n
             if (needed === 0n) continue
-            const key = asset.asset_address
-            approveAmounts.set(key, (approveAmounts.get(key) ?? 0n) + needed)
+            const key = asset.asset_address.toLowerCase()
+            const existing = approveAmounts.get(key)
+            if (existing) existing.amount += needed
+            else approveAmounts.set(key, { amount: needed, address: asset.asset_address })
           }
         }
 
-        const approveCalls = Array.from(approveAmounts.entries()).map(([tokenAddr, amount]) => ({
+        // Build approve calls for all needed tokens
+        const approveCalls = Array.from(approveAmounts.values()).map(({ amount, address: tokenAddr }) => ({
           contractAddress: tokenAddr,
           entrypoint: 'approve',
           calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
@@ -319,12 +324,16 @@ export function useMultiSettle() {
           : []
 
         // 9. Execute: approves → on-chain sign_inscription → batch_settle
+        const allCalls = [...approveCalls, ...onchainCalls, ...batchSettleCalls]
+        if (allCalls.length === 0) throw new Error('No settlement calls to execute')
+
+        // Safety: ensure we have approve calls when there are settle calls
+        if (approveCalls.length === 0 && (onchainCalls.length > 0 || batchSettleCalls.length > 0)) {
+          console.warn('No approve calls generated — settlement may fail if allowance is insufficient')
+        }
+
         toast.info('Confirm the settlement transaction in your wallet...')
-        const { transaction_hash } = await account.execute([
-          ...approveCalls,
-          ...onchainCalls,
-          ...batchSettleCalls,
-        ])
+        const { transaction_hash } = await account.execute(allCalls)
 
         setState((s) => ({ ...s, phase: 'confirming', txHash: transaction_hash }))
         toast.info('Waiting for transaction confirmation...')
