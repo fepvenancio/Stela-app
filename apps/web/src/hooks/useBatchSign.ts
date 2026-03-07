@@ -41,23 +41,18 @@ export function useBatchSign() {
         throw new Error('No inscriptions selected')
       }
 
-      // Aggregate approvals per unique token address
-      const approvalMap = new Map<string, bigint>()
+      // Collect unique debt token addresses that need approval.
+      // Always approve even if D1 value is null/0 — the on-chain contract
+      // reads the real amount from its own storage, so we must ensure allowance.
+      const approveTokens = new Set<string>()
 
       for (const item of items) {
         if (item.bps < 1 || item.bps > 10000) {
           throw new Error('Percentage must be between 0.01% and 100%')
         }
         for (const asset of item.debtAssets) {
-          const totalValue = BigInt(asset.value || '0')
-          if (totalValue <= 0n) continue
-          // Ceiling division: ceil(value * bps / 10000)
-          const amount = (totalValue * BigInt(item.bps) + 9999n) / 10000n
-          // Normalize address to avoid duplicate approves for the same token
-          // (D1 may store addresses with inconsistent zero-padding)
           const addr = addAddressPadding(asset.address)
-          const existing = approvalMap.get(addr) ?? 0n
-          approvalMap.set(addr, existing + amount)
+          approveTokens.add(addr)
         }
       }
 
@@ -66,7 +61,7 @@ export function useBatchSign() {
       // allowance the user may have as a borrower (ERC20 approve is a SET, not additive).
       const U128_MAX = (1n << 128n) - 1n
       const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-      for (const [tokenAddress] of approvalMap) {
+      for (const tokenAddress of approveTokens) {
         approvals.push({
           contractAddress: tokenAddress,
           entrypoint: 'approve',
