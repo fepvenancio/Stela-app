@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     href === '/' ? pathname === '/' : pathname.startsWith(href)
 
   return (
-    <div className="min-h-dvh flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Top navbar */}
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
