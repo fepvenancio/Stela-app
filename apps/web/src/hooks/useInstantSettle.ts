@@ -235,6 +235,9 @@ export function useInstantSettle() {
           description: `You earned the 0.05% relayer fee. Tx: ${transaction_hash.slice(0, 16)}...`,
         })
         progress?.advance()
+
+        // Trigger data refresh across all hooks
+        window.dispatchEvent(new Event('stela:sync'))
       } catch (err: unknown) {
         const msg = getErrorMessage(err)
         progress?.fail(msg)

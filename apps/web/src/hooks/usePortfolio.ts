@@ -5,6 +5,7 @@ import { useFetchApi, buildApiUrl } from './api'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { normalizeAddress } from '@/lib/address'
 import { enrichStatus } from '@/lib/status'
+import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import type { InscriptionRow, AssetRow, ApiListResponse } from '@/types/api'
 import type { OrderRow } from './useOrders'
 
@@ -64,6 +65,8 @@ export interface PortfolioData {
   borrowingOrders: OrderRow[]
   /** Active (pending/matched) orders where user is lender (has offer) — shown in Lending tab */
   lendingOrders: OrderRow[]
+  /** All swap orders (duration=0) */
+  swapOrders: OrderRow[]
   summary: PortfolioSummary
   isLoading: boolean
   error: Error | null
@@ -213,12 +216,29 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       }
     })
 
-    // Split active orders into borrowing/lending for display in those tabs
+    // Helper to check if an order is a swap (duration=0)
+    function isSwapOrder(order: OrderRow): boolean {
+      const raw: RawOrderData = typeof order.order_data === 'string'
+        ? (() => { try { return JSON.parse(order.order_data as string) } catch { return {} } })()
+        : (order.order_data as unknown as RawOrderData) ?? {}
+      const data = normalizeOrderData(raw)
+      return data.duration === '0'
+    }
+
+    // Separate swap orders from lending/borrowing orders
+    const swapOrders: OrderRow[] = allOrders.filter((o) =>
+      address &&
+      (normalizeAddress(o.borrower) === address || o.status === 'settled') &&
+      isSwapOrder(o)
+    )
+
+    // Split active NON-swap orders into borrowing/lending for display in those tabs
     const activeOrderStatuses = new Set(['pending', 'matched'])
     const borrowingOrders: OrderRow[] = []
     const lendingOrders: OrderRow[] = []
     for (const order of allOrders) {
       if (!activeOrderStatuses.has(order.status)) continue
+      if (isSwapOrder(order)) continue // swaps go to their own tab
       if (address && normalizeAddress(order.borrower) === address) {
         borrowingOrders.push(order)
       } else {
@@ -238,6 +258,7 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       orders: allOrders,
       borrowingOrders,
       lendingOrders,
+      swapOrders,
       summary: { totalLent, collateralLocked, redeemableCount, activeCount, orderCount },
       isLoading,
       error,

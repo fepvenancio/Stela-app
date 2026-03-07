@@ -94,6 +94,7 @@ function matchesOrderSearch(q: string, order: OrderRow): boolean {
 /* Tab config — full static class strings so Tailwind doesn't purge them */
 const TAB_CONFIG = [
   { value: 'orders', label: 'Orders', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
+  { value: 'swaps', label: 'Swaps', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-aurora' },
   { value: 'lending', label: 'Lending', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
   { value: 'borrowing', label: 'Borrowing', activeClass: 'data-[state=active]:text-nebula data-[state=active]:after:bg-nebula' },
   { value: 'repaid', label: 'Repaid', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-aurora' },
@@ -103,7 +104,7 @@ const TAB_CONFIG = [
 export default function PortfolioPage() {
   const { address } = useAccount()
   const normalized = address ? normalizeAddress(address) : undefined
-  const { lending, borrowing, repaid, redeemable, orders, borrowingOrders, lendingOrders, summary, isLoading, error } = usePortfolio(normalized)
+  const { lending, borrowing, repaid, redeemable, orders, borrowingOrders, lendingOrders, swapOrders, summary, isLoading, error } = usePortfolio(normalized)
   const [search, setSearch] = useState('')
 
   const q = search.trim().toLowerCase()
@@ -128,26 +129,32 @@ export default function PortfolioPage() {
     () => q ? orders.filter((o) => matchesOrderSearch(q, o)) : orders,
     [orders, q],
   )
+  const filteredSwaps = useMemo(
+    () => q ? swapOrders.filter((o) => matchesOrderSearch(q, o)) : swapOrders,
+    [swapOrders, q],
+  )
 
   /* Smart default tab */
   const defaultTab = useMemo(() => {
+    if (swapOrders.length > 0) return 'swaps'
     if (lending.length > 0 || lendingOrders.length > 0) return 'lending'
     if (borrowing.length > 0 || borrowingOrders.length > 0) return 'borrowing'
     if (orders.length > 0) return 'orders'
     if (redeemable.length > 0) return 'redeemable'
     return 'orders'
-  }, [lending, borrowing, orders, redeemable, lendingOrders, borrowingOrders])
+  }, [lending, borrowing, orders, redeemable, lendingOrders, borrowingOrders, swapOrders])
 
   /* Tab counts */
   const tabCounts: Record<string, number> = {
     orders: filteredOrders.length,
+    swaps: filteredSwaps.length,
     lending: filteredLending.length + lendingOrders.length,
     borrowing: filteredBorrowing.length + borrowingOrders.length,
     repaid: filteredRepaid.length,
     redeemable: filteredRedeemable.length,
   }
 
-  const totalPositions = lending.length + borrowing.length + repaid.length + redeemable.length + orders.length
+  const totalPositions = lending.length + borrowing.length + repaid.length + redeemable.length + orders.length + swapOrders.length
 
   return (
     <div className="animate-fade-up max-w-6xl mx-auto">
@@ -263,6 +270,24 @@ export default function PortfolioPage() {
                       <ListingTableHeader />
                       <div className="flex flex-col">
                         {filteredOrders.map((order) => (
+                          <OrderListRow key={order.id} order={order} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="swaps">
+                  {filteredSwaps.length === 0 ? (
+                    <EmptyTab
+                      message={q ? 'No swaps match your search.' : 'No swaps yet.'}
+                      cta={!q ? { label: 'Create Swap', href: '/create' } : undefined}
+                    />
+                  ) : (
+                    <div className="rounded-xl border border-edge/30 overflow-clip">
+                      <ListingTableHeader />
+                      <div className="flex flex-col">
+                        {filteredSwaps.map((order) => (
                           <OrderListRow key={order.id} order={order} />
                         ))}
                       </div>

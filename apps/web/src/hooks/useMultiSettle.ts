@@ -358,6 +358,9 @@ export function useMultiSettle() {
           description: `${onchainOrders.length} on-chain + ${validOffchain.length} off-chain. Earned ${totalFeePercent}%. Tx: ${transaction_hash.slice(0, 16)}...`,
         })
         setState((s) => ({ ...s, phase: 'done' }))
+
+        // Trigger data refresh across all hooks
+        window.dispatchEvent(new Event('stela:sync'))
       } catch (err: unknown) {
         const msg = getErrorMessage(err)
         setState((s) => ({ ...s, phase: 'error', error: msg }))
