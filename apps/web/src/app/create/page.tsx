@@ -770,14 +770,14 @@ export default function CreatePage() {
       <div className="fixed top-1/4 -left-20 w-64 h-64 bg-star/[0.04] rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-1/4 -right-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
-      {/* ── Header: Toggle (left) + Title (center) ────────── */}
-      <div className="flex flex-col items-center mb-14 text-center">
-        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-star/[0.08] border border-star/20 mb-6">
+      {/* ── Header ────────── */}
+      <div className="flex flex-col mb-14">
+        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-star/[0.08] border border-star/20 mb-6 w-fit">
           <div className="w-1.5 h-1.5 rounded-full bg-star animate-pulse" />
           <span className="text-[10px] font-display tracking-[0.3em] text-star/90 uppercase">Protocol Artifact</span>
         </div>
 
-        <h1 className="font-display text-4xl sm:text-5xl tracking-[0.35em] text-chalk mb-10 uppercase">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-10 uppercase">
           Inscribe
         </h1>
 

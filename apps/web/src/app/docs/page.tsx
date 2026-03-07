@@ -139,16 +139,16 @@ export default function DocsPage() {
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-32 px-4">
       {/* Hero */}
-      <div className="mb-24 text-center relative py-12">
+      <div className="mb-16 relative py-12">
         <div className="absolute inset-0 bg-star/2 blur-[120px] rounded-full -z-10" />
         <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-6">Protocol Documentation</p>
-        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl tracking-tight text-chalk mb-6">
-          The <span className="text-star italic">Stela</span> Codex
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-6 uppercase">
+          The Stela Codex
         </h1>
-        <p className="text-dust max-w-2xl leading-relaxed text-lg mx-auto">
+        <p className="text-dust max-w-2xl leading-relaxed text-lg">
           Everything you need to understand, integrate, and build on the Stela P2P lending protocol.
         </p>
-        <div className="w-32 h-px bg-gradient-to-r from-transparent via-star/50 to-transparent mx-auto mt-12" />
+        <div className="w-32 h-px bg-gradient-to-r from-transparent via-star/50 to-transparent mt-12" />
       </div>
 
       <div className="space-y-24">
