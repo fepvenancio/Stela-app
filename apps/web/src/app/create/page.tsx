@@ -772,13 +772,6 @@ export default function CreatePage() {
 
       {/* ── Header ────────── */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-star/[0.08] border border-star/20 w-fit">
-            <div className="w-1.5 h-1.5 rounded-full bg-star animate-pulse" />
-            <span className="text-[10px] font-display tracking-[0.3em] text-star/90 uppercase">Protocol Artifact</span>
-          </div>
-        </div>
-
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-6 uppercase">
           Inscribe
         </h1>
