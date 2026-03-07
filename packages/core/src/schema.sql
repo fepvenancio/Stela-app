@@ -3,9 +3,9 @@
 
 CREATE TABLE IF NOT EXISTS inscriptions (
   id                      TEXT PRIMARY KEY,
-  creator                 TEXT NOT NULL,
-  borrower                TEXT,
-  lender                  TEXT,
+  creator                 TEXT NOT NULL COLLATE NOCASE,
+  borrower                TEXT COLLATE NOCASE,
+  lender                  TEXT COLLATE NOCASE,
   status                  TEXT NOT NULL DEFAULT 'open',
   issued_debt_percentage  INTEGER NOT NULL DEFAULT 0,
   multi_lender            INTEGER NOT NULL DEFAULT 0,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS inscription_assets (
   inscription_id  TEXT NOT NULL REFERENCES inscriptions(id),
   asset_role      TEXT NOT NULL,
   asset_index     INTEGER NOT NULL,
-  asset_address   TEXT NOT NULL,
+  asset_address   TEXT NOT NULL COLLATE NOCASE,
   asset_type      TEXT NOT NULL,
   value           TEXT,
   token_id        TEXT,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS lockers (
 CREATE INDEX IF NOT EXISTS idx_lockers_address ON lockers(locker_address);
 
 CREATE TABLE IF NOT EXISTS share_balances (
-  account        TEXT NOT NULL,
+  account        TEXT NOT NULL COLLATE NOCASE,
   inscription_id TEXT NOT NULL,
   balance        TEXT NOT NULL DEFAULT '0',
   PRIMARY KEY (account, inscription_id)

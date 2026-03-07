@@ -2,22 +2,22 @@
 
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
-  borrower TEXT NOT NULL,
+  borrower TEXT NOT NULL COLLATE NOCASE,
   order_data TEXT NOT NULL,
   borrower_signature TEXT,
   nonce TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',
   deadline INTEGER NOT NULL,
   created_at INTEGER NOT NULL,
-  debt_token TEXT,
-  collateral_token TEXT,
+  debt_token TEXT COLLATE NOCASE,
+  collateral_token TEXT COLLATE NOCASE,
   duration_seconds INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS order_offers (
   id TEXT PRIMARY KEY,
   order_id TEXT NOT NULL REFERENCES orders(id),
-  lender TEXT NOT NULL,
+  lender TEXT NOT NULL COLLATE NOCASE,
   bps INTEGER NOT NULL,
   lender_signature TEXT NOT NULL,
   nonce TEXT NOT NULL,
