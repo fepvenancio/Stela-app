@@ -671,6 +671,7 @@ export function createD1Queries(db: D1Database) {
              AND deadline > ?
              AND debt_token = ?
              AND collateral_token = ?
+             AND duration_seconds = ?
              AND borrower != ?
              AND borrower_signature IS NOT NULL
            ORDER BY created_at ASC
@@ -680,6 +681,7 @@ export function createD1Queries(db: D1Database) {
           params.nowSeconds,
           normalizedCollateral,  // matches their debt_token (they want what I offer)
           normalizedDebt,        // matches their collateral_token (they offer what I want)
+          params.duration,
           normalizedBorrower,
         )
         .all<Record<string, unknown>>()

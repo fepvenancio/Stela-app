@@ -254,7 +254,7 @@ export function useMultiSettle() {
         for (const p of preparedOrders) {
           for (const asset of p.sdkDebtAssets) {
             if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
-            const needed = (asset.value * BigInt(p.so.bps)) / 10000n
+            const needed = (asset.value * BigInt(p.so.bps) + 9999n) / 10000n
             if (needed === 0n) continue
             const key = asset.asset_address
             approveAmounts.set(key, (approveAmounts.get(key) ?? 0n) + needed)

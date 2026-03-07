@@ -117,12 +117,13 @@ export default function CreatePage() {
     return durationPreset
   }, [orderType, durationPreset, customDurationValue, customDurationUnit, useCustomDuration])
 
-  // Deadline
+  // Deadline — preset is the offset in seconds; actual deadline computed fresh at submission
   const [deadlinePreset, setDeadlinePreset] = useState('604800')
-  const deadline = useMemo(() => {
+  const deadlinePreview = useMemo(() => {
     const now = Math.floor(Date.now() / 1000)
     return (now + Number(deadlinePreset)).toString()
   }, [deadlinePreset])
+  const freshDeadline = () => (Math.floor(Date.now() / 1000) + Number(deadlinePreset)).toString()
 
   const [showErrors, setShowErrors] = useState(false)
   const { balances } = useTokenBalances()
@@ -412,6 +413,7 @@ export default function CreatePage() {
   async function createOnChainInscription() {
     if (!address || !account) return
     closeAllProgress()
+    const deadline = freshDeadline()
 
     const sdkDebtAssets = toSdkAssets(debtAssets)
     const sdkInterestAssets = toSdkAssets(interestAssets)
@@ -465,6 +467,7 @@ export default function CreatePage() {
   async function createOrder() {
     if (!address || !account) return
     closeAllProgress()
+    const deadline = freshDeadline()
 
     const sdkDebtAssets = toSdkAssets(debtAssets)
     const sdkInterestAssets = toSdkAssets(interestAssets)
@@ -830,7 +833,7 @@ export default function CreatePage() {
               ))}
             </div>
             <p className="text-[10px] text-dust">
-              Expires {formatTimestamp(BigInt(deadline))}
+              Expires {formatTimestamp(BigInt(deadlinePreview))}
             </p>
           </div>
         </div>
@@ -929,7 +932,7 @@ export default function CreatePage() {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-dust">Expiry</span>
-                  <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span>
+                  <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadlinePreview))}</span>
                 </div>
                 {roiInfo && (
                   <div className="flex justify-between text-sm">

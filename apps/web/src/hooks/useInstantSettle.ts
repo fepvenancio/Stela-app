@@ -73,7 +73,12 @@ export function useInstantSettle() {
         const provider = new RpcProvider({ nodeUrl: RPC_URL })
         const orderData = matchedOrder.order_data
 
-        // 1. Self-lending check
+        // 1. Deadline + self-lending checks
+        const nowSeconds = Math.floor(Date.now() / 1000)
+        if (matchedOrder.deadline <= nowSeconds) {
+          throw new Error('This order has expired — the deadline has passed.')
+        }
+
         const borrowerAddr = (orderData.borrower as string || matchedOrder.borrower).toLowerCase()
         if (borrowerAddr === address.toLowerCase()) {
           throw new Error('Cannot lend to your own order')
