@@ -94,6 +94,8 @@ async function getOnChainNonce(
  * Expire pending orders whose borrower nonce no longer matches on-chain.
  * This happens when the borrower's nonce advances (e.g., another order settled)
  * but the old order remains pending in D1. Such orders can never be settled.
+ *
+ * Groups orders by borrower to minimize RPC calls (1 per unique borrower).
  */
 async function expireStaleNonceOrders(
   provider: RpcProvider,
@@ -101,25 +103,57 @@ async function expireStaleNonceOrders(
   queries: ReturnType<typeof createD1Queries>,
 ): Promise<number> {
   const pending = await queries.getPendingOrders()
-  let expiredCount = 0
+  if (pending.length === 0) return 0
 
+  // Group orders by borrower to batch nonce lookups
+  const byBorrower = new Map<string, typeof pending>()
   for (const order of pending) {
     try {
       const orderData: OrderData = JSON.parse(order.order_data as string)
-      const onChainNonce = await getOnChainNonce(provider, contractAddress, orderData.borrower)
-      const orderNonce = BigInt(orderData.nonce)
+      const borrower = normalizeAddress(orderData.borrower)
+      const group = byBorrower.get(borrower)
+      if (group) group.push(order)
+      else byBorrower.set(borrower, [order])
+    } catch {
+      // Skip unparseable orders
+    }
+  }
 
-      if (onChainNonce !== orderNonce) {
-        console.log(
-          `Expiring order ${order.id}: borrower nonce stale (order=${orderNonce}, on-chain=${onChainNonce})`,
-        )
-        await queries.updateOrderStatus(order.id as string, 'expired')
-        expiredCount++
+  // Fetch nonces in parallel (1 RPC call per unique borrower)
+  const nonceResults = await Promise.allSettled(
+    Array.from(byBorrower.keys()).map(async (borrower) => ({
+      borrower,
+      nonce: await getOnChainNonce(provider, contractAddress, borrower),
+    })),
+  )
+
+  const nonceMap = new Map<string, bigint>()
+  for (const result of nonceResults) {
+    if (result.status === 'fulfilled') {
+      nonceMap.set(result.value.borrower, result.value.nonce)
+    }
+  }
+
+  let expiredCount = 0
+  for (const [borrower, orders] of byBorrower) {
+    const onChainNonce = nonceMap.get(borrower)
+    if (onChainNonce === undefined) continue // RPC failed for this borrower
+
+    for (const order of orders) {
+      try {
+        const orderData: OrderData = JSON.parse(order.order_data as string)
+        const orderNonce = BigInt(orderData.nonce)
+        if (onChainNonce !== orderNonce) {
+          console.log(
+            `Expiring order ${order.id}: borrower nonce stale (order=${orderNonce}, on-chain=${onChainNonce})`,
+          )
+          await queries.updateOrderStatus(order.id as string, 'expired')
+          expiredCount++
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.warn(`Failed to check nonce for order ${order.id}: ${msg}`)
       }
-    } catch (err) {
-      // Don't let a single RPC failure block the whole batch
-      const msg = err instanceof Error ? err.message : String(err)
-      console.warn(`Failed to check nonce for order ${order.id}: ${msg}`)
     }
   }
 
@@ -148,6 +182,23 @@ async function settleOrders(
   const calls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
   const settledPairs: { order_id: string; offer_id: string; borrower: string; nonce: string }[] = []
 
+  // Pre-fetch all unique nonces in parallel to minimize RPC round-trips
+  const uniqueAddresses = new Set<string>()
+  for (const row of matched) {
+    uniqueAddresses.add(normalizeAddress(row.borrower as string))
+    uniqueAddresses.add(normalizeAddress(row.lender as string))
+  }
+  const nonceResults = await Promise.allSettled(
+    Array.from(uniqueAddresses).map(async (addr) => ({
+      addr,
+      nonce: await getOnChainNonce(provider, contractAddress, addr),
+    })),
+  )
+  const nonceCache = new Map<string, bigint>()
+  for (const r of nonceResults) {
+    if (r.status === 'fulfilled') nonceCache.set(r.value.addr, r.value.nonce)
+  }
+
   for (const row of matched) {
     const order_id = row.order_id as string
     const offer_id = row.offer_id as string
@@ -157,8 +208,13 @@ async function settleOrders(
       const orderData: OrderData = JSON.parse(row.order_data as string)
 
       // Pre-settle nonce check: verify both nonces are still valid on-chain
-      const borrowerNonce = await getOnChainNonce(provider, contractAddress, row.borrower as string)
+      const borrowerNonce = nonceCache.get(normalizeAddress(row.borrower as string))
       const expectedBorrowerNonce = BigInt(row.order_nonce as string)
+
+      if (borrowerNonce === undefined) {
+        console.warn(`Order ${order_id}: borrower nonce lookup failed, skipping`)
+        continue
+      }
 
       if (borrowerNonce !== expectedBorrowerNonce) {
         console.warn(
@@ -168,8 +224,13 @@ async function settleOrders(
         continue
       }
 
-      const lenderNonce = await getOnChainNonce(provider, contractAddress, row.lender as string)
+      const lenderNonce = nonceCache.get(normalizeAddress(row.lender as string))
       const expectedLenderNonce = BigInt(row.offer_nonce as string)
+
+      if (lenderNonce === undefined) {
+        console.warn(`Order ${order_id}: lender nonce lookup failed, skipping`)
+        continue
+      }
 
       if (lenderNonce !== expectedLenderNonce) {
         console.warn(

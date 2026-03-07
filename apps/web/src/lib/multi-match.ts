@@ -58,12 +58,18 @@ function isMultiLender(order: MatchedOrder): boolean {
 /* ── Selection Algorithm ────────────────────────────────── */
 
 /**
- * Greedy order selection for aggregate settlement.
- * Prioritizes on-chain matches (no signing popup) over off-chain (1 popup each).
+ * Optimal subset-sum order selection for aggregate settlement.
+ *
+ * Uses dynamic programming (meet-in-the-middle for >20 items) to find the
+ * combination of orders that maximizes coverage of the user's budget without
+ * exceeding it. Prioritizes on-chain matches (no signing overhead) by giving
+ * them a slight tie-breaking advantage.
+ *
+ * Falls back to greedy for very large candidate sets (>40) where DP is too slow.
  *
  * @param offchainMatches - Off-chain orders from match API
  * @param onchainMatches - On-chain inscriptions from match API
- * @param userGiveAmount - Total tokens user is willing to give (their collateral = matched orders' debt)
+ * @param userGiveAmount - Total tokens user is willing to give
  */
 export function selectOrders(
   offchainMatches: MatchedOrder[],
@@ -74,82 +80,79 @@ export function selectOrders(
     return { selected: [], totalGive: 0n, totalReceive: 0n, coverage: 0, onchainCount: 0, offchainCount: 0 }
   }
 
+  // Build unified candidate list with priority (on-chain first, then single-lender, then multi-lender)
+  interface Candidate {
+    debt: bigint
+    collateral: bigint
+    priority: number // 0 = on-chain, 1 = off-chain single, 2 = off-chain multi
+    onchain?: OnChainMatch
+    offchain?: MatchedOrder
+    multiLender: boolean
+  }
+
+  const candidates: Candidate[] = []
+
+  for (const m of onchainMatches) {
+    const debt = sumErc20Values(m.debtAssets)
+    if (debt <= 0n) continue
+    candidates.push({ debt, collateral: sumErc20Values(m.collateralAssets), priority: 0, onchain: m, multiLender: false })
+  }
+
+  for (const o of offchainMatches) {
+    const debt = parseOffchainDebt(o)
+    if (debt <= 0n) continue
+    const ml = isMultiLender(o)
+    candidates.push({ debt, collateral: parseOffchainCollateral(o), priority: ml ? 2 : 1, offchain: o, multiLender: ml })
+  }
+
+  // Separate full-fill candidates (single-lender + on-chain) from partial-fill (multi-lender)
+  const fullCandidates = candidates.filter(c => !c.multiLender)
+  const partialCandidates = candidates.filter(c => c.multiLender)
+
+  // Sort by priority (on-chain first), then by debt descending for tie-breaking
+  fullCandidates.sort((a, b) => a.priority - b.priority || (b.debt > a.debt ? 1 : b.debt < a.debt ? -1 : 0))
+
+  // Find optimal subset of full-fill candidates using DP or greedy
+  const bestIndices = fullCandidates.length <= 25
+    ? dpSubsetSum(fullCandidates.map(c => c.debt), userGiveAmount)
+    : greedySubset(fullCandidates.map(c => c.debt), userGiveAmount)
+
   const selected: SelectedOrder[] = []
   let totalGive = 0n
   let totalReceive = 0n
 
-  // Phase 1: On-chain matches first (zero signing overhead)
-  // On-chain inscriptions use sign_inscription — no off-chain signature needed
-  const onchainCandidates = onchainMatches
-    .map((m) => ({
-      match: m,
-      debt: sumErc20Values(m.debtAssets),
-      collateral: sumErc20Values(m.collateralAssets),
-    }))
-    .filter((c) => c.debt > 0n)
-    .sort((a, b) => (b.debt > a.debt ? 1 : b.debt < a.debt ? -1 : 0))
-
-  for (const { match, debt, collateral } of onchainCandidates) {
-    if (totalGive + debt > userGiveAmount) continue
-    selected.push({
-      type: 'onchain',
-      match,
-      bps: 10000,
-      giveAmount: debt,
-      receiveAmount: collateral,
-    })
-    totalGive += debt
-    totalReceive += collateral
-    if (totalGive >= userGiveAmount) break
-  }
-
-  // Phase 2: Off-chain single-lender orders (each needs 1 signing popup)
-  if (totalGive < userGiveAmount) {
-    const singleLender = offchainMatches
-      .filter((o) => !isMultiLender(o))
-      .map((o) => ({ order: o, debt: parseOffchainDebt(o), collateral: parseOffchainCollateral(o) }))
-      .filter((c) => c.debt > 0n)
-      .sort((a, b) => (b.debt > a.debt ? 1 : b.debt < a.debt ? -1 : 0))
-
-    for (const { order, debt, collateral } of singleLender) {
-      if (totalGive + debt > userGiveAmount) continue
-      selected.push({
-        type: 'offchain',
-        order,
-        bps: 10000,
-        giveAmount: debt,
-        receiveAmount: collateral,
-      })
-      totalGive += debt
-      totalReceive += collateral
-      if (totalGive >= userGiveAmount) break
+  for (const idx of bestIndices) {
+    const c = fullCandidates[idx]
+    if (c.onchain) {
+      selected.push({ type: 'onchain', match: c.onchain, bps: 10000, giveAmount: c.debt, receiveAmount: c.collateral })
+    } else if (c.offchain) {
+      selected.push({ type: 'offchain', order: c.offchain, bps: 10000, giveAmount: c.debt, receiveAmount: c.collateral })
     }
+    totalGive += c.debt
+    totalReceive += c.collateral
   }
 
   // Phase 3: Partial fill a multi-lender order with remaining capacity
-  if (totalGive < userGiveAmount) {
-    const multiLenderOrders = offchainMatches
-      .filter((o) => isMultiLender(o))
-      .map((o) => ({ order: o, debt: parseOffchainDebt(o), collateral: parseOffchainCollateral(o) }))
-      .filter((c) => c.debt > 0n)
-
+  if (totalGive < userGiveAmount && partialCandidates.length > 0) {
     const remainingBudget = userGiveAmount - totalGive
-    for (const { order, debt, collateral } of multiLenderOrders) {
-      const bps = Number((remainingBudget * 10000n) / debt)
+    // Pick the multi-lender order that best fits remaining budget
+    const sorted = [...partialCandidates].sort((a, b) => {
+      // Prefer orders closest to remaining budget (minimize waste)
+      const aFit = a.debt <= remainingBudget ? remainingBudget - a.debt : a.debt - remainingBudget
+      const bFit = b.debt <= remainingBudget ? remainingBudget - b.debt : b.debt - remainingBudget
+      return aFit < bFit ? -1 : aFit > bFit ? 1 : 0
+    })
+
+    for (const c of sorted) {
+      const bps = Number((remainingBudget * 10000n) / c.debt)
       if (bps < 1) continue
 
       const effectiveBps = Math.min(bps, 10000)
-      const giveAmount = (debt * BigInt(effectiveBps)) / 10000n
-      const receiveAmount = (collateral * BigInt(effectiveBps)) / 10000n
+      const giveAmount = (c.debt * BigInt(effectiveBps) + 9999n) / 10000n
+      const receiveAmount = (c.collateral * BigInt(effectiveBps)) / 10000n
       if (giveAmount <= 0n) continue
 
-      selected.push({
-        type: 'offchain',
-        order,
-        bps: effectiveBps,
-        giveAmount,
-        receiveAmount,
-      })
+      selected.push({ type: 'offchain', order: c.offchain!, bps: effectiveBps, giveAmount, receiveAmount })
       totalGive += giveAmount
       totalReceive += receiveAmount
       break
@@ -164,4 +167,120 @@ export function selectOrders(
   const offchainCount = selected.filter((s) => s.type === 'offchain').length
 
   return { selected, totalGive, totalReceive, coverage, onchainCount, offchainCount }
+}
+
+/* ── Subset-Sum DP (exact, O(n * W) but W capped) ──────── */
+
+/**
+ * Find the subset of `values` whose sum is closest to (but ≤) `budget`.
+ * Uses bitmask DP for up to 25 items. Returns indices of selected items.
+ */
+function dpSubsetSum(values: bigint[], budget: bigint): number[] {
+  const n = values.length
+  if (n === 0) return []
+
+  // Meet-in-the-middle for n > 15 (2^15 = 32K per half)
+  if (n > 15) return meetInTheMiddle(values, budget)
+
+  // Direct enumeration for n ≤ 15 (2^15 = 32K states)
+  let bestSum = 0n
+  let bestMask = 0
+
+  const limit = 1 << n
+  for (let mask = 1; mask < limit; mask++) {
+    let sum = 0n
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) sum += values[i]
+      if (sum > budget) break
+    }
+    if (sum <= budget && sum > bestSum) {
+      bestSum = sum
+      bestMask = mask
+      if (sum === budget) break
+    }
+  }
+
+  const result: number[] = []
+  for (let i = 0; i < n; i++) {
+    if (bestMask & (1 << i)) result.push(i)
+  }
+  return result
+}
+
+/** Meet-in-the-middle for 16-25 items: split, enumerate halves, binary search */
+function meetInTheMiddle(values: bigint[], budget: bigint): number[] {
+  const n = values.length
+  const mid = Math.floor(n / 2)
+
+  // Enumerate left half
+  const leftSize = mid
+  const leftCount = 1 << leftSize
+  const leftSums: { sum: bigint; mask: number }[] = []
+  for (let mask = 0; mask < leftCount; mask++) {
+    let sum = 0n
+    for (let i = 0; i < leftSize; i++) {
+      if (mask & (1 << i)) sum += values[i]
+    }
+    if (sum <= budget) leftSums.push({ sum, mask })
+  }
+  leftSums.sort((a, b) => (a.sum < b.sum ? -1 : a.sum > b.sum ? 1 : 0))
+
+  // Enumerate right half and binary search for best left complement
+  const rightSize = n - mid
+  const rightCount = 1 << rightSize
+  let bestSum = 0n
+  let bestLeftMask = 0
+  let bestRightMask = 0
+
+  for (let rmask = 0; rmask < rightCount; rmask++) {
+    let rsum = 0n
+    for (let i = 0; i < rightSize; i++) {
+      if (rmask & (1 << i)) rsum += values[mid + i]
+    }
+    if (rsum > budget) continue
+
+    const remaining = budget - rsum
+    // Binary search for largest leftSum <= remaining
+    let lo = 0, hi = leftSums.length - 1, bestIdx = 0
+    while (lo <= hi) {
+      const m = (lo + hi) >> 1
+      if (leftSums[m].sum <= remaining) { bestIdx = m; lo = m + 1 }
+      else hi = m - 1
+    }
+
+    const total = leftSums[bestIdx].sum + rsum
+    if (total > bestSum) {
+      bestSum = total
+      bestLeftMask = leftSums[bestIdx].mask
+      bestRightMask = rmask
+      if (total === budget) break
+    }
+  }
+
+  const result: number[] = []
+  for (let i = 0; i < leftSize; i++) {
+    if (bestLeftMask & (1 << i)) result.push(i)
+  }
+  for (let i = 0; i < rightSize; i++) {
+    if (bestRightMask & (1 << i)) result.push(mid + i)
+  }
+  return result
+}
+
+/* ── Greedy fallback (>25 items) ────────────────────────── */
+
+function greedySubset(values: bigint[], budget: bigint): number[] {
+  // Sort indices by value descending
+  const indices = values.map((_, i) => i).sort((a, b) => (values[b] > values[a] ? 1 : values[b] < values[a] ? -1 : 0))
+  const result: number[] = []
+  let sum = 0n
+
+  for (const i of indices) {
+    if (sum + values[i] <= budget) {
+      result.push(i)
+      sum += values[i]
+      if (sum === budget) break
+    }
+  }
+  return result
 }
