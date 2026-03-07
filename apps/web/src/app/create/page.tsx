@@ -670,15 +670,25 @@ export default function CreatePage() {
   /* ── Render ────────────────────────────────────────────── */
 
   return (
-    <div className="animate-fade-up max-w-5xl mx-auto pb-24 relative">
+    <div className="animate-fade-up max-w-7xl mx-auto pb-24 relative">
 
       {/* ── Ambient Background ───────────────────────────── */}
       <div className="fixed top-1/4 -left-20 w-64 h-64 bg-star/[0.04] rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-1/4 -right-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
-      {/* ── Step 1: Type Toggle (first choice, left-aligned) ── */}
-      <div className="flex items-center gap-4 mb-5">
-        <div className="bg-void/60 backdrop-blur border border-edge/30 p-1 rounded-xl flex items-center gap-0.5">
+      {/* ── Header: Toggle (left) + Title (center) ────────── */}
+      <div className="flex flex-col items-center mb-14 text-center">
+        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-star/[0.08] border border-star/20 mb-6">
+          <div className="w-1.5 h-1.5 rounded-full bg-star animate-pulse" />
+          <span className="text-[10px] font-display tracking-[0.3em] text-star/90 uppercase">Protocol Artifact</span>
+        </div>
+
+        <h1 className="font-display text-4xl sm:text-5xl tracking-[0.35em] text-chalk mb-10 uppercase">
+          Inscribe
+        </h1>
+
+        {/* Lending / Swap Toggle — first choice */}
+        <div className="bg-void/60 backdrop-blur border border-edge/30 p-1.5 rounded-[20px] flex items-center gap-1 shadow-2xl">
           {(['lending', 'swap'] as const).map((t) => (
             <button
               key={t}
@@ -688,9 +698,9 @@ export default function CreatePage() {
                 if (t === 'swap') { setInterestAssets([]); setUseCustomDuration(false) }
                 else if (durationPreset === '0') setDurationPreset('86400')
               }}
-              className={`px-6 py-2 rounded-lg text-[12px] font-display tracking-[0.15em] transition-all duration-200 cursor-pointer uppercase ${
+              className={`px-8 py-2.5 rounded-[14px] text-[11px] font-display tracking-[0.2em] transition-all duration-300 cursor-pointer uppercase ${
                 orderType === t
-                  ? 'bg-star/10 text-star border border-star/20'
+                  ? 'bg-star/10 text-star shadow-[0_0_15px_rgba(232,168,37,0.08)] border border-star/20'
                   : 'text-dust/60 hover:text-dust border border-transparent'
               }`}
             >
@@ -698,147 +708,124 @@ export default function CreatePage() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* ── Settings Bar ─────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-8">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
+          <div className="flex gap-1">
+            {(['offchain', 'onchain'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  mode === m
+                    ? 'bg-star/10 text-star border border-star/25'
+                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                }`}
+              >
+                {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
+          <div className="flex gap-1">
+            {([
+              { value: 'single', label: 'Single Lender' },
+              { value: 'multi', label: 'Multi-Lender' },
+            ] as const).map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setMultiLender(f.value === 'multi')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  (multiLender ? 'multi' : 'single') === f.value
+                    ? 'bg-star/10 text-star border border-star/25'
+                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="w-px h-5 bg-edge/40 hidden sm:block" />
 
         <button
           type="button"
           onClick={resetForm}
-          className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer px-2 py-1.5 ml-auto"
-          title="Reset form"
+          className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
         >
           Reset
         </button>
       </div>
 
-      {/* ── Main 2-Column Layout ─────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
+      {/* ── Terms & Duration ─────────────────────────────── */}
+      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8">
+        <div className="px-4 py-3 border-b border-edge/30 bg-surface/10">
+          <span className="text-[11px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
+        </div>
 
-        {/* ── Left Column: Form ──────────────────────────── */}
-        <div className="space-y-4 min-w-0">
-
-          {/* ── Settings Row (Mode + Funding) ─────────────── */}
-          <div className="rounded-xl border border-edge/30 bg-surface/5 px-4 py-3">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-              {/* Mode */}
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] text-ash uppercase tracking-widest font-bold">Mode</span>
-                <div className="flex gap-0.5">
-                  {(['offchain', 'onchain'] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMode(m)}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
-                        mode === m
-                          ? 'bg-star/10 text-star border border-star/25'
-                          : 'text-dust hover:text-chalk border border-edge/30 hover:border-edge-bright'
-                      }`}
-                    >
-                      {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="w-px h-4 bg-edge/30 hidden sm:block" />
-
-              {/* Funding */}
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] text-ash uppercase tracking-widest font-bold">Funding</span>
-                <div className="flex gap-0.5">
-                  {([
-                    { value: 'single', label: 'Single' },
-                    { value: 'multi', label: 'Multi' },
-                  ] as const).map((f) => (
-                    <button
-                      key={f.value}
-                      type="button"
-                      onClick={() => setMultiLender(f.value === 'multi')}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
-                        (multiLender ? 'multi' : 'single') === f.value
-                          ? 'bg-star/10 text-star border border-star/25'
-                          : 'text-dust hover:text-chalk border border-edge/30 hover:border-edge-bright'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="w-px h-4 bg-edge/30 hidden sm:block" />
-
-              {/* Deadline inline */}
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] text-ash uppercase tracking-widest font-bold">Expiry</span>
-                <div className="flex gap-0.5">
-                  {DEADLINE_PRESETS.map((p) => (
-                    <button
-                      key={p.seconds}
-                      type="button"
-                      onClick={() => setDeadlinePreset(p.seconds.toString())}
-                      className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
-                        deadlinePreset === p.seconds.toString()
-                          ? 'bg-star/10 text-star border border-star/25'
-                          : 'text-dust hover:text-chalk border border-edge/30 hover:border-edge-bright'
-                      }`}
-                    >{p.label}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Duration (lending only) ───────────────────── */}
+        <div className="p-4 flex flex-col md:flex-row md:items-start gap-6">
+          {/* Duration (lending only) */}
           {!isSwap && (
-            <div className="rounded-xl border border-edge/30 bg-surface/5 px-4 py-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] text-ash uppercase tracking-widest font-bold">Loan Duration</span>
+            <div className="space-y-3 flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Loan Duration</span>
                 <button
                   type="button"
                   onClick={() => setUseCustomDuration(!useCustomDuration)}
                   className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider"
                 >
-                  {useCustomDuration ? 'Presets' : 'Custom'}
+                  {useCustomDuration ? 'Use Presets' : 'Custom'}
                 </button>
               </div>
 
               {useCustomDuration ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={customDurationValue}
-                    onChange={(e) => setCustomDurationValue(e.target.value)}
-                    className="w-24 bg-surface/50 border-edge/50 font-mono h-8 text-sm"
-                    placeholder="Amount"
-                    min="1"
-                  />
-                  <div className="flex gap-0.5">
-                    {CUSTOM_DURATION_UNITS.map((u) => (
-                      <button
-                        key={u.multiplier}
-                        type="button"
-                        onClick={() => setCustomDurationUnit(u.multiplier)}
-                        className={`px-2.5 py-1 rounded-md text-[10px] border transition-all cursor-pointer font-medium ${
-                          customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
-                        }`}
-                      >{u.label}</button>
-                    ))}
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={customDurationValue}
+                      onChange={(e) => setCustomDurationValue(e.target.value)}
+                      className="flex-1 bg-surface/50 border-edge/50 font-mono h-9 text-sm"
+                      placeholder="Amount"
+                      min="1"
+                    />
+                    <div className="flex gap-1">
+                      {CUSTOM_DURATION_UNITS.map((u) => (
+                        <button
+                          key={u.multiplier}
+                          type="button"
+                          onClick={() => setCustomDurationUnit(u.multiplier)}
+                          className={`px-3 py-1 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                            customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
+                          }`}
+                        >{u.label}</button>
+                      ))}
+                    </div>
                   </div>
-                  <span className="text-[10px] text-dust ml-1">
-                    = {formatDurationHuman(Number(duration))}
-                  </span>
+                  <p className="text-[10px] text-dust italic">
+                    Result: {formatDurationHuman(Number(duration))}
+                  </p>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {DURATION_PRESETS.map((p) => (
                     <button
                       key={p.seconds}
                       type="button"
                       onClick={() => setDurationPreset(p.seconds.toString())}
-                      className={`py-1.5 px-3 rounded-md text-[11px] border transition-all cursor-pointer font-medium ${
-                        durationPreset === p.seconds.toString()
-                          ? 'border-star/40 bg-star/10 text-star'
-                          : 'border-edge/40 text-dust hover:text-chalk hover:border-edge-bright'
+                      className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                        durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
                       }`}
                     >{p.label}</button>
                   ))}
@@ -847,11 +834,39 @@ export default function CreatePage() {
             </div>
           )}
 
-          {/* ── Asset Table ──────────────────────────────── */}
-          <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-edge/30 bg-surface/10">
+          {/* Divider */}
+          {!isSwap && <div className="hidden md:block w-px self-stretch bg-edge/30" />}
+
+          {/* Deadline / Expiry */}
+          <div className="space-y-3 flex-1 min-w-0">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
+            <div className="flex flex-wrap gap-2">
+              {DEADLINE_PRESETS.map((p) => (
+                <button
+                  key={p.seconds}
+                  type="button"
+                  onClick={() => setDeadlinePreset(p.seconds.toString())}
+                  className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                    deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >{p.label}</button>
+              ))}
+            </div>
+            <p className="text-[10px] text-dust">
+              Expires {formatTimestamp(BigInt(deadline))}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Asset Table + Summary Grid ───────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+        {/* Left: Asset List */}
+        <div className="lg:col-span-2 flex flex-col">
+          <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5 flex flex-col flex-1">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
               <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
-                Assets
+                Inscription Assets
                 {allAssets.length > 0 && <span className="ml-2 text-star">({allAssets.length})</span>}
               </span>
               <button
@@ -865,7 +880,7 @@ export default function CreatePage() {
             </div>
 
             {/* Table Header */}
-            <div className="hidden md:flex items-center px-4 py-1.5 text-[9px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
+            <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
               <div className="flex-1">Asset</div>
               <div className="w-32 text-center">Amount / ID</div>
               <div className="w-32 text-center">Role</div>
@@ -876,20 +891,20 @@ export default function CreatePage() {
             {allAssets.length === 0 ? (
               <div
                 onClick={() => setAddModalOpen(true)}
-                className="w-full min-h-[140px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3"
+                className="w-full flex-1 min-h-[200px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4"
               >
-                <div className="w-12 h-12 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
-                  <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
+                <div className="w-14 h-14 rounded-2xl bg-surface/30 border border-edge/50 flex items-center justify-center">
+                  <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
                 </div>
                 <div className="text-center">
-                  <p className="text-chalk text-sm font-medium">Add assets to begin</p>
-                  <p className="text-[11px] text-dust mt-0.5">
-                    Need at least one borrow + one collateral asset
+                  <p className="text-chalk font-medium">No assets added yet</p>
+                  <p className="text-xs text-dust max-w-[200px] mx-auto mt-1 leading-relaxed">
+                    At least one debt and one collateral asset are required to create an inscription.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="divide-y divide-edge/10">
+              <div className="divide-y divide-edge/10 flex-1">
                 {allAssets.map((item) => (
                   <AssetRow
                     key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
@@ -902,7 +917,7 @@ export default function CreatePage() {
             )}
 
             {showErrors && (!hasDebt || !hasCollateral) && (
-              <div className="px-4 py-2.5 border-t border-edge/20 bg-nova/5">
+              <div className="px-4 py-3 border-t border-edge/20 bg-nova/5">
                 <p className="text-xs text-nova font-medium">
                   {!hasDebt && '• Add at least one borrow asset. '}
                   {!hasCollateral && '• Add at least one collateral asset.'}
@@ -910,93 +925,59 @@ export default function CreatePage() {
               </div>
             )}
           </section>
-
-          {/* ── Match Detection (inline, below assets) ───── */}
-          {matchesVisible && !matchSkipped && hasMatches && (
-            <div>
-              <div className="mb-3 flex items-center gap-3 px-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-star animate-ping" />
-                <span className="text-[10px] font-display tracking-[0.25em] text-star uppercase">
-                  {isSwap && multiSettleSelection
-                    ? multiSettleSelection.coverage >= 100
-                      ? 'Fully Matched'
-                      : `${multiSettleSelection.coverage}% Matched`
-                    : 'Match Detected'}
-                </span>
-              </div>
-              <InlineMatchList
-                offchainMatches={offchainMatches}
-                onchainMatches={onchainMatches}
-                isSwap={isSwap}
-                onSettleOffchain={handleInstantSettle}
-                onSettleOnchain={handleOnchainSettle}
-                onSettleMultiple={handleMultiSettle}
-                onSkip={() => {
-                  setMatchSkipped(true)
-                  setMatchesVisible(false)
-                }}
-                isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
-                multiSettleSelection={multiSettleSelection}
-                giveSymbol={giveSymbol}
-                receiveSymbol={receiveSymbol}
-              />
-            </div>
-          )}
         </div>
 
-        {/* ── Right Column: Summary + Submit ─────────────── */}
-        <div className="lg:row-span-full">
-          <section className="rounded-xl border border-star/30 bg-star/5 p-4 flex flex-col lg:sticky lg:top-20 lg:min-h-[calc(100vh-120px)]">
-            {/* Summary details at top */}
-            <div className="space-y-2.5">
-              <span className="text-[10px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-1.5">
-                Summary
+        {/* Right: Agreement Summary — stretches to match asset table height */}
+        <div className="flex flex-col">
+          <section className="rounded-xl border border-star/30 bg-star/5 p-5 flex flex-col flex-1 lg:sticky lg:top-24">
+            <div className="space-y-3">
+              <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
+                Agreement Summary
               </span>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-dust">Type</span>
-                  <span className="text-chalk font-medium uppercase tracking-wider text-xs">{orderType}</span>
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-dust">Intent</span>
+                  <span className="text-chalk font-medium uppercase tracking-wider">{orderType}</span>
                 </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-dust">Mode</span>
-                  <span className={`font-medium text-xs ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
-                    {mode === 'offchain' ? 'Gasless' : 'On-Chain'}
+                <div className="flex justify-between text-sm">
+                  <span className="text-dust">Network Mode</span>
+                  <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
+                    {mode === 'offchain' ? 'Gasless (Off-Chain)' : 'On-Chain'}
                   </span>
                 </div>
                 {!isSwap && (
-                  <div className="flex justify-between text-[13px]">
+                  <div className="flex justify-between text-sm">
                     <span className="text-dust">Duration</span>
-                    <span className="text-chalk font-medium text-xs">{formatDurationHuman(Number(duration))}</span>
+                    <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-[13px]">
+                <div className="flex justify-between text-sm">
                   <span className="text-dust">Expiry</span>
-                  <span className="text-chalk font-medium text-xs">{formatTimestamp(BigInt(deadline))}</span>
+                  <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span>
                 </div>
                 {roiInfo && (
-                  <div className="flex justify-between text-[13px]">
+                  <div className="flex justify-between text-sm">
                     <span className="text-dust">Est. Yield</span>
-                    <span className="text-aurora font-bold text-xs">+{roiInfo.yieldPct}%</span>
+                    <span className="text-aurora font-bold">+{roiInfo.yieldPct}%</span>
                   </div>
                 )}
                 {isSwap && (
-                  <div className="flex justify-between text-[13px]">
-                    <span className="text-dust">Fee</span>
-                    <span className="text-chalk font-medium text-xs">0.10%</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-dust">Protocol Fee</span>
+                    <span className="text-chalk font-medium">0.10%</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Spacer pushes submit to bottom */}
-            <div className="flex-1 min-h-6" />
+            {/* Spacer — pushes button to bottom when sidebar is taller than content */}
+            <div className="flex-1 min-h-5" />
 
-            {/* Submit button pinned at bottom */}
-            <Web3ActionWrapper message="Connect wallet to inscribe">
+            <Web3ActionWrapper message="Connect your wallet to create an inscription">
               <Button
                 variant="gold"
                 size="lg"
-                className="w-full h-12 uppercase tracking-[0.15em] text-[12px] shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
+                className="w-full h-14 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
                 onClick={handleSubmit}
                 disabled={isPending || isCreatingOnChain || isChecking}
               >
@@ -1008,12 +989,44 @@ export default function CreatePage() {
                     </svg>
                     Processing...
                   </div>
-                ) : isChecking ? 'Checking...' : submitButtonText}
+                ) : isChecking ? 'Checking matches...' : submitButtonText}
               </Button>
             </Web3ActionWrapper>
           </section>
         </div>
       </div>
+
+      {/* ── Match Detection ──────────────────────────────── */}
+      {matchesVisible && !matchSkipped && hasMatches && (
+        <div className="mt-10">
+          <div className="mb-4 flex items-center gap-3 px-1">
+            <div className="w-2 h-2 rounded-full bg-star animate-ping" />
+            <span className="text-[10px] font-display tracking-[0.25em] text-star uppercase">
+              {isSwap && multiSettleSelection
+                ? multiSettleSelection.coverage >= 100
+                  ? 'Fully Matched'
+                  : `${multiSettleSelection.coverage}% Matched`
+                : 'Match Detected'}
+            </span>
+          </div>
+          <InlineMatchList
+            offchainMatches={offchainMatches}
+            onchainMatches={onchainMatches}
+            isSwap={isSwap}
+            onSettleOffchain={handleInstantSettle}
+            onSettleOnchain={handleOnchainSettle}
+            onSettleMultiple={handleMultiSettle}
+            onSkip={() => {
+              setMatchSkipped(true)
+              setMatchesVisible(false)
+            }}
+            isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
+            multiSettleSelection={multiSettleSelection}
+            giveSymbol={giveSymbol}
+            receiveSymbol={receiveSymbol}
+          />
+        </div>
+      )}
 
       {/* ── Modals ───────────────────────────────────────── */}
       <AddAssetModal
