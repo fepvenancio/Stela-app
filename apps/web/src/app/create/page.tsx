@@ -723,6 +723,97 @@ export default function CreatePage() {
         </div>
       </div>
 
+      {/* ── Terms & Duration (full-width bar) ──────────────── */}
+      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8">
+        <div className="px-4 py-3 border-b border-edge/30 bg-surface/10">
+          <span className="text-[11px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
+        </div>
+
+        <div className="p-4 flex flex-col md:flex-row md:items-start gap-6">
+          {/* Duration (lending only) */}
+          {!isSwap && (
+            <div className="space-y-3 flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Loan Duration</span>
+                <button
+                  type="button"
+                  onClick={() => setUseCustomDuration(!useCustomDuration)}
+                  className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider"
+                >
+                  {useCustomDuration ? 'Use Presets' : 'Custom'}
+                </button>
+              </div>
+
+              {useCustomDuration ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={customDurationValue}
+                      onChange={(e) => setCustomDurationValue(e.target.value)}
+                      className="flex-1 bg-surface/50 border-edge/50 font-mono h-9 text-sm"
+                      placeholder="Amount"
+                      min="1"
+                    />
+                    <div className="flex gap-1">
+                      {CUSTOM_DURATION_UNITS.map((u) => (
+                        <button
+                          key={u.multiplier}
+                          type="button"
+                          onClick={() => setCustomDurationUnit(u.multiplier)}
+                          className={`px-3 py-1 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                            customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
+                          }`}
+                        >{u.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-dust italic">
+                    Result: {formatDurationHuman(Number(duration))}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {DURATION_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      type="button"
+                      onClick={() => setDurationPreset(p.seconds.toString())}
+                      className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                        durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                      }`}
+                    >{p.label}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Divider between Duration and Expiry */}
+          {!isSwap && <div className="hidden md:block w-px self-stretch bg-edge/30" />}
+
+          {/* Deadline / Expiry */}
+          <div className="space-y-3 flex-1 min-w-0">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
+            <div className="flex flex-wrap gap-2">
+              {DEADLINE_PRESETS.map((p) => (
+                <button
+                  key={p.seconds}
+                  type="button"
+                  onClick={() => setDeadlinePreset(p.seconds.toString())}
+                  className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                    deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >{p.label}</button>
+              ))}
+            </div>
+            <p className="text-[10px] text-dust">
+              Expires {formatTimestamp(BigInt(deadline))}
+            </p>
+          </div>
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Assets & Matches */}
         <div className="lg:col-span-2 space-y-8">
@@ -810,97 +901,9 @@ export default function CreatePage() {
           )}
         </div>
 
-        {/* Right Column: Terms & Action */}
+        {/* Right Column: Summary & Submit */}
         <div className="space-y-6">
-          <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip">
-            <div className="px-4 py-3 border-b border-edge/30 bg-surface/10">
-              <span className="text-[11px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
-            </div>
-
-            <div className="p-4 space-y-6">
-              {/* Duration (lending only) */}
-              {!isSwap && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Loan Duration</span>
-                    <button
-                      type="button"
-                      onClick={() => setUseCustomDuration(!useCustomDuration)}
-                      className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider"
-                    >
-                      {useCustomDuration ? 'Use Presets' : 'Custom'}
-                    </button>
-                  </div>
-                  
-                  {useCustomDuration ? (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          value={customDurationValue}
-                          onChange={(e) => setCustomDurationValue(e.target.value)}
-                          className="flex-1 bg-surface/50 border-edge/50 font-mono h-9 text-sm"
-                          placeholder="Amount"
-                          min="1"
-                        />
-                        <div className="flex gap-1">
-                          {CUSTOM_DURATION_UNITS.map((u) => (
-                            <button
-                              key={u.multiplier}
-                              type="button"
-                              onClick={() => setCustomDurationUnit(u.multiplier)}
-                              className={`px-3 py-1 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
-                                customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
-                              }`}
-                            >{u.label}</button>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-dust italic">
-                        Result: {formatDurationHuman(Number(duration))}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-4 gap-2">
-                      {DURATION_PRESETS.map((p) => (
-                        <button
-                          key={p.seconds}
-                          type="button"
-                          onClick={() => setDurationPreset(p.seconds.toString())}
-                          className={`py-2 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
-                            durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                          }`}
-                        >{p.label}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Deadline */}
-              <div className="space-y-3">
-                <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
-                <div className="grid grid-cols-3 gap-2">
-                  {DEADLINE_PRESETS.map((p) => (
-                    <button
-                      key={p.seconds}
-                      type="button"
-                      onClick={() => setDeadlinePreset(p.seconds.toString())}
-                      className={`py-2 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
-                        deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                      }`}
-                    >{p.label}</button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-dust">
-                  Agreement expires on {formatTimestamp(BigInt(deadline))}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Summary & Submit */}
-          <section className="rounded-xl border border-star/30 bg-star/5 p-5 space-y-5">
+          <section className="rounded-xl border border-star/30 bg-star/5 p-5 space-y-5 lg:sticky lg:top-24">
             <div className="space-y-3">
               <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
                 Agreement Summary
@@ -922,6 +925,10 @@ export default function CreatePage() {
                     <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
                   </div>
                 )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-dust">Expiry</span>
+                  <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span>
+                </div>
                 {roiInfo && (
                   <div className="flex justify-between text-sm">
                     <span className="text-dust">Est. Yield</span>
