@@ -150,7 +150,8 @@ export function selectOrders(
       if (bps < 1) continue
 
       const effectiveBps = Math.min(bps, 10000)
-      const giveAmount = (c.debt * BigInt(effectiveBps) + 9999n) / 10000n
+      // Floor division to never exceed budget
+      const giveAmount = (c.debt * BigInt(effectiveBps)) / 10000n
       const receiveAmount = (c.collateral * BigInt(effectiveBps)) / 10000n
       if (giveAmount <= 0n) continue
 
@@ -305,16 +306,11 @@ function greedyWithRefinement(values: bigint[], budget: bigint): number[] {
   }
 
   // Phase 2: Swap refinement
-  // For each selected item, check if swapping it for an unselected item gets closer to budget
-  const gap = budget - sum
-  if (gap > 0n) {
-    // Build sorted array of unselected items for binary search
-    const unselected = sortedIndices.filter(i => !inSet[i])
-    // unselected is already sorted by value descending
-
+  // For each selected item, try replacing with a larger unselected item that still fits
+  if (sum < budget) {
     let improved = true
     let passes = 0
-    const MAX_PASSES = 3 // Limit refinement passes
+    const MAX_PASSES = 3
 
     while (improved && passes < MAX_PASSES) {
       improved = false
@@ -323,40 +319,27 @@ function greedyWithRefinement(values: bigint[], budget: bigint): number[] {
       for (let si = 0; si < selected.length; si++) {
         const selIdx = selected[si]
         const selVal = values[selIdx]
-        const currentSum = sum
+        const target = selVal + (budget - sum) // max value we can swap in
 
-        // We want to find an unselected item with value in (selVal, selVal + gap]
-        // That would increase sum by (newVal - selVal) without exceeding budget
-        const target = selVal + (budget - currentSum)
-
-        // Binary search for the largest unselected value ≤ target that is > selVal
-        let bestSwap = -1
-        let bestSwapVal = 0n
-        let lo = 0, hi = unselected.length - 1
-        while (lo <= hi) {
-          const mid = (lo + hi) >> 1
-          const uVal = values[unselected[mid]]
-          if (uVal <= target && uVal > selVal) {
-            bestSwap = mid
-            bestSwapVal = uVal
-            hi = mid - 1 // look for even larger
-          } else if (uVal > target) {
-            lo = mid + 1
-          } else {
-            hi = mid - 1
+        // Linear scan of unselected for best replacement (value in (selVal, target])
+        let bestIdx = -1
+        let bestVal = selVal // must be strictly better
+        for (const idx of sortedIndices) {
+          if (inSet[idx]) continue
+          const v = values[idx]
+          if (v <= target && v > bestVal) {
+            bestIdx = idx
+            bestVal = v
           }
+          // Since sortedIndices is descending, once v <= selVal we won't find better
+          if (v <= selVal) break
         }
 
-        if (bestSwap !== -1) {
-          const swapIdx = unselected[bestSwap]
-          // Perform swap
+        if (bestIdx !== -1) {
           inSet[selIdx] = 0
-          inSet[swapIdx] = 1
-          selected[si] = swapIdx
-          sum = currentSum - selVal + bestSwapVal
-          // Update unselected: remove swapIdx, add selIdx
-          unselected[bestSwap] = selIdx
-          // Re-sort is expensive; just mark and continue
+          inSet[bestIdx] = 1
+          selected[si] = bestIdx
+          sum = sum - selVal + bestVal
           improved = true
           if (sum === budget) return selected
         }

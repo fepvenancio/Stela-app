@@ -299,21 +299,64 @@ async function settleOrders(
 
   if (calls.length === 0) return
 
-  try {
-    const { transaction_hash } = await account.execute(calls)
-    console.log(`Submitted batch settlement of ${calls.length} orders: ${transaction_hash}`)
-    await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
+  // Strategy: try batch first, fall back to individual on failure
+  if (calls.length === 1) {
+    // Single order — execute directly
+    await executeSettlement(account, provider, queries, calls[0], settledPairs[0])
+  } else {
+    // Batch attempt
+    try {
+      const { transaction_hash } = await account.execute(calls)
+      console.log(`Submitted batch settlement of ${calls.length} orders: ${transaction_hash}`)
+      await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
 
-    for (const { order_id, offer_id, borrower, nonce } of settledPairs) {
-      await queries.updateOrderStatus(order_id, 'settled')
-      await queries.updateOfferStatus(offer_id, 'settled')
-      await queries.expireSiblingOrders(order_id, borrower, nonce)
-      await queries.purgeOrderSignature(order_id)
-      await queries.purgeOfferSignature(offer_id)
+      for (const pair of settledPairs) {
+        await markSettled(queries, pair)
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`Batch settlement failed (${calls.length} orders): ${message}`)
+      console.log('Falling back to individual settlements...')
+
+      // Individual fallback — one bad order won't block the rest
+      for (let i = 0; i < calls.length; i++) {
+        await executeSettlement(account, provider, queries, calls[i], settledPairs[i])
+      }
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Settlement helpers
+// ---------------------------------------------------------------------------
+
+async function markSettled(
+  queries: ReturnType<typeof createD1Queries>,
+  pair: { order_id: string; offer_id: string; borrower: string; nonce: string },
+) {
+  await queries.updateOrderStatus(pair.order_id, 'settled')
+  await queries.updateOfferStatus(pair.offer_id, 'settled')
+  await queries.expireSiblingOrders(pair.order_id, pair.borrower, pair.nonce)
+  await queries.purgeOrderSignature(pair.order_id)
+  await queries.purgeOfferSignature(pair.offer_id)
+}
+
+async function executeSettlement(
+  account: Account,
+  provider: RpcProvider,
+  queries: ReturnType<typeof createD1Queries>,
+  call: { contractAddress: string; entrypoint: string; calldata: string[] },
+  pair: { order_id: string; offer_id: string; borrower: string; nonce: string },
+) {
+  try {
+    const { transaction_hash } = await account.execute(call)
+    console.log(`Settled order ${pair.order_id}: ${transaction_hash}`)
+    await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
+    await markSettled(queries, pair)
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error(`Failed to execute batch settlement: ${message}`)
+    console.error(`Failed to settle order ${pair.order_id}: ${message}`)
+    // Leave as 'matched' — will retry next cron, or expireStaleNonceOrders will catch it
   }
 }
 

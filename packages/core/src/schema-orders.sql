@@ -33,4 +33,6 @@ CREATE INDEX IF NOT EXISTS idx_order_offers_lender ON order_offers(lender);
 CREATE INDEX IF NOT EXISTS idx_order_offers_status ON order_offers(status);
 
 -- Denormalized columns for instant-match queries (populated at order creation)
-CREATE INDEX IF NOT EXISTS idx_orders_match ON orders(status, debt_token, collateral_token);
+CREATE INDEX IF NOT EXISTS idx_orders_match ON orders(status, debt_token, collateral_token, duration_seconds);
+-- Bot settlement queries
+CREATE INDEX IF NOT EXISTS idx_orders_status_deadline ON orders(status, deadline);
