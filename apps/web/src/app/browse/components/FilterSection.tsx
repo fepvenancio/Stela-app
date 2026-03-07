@@ -3,7 +3,9 @@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import Link from 'next/link'
 
-const FILTERS = [
+const TOGGLE_STYLE = "px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
+
+const STATUS_FILTERS = [
   { key: 'open', label: 'Open' },
   { key: 'partial', label: 'Partial' },
   { key: 'filled', label: 'Filled' },
@@ -14,6 +16,8 @@ const FILTERS = [
 interface FilterSectionProps {
   statusFilter: string
   setStatusFilter: (v: string) => void
+  typeFilter: 'all' | 'swap' | 'lend'
+  setTypeFilter: (v: 'all' | 'swap' | 'lend') => void
   sourceFilter: 'all' | 'onchain' | 'offchain'
   setSourceFilter: (v: 'all' | 'onchain' | 'offchain') => void
 }
@@ -21,40 +25,50 @@ interface FilterSectionProps {
 export function FilterSection({
   statusFilter,
   setStatusFilter,
+  typeFilter,
+  setTypeFilter,
   sourceFilter,
   setSourceFilter,
 }: FilterSectionProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex flex-wrap gap-4">
-        <ToggleGroup 
-          type="single" 
-          value={statusFilter} 
-          onValueChange={(v) => v && setStatusFilter(v)} 
-          className="flex flex-wrap gap-2" 
+        <ToggleGroup
+          type="single"
+          value={statusFilter}
+          onValueChange={(v) => v && setStatusFilter(v)}
+          className="flex flex-wrap gap-2"
           aria-label="Filter by status"
         >
-          {FILTERS.map(({ key, label }) => (
-            <ToggleGroupItem
-              key={key}
-              value={key}
-              className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50"
-            >
+          {STATUS_FILTERS.map(({ key, label }) => (
+            <ToggleGroupItem key={key} value={key} className={TOGGLE_STYLE}>
               {label}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
 
-        <ToggleGroup 
-          type="single" 
-          value={sourceFilter} 
-          onValueChange={(v) => v && setSourceFilter(v as typeof sourceFilter)} 
-          className="flex gap-2" 
+        <ToggleGroup
+          type="single"
+          value={typeFilter}
+          onValueChange={(v) => v && setTypeFilter(v as typeof typeFilter)}
+          className="flex gap-2"
+          aria-label="Filter by type"
+        >
+          <ToggleGroupItem value="all" className={TOGGLE_STYLE}>All</ToggleGroupItem>
+          <ToggleGroupItem value="swap" className={TOGGLE_STYLE}>Swap</ToggleGroupItem>
+          <ToggleGroupItem value="lend" className={TOGGLE_STYLE}>Lend</ToggleGroupItem>
+        </ToggleGroup>
+
+        <ToggleGroup
+          type="single"
+          value={sourceFilter}
+          onValueChange={(v) => v && setSourceFilter(v as typeof sourceFilter)}
+          className="flex gap-2"
           aria-label="Filter by source"
         >
-          <ToggleGroupItem value="all" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">All</ToggleGroupItem>
-          <ToggleGroupItem value="onchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">On-chain</ToggleGroupItem>
-          <ToggleGroupItem value="offchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Off-chain</ToggleGroupItem>
+          <ToggleGroupItem value="all" className={TOGGLE_STYLE}>All</ToggleGroupItem>
+          <ToggleGroupItem value="onchain" className={TOGGLE_STYLE}>On-chain</ToggleGroupItem>
+          <ToggleGroupItem value="offchain" className={TOGGLE_STYLE}>Off-chain</ToggleGroupItem>
         </ToggleGroup>
       </div>
 

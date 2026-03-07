@@ -20,10 +20,7 @@ export function ListingTableHeader() {
           Collateral
           <InfoTooltip content={CONCEPT_DESCRIPTIONS.collateral} side="bottom" />
         </div>
-        <div className="col-span-2 text-right flex items-center justify-end gap-1">
-          Duration
-          <InfoTooltip content={CONCEPT_DESCRIPTIONS.duration} side="bottom" />
-        </div>
+        <div className="col-span-2 text-right">Action</div>
       </div>
     </div>
   )

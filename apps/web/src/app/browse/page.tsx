@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useDeferredValue } from 'react'
+import { useState, useMemo, useDeferredValue, useCallback } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { useInscriptions } from '@/hooks/useInscriptions'
 import { useOrders } from '@/hooks/useOrders'
@@ -16,6 +16,8 @@ import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelec
 import { toast } from 'sonner'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { ListingTableHeader } from '@/components/ListingTableHeader'
+import { useBatchSign } from '@/hooks/useBatchSign'
+import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
@@ -32,17 +34,21 @@ const MAX_SELECTIONS = 10
 
 function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'swap' | 'lend'>('all')
   const [sourceFilter, setSourceFilter] = useState<'all' | 'onchain' | 'offchain'>('all')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [reviewOpen, setReviewOpen] = useState(false)
   const [filters, setFilters] = useState<FilterValues>(EMPTY_FILTERS)
   const [showFilters, setShowFilters] = useState(false)
+  const [actionPendingId, setActionPendingId] = useState<string | null>(null)
 
   const deferredFilters = useDeferredValue(filters)
 
   const { address } = useAccount()
   const { toggle, isSelected, count } = useBatchSelection()
+  const { batchSign, isPending: isBatchSignPending } = useBatchSign()
+  const { settle: instantSettle, isPending: isInstantSettlePending } = useInstantSettle()
 
   const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
   const orderStatusFilter = useMemo(() => mapInscriptionFilterToOrderFilter(statusFilter), [statusFilter])
@@ -93,8 +99,20 @@ function BrowseContent() {
       return passesAdvancedFilters(data.debtAssets, data.interestAssets, data.collateralAssets, deferredFilters)
     })
 
+    // Type filter (swap vs lend)
+    if (typeFilter !== 'all') {
+      result = result.filter((o) => {
+        const raw2: RawOrderData = typeof o.order_data === 'string'
+          ? (() => { try { return JSON.parse(o.order_data as string) } catch { return {} } })()
+          : (o.order_data as unknown as RawOrderData) ?? {}
+        const d = normalizeOrderData(raw2)
+        const dur = Number(d.duration)
+        return typeFilter === 'swap' ? dur === 0 : dur > 0
+      })
+    }
+
     return result
-  }, [allOrders, statusFilter, orderStatusFilter, search, deferredFilters])
+  }, [allOrders, statusFilter, orderStatusFilter, search, deferredFilters, typeFilter])
 
   // Enrich, Filter, and Sort inscriptions
   const data = useMemo(() => {
@@ -127,6 +145,14 @@ function BrowseContent() {
       const collateralAssets = (item.assets ?? []).filter((a) => a.asset_role === 'collateral')
       return passesAdvancedFilters(debtAssets, interestAssets, collateralAssets, deferredFilters)
     })
+
+    // Type filter (swap vs lend)
+    if (typeFilter !== 'all') {
+      results = results.filter((item) => {
+        const dur = Number(item.duration)
+        return typeFilter === 'swap' ? dur === 0 : dur > 0
+      })
+    }
 
     // Sort
     results.sort((a, b) => {
@@ -174,7 +200,44 @@ function BrowseContent() {
     }
 
     return results
-  }, [rawData, search, sortBy, deferredFilters])
+  }, [rawData, search, sortBy, deferredFilters, typeFilter])
+
+  /* ── Action Handlers ─────────────────────────────────── */
+
+  const handleOnchainAction = useCallback(async (inscriptionId: string, assets: { asset_address: string; value: string | null; asset_role: string }[]) => {
+    if (!address) {
+      toast.error('Connect your wallet to continue')
+      return
+    }
+    setActionPendingId(inscriptionId)
+    try {
+      const debtAssets = assets
+        .filter((a) => a.asset_role === 'debt')
+        .map((a) => ({ address: a.asset_address, value: a.value ?? '0' }))
+      await batchSign([{ inscriptionId, bps: 10000, debtAssets }])
+    } catch {
+      // Error already toasted in hook
+    } finally {
+      setActionPendingId(null)
+    }
+  }, [address, batchSign])
+
+  const handleOffchainAction = useCallback(async (order: MatchedOrder) => {
+    if (!address) {
+      toast.error('Connect your wallet to continue')
+      return
+    }
+    setActionPendingId(order.id)
+    try {
+      await instantSettle(order)
+    } catch {
+      // Error already toasted in hook
+    } finally {
+      setActionPendingId(null)
+    }
+  }, [address, instantSettle])
+
+  const isActionPending = isBatchSignPending || isInstantSettlePending
 
   return (
     <div className="animate-fade-up">
@@ -190,9 +253,11 @@ function BrowseContent() {
 
       {/* Filters & Controls */}
       <div className="space-y-6 mb-8">
-        <FilterSection 
+        <FilterSection
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
           sourceFilter={sourceFilter}
           setSourceFilter={setSourceFilter}
         />
@@ -249,7 +314,8 @@ function BrowseContent() {
                   {onchainRows.map((a) => {
                     const enrichedStatus = a.status
                     const isOwn = address && a.creator && addressesEqual(address, a.creator)
-                    const canSelect = enrichedStatus === 'open' && !a.multi_lender && !isOwn
+                    const canFill = enrichedStatus === 'open' && !isOwn && !!address
+                    const canSelect = canFill && !a.multi_lender
 
                     return (
                       <InscriptionListRow
@@ -269,12 +335,32 @@ function BrowseContent() {
                           }
                           toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
                         } : undefined}
+                        onAction={canFill ? () => handleOnchainAction(a.id, a.assets ?? []) : undefined}
+                        actionPending={actionPendingId === a.id || (isActionPending && actionPendingId === a.id)}
                       />
                     )
                   })}
-                  {offchainRows.map((order) => (
-                    <OrderListRow key={order.id} order={order} />
-                  ))}
+                  {offchainRows.map((order) => {
+                    const canFill = order.status === 'pending' && !!address && !addressesEqual(address, order.borrower)
+                    return (
+                      <OrderListRow
+                        key={order.id}
+                        order={order}
+                        onAction={canFill ? () => handleOffchainAction({
+                          id: order.id,
+                          borrower: order.borrower,
+                          borrower_signature: order.borrower_signature,
+                          nonce: order.nonce,
+                          deadline: order.deadline,
+                          created_at: order.created_at,
+                          order_data: typeof order.order_data === 'string'
+                            ? JSON.parse(order.order_data as string)
+                            : order.order_data as Record<string, unknown>,
+                        }) : undefined}
+                        actionPending={actionPendingId === order.id}
+                      />
+                    )
+                  })}
                 </div>
               </div>
             )}

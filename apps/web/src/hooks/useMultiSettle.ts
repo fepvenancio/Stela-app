@@ -48,7 +48,15 @@ export function useMultiSettle() {
   const reset = useCallback(() => setState(INITIAL_STATE), [])
 
   const settleMultiple = useCallback(
-    async (selectedOrders: SelectedOrder[]) => {
+    async (
+      selectedOrders: SelectedOrder[],
+      options?: {
+        /** Additional calls appended after settle calls (e.g. create_inscription for remainder) */
+        extraCalls?: { contractAddress: string; entrypoint: string; calldata: string[] }[]
+        /** Additional ERC20 approval amounts per token address (added to settlement approvals) */
+        extraApproveAmounts?: Map<string, { amount: bigint; address: string }>
+      },
+    ) => {
       if (!address || !account) throw new Error('Wallet not connected')
       if (selectedOrders.length === 0) throw new Error('No orders selected')
 
@@ -256,6 +264,15 @@ export function useMultiSettle() {
           }
         }
 
+        // Merge extra approval amounts (e.g. collateral for remainder inscription)
+        if (options?.extraApproveAmounts) {
+          for (const [key, { amount, address: tokenAddr }] of options.extraApproveAmounts) {
+            const existing = approveAmounts.get(key)
+            if (existing) existing.amount += amount
+            else approveAmounts.set(key, { amount, address: tokenAddr })
+          }
+        }
+
         // Build approve calls for all needed tokens
         const approveCalls = Array.from(approveAmounts.values()).map(({ amount, address: tokenAddr }) => ({
           contractAddress: tokenAddr,
@@ -303,8 +320,8 @@ export function useMultiSettle() {
             })]
           : []
 
-        // 9. Execute: approves → on-chain sign_inscription → batch_settle
-        const allCalls = [...approveCalls, ...onchainCalls, ...batchSettleCalls]
+        // 9. Execute: approves → on-chain sign_inscription → batch_settle → extra calls
+        const allCalls = [...approveCalls, ...onchainCalls, ...batchSettleCalls, ...(options?.extraCalls ?? [])]
         if (allCalls.length === 0) throw new Error('No settlement calls to execute')
 
         // Safety: ensure we have approve calls when there are settle calls

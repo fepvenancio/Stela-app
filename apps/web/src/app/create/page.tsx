@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useAccount } from '@starknet-react/core'
-import { findTokenByAddress, toU256, getTokensForNetwork } from '@fepvenancio/stela-sdk'
-import type { Asset, AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress, toU256, getTokensForNetwork, InscriptionClient } from '@fepvenancio/stela-sdk'
+import type { Asset, AssetType, TokenInfo, InscriptionParams } from '@fepvenancio/stela-sdk'
 import { RpcProvider, typedData as starknetTypedData, CallData } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID, NETWORK } from '@/lib/config'
 import { getInscriptionOrderTypedData, hashAssets, getNonce } from '@/lib/offchain'
@@ -163,9 +163,9 @@ export default function CreatePage() {
   // On-chain match settlement
   const { signOnChainMatch: settleOnChainMatch, isPending: isSettlingOnChain } = useSignOnChainMatch()
   const onchainSettleProgress = useTransactionProgress([
-    { label: 'Signing lend offer', description: 'Sign the transaction in your wallet' },
-    { label: 'Settling on-chain', description: 'Approve tokens & execute settlement' },
+    { label: 'Approve & settle', description: 'Confirm the transaction in your wallet' },
     { label: 'Confirming', description: 'Waiting for block confirmation' },
+    { label: 'Done', description: 'Settlement complete' },
   ])
 
   /** Close any lingering progress modal before starting a new flow */
@@ -186,16 +186,33 @@ export default function CreatePage() {
   const isSwap = orderType === 'swap'
   const isValid = hasDebt && hasCollateral && (isSwap || hasDuration)
 
+  // Multi-settle selection (works for both swaps and loans)
+  const userGiveAmount = useMemo(() => {
+    if (collateralAssets.length !== 1 || !collateralAssets[0].asset) return 0n
+    const a = collateralAssets[0]
+    return a.value ? parseAmount(a.value, a.decimals) : 0n
+  }, [collateralAssets])
+
+  const multiSettleSelection = useMemo(() => {
+    const totalMatches = offchainMatches.length + onchainMatches.length
+    if (totalMatches === 0 || userGiveAmount <= 0n) return null
+    return selectOrders(offchainMatches, onchainMatches, userGiveAmount)
+  }, [offchainMatches, onchainMatches, userGiveAmount])
+
   const submitButtonText = useMemo(() => {
     const showingMatches = matchesVisible && hasMatches && !broadcastMode
     if (showingMatches) {
+      const coverage = multiSettleSelection?.coverage ?? 0
+      if (coverage > 0 && coverage < 100) {
+        return isSwap ? `Swap ${coverage}% + Broadcast` : `Fill ${coverage}% + Broadcast`
+      }
       return isSwap ? 'Swap Now' : 'Fill Match'
     }
     if (mode === 'offchain') {
       return isSwap ? 'Sign & Create Swap' : 'Sign & Create Order'
     }
     return isSwap ? 'Create On-Chain Swap' : 'Create On-Chain Inscription'
-  }, [mode, isSwap, matchesVisible, hasMatches, broadcastMode])
+  }, [mode, isSwap, matchesVisible, hasMatches, broadcastMode, multiSettleSelection])
 
   const allAssets = useMemo(() => {
     const items: { asset: AssetInputValue; role: AssetRole; index: number }[] = []
@@ -226,19 +243,6 @@ export default function CreatePage() {
     return null
   }, [debtAssets, interestAssets])
 
-  // Multi-settle selection
-  const userGiveAmount = useMemo(() => {
-    if (!isSwap || collateralAssets.length !== 1 || !collateralAssets[0].asset) return 0n
-    const a = collateralAssets[0]
-    return a.value ? parseAmount(a.value, a.decimals) : 0n
-  }, [isSwap, collateralAssets])
-
-  const multiSettleSelection = useMemo(() => {
-    const totalMatches = offchainMatches.length + onchainMatches.length
-    if (!isSwap || totalMatches < 2 || userGiveAmount <= 0n) return null
-    return selectOrders(offchainMatches, onchainMatches, userGiveAmount)
-  }, [isSwap, offchainMatches, onchainMatches, userGiveAmount])
-
   const giveSymbol = useMemo(() => {
     if (collateralAssets.length !== 1 || !collateralAssets[0].asset) return undefined
     return findTokenByAddress(collateralAssets[0].asset)?.symbol
@@ -260,7 +264,6 @@ export default function CreatePage() {
 
     if (!address) return
     if (filteredDebtForMatch.length !== 1 || filteredCollateralForMatch.length !== 1) return
-    if (multiLender) return
 
     const debtToken = filteredDebtForMatch[0].asset
     const collateralToken = filteredCollateralForMatch[0].asset
@@ -277,7 +280,7 @@ export default function CreatePage() {
 
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredDebtForMatch, filteredCollateralForMatch, duration, address, multiLender])
+  }, [filteredDebtForMatch, filteredCollateralForMatch, duration, address])
 
   useEffect(() => {
     if (hasMatches) {
@@ -362,7 +365,17 @@ export default function CreatePage() {
 
     // When matches exist and broadcast mode is off, settle with matches
     if (hasMatches && !broadcastMode) {
-      // Multi-settle if optimal selection covers multiple orders
+      // Check if we need to inscribe a remainder (coverage < 100%)
+      const coverage = multiSettleSelection?.coverage ?? 0
+      const hasPartialCoverage = coverage > 0 && coverage < 100
+
+      if (hasPartialCoverage && multiSettleSelection) {
+        // Settle matches + inscribe the remainder in one multicall
+        await handleSettleAndBroadcast()
+        return
+      }
+
+      // Full coverage — settle only
       if (multiSettleSelection && multiSettleSelection.selected.length >= 2) {
         await handleMultiSettle()
         return
@@ -415,6 +428,92 @@ export default function CreatePage() {
     setMultiSettleModalOpen(true)
     try {
       await settleMultiple(multiSettleSelection.selected)
+      resetForm()
+    } catch {
+      // Error already toasted in hook
+    }
+  }
+
+  /**
+   * Settle matched orders + create an inscription for the unmatched remainder.
+   * All in one atomic multicall: approve → settle matches → create_inscription(remainder).
+   */
+  async function handleSettleAndBroadcast() {
+    if (!address || !account || !multiSettleSelection) return
+    closeAllProgress()
+    setMultiSettleModalOpen(true)
+
+    const sdkDebtAssets = toSdkAssets(debtAssets)
+    const sdkInterestAssets = toSdkAssets(interestAssets)
+    const sdkCollateralAssets = toSdkAssets(collateralAssets)
+
+    // Compute remainder amounts (proportional scaling)
+    const totalGive = userGiveAmount
+    const matchedGive = multiSettleSelection.totalGive
+    const remainder = totalGive - matchedGive
+
+    if (remainder <= 0n) {
+      // Full coverage — just settle
+      return handleMultiSettle()
+    }
+
+    // Scale each asset proportionally for the remainder inscription
+    const scaleDown = (assets: Asset[]): Asset[] =>
+      assets.map(a => ({
+        ...a,
+        value: totalGive > 0n ? (a.value * remainder) / totalGive : 0n,
+      })).filter(a => a.value > 0n || a.asset_type === 'ERC721')
+
+    const remainderDebt = scaleDown(sdkDebtAssets)
+    const remainderInterest = scaleDown(sdkInterestAssets)
+    const remainderCollateral = scaleDown(sdkCollateralAssets)
+
+    // Build create_inscription call for the remainder
+    const client = new InscriptionClient({
+      stelaAddress: CONTRACT_ADDRESS,
+      provider: new RpcProvider({ nodeUrl: RPC_URL }),
+    })
+
+    const createCall = client.buildCreateInscription({
+      is_borrow: true,
+      debt_assets: remainderDebt,
+      interest_assets: remainderInterest,
+      collateral_assets: remainderCollateral,
+      duration: BigInt(duration || '0'),
+      deadline: BigInt(deadline || '0'),
+      multi_lender: multiLender,
+    } as InscriptionParams)
+
+    // Build extra approval amounts for remainder collateral
+    const extraApproveAmounts = new Map<string, { amount: bigint; address: string }>()
+    for (const asset of remainderCollateral) {
+      if (asset.asset_type === 'ERC20' || asset.asset_type === 'ERC4626') {
+        if (asset.value <= 0n) continue
+        const key = asset.asset_address.toLowerCase()
+        const existing = extraApproveAmounts.get(key)
+        if (existing) existing.amount += asset.value
+        else extraApproveAmounts.set(key, { amount: asset.value, address: asset.asset_address })
+      }
+    }
+
+    // Also add set_approval_for_all for ERC721/ERC1155 collateral
+    const nftApprovals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+    for (const asset of remainderCollateral) {
+      if (asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155') {
+        nftApprovals.push({
+          contractAddress: asset.asset_address,
+          entrypoint: 'set_approval_for_all',
+          calldata: [CONTRACT_ADDRESS, '1'],
+        })
+      }
+    }
+
+    try {
+      await settleMultiple(multiSettleSelection.selected, {
+        extraCalls: [...nftApprovals, createCall],
+        extraApproveAmounts,
+      })
+      toast.success('Settled matches + inscribed remainder!')
       resetForm()
     } catch {
       // Error already toasted in hook

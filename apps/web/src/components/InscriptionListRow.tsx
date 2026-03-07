@@ -5,6 +5,7 @@ import { getStatusBadgeVariant, getStatusLabel, STATUS_DESCRIPTIONS } from '@/li
 import { CompactAssetSummary } from '@/components/CompactAssetSummary'
 import { InfoTooltip } from '@/components/InfoTooltip'
 import { Badge } from '@/components/ui/badge'
+import { Loader2 } from 'lucide-react'
 import type { AssetRow } from '@/types/api'
 import Link from 'next/link'
 
@@ -20,6 +21,9 @@ interface InscriptionListRowProps {
   selectable?: boolean
   selected?: boolean
   onSelect?: () => void
+  /** Action button callback (Swap or Lend) */
+  onAction?: () => void
+  actionPending?: boolean
 }
 
 function AssetsByRole({ assets, role }: { assets: AssetRow[]; role: string }) {
@@ -38,9 +42,12 @@ export function InscriptionListRow({
   selectable,
   selected,
   onSelect,
+  onAction,
+  actionPending,
 }: InscriptionListRowProps) {
   const statusKey = getStatusBadgeVariant(status)
   const label = getStatusLabel(status)
+  const isSwap = Number(duration) === 0
 
   const row = (
     <div
@@ -113,18 +120,44 @@ export function InscriptionListRow({
           <AssetsByRole assets={assets} role="collateral" />
         </div>
 
-        {/* Duration */}
-        <div className="col-span-2 text-right">
-          <span className="text-chalk text-[11px] font-medium">{formatDuration(Number(duration))}</span>
+        {/* Action */}
+        <div className="col-span-2 flex flex-col items-end gap-0.5">
+          {onAction ? (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAction() }}
+                disabled={actionPending}
+                className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+              >
+                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+              </button>
+              {!isSwap && (
+                <span className="text-dust text-[9px]">{formatDuration(Number(duration))}</span>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[16px] text-[7px] px-1 py-0 uppercase font-bold">
+                {isSwap ? 'Swap' : 'Loan'}
+              </Badge>
+              {!isSwap && (
+                <span className="text-chalk text-[11px] font-medium">{formatDuration(Number(duration))}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Mobile: compact two-line layout */}
-      <div className="flex md:hidden flex-col gap-1 flex-1 min-w-0">
+      <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
             <Badge variant={statusKey} className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
               {label}
+            </Badge>
+            <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[16px] text-[7px] px-1 py-0 uppercase font-bold shrink-0">
+              {isSwap ? 'Swap' : 'Loan'}
             </Badge>
             <Link
               href={`/stela/${id}`}
@@ -133,11 +166,19 @@ export function InscriptionListRow({
             >
               #{id.slice(2, 8)}
             </Link>
-            {pendingShares && (
-              <span className="text-[8px] text-cosmic font-semibold">{pendingShares}sh</span>
-            )}
           </div>
-          <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(Number(duration))}</span>
+          {onAction ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAction() }}
+              disabled={actionPending}
+              className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+            >
+              {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+            </button>
+          ) : (
+            <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(Number(duration))}</span>
+          )}
         </div>
         <div className="flex items-center gap-3 overflow-x-auto">
           <div className="flex items-center gap-1 shrink-0">

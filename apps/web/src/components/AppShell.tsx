@@ -8,6 +8,7 @@ import { NetworkMismatchBanner } from './NetworkMismatchBanner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { NETWORK } from '@/lib/config'
+import { Footer } from '@/components/Footer'
 
 const NAV_LINKS = [
   { href: '/', label: 'Home', icon: (props: React.SVGProps<SVGSVGElement>) => (
@@ -232,6 +233,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-12 py-4 sm:py-8 animate-fade-in">
         {children}
       </main>
+
+      <Footer />
 
       <ScrollToTopButton />
     </div>
