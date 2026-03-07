@@ -64,10 +64,10 @@ export function BrowseControls({
           <button
             type="button"
             onClick={onToggleFilters}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm transition-colors ${
+            className={`flex items-center gap-1.5 px-4 h-12 rounded-2xl border text-sm transition-colors ${
               showFilters || filtersActive
                 ? 'bg-star/10 border-star/30 text-star'
-                : 'bg-surface/40 border-edge/50 text-dust hover:text-chalk hover:bg-surface/60'
+                : 'bg-abyss/50 border-edge text-dust hover:text-chalk hover:bg-surface/60'
             }`}
             aria-label="Toggle advanced filters"
             aria-expanded={showFilters}
@@ -79,7 +79,7 @@ export function BrowseControls({
             )}
           </button>
 
-          <div className="flex items-center gap-2 bg-surface/40 border border-edge/50 rounded-xl px-2">
+          <div className="flex items-center gap-2 bg-abyss/50 border border-edge rounded-2xl px-3 h-12">
             <ArrowUpDown className="w-4 h-4 text-ash ml-1" aria-hidden="true" />
             <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
               <SelectTrigger className="border-0 bg-transparent focus:ring-0 w-[180px] text-sm text-dust hover:text-chalk" aria-label="Sort inscriptions">

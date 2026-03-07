@@ -771,101 +771,108 @@ export default function CreatePage() {
       <div className="fixed bottom-1/4 -right-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       {/* ── Header ────────── */}
-      <div className="flex flex-col mb-14">
-        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-star/[0.08] border border-star/20 mb-6 w-fit">
-          <div className="w-1.5 h-1.5 rounded-full bg-star animate-pulse" />
-          <span className="text-[10px] font-display tracking-[0.3em] text-star/90 uppercase">Protocol Artifact</span>
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-star/[0.08] border border-star/20 w-fit">
+            <div className="w-1.5 h-1.5 rounded-full bg-star animate-pulse" />
+            <span className="text-[10px] font-display tracking-[0.3em] text-star/90 uppercase">Protocol Artifact</span>
+          </div>
         </div>
 
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-10 uppercase">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-6 uppercase">
           Inscribe
         </h1>
 
-        {/* Lending / Swap Toggle — first choice */}
-        <div className="bg-void/60 backdrop-blur border border-edge/30 p-1.5 rounded-[20px] flex items-center gap-1 shadow-2xl">
-          {(['lending', 'swap'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => {
-                setOrderType(t)
-                if (t === 'swap') { setInterestAssets([]); setUseCustomDuration(false) }
-                else if (durationPreset === '0') setDurationPreset('86400')
-              }}
-              className={`px-8 py-2.5 rounded-[14px] text-[11px] font-display tracking-[0.2em] transition-all duration-300 cursor-pointer uppercase ${
-                orderType === t
-                  ? 'bg-star/10 text-star shadow-[0_0_15px_rgba(232,168,37,0.08)] border border-star/20'
-                  : 'text-dust/60 hover:text-dust border border-transparent'
-              }`}
-            >
-              {t === 'lending' ? 'Lending' : 'Swap'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Settings Bar ─────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-8">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
-          <div className="flex gap-1">
-            {(['offchain', 'onchain'] as const).map((m) => (
+        {/* Controls row: Type + Mode + Funding + Reset */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          {/* Lending / Swap Toggle */}
+          <div className="bg-void/60 backdrop-blur border border-edge/30 p-1 rounded-xl flex items-center gap-0.5">
+            {(['lending', 'swap'] as const).map((t) => (
               <button
-                key={m}
+                key={t}
                 type="button"
-                onClick={() => setMode(m)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  mode === m
-                    ? 'bg-star/10 text-star border border-star/25'
-                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                onClick={() => {
+                  setOrderType(t)
+                  if (t === 'swap') { setInterestAssets([]); setUseCustomDuration(false) }
+                  else if (durationPreset === '0') setDurationPreset('86400')
+                }}
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-display tracking-[0.2em] transition-all duration-300 cursor-pointer uppercase ${
+                  orderType === t
+                    ? 'bg-star/10 text-star border border-star/20'
+                    : 'text-dust/60 hover:text-dust border border-transparent'
                 }`}
               >
-                {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                {t === 'lending' ? 'Lending' : 'Swap'}
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+          <div className="w-px h-5 bg-edge/40 hidden sm:block" />
 
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
-          <div className="flex gap-1">
-            {([
-              { value: 'single', label: 'Single Lender' },
-              { value: 'multi', label: 'Multi-Lender' },
-            ] as const).map((f) => (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setMultiLender(f.value === 'multi')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  (multiLender ? 'multi' : 'single') === f.value
-                    ? 'bg-star/10 text-star border border-star/25'
-                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          {/* Mode */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
+            <div className="flex gap-1">
+              {(['offchain', 'onchain'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMode(m)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                    mode === m
+                      ? 'bg-star/10 text-star border border-star/25'
+                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  }`}
+                >
+                  {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                </button>
+              ))}
+            </div>
           </div>
+
+          <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+
+          {/* Funding */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
+            <div className="flex gap-1">
+              {([
+                { value: 'single', label: 'Single' },
+                { value: 'multi', label: 'Multi' },
+              ] as const).map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setMultiLender(f.value === 'multi')}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                    (multiLender ? 'multi' : 'single') === f.value
+                      ? 'bg-star/10 text-star border border-star/25'
+                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+
+          {/* Reset */}
+          <button
+            type="button"
+            onClick={resetForm}
+            className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
+          >
+            Reset
+          </button>
         </div>
-
-        <div className="w-px h-5 bg-edge/40 hidden sm:block" />
-
-        <button
-          type="button"
-          onClick={resetForm}
-          className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
-        >
-          Reset
-        </button>
       </div>
 
       {/* ── Terms & Duration ─────────────────────────────── */}
       <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8">
-        <div className="px-4 py-3 border-b border-edge/30 bg-surface/10">
-          <span className="text-[11px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
+        <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
+          <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
         </div>
 
         <div className="p-4 flex flex-col md:flex-row md:items-start gap-6">
