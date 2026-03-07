@@ -771,10 +771,13 @@ export default function CreatePage() {
       <div className="fixed bottom-1/4 -right-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       {/* ── Header ────────── */}
-      <div className="mb-8">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-6 uppercase">
+      <div className="mb-10">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
           Inscribe
         </h1>
+        <p className="text-dust max-w-lg leading-relaxed mb-6">
+          Lend or swap any ERC20 — stables, vault shares, LP tokens — fully peer-to-peer. Every position becomes a tradeable share on a built-in secondary market.
+        </p>
 
         {/* Controls row: Type + Mode + Funding + Reset */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
