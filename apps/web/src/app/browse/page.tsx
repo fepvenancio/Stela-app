@@ -11,6 +11,8 @@ import { SelectionActionBar } from '@/components/SelectionActionBar'
 import { LendReviewModal } from '@/components/LendReviewModal'
 import { FilterSection } from './components/FilterSection'
 import { enrichStatus, mapInscriptionFilterToOrderFilter } from '@/lib/status'
+import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
+import type { AssetRow } from '@/types/api'
 import { addressesEqual } from '@/lib/address'
 import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
 import { toast } from 'sonner'
@@ -20,7 +22,6 @@ import { useBatchSign } from '@/hooks/useBatchSign'
 import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
-import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import {
   EMPTY_FILTERS,
   passesAdvancedFilters,
@@ -31,6 +32,27 @@ import {
 } from '@/lib/filter-utils'
 
 const MAX_SELECTIONS = 10
+
+/** Convert normalized order data into AssetRow[] for the selection system */
+function orderDataToAssetRows(orderId: string, raw: RawOrderData): AssetRow[] {
+  const d = normalizeOrderData(raw)
+  const rows: AssetRow[] = []
+  const addRole = (assets: { asset_address: string; asset_type: string; value: string; token_id: string }[], role: 'debt' | 'interest' | 'collateral') => {
+    assets.forEach((a, i) => rows.push({
+      inscription_id: orderId,
+      asset_role: role,
+      asset_index: i,
+      asset_address: a.asset_address,
+      asset_type: a.asset_type,
+      value: a.value || null,
+      token_id: a.token_id || null,
+    }))
+  }
+  addRole(d.debtAssets, 'debt')
+  addRole(d.interestAssets, 'interest')
+  addRole(d.collateralAssets, 'collateral')
+  return rows
+}
 
 function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
@@ -46,7 +68,7 @@ function BrowseContent() {
   const deferredFilters = useDeferredValue(filters)
 
   const { address } = useAccount()
-  const { toggle, isSelected, count } = useBatchSelection()
+  const { toggle, isSelected, count, selected } = useBatchSelection()
   const { batchSign, isPending: isBatchSignPending } = useBatchSign()
   const { settle: instantSettle, isPending: isInstantSettlePending } = useInstantSettle()
 
@@ -333,7 +355,7 @@ function BrowseContent() {
                             toast.warning(`Maximum ${MAX_SELECTIONS} inscriptions per batch`)
                             return
                           }
-                          toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender })
+                          toggle({ id: a.id, assets: a.assets ?? [], multiLender: a.multi_lender, source: 'onchain' })
                         } : undefined}
                         onAction={canFill ? () => handleOnchainAction(a.id, a.assets ?? []) : undefined}
                         actionPending={actionPendingId === a.id || (isActionPending && actionPendingId === a.id)}
@@ -342,10 +364,50 @@ function BrowseContent() {
                   })}
                   {offchainRows.map((order) => {
                     const canFill = order.status === 'pending' && !!address && !addressesEqual(address, order.borrower)
+                    // Only allow selecting one off-chain order per borrower (nonce conflict)
+                    const borrowerAlreadySelected = canFill && Array.from(selected.values()).some(
+                      (s) => s.source === 'offchain' && s.orderData && addressesEqual(s.orderData.borrower, order.borrower)
+                    )
+                    const canSelect = canFill && !borrowerAlreadySelected
+                    const orderRaw = typeof order.order_data === 'string'
+                      ? (() => { try { return JSON.parse(order.order_data as string) } catch { return {} } })()
+                      : (order.order_data as Record<string, unknown>) ?? {}
                     return (
                       <OrderListRow
                         key={order.id}
                         order={order}
+                        selectable={canFill}
+                        selected={canFill && isSelected(order.id)}
+                        onSelect={canFill ? () => {
+                          if (isSelected(order.id)) {
+                            toggle({ id: order.id, assets: [], multiLender: false, source: 'offchain' })
+                            return
+                          }
+                          if (!canSelect) {
+                            toast.warning('Only one order per borrower can be selected', {
+                              description: 'Selecting multiple orders from the same borrower would cause nonce conflicts.',
+                            })
+                            return
+                          }
+                          if (count >= MAX_SELECTIONS) {
+                            toast.warning(`Maximum ${MAX_SELECTIONS} items per batch`)
+                            return
+                          }
+                          toggle({
+                            id: order.id,
+                            assets: orderDataToAssetRows(order.id, orderRaw as RawOrderData),
+                            multiLender: false,
+                            source: 'offchain',
+                            orderData: {
+                              borrower: order.borrower,
+                              borrower_signature: order.borrower_signature,
+                              nonce: order.nonce,
+                              deadline: order.deadline,
+                              created_at: order.created_at,
+                              order_data: orderRaw,
+                            },
+                          })
+                        } : undefined}
                         onAction={canFill ? () => handleOffchainAction({
                           id: order.id,
                           borrower: order.borrower,
@@ -353,9 +415,7 @@ function BrowseContent() {
                           nonce: order.nonce,
                           deadline: order.deadline,
                           created_at: order.created_at,
-                          order_data: typeof order.order_data === 'string'
-                            ? JSON.parse(order.order_data as string)
-                            : order.order_data as Record<string, unknown>,
+                          order_data: orderRaw,
                         }) : undefined}
                         actionPending={actionPendingId === order.id}
                       />

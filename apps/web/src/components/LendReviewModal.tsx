@@ -3,6 +3,8 @@
 import { useEffect, useMemo } from 'react'
 import { useBatchSelection } from '@/hooks/useBatchSelection'
 import { useBatchSign, type BatchSignItem } from '@/hooks/useBatchSign'
+import { useMultiSettle } from '@/hooks/useMultiSettle'
+import type { SelectedOffchainOrder } from '@/lib/multi-match'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { formatTokenValue } from '@/lib/format'
@@ -28,8 +30,11 @@ interface LendReviewModalProps {
 
 export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
   const { selected, toggle, clearAll, count } = useBatchSelection()
-  const { batchSign, isPending } = useBatchSign()
+  const { batchSign, isPending: isBatchSignPending } = useBatchSign()
+  const { settleMultiple, state: multiSettleState } = useMultiSettle()
   const { balances } = useTokenBalances()
+
+  const isPending = isBatchSignPending || multiSettleState.phase !== 'idle'
 
   // Auto-close when all items removed
   useEffect(() => {
@@ -37,6 +42,17 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
       onOpenChange(false)
     }
   }, [open, count, onOpenChange])
+
+  // Split selections by source
+  const { onchainItems, offchainItems } = useMemo(() => {
+    const onchain: typeof selected extends Map<string, infer V> ? V[] : never = []
+    const offchain: typeof selected extends Map<string, infer V> ? V[] : never = []
+    for (const [, item] of selected) {
+      if (item.source === 'offchain') offchain.push(item)
+      else onchain.push(item)
+    }
+    return { onchainItems: onchain, offchainItems: offchain }
+  }, [selected])
 
   // Aggregate required amounts per token
   const totals = useMemo(() => {
@@ -60,30 +76,60 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
   }, [totals, balances])
 
   const handleConfirm = async () => {
-    const items: BatchSignItem[] = []
-    for (const [, inscription] of selected) {
-      const debtAssets = inscription.assets
-        .filter((a) => a.asset_role === 'debt')
-        .map((a) => ({ address: a.asset_address, value: a.value ?? '0' }))
-      items.push({
-        inscriptionId: inscription.id,
-        bps: 10000,
-        debtAssets,
-      })
-    }
-
     // Check balances
     for (const [tokenAddr, required] of totals) {
       const available = balances.get(tokenAddr) ?? 0n
       if (available < required) {
         toast.error('Insufficient balance', {
-          description: 'You need more tokens to fund all selected inscriptions.',
+          description: 'You need more tokens to fund all selected items.',
         })
         return
       }
     }
 
-    await batchSign(items)
+    // Handle on-chain inscriptions via batchSign
+    if (onchainItems.length > 0) {
+      const items: BatchSignItem[] = onchainItems.map((item) => ({
+        inscriptionId: item.id,
+        bps: 10000,
+        debtAssets: item.assets
+          .filter((a) => a.asset_role === 'debt')
+          .map((a) => ({ address: a.asset_address, value: a.value ?? '0' })),
+      }))
+      await batchSign(items)
+    }
+
+    // Handle off-chain orders via settleMultiple
+    if (offchainItems.length > 0) {
+      const offchainOrders: SelectedOffchainOrder[] = offchainItems
+        .filter((item) => item.orderData)
+        .map((item) => {
+          // Compute give/receive from debt assets (lender gives debt tokens)
+          const debtTotal = item.assets
+            .filter((a) => a.asset_role === 'debt')
+            .reduce((sum, a) => sum + BigInt(a.value || '0'), 0n)
+          return {
+            type: 'offchain' as const,
+            order: {
+              id: item.id,
+              borrower: item.orderData!.borrower,
+              borrower_signature: item.orderData!.borrower_signature,
+              nonce: item.orderData!.nonce,
+              deadline: Number(item.orderData!.deadline),
+              created_at: Number(item.orderData!.created_at),
+              order_data: item.orderData!.order_data,
+            },
+            bps: 10000,
+            giveAmount: debtTotal,
+            receiveAmount: debtTotal,
+          }
+        })
+
+      if (offchainOrders.length > 0) {
+        await settleMultiple(offchainOrders)
+      }
+    }
+
     clearAll()
     onOpenChange(false)
   }
@@ -93,10 +139,14 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
       <DialogContent className="bg-void border-edge/50 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
-            Review & Lend
+            Review & Sign
           </DialogTitle>
           <DialogDescription className="text-dust text-xs">
-            {count} inscription{count !== 1 ? 's' : ''} selected. Review the details below.
+            {count} item{count !== 1 ? 's' : ''} selected
+            {onchainItems.length > 0 && offchainItems.length > 0
+              ? ` (${onchainItems.length} on-chain, ${offchainItems.length} off-chain)`
+              : onchainItems.length > 0 ? ' (on-chain)' : ' (off-chain)'
+            }. Review the details below.
           </DialogDescription>
         </DialogHeader>
 
@@ -186,7 +236,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
             disabled={isPending || hasInsufficientBalance}
             className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"
           >
-            {isPending ? 'Signing...' : 'Confirm & Lend'}
+            {isPending ? 'Processing...' : 'Confirm & Sign'}
           </Button>
         </DialogFooter>
       </DialogContent>

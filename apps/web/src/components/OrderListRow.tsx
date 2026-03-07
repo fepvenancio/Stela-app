@@ -13,11 +13,14 @@ import Link from 'next/link'
 
 interface OrderListRowProps {
   order: OrderRow
+  selectable?: boolean
+  selected?: boolean
+  onSelect?: () => void
   onAction?: () => void
   actionPending?: boolean
 }
 
-export function OrderListRow({ order, onAction, actionPending }: OrderListRowProps) {
+export function OrderListRow({ order, selectable, selected, onSelect, onAction, actionPending }: OrderListRowProps) {
   const orderData = useMemo(() => {
     if (!order.order_data) return normalizeOrderData({})
     const raw: RawOrderData = typeof order.order_data === 'string'
@@ -32,7 +35,38 @@ export function OrderListRow({ order, onAction, actionPending }: OrderListRowPro
   const isSwap = Number(duration) === 0
 
   const inner = (
-    <div className="group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 border-edge/20 hover:bg-surface/30">
+    <div
+      onClick={selectable ? () => onSelect?.() : undefined}
+      className={`group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 ${
+        selectable ? 'cursor-pointer' : ''
+      } ${
+        selected
+          ? 'bg-star/5 border-star/20'
+          : 'border-edge/20 hover:bg-surface/30'
+      }`}
+    >
+      {/* Checkbox — only rendered when selectable */}
+      {selectable && (
+        <div className="shrink-0 w-4 h-4 flex items-center justify-center">
+          <div
+            role="checkbox"
+            aria-checked={selected}
+            aria-label={`Select order ${order.id.slice(0, 8)}`}
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect?.(); } }}
+            onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+            className={`w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-colors cursor-pointer ${
+              selected ? 'bg-star border-star' : 'border-dust/30 bg-surface/40 hover:border-star/50'
+            }`}
+          >
+            {selected && (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-void" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Desktop: single-line grid */}
       <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
@@ -143,7 +177,7 @@ export function OrderListRow({ order, onAction, actionPending }: OrderListRowPro
     </div>
   )
 
-  if (onAction) return inner
+  if (selectable || onAction) return inner
 
   return (
     <Link href={`/stela/${order.id}`} className="block" aria-label={`View order ${order.id.slice(0, 8)}`}>

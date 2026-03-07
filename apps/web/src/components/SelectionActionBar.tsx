@@ -64,7 +64,7 @@ export function SelectionActionBar({ onReview }: SelectionActionBarProps) {
             onClick={onReview}
             className="h-8 px-5 rounded-xl font-bold shadow-lg shadow-star/20"
           >
-            Review & Lend
+            Review & Sign
           </Button>
         </div>
       </div>

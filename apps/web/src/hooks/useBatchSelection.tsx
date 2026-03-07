@@ -7,6 +7,16 @@ export interface SelectedInscription {
   id: string
   assets: AssetRow[]
   multiLender: boolean
+  source: 'onchain' | 'offchain'
+  /** Off-chain order data (only set when source='offchain') */
+  orderData?: {
+    borrower: string
+    borrower_signature: string
+    nonce: string
+    deadline: number | string
+    created_at: number | string
+    order_data: Record<string, unknown>
+  }
 }
 
 interface BatchSelectionContextValue {
