@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTimestamp, formatDisplayAmount } from '@/lib/format'
@@ -124,39 +125,57 @@ function AssetRow({
   const isNft = asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155'
 
   return (
-    <div className="group flex items-center gap-3 px-3 py-2.5 border-b border-edge/20 last:border-b-0 hover:bg-surface/20 transition-colors">
-      {/* Token icon + amount */}
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        {token ? (
-          <TokenAvatar token={token} size={20} />
-        ) : (
-          <TokenAvatarByAddress address={asset.asset} size={20} />
-        )}
-        <span className="text-sm text-chalk font-medium truncate">
-          {isNft ? (
-            <>{token?.symbol || 'NFT'} #{asset.token_id}</>
+    <div className="group flex items-center px-4 py-3 hover:bg-surface/20 transition-colors">
+      {/* Token icon + name */}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center border border-edge/30">
+          {token ? (
+            <TokenAvatar token={token} size={20} />
           ) : (
-            <>{formatDisplayAmount(asset.value || '0')} <span className="text-dust">{token?.symbol || formatAddress(asset.asset)}</span></>
+            <TokenAvatarByAddress address={asset.asset} size={20} />
+          )}
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="text-sm text-chalk font-medium truncate">
+            {token?.name || formatAddress(asset.asset)}
+          </span>
+          <span className="text-[10px] text-dust font-mono uppercase">
+            {token?.symbol || 'Custom'}
+          </span>
+        </div>
+      </div>
+
+      {/* Amount / ID */}
+      <div className="w-32 text-center">
+        <span className="text-sm text-chalk font-mono">
+          {isNft ? (
+            <>#{asset.token_id}</>
+          ) : (
+            <>{formatDisplayAmount(asset.value || '0')}</>
           )}
         </span>
       </div>
 
       {/* Role badge */}
-      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${meta.bgClass} ${meta.textClass} shrink-0`}>
-        {meta.short}
-      </span>
+      <div className="w-32 flex justify-center">
+        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${meta.bgClass} ${meta.textClass} border ${meta.borderClass}`}>
+          {meta.short}
+        </span>
+      </div>
 
       {/* Remove */}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="w-6 h-6 rounded-md flex items-center justify-center text-ash hover:text-nova hover:bg-nova/10 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
-        aria-label="Remove asset"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M3 3l6 6M9 3l-6 6" />
-        </svg>
-      </button>
+      <div className="w-10 flex justify-end">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-ash hover:text-nova hover:bg-nova/10 transition-all opacity-0 group-hover:opacity-100"
+          aria-label="Remove asset"
+        >
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M3 3l6 6M9 3l-6 6" />
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }
@@ -910,232 +929,296 @@ export default function CreatePage() {
 
   /* ── Render ────────────────────────────────────────────── */
 
-  const pillClass = (active: boolean) =>
-    `px-3 py-1.5 rounded-full text-[11px] font-medium transition-all cursor-pointer ${
-      active
-        ? 'bg-star/15 text-star border border-star/30'
-        : 'text-dust border border-transparent hover:text-chalk hover:bg-surface/50'
-    }`
-
   return (
-    <div className="animate-fade-up max-w-xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="font-display text-2xl sm:text-3xl tracking-widest text-chalk mb-1 uppercase">
-          Inscribe
+    <div className="animate-fade-up max-w-7xl mx-auto">
+      {/* Hero */}
+      <div className="mb-10">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
+          Inscribe a Stela
         </h1>
-        <p className="text-dust text-sm">
-          {mode === 'offchain' ? 'Gasless signing — no cost until settlement.' : 'Collateral locked on-chain immediately.'}
+        <p className="text-dust max-w-lg leading-relaxed">
+          {mode === 'offchain'
+            ? 'Gasless signing — prepare your lending agreement and sign it without spending gas. Collateral is approved but stays in your wallet until settlement.'
+            : 'On-chain inscription — lock your collateral and record your agreement directly on the network immediately.'}
         </p>
       </div>
 
-      <div className="space-y-4">
+      {/* Options & Controls */}
+      <div className="space-y-6 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-4">
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-dust uppercase tracking-widest font-bold ml-1">Type</span>
+              <ToggleGroup type="single" value={orderType} onValueChange={(v) => { if (v) { setOrderType(v as 'lending' | 'swap'); if (v === 'swap') { setInterestAssets([]); setUseCustomDuration(false); } else if (durationPreset === '0') setDurationPreset('86400'); } }} className="flex gap-2">
+                <ToggleGroupItem value="lending" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Lending</ToggleGroupItem>
+                <ToggleGroupItem value="swap" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Swap</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
 
-        {/* ── TOGGLES — single compact row ──────────────── */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {/* Order type */}
-          <button type="button" onClick={() => { setOrderType('lending'); if (durationPreset === '0') setDurationPreset('86400') }} className={pillClass(orderType === 'lending')}>
-            Lending
-          </button>
-          <button type="button" onClick={() => { setOrderType('swap'); setInterestAssets([]); setUseCustomDuration(false) }} className={pillClass(orderType === 'swap')}>
-            Swap
-          </button>
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-dust uppercase tracking-widest font-bold ml-1">Mode</span>
+              <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v as 'offchain' | 'onchain')} className="flex gap-2">
+                <ToggleGroupItem value="offchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Off-Chain</ToggleGroupItem>
+                <ToggleGroupItem value="onchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">On-Chain</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
 
-          <div className="w-px h-4 bg-edge/40 mx-1" />
-
-          {/* Mode */}
-          <button type="button" onClick={() => setMode('offchain')} className={pillClass(mode === 'offchain')}>
-            Off-Chain
-          </button>
-          <button type="button" onClick={() => setMode('onchain')} className={pillClass(mode === 'onchain')}>
-            On-Chain
-          </button>
-
-          <div className="w-px h-4 bg-edge/40 mx-1" />
-
-          {/* Lender mode */}
-          <button type="button" onClick={() => setMultiLender(false)} className={pillClass(!multiLender)}>
-            Single
-          </button>
-          <button type="button" onClick={() => setMultiLender(true)} className={pillClass(multiLender)}>
-            Multi
-          </button>
-        </div>
-
-        {/* ── ASSETS + TERMS (single card) ──────────────── */}
-        <section className="rounded-xl border border-edge/30 overflow-clip">
-          {/* Asset header + add */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-edge/30 bg-surface/10">
-            <span className="text-[10px] text-dust uppercase tracking-widest font-bold">
-              Assets{allAssets.length > 0 && <span className="ml-1 text-chalk">{allAssets.length}</span>}
-            </span>
-            <button
-              type="button"
-              onClick={() => setAddModalOpen(true)}
-              className="flex items-center gap-1 text-[11px] text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
-              Add
-            </button>
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-dust uppercase tracking-widest font-bold ml-1">Funding</span>
+              <ToggleGroup type="single" value={multiLender ? 'multi' : 'single'} onValueChange={(v) => v && setMultiLender(v === 'multi')} className="flex gap-2">
+                <ToggleGroupItem value="single" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Single Lender</ToggleGroupItem>
+                <ToggleGroupItem value="multi" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Multi-Lender</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           </div>
 
-          {/* Asset list */}
-          {allAssets.length === 0 ? (
-            <button
-              type="button"
-              onClick={() => setAddModalOpen(true)}
-              className="w-full py-8 hover:bg-surface/10 transition-colors cursor-pointer"
+          <div className="flex items-end">
+            <Button
+              variant="ghost"
+              onClick={resetForm}
+              className="text-ash hover:text-nova hover:bg-nova/10 text-xs uppercase tracking-widest h-9"
             >
-              <div className="flex flex-col items-center gap-1.5">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
-                <span className="text-xs text-dust">Add tokens</span>
-              </div>
-            </button>
-          ) : (
-            <div>
-              {allAssets.map((item) => (
-                <AssetRow
-                  key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
-                  asset={item.asset}
-                  role={item.role}
-                  onRemove={() => handleRemoveAsset(item.role, item.index)}
-                />
-              ))}
-            </div>
-          )}
+              Reset Form
+            </Button>
+          </div>
+        </div>
+      </div>
 
-          {showErrors && (!hasDebt || !hasCollateral) && (
-            <div className="px-3 py-1.5 border-t border-edge/20 bg-nova/5">
-              <p className="text-[11px] text-nova">
-                {!hasDebt && 'Add at least one borrow asset. '}
-                {!hasCollateral && 'Add at least one collateral asset.'}
-              </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Assets & Matches */}
+        <div className="lg:col-span-2 space-y-8">
+          <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
+              <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
+                Inscription Assets
+                {allAssets.length > 0 && <span className="ml-2 text-star">({allAssets.length})</span>}
+              </span>
+              <button
+                type="button"
+                onClick={() => setAddModalOpen(true)}
+                className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
+                Add Asset
+              </button>
             </div>
-          )}
 
-          {/* Terms — inline inside the same card */}
-          <div className="px-3 py-3 border-t border-edge/20 space-y-3">
-            {/* Duration (lending only) */}
-            {!isSwap && (
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Duration</span>
-                  {useCustomDuration ? (
-                    <button type="button" onClick={() => setUseCustomDuration(false)} className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer">Presets</button>
-                  ) : (
-                    <button type="button" onClick={() => setUseCustomDuration(true)} className="text-[10px] text-ash hover:text-star transition-colors cursor-pointer">Custom</button>
-                  )}
+            {/* Asset Table Header */}
+            <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
+              <div className="flex-1">Asset</div>
+              <div className="w-32 text-center">Amount / ID</div>
+              <div className="w-32 text-center">Role</div>
+              <div className="w-10"></div>
+            </div>
+
+            {/* Asset list */}
+            {allAssets.length === 0 ? (
+              <div
+                onClick={() => setAddModalOpen(true)}
+                className="w-full py-20 hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-surface/30 border border-edge/50 flex items-center justify-center">
+                  <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
                 </div>
-                {useCustomDuration ? (
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      value={customDurationValue}
-                      onChange={(e) => setCustomDurationValue(e.target.value)}
-                      className="flex-1 bg-surface/50 border-edge/50 font-mono h-8 text-sm"
-                      placeholder="Amount"
-                      min="1"
-                    />
-                    <div className="flex gap-1">
-                      {CUSTOM_DURATION_UNITS.map((u) => (
-                        <button
-                          key={u.multiplier}
-                          type="button"
-                          onClick={() => setCustomDurationUnit(u.multiplier)}
-                          className={`px-2 py-1 rounded-lg text-[10px] border transition-all cursor-pointer ${
-                            customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
-                          }`}
-                        >{u.label}</button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {DURATION_PRESETS.map((p) => (
-                      <button
-                        key={p.seconds}
-                        type="button"
-                        onClick={() => setDurationPreset(p.seconds.toString())}
-                        className={`px-2.5 py-1 rounded-lg text-xs border transition-all cursor-pointer ${
-                          durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star font-medium' : 'border-edge/50 text-dust hover:text-chalk'
-                        }`}
-                      >{p.label}</button>
-                    ))}
-                  </div>
-                )}
+                <div className="text-center">
+                  <p className="text-chalk font-medium">No assets added yet</p>
+                  <p className="text-xs text-dust max-w-[200px] mx-auto mt-1 leading-relaxed">
+                    At least one debt and one collateral asset are required to create an inscription.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-edge/10">
+                {allAssets.map((item) => (
+                  <AssetRow
+                    key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
+                    asset={item.asset}
+                    role={item.role}
+                    onRemove={() => handleRemoveAsset(item.role, item.index)}
+                  />
+                ))}
               </div>
             )}
 
-            {/* Deadline */}
-            <div>
-              <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-1.5">Expires in</span>
-              <div className="flex flex-wrap gap-1.5">
-                {DEADLINE_PRESETS.map((p) => (
-                  <button
-                    key={p.seconds}
-                    type="button"
-                    onClick={() => setDeadlinePreset(p.seconds.toString())}
-                    className={`px-2.5 py-1 rounded-lg text-xs border transition-all cursor-pointer ${
-                      deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star font-medium' : 'border-edge/50 text-dust hover:text-chalk'
-                    }`}
-                  >{p.label}</button>
-                ))}
+            {showErrors && (!hasDebt || !hasCollateral) && (
+              <div className="px-4 py-3 border-t border-edge/20 bg-nova/5">
+                <p className="text-xs text-nova font-medium">
+                  {!hasDebt && '• Add at least one borrow asset. '}
+                  {!hasCollateral && '• Add at least one collateral asset.'}
+                </p>
               </div>
-            </div>
-          </div>
+            )}
+          </section>
 
-          {/* Summary bar — thin inline strip */}
-          {allAssets.length > 0 && (
-            <div className="px-3 py-2 border-t border-edge/20 bg-surface/5">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
-                {isSwap ? (
-                  <span className="text-aurora font-medium">Swap</span>
-                ) : (
-                  <span className="text-dust">Duration: <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span></span>
-                )}
-                <span className="text-dust">Expires: <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span></span>
-                <span className="text-dust">Mode: <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>{mode === 'offchain' ? 'Gasless' : 'On-Chain'}</span></span>
-                {roiInfo && (
-                  <span className="text-dust">Yield: <span className="text-aurora font-medium">+{roiInfo.yieldPct}%</span></span>
-                )}
-                {isSwap && <span className="text-dust/60">0.10% fee</span>}
-              </div>
-            </div>
+          {/* Matched Stelas */}
+          {matchesVisible && !matchSkipped && hasMatches && (
+            <InlineMatchList
+              offchainMatches={offchainMatches}
+              onchainMatches={onchainMatches}
+              isSwap={isSwap}
+              onSettleOffchain={handleInstantSettle}
+              onSettleOnchain={handleOnchainSettle}
+              onSettleMultiple={handleMultiSettle}
+              onSkip={() => {
+                setMatchSkipped(true)
+                setMatchesVisible(false)
+              }}
+              isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
+              multiSettleSelection={multiSettleSelection}
+              giveSymbol={giveSymbol}
+              receiveSymbol={receiveSymbol}
+            />
           )}
-        </section>
+        </div>
 
-        {/* ── MATCHED STELAS — table list ───────────────── */}
-        {matchesVisible && !matchSkipped && hasMatches && (
-          <InlineMatchList
-            offchainMatches={offchainMatches}
-            onchainMatches={onchainMatches}
-            isSwap={isSwap}
-            onSettleOffchain={handleInstantSettle}
-            onSettleOnchain={handleOnchainSettle}
-            onSettleMultiple={handleMultiSettle}
-            onSkip={() => {
-              setMatchSkipped(true)
-              setMatchesVisible(false)
-            }}
-            isSettling={isSettling || isSettlingOnChain || multiSettleState.phase !== 'idle'}
-            multiSettleSelection={multiSettleSelection}
-            giveSymbol={giveSymbol}
-            receiveSymbol={receiveSymbol}
-          />
-        )}
+        {/* Right Column: Terms & Action */}
+        <div className="space-y-6">
+          <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip">
+            <div className="px-4 py-3 border-b border-edge/30 bg-surface/10">
+              <span className="text-[11px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
+            </div>
 
-        {/* ── SUBMIT ────────────────────────────────────── */}
-        <Web3ActionWrapper message="Connect your wallet to create an inscription">
-          <Button
-            variant="gold"
-            size="lg"
-            className="w-full h-12 uppercase tracking-widest"
-            onClick={handleSubmit}
-            disabled={isPending || isCreatingOnChain || isChecking}
-          >
-            {isPending || isCreatingOnChain ? 'Processing...' : isChecking ? 'Checking matches...' : submitButtonText}
-          </Button>
-        </Web3ActionWrapper>
+            <div className="p-4 space-y-6">
+              {/* Duration (lending only) */}
+              {!isSwap && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Loan Duration</span>
+                    <button
+                      type="button"
+                      onClick={() => setUseCustomDuration(!useCustomDuration)}
+                      className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider"
+                    >
+                      {useCustomDuration ? 'Use Presets' : 'Custom'}
+                    </button>
+                  </div>
+                  
+                  {useCustomDuration ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          value={customDurationValue}
+                          onChange={(e) => setCustomDurationValue(e.target.value)}
+                          className="flex-1 bg-surface/50 border-edge/50 font-mono h-9 text-sm"
+                          placeholder="Amount"
+                          min="1"
+                        />
+                        <div className="flex gap-1">
+                          {CUSTOM_DURATION_UNITS.map((u) => (
+                            <button
+                              key={u.multiplier}
+                              type="button"
+                              onClick={() => setCustomDurationUnit(u.multiplier)}
+                              className={`px-3 py-1 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                                customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
+                              }`}
+                            >{u.label}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-dust italic">
+                        Result: {formatDurationHuman(Number(duration))}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {DURATION_PRESETS.map((p) => (
+                        <button
+                          key={p.seconds}
+                          type="button"
+                          onClick={() => setDurationPreset(p.seconds.toString())}
+                          className={`py-2 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                            durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                          }`}
+                        >{p.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Deadline */}
+              <div className="space-y-3">
+                <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {DEADLINE_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      type="button"
+                      onClick={() => setDeadlinePreset(p.seconds.toString())}
+                      className={`py-2 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                        deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                      }`}
+                    >{p.label}</button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-dust">
+                  Agreement expires on {formatTimestamp(BigInt(deadline))}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Summary & Submit */}
+          <section className="rounded-xl border border-star/30 bg-star/5 p-5 space-y-5">
+            <div className="space-y-3">
+              <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
+                Agreement Summary
+              </span>
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-dust">Intent</span>
+                  <span className="text-chalk font-medium uppercase tracking-wider">{orderType}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-dust">Network Mode</span>
+                  <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
+                    {mode === 'offchain' ? 'Gasless (Off-Chain)' : 'On-Chain'}
+                  </span>
+                </div>
+                {!isSwap && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-dust">Duration</span>
+                    <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
+                  </div>
+                )}
+                {roiInfo && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-dust">Est. Yield</span>
+                    <span className="text-aurora font-bold">+{roiInfo.yieldPct}%</span>
+                  </div>
+                )}
+                {isSwap && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-dust">Protocol Fee</span>
+                    <span className="text-chalk font-medium">0.10%</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Web3ActionWrapper message="Connect your wallet to create an inscription">
+              <Button
+                variant="gold"
+                size="lg"
+                className="w-full h-14 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
+                onClick={handleSubmit}
+                disabled={isPending || isCreatingOnChain || isChecking}
+              >
+                {isPending || isCreatingOnChain ? (
+                  <div className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Processing...
+                  </div>
+                ) : isChecking ? 'Checking matches...' : submitButtonText}
+              </Button>
+            </Web3ActionWrapper>
+          </section>
+        </div>
       </div>
 
       {/* Modals */}

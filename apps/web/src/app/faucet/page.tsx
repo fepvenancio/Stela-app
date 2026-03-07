@@ -90,45 +90,49 @@ function MintCard({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <TokenAvatarByAddress address={token.address} size={32} />
-            <div>
-              <CardTitle className="text-base">{token.symbol}</CardTitle>
-              <CardDescription className="text-xs mt-0.5">{token.name}</CardDescription>
-            </div>
+    <div className="bg-surface/5 border border-edge/30 rounded-2xl overflow-hidden hover:border-edge-bright transition-all group">
+      <div className="px-5 py-4 border-b border-edge/20 bg-surface/10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <TokenAvatarByAddress address={token.address} size={28} />
+          <div>
+            <h3 className="text-sm font-display text-chalk uppercase tracking-wider">{token.symbol}</h3>
+            <p className="text-[10px] text-dust">{token.name}</p>
           </div>
-          <span className="text-[10px] font-mono text-dust bg-abyss px-2 py-1 rounded-md">
-            {token.type}
-          </span>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-[11px] font-mono text-dust break-all leading-relaxed">
-          {formatAddress(token.address)}
-        </p>
+        <span className="text-[9px] font-mono font-bold text-star bg-star/10 px-2 py-0.5 rounded border border-star/20">
+          {token.type}
+        </span>
+      </div>
+      
+      <div className="p-5 space-y-4">
+        <div className="space-y-1">
+          <span className="text-[9px] text-dust uppercase tracking-widest font-bold">Contract Address</span>
+          <p className="text-[10px] font-mono text-dust truncate bg-void/30 px-2 py-1.5 rounded border border-edge/10">
+            {token.address}
+          </p>
+        </div>
 
         <div className="flex gap-3 items-end">
           {token.type === 'ERC20' ? (
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor={`amount-${token.symbol}`} className="text-xs text-dust">Amount</Label>
+              <Label htmlFor={`amount-${token.symbol}`} className="text-[10px] text-dust uppercase tracking-widest font-bold">Amount</Label>
               <Input
                 id={`amount-${token.symbol}`}
                 type="text"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                className="bg-surface/50 border-edge/50 h-9 font-mono text-sm"
               />
             </div>
           ) : (
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor={`tokenid-${token.symbol}`} className="text-xs text-dust">Token ID</Label>
+              <Label htmlFor={`tokenid-${token.symbol}`} className="text-[10px] text-dust uppercase tracking-widest font-bold">Token ID</Label>
               <Input
                 id={`tokenid-${token.symbol}`}
                 type="text"
                 value={tokenId}
                 onChange={(e) => setTokenId(e.target.value)}
+                className="bg-surface/50 border-edge/50 h-9 font-mono text-sm"
               />
             </div>
           )}
@@ -137,48 +141,97 @@ function MintCard({
             variant="gold"
             onClick={handleMint}
             disabled={isPending || !address}
+            className="h-9 px-6 uppercase tracking-widest text-xs"
           >
-            {isPending ? 'Minting...' : 'Mint'}
+            {isPending ? '...' : 'Mint'}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 export default function FaucetPage() {
   return (
-    <div className="animate-fade-up max-w-2xl mx-auto">
+    <div className="animate-fade-up max-w-7xl mx-auto">
+      {/* Hero */}
       <div className="mb-10">
-        <h1 className="font-display text-3xl tracking-widest text-chalk mb-3 uppercase">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
           Sepolia Faucet
         </h1>
-        <p className="text-dust leading-relaxed">
-          Mint mock tokens to your wallet for testing on Sepolia.
+        <p className="text-dust max-w-lg leading-relaxed">
+          The Stela testnet ecosystem requires mock assets for protocol interaction. 
+          Mint various ERC20 and ERC721 tokens to your wallet to begin testing.
         </p>
       </div>
 
-      <div className="mb-8 p-4 rounded-xl border border-edge bg-surface/20">
-        <p className="text-sm text-dust">
-          Need Sepolia ETH for gas?{' '}
-          <a
-            href="https://faucet.starknet.io/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-star hover:text-star-bright transition-colors underline underline-offset-2"
-          >
-            StarkNet Sepolia Faucet
-          </a>
-        </p>
-      </div>
-
-      <Web3ActionWrapper message="Connect your wallet to mint test tokens">
-        <div className="space-y-4">
-          {MOCK_TOKENS.map((token) => (
-            <MintCard key={token.symbol} token={token} />
-          ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Token Grid */}
+        <div className="lg:col-span-2">
+          <Web3ActionWrapper message="Connect your wallet to mint test tokens">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {MOCK_TOKENS.map((token) => (
+                <MintCard key={token.symbol} token={token} />
+              ))}
+            </div>
+          </Web3ActionWrapper>
         </div>
-      </Web3ActionWrapper>
+
+        {/* Right Column: Info & Resources */}
+        <div className="space-y-6">
+          <section className="bg-surface/5 border border-edge/30 rounded-2xl p-6 space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-[11px] text-dust uppercase tracking-widest font-bold border-b border-edge/10 pb-3">
+                Gas & Support
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-star/5 border border-star/20 space-y-2">
+                  <span className="text-[10px] text-star uppercase tracking-widest font-bold block">Sepolia ETH</span>
+                  <p className="text-xs text-dust leading-relaxed">
+                    You need Sepolia ETH to pay for gas on StarkNet Sepolia. 
+                  </p>
+                  <a
+                    href="https://faucet.starknet.io/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-star hover:text-star-bright transition-colors text-xs font-bold uppercase tracking-wider mt-1 group"
+                  >
+                    Official Faucet
+                    <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </a>
+                </div>
+
+                <div className="p-4 rounded-xl bg-surface/10 border border-edge/20 space-y-2">
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Documentation</span>
+                  <p className="text-xs text-dust leading-relaxed">
+                    Learn more about using mock assets for testing inscriptions and lending.
+                  </p>
+                  <a
+                    href="/docs"
+                    className="inline-flex items-center gap-2 text-chalk hover:text-star transition-colors text-xs font-bold uppercase tracking-wider mt-1 group"
+                  >
+                    View Docs
+                    <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div className="p-5 rounded-2xl border border-edge/20 bg-surface/5">
+            <h4 className="text-[10px] text-dust uppercase tracking-widest font-bold mb-2">Usage Notice</h4>
+            <p className="text-[11px] text-dust leading-relaxed italic">
+              Mock tokens have no real-world value and are intended for testing on StarkNet Sepolia only. 
+              The Stela team does not provide mainnet assets.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

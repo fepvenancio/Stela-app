@@ -235,80 +235,113 @@ export default function GenesisPage() {
   const isHolder = pos.balance > 0n
 
   return (
-    <div className="animate-fade-up max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-display text-3xl tracking-widest text-chalk mb-2 uppercase">
+    <div className="animate-fade-up max-w-7xl mx-auto">
+      {/* Hero */}
+      <div className="mb-10">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
           Genesis Collection
         </h1>
-        <p className="text-dust text-sm leading-relaxed">
-          {MAX_SUPPLY} Genesis NFTs — holders receive protocol fee discounts up to 50%.
+        <p className="text-dust max-w-lg leading-relaxed">
+          The Stela Genesis Collection consists of {MAX_SUPPLY} unique artifacts on StarkNet. 
+          Holders receive permanent protocol fee discounts up to 50% based on their position.
         </p>
       </div>
 
-      {/* Stats row — compact */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-          <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">Minted</span>
-          {pos.isLoading ? (
-            <Skeleton className="h-7 w-16 bg-edge/20" />
-          ) : (
-            <span className="text-xl font-display text-chalk">
-              {pos.totalMinted.toString()}<span className="text-xs text-dust">/{MAX_SUPPLY}</span>
-            </span>
-          )}
-        </div>
-        <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-          <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">Price</span>
-          <span className="text-xl font-display text-star">{formatStrk(pos.mintPrice)}<span className="text-xs text-dust"> STRK</span></span>
-        </div>
-        <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-          <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">You Hold</span>
-          <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
-        </div>
-      </div>
-
-      <Web3ActionWrapper message="Connect your wallet to mint Genesis NFTs">
-        <div className="space-y-5">
-          {/* Your NFTs section — show discount tier if holder */}
-          {isHolder && (
-            <section className="bg-surface/15 border border-edge/25 rounded-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b border-edge/20">
-                <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Your Position</h2>
-                <p className="text-[10px] text-dust mt-0.5">
-                  {Number(pos.balance)} NFT{Number(pos.balance) !== 1 ? 's' : ''} -- 15% base{Number(pos.balance) > 1 ? ` + ${(Number(pos.balance) - 1) * 2}% multi-NFT bonus` : ''} + volume tiers
-                </p>
-              </div>
-              {pos.tokenIds.length > 0 && (
-                <div className="px-6 py-3 bg-surface/10">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[9px] text-dust uppercase tracking-widest">Your NFTs:</span>
-                    {pos.tokenIds.map((id) => (
-                      <span key={id.toString()} className="text-[10px] font-mono text-chalk bg-surface/50 px-2 py-0.5 rounded-md border border-edge/20">
-                        #{id.toString()}
-                      </span>
-                    ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Mint & Info */}
+        <div className="lg:col-span-2 space-y-8">
+          <Web3ActionWrapper message="Connect your wallet to mint Genesis NFTs">
+            <div className="space-y-8">
+              {/* Your NFTs section — show discount tier if holder */}
+              {isHolder && (
+                <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(232,168,37,0.05)]">
+                  <div className="px-6 py-5 border-b border-star/10 bg-star/5">
+                    <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Your Position</h2>
+                    <p className="text-[10px] text-dust mt-1 uppercase tracking-wider font-bold">
+                      {Number(pos.balance)} NFT{Number(pos.balance) !== 1 ? 's' : ''} held — {15 + (Number(pos.balance) > 1 ? (Number(pos.balance) - 1) * 2 : 0)}% Base Discount
+                    </p>
                   </div>
-                </div>
+                  {pos.tokenIds.length > 0 && (
+                    <div className="px-6 py-4 bg-void/30">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-[9px] text-dust uppercase tracking-[0.2em] font-bold">Your Artifacts:</span>
+                        {pos.tokenIds.map((id) => (
+                          <span key={id.toString()} className="text-[11px] font-mono text-star bg-star/10 px-3 py-1 rounded-lg border border-star/20 shadow-sm">
+                            #{id.toString().padStart(3, '0')}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </section>
               )}
-            </section>
-          )}
 
-          {/* Mint section */}
-          <MintSection
-            totalMinted={pos.totalMinted}
-            mintPrice={pos.mintPrice}
-            mintEnabled={pos.mintEnabled}
-            soldOut={soldOut}
-          />
+              {/* Mint section */}
+              <MintSection
+                totalMinted={pos.totalMinted}
+                mintPrice={pos.mintPrice}
+                mintEnabled={pos.mintEnabled}
+                soldOut={soldOut}
+              />
 
-          {/* Fee info */}
-          <FeeInfo />
+              {/* Fee info */}
+              <FeeInfo />
+            </div>
+          </Web3ActionWrapper>
+        </div>
+
+        {/* Right Column: Stats & Transparency */}
+        <div className="space-y-6">
+          {/* Stats Card */}
+          <section className="bg-surface/5 border border-edge/30 rounded-2xl p-6 space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-end border-b border-edge/10 pb-4">
+                <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Total Minted</span>
+                {pos.isLoading ? (
+                  <Skeleton className="h-7 w-16 bg-edge/20" />
+                ) : (
+                  <div className="text-right">
+                    <span className="text-2xl font-display text-chalk leading-none">
+                      {pos.totalMinted.toString()}
+                    </span>
+                    <span className="text-xs text-dust ml-1">/{MAX_SUPPLY}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-between items-end border-b border-edge/10 pb-4">
+                <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Mint Price</span>
+                <div className="text-right">
+                  <span className="text-2xl font-display text-star leading-none">
+                    {formatStrk(pos.mintPrice)}
+                  </span>
+                  <span className="text-xs text-dust ml-1">STRK</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-end">
+                <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Artifacts Held</span>
+                <span className="text-2xl font-display text-chalk leading-none">
+                  {pos.balance.toString()}
+                </span>
+              </div>
+            </div>
+          </section>
 
           {/* Transparency */}
           <TransparencyInfo />
+
+          {/* Quick link to docs */}
+          <div className="p-4 rounded-xl border border-edge/20 bg-surface/5">
+            <p className="text-[11px] text-dust leading-relaxed">
+              Read the full specification of Genesis rewards in the 
+              <a href="/docs" className="text-star hover:text-star-bright ml-1 font-medium underline underline-offset-4">
+                Documentation
+              </a>.
+            </p>
+          </div>
         </div>
-      </Web3ActionWrapper>
+      </div>
     </div>
   )
 }
