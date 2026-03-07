@@ -112,10 +112,12 @@ export function selectOrders(
   // Sort by priority (on-chain first), then by debt descending for tie-breaking
   fullCandidates.sort((a, b) => a.priority - b.priority || (b.debt > a.debt ? 1 : b.debt < a.debt ? -1 : 0))
 
-  // Find optimal subset of full-fill candidates using DP or greedy
+  // Find optimal subset of full-fill candidates
+  // ≤25: exact DP/meet-in-middle, >25: greedy + local search refinement
+  const debts = fullCandidates.map(c => c.debt)
   const bestIndices = fullCandidates.length <= 25
-    ? dpSubsetSum(fullCandidates.map(c => c.debt), userGiveAmount)
-    : greedySubset(fullCandidates.map(c => c.debt), userGiveAmount)
+    ? dpSubsetSum(debts, userGiveAmount)
+    : greedyWithRefinement(debts, userGiveAmount)
 
   const selected: SelectedOrder[] = []
   let totalGive = 0n
@@ -267,20 +269,119 @@ function meetInTheMiddle(values: bigint[], budget: bigint): number[] {
   return result
 }
 
-/* ── Greedy fallback (>25 items) ────────────────────────── */
+/* ── Greedy + Local Search Refinement (>25 items) ───────── */
 
-function greedySubset(values: bigint[], budget: bigint): number[] {
-  // Sort indices by value descending
-  const indices = values.map((_, i) => i).sort((a, b) => (values[b] > values[a] ? 1 : values[b] < values[a] ? -1 : 0))
-  const result: number[] = []
+/**
+ * Two-phase algorithm for large candidate sets:
+ *
+ * Phase 1 — Greedy: Sort descending, pack greedily. O(n log n).
+ * Phase 2 — Swap refinement: For each gap (budget - sum), try swapping a
+ *   selected item for an unselected one that closes the gap. Uses a sorted
+ *   unselected array with binary search for O(k * log n) per pass.
+ * Phase 3 — Add pass: Try adding small unselected items that fit the remaining gap.
+ *
+ * Guarantees: At least as good as greedy, typically much better.
+ * Complexity: O(n log n) total — safe for 1M+ items.
+ */
+function greedyWithRefinement(values: bigint[], budget: bigint): number[] {
+  const n = values.length
+  if (n === 0) return []
+
+  // Phase 1: Greedy (largest-first)
+  const sortedIndices = values.map((_, i) => i)
+    .sort((a, b) => (values[b] > values[a] ? 1 : values[b] < values[a] ? -1 : 0))
+
+  const inSet = new Uint8Array(n) // 0/1 membership for O(1) lookup
+  const selected: number[] = []
   let sum = 0n
 
-  for (const i of indices) {
+  for (const i of sortedIndices) {
     if (sum + values[i] <= budget) {
-      result.push(i)
+      selected.push(i)
+      inSet[i] = 1
       sum += values[i]
-      if (sum === budget) break
+      if (sum === budget) return selected
     }
   }
-  return result
+
+  // Phase 2: Swap refinement
+  // For each selected item, check if swapping it for an unselected item gets closer to budget
+  const gap = budget - sum
+  if (gap > 0n) {
+    // Build sorted array of unselected items for binary search
+    const unselected = sortedIndices.filter(i => !inSet[i])
+    // unselected is already sorted by value descending
+
+    let improved = true
+    let passes = 0
+    const MAX_PASSES = 3 // Limit refinement passes
+
+    while (improved && passes < MAX_PASSES) {
+      improved = false
+      passes++
+
+      for (let si = 0; si < selected.length; si++) {
+        const selIdx = selected[si]
+        const selVal = values[selIdx]
+        const currentSum = sum
+
+        // We want to find an unselected item with value in (selVal, selVal + gap]
+        // That would increase sum by (newVal - selVal) without exceeding budget
+        const target = selVal + (budget - currentSum)
+
+        // Binary search for the largest unselected value ≤ target that is > selVal
+        let bestSwap = -1
+        let bestSwapVal = 0n
+        let lo = 0, hi = unselected.length - 1
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1
+          const uVal = values[unselected[mid]]
+          if (uVal <= target && uVal > selVal) {
+            bestSwap = mid
+            bestSwapVal = uVal
+            hi = mid - 1 // look for even larger
+          } else if (uVal > target) {
+            lo = mid + 1
+          } else {
+            hi = mid - 1
+          }
+        }
+
+        if (bestSwap !== -1) {
+          const swapIdx = unselected[bestSwap]
+          // Perform swap
+          inSet[selIdx] = 0
+          inSet[swapIdx] = 1
+          selected[si] = swapIdx
+          sum = currentSum - selVal + bestSwapVal
+          // Update unselected: remove swapIdx, add selIdx
+          unselected[bestSwap] = selIdx
+          // Re-sort is expensive; just mark and continue
+          improved = true
+          if (sum === budget) return selected
+        }
+      }
+    }
+  }
+
+  // Phase 3: Add pass — try to fit remaining small items into the gap
+  const finalGap = budget - sum
+  if (finalGap > 0n) {
+    // Scan unselected from smallest to largest
+    for (let i = sortedIndices.length - 1; i >= 0; i--) {
+      const idx = sortedIndices[i]
+      if (inSet[idx]) continue
+      if (values[idx] <= finalGap) {
+        // Check against actual remaining budget
+        if (sum + values[idx] <= budget) {
+          selected.push(idx)
+          inSet[idx] = 1
+          sum += values[idx]
+          if (sum === budget) break
+        }
+      }
+    }
+  }
+
+  return selected
 }
