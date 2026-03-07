@@ -362,6 +362,25 @@ export default function CreatePage() {
     setShowErrors(true)
     if (!isValid) return
 
+    // For swaps with matches, auto-settle the best match
+    if (isSwap && hasMatches && !matchSkipped) {
+      // Multi-settle if optimal selection covers multiple orders
+      if (multiSettleSelection && multiSettleSelection.selected.length >= 2) {
+        await handleMultiSettle()
+        return
+      }
+      // Single best match: prefer off-chain (cheaper), fall back to on-chain
+      if (offchainMatches.length > 0) {
+        await handleInstantSettle(offchainMatches[0])
+        return
+      }
+      if (onchainMatches.length > 0) {
+        await handleOnchainSettle(onchainMatches[0])
+        return
+      }
+    }
+
+    // For lending with matches, show the match list (user picks)
     if (matchesVisible && hasMatches && !matchSkipped) {
       setMatchSkipped(true)
       setMatchesVisible(false)
