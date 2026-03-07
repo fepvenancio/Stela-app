@@ -852,7 +852,7 @@ export default function CreatePage() {
                 >{p.label}</button>
               ))}
             </div>
-            <p className="text-[10px] text-dust">
+            <p className="text-[10px] text-dust" suppressHydrationWarning>
               Expires {formatTimestamp(BigInt(deadline))}
             </p>
           </div>
@@ -953,7 +953,7 @@ export default function CreatePage() {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-dust">Expiry</span>
-                  <span className="text-chalk font-medium">{formatTimestamp(BigInt(deadline))}</span>
+                  <span className="text-chalk font-medium" suppressHydrationWarning>{formatTimestamp(BigInt(deadline))}</span>
                 </div>
                 {roiInfo && (
                   <div className="flex justify-between text-sm">

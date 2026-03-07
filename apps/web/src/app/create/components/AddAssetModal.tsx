@@ -31,8 +31,8 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
     textClass: 'text-star',
   },
   interest: {
-    label: 'Interests',
-    short: 'Interests',
+    label: 'You Pay Interest',
+    short: 'You Pay Interest',
     color: 'aurora',
     bgClass: 'bg-aurora/10',
     borderClass: 'border-aurora/25',
@@ -138,12 +138,12 @@ export function AddAssetModal({
           }
         }}
       >
-        <DialogContent className="bg-abyss border-edge text-chalk p-0 gap-0 max-w-sm overflow-hidden">
+        <DialogContent className="bg-void border-edge/50 text-chalk p-0 gap-0 sm:max-w-md overflow-hidden" showCloseButton={false}>
           <DialogHeader className="px-5 pt-5 pb-0">
-            <DialogTitle className="text-chalk text-base font-semibold flex items-center gap-2.5">
+            <DialogTitle className="font-display text-sm tracking-widest text-star uppercase flex items-center gap-2.5">
               {selectedToken ? (
                 <>
-                  <TokenAvatar token={selectedToken} size={24} />
+                  <TokenAvatar token={selectedToken} size={20} />
                   {selectedToken.symbol}
                 </>
               ) : (
@@ -244,6 +244,7 @@ export function AddAssetModal({
 
             <Button
               variant="gold"
+              size="lg"
               className="w-full"
               onClick={handleAdd}
               disabled={!canAdd}

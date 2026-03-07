@@ -26,8 +26,8 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
     textClass: 'text-star',
   },
   interest: {
-    label: 'Interests',
-    short: 'Interests',
+    label: 'You Pay Interest',
+    short: 'You Pay Interest',
     color: 'aurora',
     bgClass: 'bg-aurora/10',
     borderClass: 'border-aurora/25',

@@ -241,13 +241,13 @@ export function TokenSelectorModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-abyss border-edge text-chalk p-0 gap-0 max-w-md overflow-hidden"
+        className="bg-void border-edge/50 text-chalk p-0 gap-0 sm:max-w-md overflow-hidden"
         showCloseButton={true}
       >
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-0">
-          <DialogTitle className="text-chalk text-lg font-semibold">
-            {walletConnected ? 'Your tokens' : 'Select a token'}
+          <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
+            {walletConnected ? 'Your Tokens' : 'Select a Token'}
           </DialogTitle>
         </DialogHeader>
 

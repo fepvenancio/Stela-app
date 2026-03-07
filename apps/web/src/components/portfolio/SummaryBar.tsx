@@ -47,11 +47,7 @@ function MetricCard({
 
 export function SummaryBar({ summary }: SummaryBarProps) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-      <MetricCard label="Total Lent" color="bg-star" info="Sum of all debt tokens you have provided as a lender.">
-        <TokenList amounts={summary.totalLent} />
-      </MetricCard>
-
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
       <MetricCard label="Collateral Locked" color="bg-nebula" info="Total collateral currently locked in your locker contracts.">
         <TokenList amounts={summary.collateralLocked} />
       </MetricCard>

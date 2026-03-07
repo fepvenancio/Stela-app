@@ -18,8 +18,8 @@ importers:
   apps/web:
     dependencies:
       '@fepvenancio/stela-sdk':
-        specifier: 0.6.0
-        version: 0.6.0(starknet@6.24.1)
+        specifier: 0.7.0
+        version: 0.7.0(starknet@6.24.1)
       '@opennextjs/cloudflare':
         specifier: ^1.0.0
         version: 1.16.5(next@15.5.12(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.67.0(@cloudflare/workers-types@4.20260227.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
@@ -1119,8 +1119,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fepvenancio/stela-sdk@0.6.0':
-    resolution: {integrity: sha512-0SWedy9QmNgPBGiWAoqNKX7Cx1+5HHvQSUnVJKoNMv3mCVvRQFk1vvflsvnLu6ENqyDyVGbqZfxVGjFBgwhFmw==}
+  '@fepvenancio/stela-sdk@0.7.0':
+    resolution: {integrity: sha512-eTcdJplqoGmRoSvQ8gK8PDELksTxtZcXD3LGJ2YTU4snzlOH+H3C0AAFGwYXMmoN6OQ4Z2w+gKKwmYKT7hoKZg==}
     peerDependencies:
       starknet: ^6.0.0
 
@@ -6585,7 +6585,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@fepvenancio/stela-sdk@0.6.0(starknet@6.24.1)':
+  '@fepvenancio/stela-sdk@0.7.0(starknet@6.24.1)':
     dependencies:
       starknet: 6.24.1
 

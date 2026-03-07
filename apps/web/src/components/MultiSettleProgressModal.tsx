@@ -154,10 +154,11 @@ export function MultiSettleProgressModal({ open, state, onClose }: MultiSettlePr
 
         <DialogFooter>
           <Button
-            variant={isComplete ? 'gold' : 'ghost'}
+            variant={isComplete ? 'gold' : hasError ? 'outline' : 'ghost'}
+            size="lg"
             onClick={onClose}
             disabled={!canClose}
-            className={isComplete ? 'w-full' : 'text-ash hover:text-chalk'}
+            className="w-full"
           >
             {isComplete ? 'Done' : hasError ? 'Close' : 'Processing...'}
           </Button>
