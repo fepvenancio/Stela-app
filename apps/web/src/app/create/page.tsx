@@ -363,7 +363,8 @@ export default function CreatePage() {
     if (!isValid) return
 
     if (matchesVisible && hasMatches && !matchSkipped) {
-      return
+      setMatchSkipped(true)
+      setMatchesVisible(false)
     }
 
     if (mode === 'offchain') {
