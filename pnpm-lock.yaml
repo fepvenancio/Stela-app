@@ -32,6 +32,9 @@ importers:
       '@stela/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@tanstack/react-query':
+        specifier: ^5.90.21
+        version: 5.90.21(react@19.2.4)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -111,6 +114,9 @@ importers:
       starknet:
         specifier: ^6.23.1
         version: 6.24.1
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
     devDependencies:
       typescript:
         specifier: ^5.7.0

@@ -1,17 +1,10 @@
 import { NextRequest } from 'next/server'
-import { typedData as starknetTypedData } from 'starknet'
-import type { AssetType } from '@fepvenancio/stela-sdk'
 import { getD1, jsonResponse, errorResponse, handleOptions, rateLimit, rateLimitWrite, logError } from '@/lib/api'
 import { CHAIN_ID } from '@/lib/config'
-import { getInscriptionOrderTypedData, hashAssets } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
 import { verifyNonce } from '@/lib/verify-nonce'
-import { createOrderSchema } from '@/lib/validation'
+import { createOrderParamsSchema, processCreateOrder } from '@stela/core'
 import { parseOrderRow } from '@/lib/order-utils'
-
-function normalizeAddr(address: string): string {
-  return '0x' + address.replace(/^0x/i, '').toLowerCase().padStart(64, '0')
-}
 
 export function OPTIONS(request: NextRequest) {
   return handleOptions(request)
@@ -49,142 +42,35 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid JSON', 400, request)
     }
 
-    // Validate input structure with Zod
-    const parsed = createOrderSchema.safeParse(body)
+    // Validate input structure
+    const parsed = createOrderParamsSchema.safeParse(body)
     if (!parsed.success) {
       const messages = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`)
       return errorResponse(`Validation failed: ${messages.join('; ')}`, 400, request)
     }
 
-    const { id, borrower, order_data, borrower_signature, nonce, deadline } = parsed.data
+    const { borrower } = parsed.data
 
     // Rate limit by IP + borrower address
     const limited = rateLimit(request, borrower)
     if (limited) return limited
 
-    // Validate deadline is in the future
-    const now = Math.floor(Date.now() / 1000)
-    if (deadline <= now) {
-      return errorResponse('Deadline must be in the future', 400, request)
-    }
-
-    // D1-backed rate limit (persists across cold starts)
+    // D1-backed rate limit
     const db = getD1()
     const d1Limited = await rateLimitWrite(request, db, borrower)
     if (d1Limited) return d1Limited
 
-    // ── Signature Verification ──────────────────────────────────────────
-    // Reconstruct the SNIP-12 typed data from the submitted order data and
-    // compute the message hash server-side. This prevents an attacker from
-    // submitting a forged orderHash that doesn't match the actual data.
-    const toSdkAssets = (arr: Array<{ asset_address: string; asset_type: string; value: string; token_id: string }>) =>
-      arr.map((a) => ({
-        asset_address: a.asset_address,
-        asset_type: a.asset_type as AssetType,
-        value: BigInt(a.value),
-        token_id: BigInt(a.token_id),
-      }))
-
-    const sdkDebtAssets = toSdkAssets(order_data.debtAssets)
-    const sdkInterestAssets = toSdkAssets(order_data.interestAssets)
-    const sdkCollateralAssets = toSdkAssets(order_data.collateralAssets)
-
-    const typedData = getInscriptionOrderTypedData({
-      borrower,
-      debtAssets: sdkDebtAssets,
-      interestAssets: sdkInterestAssets,
-      collateralAssets: sdkCollateralAssets,
-      debtCount: sdkDebtAssets.length,
-      interestCount: sdkInterestAssets.length,
-      collateralCount: sdkCollateralAssets.length,
-      duration: BigInt(order_data.duration),
-      deadline: BigInt(order_data.deadline),
-      multiLender: order_data.multiLender,
-      nonce: BigInt(order_data.nonce),
+    // Delegate to shared Service Layer
+    const result = await processCreateOrder(db, parsed.data, {
       chainId: CHAIN_ID,
+      verifySignature: verifyStarknetSignature,
+      verifyNonce: verifyNonce,
     })
 
-    const messageHash = starknetTypedData.getMessageHash(typedData, borrower)
-
-    // Verify signature + nonce in parallel (both are independent RPC calls)
-    const [sigValid, nonceCheck] = await Promise.all([
-      verifyStarknetSignature(borrower, messageHash, borrower_signature),
-      verifyNonce(borrower, BigInt(order_data.nonce)),
-    ])
-
-    if (!sigValid) {
-      return errorResponse('Invalid borrower signature', 401, request)
-    }
-
-    if (!nonceCheck.valid) {
-      return errorResponse(
-        `Nonce mismatch: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}. Please hard-refresh the page and try again.`,
-        400,
-        request,
-      )
-    }
-
-    // Idempotent retry: if the exact same order already exists, return it
-    const existingOrders = await db.getOrders({ status: 'pending', address: borrower, page: 1, limit: 100 })
-    const existingOrder = (existingOrders as Record<string, unknown>[]).find((o) => {
-      const od = typeof o.order_data === 'string' ? JSON.parse(o.order_data as string) : o.order_data
-      return od?.orderHash === messageHash
-    })
-    if (existingOrder) {
-      return jsonResponse({ ok: true, id: existingOrder.id, existing: true }, request)
-    }
-
-    // Verify asset hashes if provided (defense in depth)
-    if (order_data.debtHash) {
-      const serverDebtHash = hashAssets(sdkDebtAssets)
-      if (serverDebtHash !== order_data.debtHash) {
-        return errorResponse('Debt asset hash mismatch', 400, request)
-      }
-    }
-    if (order_data.interestHash) {
-      const serverInterestHash = hashAssets(sdkInterestAssets)
-      if (serverInterestHash !== order_data.interestHash) {
-        return errorResponse('Interest asset hash mismatch', 400, request)
-      }
-    }
-    if (order_data.collateralHash) {
-      const serverCollateralHash = hashAssets(sdkCollateralAssets)
-      if (serverCollateralHash !== order_data.collateralHash) {
-        return errorResponse('Collateral asset hash mismatch', 400, request)
-      }
-    }
-
-    // Store the server-computed message hash in the persisted order data
-    const orderDataToStore = {
-      ...order_data,
-      orderHash: messageHash,
-    }
-
-    // Extract denormalized fields for instant-match queries
-    const debtToken = order_data.debtAssets?.[0]?.asset_address
-      ? normalizeAddr(order_data.debtAssets[0].asset_address)
-      : null
-    const collateralToken = order_data.collateralAssets?.[0]?.asset_address
-      ? normalizeAddr(order_data.collateralAssets[0].asset_address)
-      : null
-    const durationSeconds = Number(order_data.duration ?? 0)
-
-    await db.createOrder({
-      id: String(id),
-      borrower: String(borrower),
-      order_data: JSON.stringify(orderDataToStore),
-      borrower_signature: JSON.stringify(borrower_signature),
-      nonce: String(nonce),
-      deadline: Number(deadline),
-      created_at: now,
-      debt_token: debtToken,
-      collateral_token: collateralToken,
-      duration_seconds: durationSeconds,
-    })
-
-    return jsonResponse({ ok: true, id }, request)
-  } catch (err) {
+    return jsonResponse({ ok: true, id: result.id, existing: result.existing }, request)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
     logError('orders', err)
-    return errorResponse('service unavailable', 502, request)
+    return errorResponse(message, 400, request)
   }
 }

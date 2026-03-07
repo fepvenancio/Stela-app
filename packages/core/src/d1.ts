@@ -788,6 +788,34 @@ export function createD1Queries(db: D1Database) {
       return result.results
     },
 
+    async getMatchedOrdersFull(): Promise<Record<string, unknown>[]> {
+      const now = Math.floor(Date.now() / 1000)
+      const result = await db
+        .prepare(
+          `SELECT 
+            o.id as order_id, 
+            o.borrower,
+            o.order_data,
+            o.borrower_signature,
+            o.nonce as order_nonce,
+            oo.id as offer_id,
+            oo.lender,
+            oo.bps,
+            oo.lender_signature,
+            oo.nonce as offer_nonce
+           FROM orders o
+           JOIN order_offers oo ON oo.order_id = o.id
+           WHERE o.status = 'matched'
+             AND oo.status = 'pending'
+             AND o.deadline > ?
+           ORDER BY CAST(json_extract(o.order_data, '$.duration') AS INTEGER) ASC, o.created_at ASC
+           LIMIT 50`
+        )
+        .bind(now)
+        .all<Record<string, unknown>>()
+      return result.results
+    },
+
     async getMatchedOrders(): Promise<{ order_id: string; offer_id: string }[]> {
       const result = await db
         .prepare(

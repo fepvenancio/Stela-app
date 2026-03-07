@@ -49,6 +49,8 @@ export {
   findTokenByAddress,
 } from './tokens.js'
 
+export * from './services/orders.js'
+
 export type {
   D1Database,
   D1PreparedStatement,

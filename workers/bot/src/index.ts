@@ -136,63 +136,29 @@ async function settleOrders(
   contractAddress: string,
   queries: ReturnType<typeof createD1Queries>,
 ): Promise<void> {
-  const matched = await queries.getMatchedOrders()
+  const matched = await queries.getMatchedOrdersFull()
 
   if (matched.length === 0) {
     console.log('No matched orders to settle')
     return
   }
 
-  // Pre-load all orders to extract duration for sorting (swaps first)
-  const orderCache = new Map<string, Record<string, unknown>>()
-  for (const { order_id } of matched) {
-    const order = await queries.getOrder(order_id) as Record<string, unknown> | null
-    if (order) orderCache.set(order_id, order)
-  }
-
-  // Sort: duration=0 (swaps) first, then by creation order
-  const sorted = matched.sort((a, b) => {
-    const oA = orderCache.get(a.order_id)
-    const oB = orderCache.get(b.order_id)
-    let durA = Infinity
-    let durB = Infinity
-    try { durA = Number(JSON.parse(oA?.order_data as string).duration) } catch { /* keep Infinity */ }
-    try { durB = Number(JSON.parse(oB?.order_data as string).duration) } catch { /* keep Infinity */ }
-    return durA - durB
-  })
-
-  console.log(`Found ${sorted.length} matched order(s) to settle`)
+  console.log(`Found ${matched.length} matched order(s) to settle`)
 
   const calls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-  const settledPairs: { order_id: string; offer_id: string; orderData: OrderData }[] = []
+  const settledPairs: { order_id: string; offer_id: string; borrower: string; nonce: string }[] = []
 
-  for (const { order_id, offer_id } of sorted) {
+  for (const row of matched) {
+    const order_id = row.order_id as string
+    const offer_id = row.offer_id as string
+
     try {
-      // Re-read order status fresh (may have been settled by instant-match user since we fetched)
-      const order = await queries.getOrder(order_id) as Record<string, unknown> | null
-      if (!order) {
-        console.warn(`Order ${order_id} not found, skipping`)
-        continue
-      }
-
-      if (order.status !== 'matched') {
-        console.log(`Order ${order_id} status is '${order.status}' (no longer matched), skipping`)
-        continue
-      }
-
-      const offers = await queries.getOrderOffers(order_id) as Record<string, unknown>[]
-      const offer = offers.find((o) => o.id === offer_id) as Record<string, unknown> | undefined
-      if (!offer) {
-        console.warn(`Offer ${offer_id} not found for order ${order_id}, skipping`)
-        continue
-      }
-
       // Parse stored order data
-      const orderData: OrderData = JSON.parse(order.order_data as string)
+      const orderData: OrderData = JSON.parse(row.order_data as string)
 
       // Pre-settle nonce check: verify both nonces are still valid on-chain
-      const borrowerNonce = await getOnChainNonce(provider, contractAddress, orderData.borrower)
-      const expectedBorrowerNonce = BigInt(orderData.nonce)
+      const borrowerNonce = await getOnChainNonce(provider, contractAddress, row.borrower as string)
+      const expectedBorrowerNonce = BigInt(row.order_nonce as string)
 
       if (borrowerNonce !== expectedBorrowerNonce) {
         console.warn(
@@ -202,8 +168,8 @@ async function settleOrders(
         continue
       }
 
-      const lenderNonce = await getOnChainNonce(provider, contractAddress, offer.lender as string)
-      const expectedLenderNonce = BigInt(offer.nonce as string)
+      const lenderNonce = await getOnChainNonce(provider, contractAddress, row.lender as string)
+      const expectedLenderNonce = BigInt(row.offer_nonce as string)
 
       if (lenderNonce !== expectedLenderNonce) {
         console.warn(
@@ -218,10 +184,7 @@ async function settleOrders(
       const interestHash = orderData.interestHash ?? hashAssets(orderData.interestAssets)
       const collateralHash = orderData.collateralHash ?? hashAssets(orderData.collateralAssets)
 
-      // Build order struct calldata (11 fields inline):
-      // borrower, debt_hash, interest_hash, collateral_hash,
-      // debt_count, interest_count, collateral_count,
-      // duration, deadline, multi_lender (0/1), nonce
+      // Build order struct calldata
       const orderCalldata: string[] = [
         normalizeAddress(orderData.borrower),
         debtHash,
@@ -236,46 +199,36 @@ async function settleOrders(
         orderData.nonce,
       ]
 
-      // Serialize asset arrays
       const debtCalldata = serializeAssetCalldata(orderData.debtAssets)
       const interestCalldata = serializeAssetCalldata(orderData.interestAssets)
       const collateralCalldata = serializeAssetCalldata(orderData.collateralAssets)
+      const borrowerSigCalldata = serializeSignatureCalldata(row.borrower_signature as string)
 
-      // Serialize borrower signature
-      const borrowerSigCalldata = serializeSignatureCalldata(order.borrower_signature as string)
-
-      // Build offer struct calldata (5 fields inline):
-      // order_hash, lender, issued_debt_percentage_low, issued_debt_percentage_high, nonce
-      const [bpsLow, bpsHigh] = toU256(BigInt(offer.bps as number))
-      const orderHash = orderData.orderHash
+      const [bpsLow, bpsHigh] = toU256(BigInt(row.bps as number))
       const offerCalldata: string[] = [
-        orderHash,
-        normalizeAddress(offer.lender as string),
+        orderData.orderHash,
+        normalizeAddress(row.lender as string),
         bpsLow,
         bpsHigh,
-        offer.nonce as string,
+        row.offer_nonce as string,
       ]
 
-      // Serialize lender signature
-      const lenderSigCalldata = serializeSignatureCalldata(offer.lender_signature as string)
-
-      // Combine all calldata
-      const calldata = [
-        ...orderCalldata,
-        ...debtCalldata,
-        ...interestCalldata,
-        ...collateralCalldata,
-        ...borrowerSigCalldata,
-        ...offerCalldata,
-        ...lenderSigCalldata,
-      ]
+      const lenderSigCalldata = serializeSignatureCalldata(row.lender_signature as string)
 
       calls.push({
         contractAddress,
         entrypoint: 'settle',
-        calldata,
+        calldata: [
+          ...orderCalldata,
+          ...debtCalldata,
+          ...interestCalldata,
+          ...collateralCalldata,
+          ...borrowerSigCalldata,
+          ...offerCalldata,
+          ...lenderSigCalldata,
+        ],
       })
-      settledPairs.push({ order_id, offer_id, orderData })
+      settledPairs.push({ order_id, offer_id, borrower: row.borrower as string, nonce: row.order_nonce as string })
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
@@ -283,34 +236,23 @@ async function settleOrders(
     }
   }
 
-  if (calls.length === 0) {
-    return
-  }
+  if (calls.length === 0) return
 
   try {
     const { transaction_hash } = await account.execute(calls)
     console.log(`Submitted batch settlement of ${calls.length} orders: ${transaction_hash}`)
     await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
 
-    // Update statuses on success
-    for (const { order_id, offer_id, orderData } of settledPairs) {
+    for (const { order_id, offer_id, borrower, nonce } of settledPairs) {
       await queries.updateOrderStatus(order_id, 'settled')
       await queries.updateOfferStatus(offer_id, 'settled')
-
-      // Expire sibling orders with the same borrower+nonce (nonce is now consumed)
-      const siblingExpired = await queries.expireSiblingOrders(order_id, orderData.borrower, orderData.nonce)
-      if (siblingExpired > 0) {
-        console.log(`Expired ${siblingExpired} sibling order(s) for borrower ${orderData.borrower} nonce ${orderData.nonce}`)
-      }
-
-      // Purge signatures — no longer needed after on-chain verification
+      await queries.expireSiblingOrders(order_id, borrower, nonce)
       await queries.purgeOrderSignature(order_id)
       await queries.purgeOfferSignature(offer_id)
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
     console.error(`Failed to execute batch settlement: ${message}`)
-    // Leave as 'matched' so it can be retried on the next cron run
   }
 }
 

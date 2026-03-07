@@ -17,6 +17,7 @@
     "@starknet-react/chains": "^3.1.0",
     "@starknet-react/core": "^3.7.0",
     "@stela/core": "workspace:*",
+    "@tanstack/react-query": "^5.90.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "get-starknet-core": "^4.0.0",
