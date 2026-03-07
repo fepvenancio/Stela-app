@@ -98,14 +98,14 @@ async function fetchTxReceipt(txHash: string): Promise<{ calldata?: string[] }> 
 // starknet.js hash.getSelectorFromName equivalent using keccak
 // We hardcode the known selectors to avoid importing starknet.js in the worker
 const EVENT_SELECTORS: Record<string, string> = {
-  // These match the selectors from services/indexer/src/rpc.ts
-  InscriptionCreated: '0x1390fd803c110ac71730c1a13a0c3457f5e507e0dab18cd1e525c2e4b5b37e0',
-  InscriptionSigned: '0x11b5243fe7be5fc0aa7da0cd3c58558d66aad97bdafb0731a36bfd629ed363d',
-  InscriptionCancelled: '0x2a7cae08d6fcf0a5a795f0b4b4ce7b16baa6a1a4a2e6a8c3f3bcd4f5e6a7b8',
-  InscriptionRepaid: '0x3b8cde09e7fdf1b6b896f1c5de8c27dbb7b2b5b6c3d4e5f6a7b8c9d0e1f2a3',
-  InscriptionLiquidated: '0x4c9def10f8gef2c7c9a7g2d6ef9d38ecc8c3c6c7d4e5f6a7b8c9d0e1f2a3b4',
-  SharesRedeemed: '0x5daef021g9hfg3d8dab8h3e7fg0e49fdd9d4d7d8e5f6g7a8b9c0d1e2f3a4b5',
-  TransferSingle: '0x182d859c0807ba9db63baf8b9d9fdbfeb885571c66ca2bef834f588c0c2f6b0',
+  // Computed via starknet.js hash.getSelectorFromName() — must match services/indexer/src/rpc.ts
+  InscriptionCreated: '0x11b5243fe7be5fc0aa7da0cd3c58558d66aad97bdafb0731a36bfd629ed363d',
+  InscriptionSigned: '0x319f0b51fd47a51ff14b3ffb0104f54f852f987eec0abdad46ad0d8c37d1ea5',
+  InscriptionCancelled: '0x11ed06655bb16b354916e14261b6f0ddc226926efdb706556a29e9743f73985',
+  InscriptionRepaid: '0x3f03bc297f5792aa3ff0b8b538a1588d030b5923a9e7993c119289e5e5a38ea',
+  InscriptionLiquidated: '0xff101a14d2cba58e2f37a7e01826124cf6f114fbafff5ea1089210d80daba5',
+  SharesRedeemed: '0x20925ab6b063274d97de5700ecfa1a19dcda76364874f3f11398d58136c2747',
+  TransferSingle: '0x182d859c0807ba9db63baf8b9d9fdbfeb885d820be6e206b9dab626d995c433',
 }
 
 function parseInscriptionId(keys: string[]): string {

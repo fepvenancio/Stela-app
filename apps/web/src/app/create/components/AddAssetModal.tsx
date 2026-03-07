@@ -15,24 +15,24 @@ type AssetRole = 'debt' | 'collateral' | 'interest'
 
 const ROLE_META: Record<AssetRole, { label: string; short: string; color: string; bgClass: string; borderClass: string; textClass: string }> = {
   debt: {
-    label: 'Borrow',
-    short: 'Debt',
+    label: 'You Receive',
+    short: 'You Receive',
     color: 'nebula',
     bgClass: 'bg-nebula/10',
     borderClass: 'border-nebula/25',
     textClass: 'text-nebula',
   },
   collateral: {
-    label: 'Collateral',
-    short: 'Collat.',
+    label: 'You Lock',
+    short: 'You Lock',
     color: 'star',
     bgClass: 'bg-star/10',
     borderClass: 'border-star/25',
     textClass: 'text-star',
   },
   interest: {
-    label: 'Interest',
-    short: 'Interest',
+    label: 'Interests',
+    short: 'Interests',
     color: 'aurora',
     bgClass: 'bg-aurora/10',
     borderClass: 'border-aurora/25',

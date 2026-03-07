@@ -86,7 +86,33 @@ export function parseAssetArray(
   return { assets, nextOffset: pos }
 }
 
-const CREATE_INSCRIPTION_SELECTOR = '0x2c9e2d5cdae3b0cd945fbb8b55cded1be7e4e2e0c648940defcacbc5cbfb9cd'
+// Computed via starknet.js hash.getSelectorFromName()
+const CREATE_INSCRIPTION_SELECTOR = '0x1883531093e6399258a46b3e397a8ec94952f12d37afeeea49fb35b4361d262'
+const SETTLE_SELECTOR = '0x1482408710165f49db4f7b422428870c37d86b0624cd661b387e24aa64f0249'
+const BATCH_SETTLE_SELECTOR = '0x116475a69261425e56d6d49661fec19f7629381447afd9c70300115e6f44d0f'
+
+type MatchedCall = { selector: string; cd: string[] }
+
+/** Find matching call in multicall or direct transaction calldata */
+function findCall(calldata: string[], selectors: string[]): MatchedCall | null {
+  const numCalls = Number(BigInt(calldata[0]))
+
+  if (numCalls > 0 && numCalls < 100) {
+    // Multicall: [num_calls, to, selector, data_len, ...data, ...]
+    let pos = 1
+    for (let i = 0; i < numCalls; i++) {
+      const selector = standardizeHex(calldata[pos + 1])
+      const cdLen = Number(BigInt(calldata[pos + 2]))
+      const cdStart = pos + 3
+      if (selectors.includes(selector)) {
+        return { selector, cd: calldata.slice(cdStart, cdStart + cdLen) }
+      }
+      pos = cdStart + cdLen
+    }
+  }
+
+  return null
+}
 
 /** Extract and parse inscription assets from transaction calldata */
 export function parseInscriptionCalldata(calldata: string[]): {
@@ -95,37 +121,25 @@ export function parseInscriptionCalldata(calldata: string[]): {
   collateral: StoredAsset[]
 } | null {
   try {
-    // 1. Identify if this is a multicall or direct call
-    // Simple heuristic: num_calls at index 0
-    const numCalls = Number(BigInt(calldata[0]))
-    let innerCd: string[] | null = null
+    const match = findCall(calldata, [CREATE_INSCRIPTION_SELECTOR, SETTLE_SELECTOR, BATCH_SETTLE_SELECTOR])
+    if (!match) return null
 
-    if (numCalls > 0 && numCalls < 100) {
-      // Likely multicall: [num_calls, to, selector, data_len, ...data]
-      let pos = 1
-      for (let i = 0; i < numCalls; i++) {
-        const selector = standardizeHex(calldata[pos + 1])
-        const cdLen = Number(BigInt(calldata[pos + 2]))
-        const cdStart = pos + 3
-        if (selector === CREATE_INSCRIPTION_SELECTOR) {
-          innerCd = calldata.slice(cdStart, cdStart + cdLen)
-          break
-        }
-        pos = cdStart + cdLen
-      }
+    let offset: number
+    if (match.selector === CREATE_INSCRIPTION_SELECTOR) {
+      // create_inscription(InscriptionParams): is_borrow(1), debt_assets, interest_assets, collateral_assets, ...
+      offset = 1
+    } else if (match.selector === SETTLE_SELECTOR) {
+      // settle(InscriptionOrder(11), debt_assets, interest_assets, collateral_assets, ...)
+      offset = 11
     } else {
-      // Direct call: [params...]
-      innerCd = calldata
+      // batch_settle: orders array length + N orders, then flat asset arrays
+      // Too complex for single-inscription parsing — skip for now
+      return null
     }
 
-    if (!innerCd) return null
-
-    // 2. Parse inner calldata
-    // Layout: is_borrow (bool), debt_assets (arr), interest_assets (arr), collateral_assets (arr), ...
-    let offset = 1 // skip is_borrow
-    const { assets: debt, nextOffset: afterDebt } = parseAssetArray(innerCd, offset)
-    const { assets: interest, nextOffset: afterInterest } = parseAssetArray(innerCd, afterDebt)
-    const { assets: collateral } = parseAssetArray(innerCd, afterInterest)
+    const { assets: debt, nextOffset: afterDebt } = parseAssetArray(match.cd, offset)
+    const { assets: interest, nextOffset: afterInterest } = parseAssetArray(match.cd, afterDebt)
+    const { assets: collateral } = parseAssetArray(match.cd, afterInterest)
 
     return { debt, interest, collateral }
   } catch (err) {

@@ -2,6 +2,7 @@ import { createD1Queries } from '@stela/core'
 import type { Env } from './types.js'
 import { processWebhookEvent } from './handlers/index.js'
 import { webhookPayloadSchema } from './schemas.js'
+import { pollEvents } from './poll.js'
 
 // ---------------------------------------------------------------------------
 // Security helpers
@@ -113,6 +114,14 @@ export default {
         if (expired > 0) {
           console.log(`Expired ${expired} open inscription(s) past deadline`)
         }
+      })
+    )
+
+    // RPC polling fallback — indexes events directly from StarkNet RPC
+    // This ensures D1 stays in sync even when the Apibara service is down
+    ctx.waitUntil(
+      pollEvents(env).catch((err) => {
+        console.error('Poll fallback error:', err instanceof Error ? err.message : String(err))
       })
     )
   },
