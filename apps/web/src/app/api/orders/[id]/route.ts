@@ -5,6 +5,7 @@ import { CHAIN_ID } from '@/lib/config'
 import { getCancelOrderTypedData } from '@/lib/offchain'
 import { verifyStarknetSignature } from '@/lib/verify-signature'
 import { cancelOrderSchema } from '@/lib/validation'
+import { normalizeAddress } from '@stela/core'
 
 export function OPTIONS(request: NextRequest) {
   return handleOptions(request)
@@ -86,11 +87,8 @@ export async function DELETE(
     }
 
     // Verify the caller is the borrower who created this order
-    const normalizeAddr = (a: string) =>
-      '0x' + a.replace(/^0x/i, '').toLowerCase().padStart(64, '0')
-
-    const orderBorrower = normalizeAddr(orderRecord.borrower as string)
-    const caller = normalizeAddr(callerAddress)
+    const orderBorrower = normalizeAddress(orderRecord.borrower as string)
+    const caller = normalizeAddress(callerAddress)
 
     if (caller !== orderBorrower) {
       return errorResponse('Not authorized to cancel this order', 403, request)
@@ -109,6 +107,14 @@ export async function DELETE(
     }
 
     await db.updateOrderStatus(id, 'cancelled')
+
+    // Cancel any pending offers on this order
+    const offers = (await db.getOrderOffers(id)) as Record<string, unknown>[]
+    for (const offer of offers) {
+      if (offer.status === 'pending') {
+        await db.updateOfferStatus(offer.id as string, 'cancelled')
+      }
+    }
 
     // Purge signature immediately — no longer needed after cancellation
     await db.purgeOrderSignature(id)

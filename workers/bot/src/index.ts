@@ -109,13 +109,14 @@ async function expireStaleNonceOrders(
   const byBorrower = new Map<string, typeof pending>()
   for (const order of pending) {
     try {
-      const orderData: OrderData = JSON.parse(order.order_data as string)
+      const raw = order.order_data
+      const orderData: OrderData = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw))
       const borrower = normalizeAddress(orderData.borrower)
       const group = byBorrower.get(borrower)
       if (group) group.push(order)
       else byBorrower.set(borrower, [order])
-    } catch {
-      // Skip unparseable orders
+    } catch (err) {
+      console.warn(`Failed to parse order_data for order ${order.id}: ${err}`)
     }
   }
 
@@ -141,7 +142,8 @@ async function expireStaleNonceOrders(
 
     for (const order of orders) {
       try {
-        const orderData: OrderData = JSON.parse(order.order_data as string)
+        const raw = order.order_data
+        const orderData: OrderData = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw))
         const orderNonce = BigInt(orderData.nonce)
         if (onChainNonce !== orderNonce) {
           console.log(
@@ -205,7 +207,8 @@ async function settleOrders(
 
     try {
       // Parse stored order data
-      const orderData: OrderData = JSON.parse(row.order_data as string)
+      const rawData = row.order_data
+      const orderData: OrderData = JSON.parse(typeof rawData === 'string' ? rawData : JSON.stringify(rawData))
 
       // Pre-settle nonce check: verify both nonces are still valid on-chain
       const borrowerNonce = nonceCache.get(normalizeAddress(row.borrower as string))
@@ -310,9 +313,7 @@ async function settleOrders(
       console.log(`Submitted batch settlement of ${calls.length} orders: ${transaction_hash}`)
       await withTimeout(provider.waitForTransaction(transaction_hash), TX_TIMEOUT_MS)
 
-      for (const pair of settledPairs) {
-        await markSettled(queries, pair)
-      }
+      await markSettledBatch(queries, settledPairs)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error(`Batch settlement failed (${calls.length} orders): ${message}`)
@@ -339,6 +340,53 @@ async function markSettled(
   await queries.expireSiblingOrders(pair.order_id, pair.borrower, pair.nonce)
   await queries.purgeOrderSignature(pair.order_id)
   await queries.purgeOfferSignature(pair.offer_id)
+}
+
+/**
+ * Batch version of markSettled — uses D1 batch() to execute all post-settlement
+ * writes in a single round-trip instead of 5 sequential queries per pair.
+ */
+async function markSettledBatch(
+  queries: ReturnType<typeof createD1Queries>,
+  pairs: { order_id: string; offer_id: string; borrower: string; nonce: string }[],
+) {
+  if (pairs.length === 0) return
+
+  const db = queries.db
+  const statements: Parameters<typeof db.batch>[0] = []
+
+  for (const pair of pairs) {
+    const normalizedBorrower = normalizeAddress(pair.borrower)
+
+    // 1. Update order status to 'settled'
+    statements.push(
+      db.prepare('UPDATE orders SET status = ? WHERE id = ?').bind('settled', pair.order_id),
+    )
+    // 2. Update offer status to 'settled'
+    statements.push(
+      db.prepare('UPDATE order_offers SET status = ? WHERE id = ?').bind('settled', pair.offer_id),
+    )
+    // 3. Expire sibling orders with same borrower+nonce
+    statements.push(
+      db
+        .prepare(
+          `UPDATE orders SET status = 'expired' WHERE status = 'pending' AND id != ? AND LOWER(borrower) = LOWER(?) AND nonce = ?`,
+        )
+        .bind(pair.order_id, normalizedBorrower, pair.nonce),
+    )
+    // 4. Purge borrower signature
+    statements.push(
+      db.prepare('UPDATE orders SET borrower_signature = NULL WHERE id = ?').bind(pair.order_id),
+    )
+    // 5. Purge lender signature
+    statements.push(
+      db
+        .prepare('UPDATE order_offers SET lender_signature = NULL WHERE id = ?')
+        .bind(pair.offer_id),
+    )
+  }
+
+  await db.batch(statements)
 }
 
 async function executeSettlement(
@@ -383,7 +431,7 @@ export default {
     const work = async () => {
       // Acquire a D1-based lock atomically to prevent overlapping cron runs
       const LOCK_KEY = 'bot_lock'
-      const LOCK_TTL_SECONDS = 300 // 5 minutes
+      const LOCK_TTL_SECONDS = 150 // 2.5 minutes (just above 2-min cron interval)
       const acquired = await queries.tryAcquireLock(LOCK_KEY, now, LOCK_TTL_SECONDS)
       if (!acquired) {
         console.log('Skipping: lock held by another instance')

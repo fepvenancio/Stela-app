@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
-import type { AssetType, Asset } from '@fepvenancio/stela-sdk'
+import type { Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getBatchLendOfferTypedData, hashAssets, hashBatchEntries, getNonce } from '@/lib/offchain'
 import type { BatchEntry } from '@/lib/offchain'
@@ -13,28 +13,8 @@ import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { useWalletSign } from '@/hooks/useWalletSign'
 import type { SelectedOrder, SelectedOffchainOrder, SelectedOnchainOrder } from '@/lib/multi-match'
-
-function toSdkAssets(arr: Record<string, string>[] | undefined): Asset[] {
-  return (arr || []).map((a) => ({
-    asset_address: a.asset_address,
-    asset_type: a.asset_type as AssetType,
-    value: BigInt(a.value || '0'),
-    token_id: BigInt(a.token_id ?? '0'),
-  }))
-}
-
-function parseSigToArray(raw: string | string[]): string[] {
-  if (Array.isArray(raw)) return raw.map(String)
-  if (typeof raw === 'string') {
-    if (raw.startsWith('[')) return JSON.parse(raw) as string[]
-    if (raw.startsWith('{')) {
-      const obj = JSON.parse(raw) as { r: string; s: string }
-      return [obj.r, obj.s]
-    }
-    return raw.split(',')
-  }
-  throw new Error('Invalid signature format')
-}
+import { parseSigToArray } from '@/lib/signature'
+import { toSdkAssets } from '@/lib/asset-conversion'
 
 export type MultiSettlePhase =
   | 'idle' | 'validating' | 'signing' | 'executing'

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
   const status = searchParams.get('status') ?? 'pending'
   const address = searchParams.get('address') ?? undefined
-  const page = Math.max(1, Number(searchParams.get('page') ?? '1'))
+  const page = Math.max(1, Math.min(1000, Number(searchParams.get('page') ?? '1')))
   const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit') ?? '20')))
 
   try {

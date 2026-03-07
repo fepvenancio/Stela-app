@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
-import type { AssetType, Asset } from '@fepvenancio/stela-sdk'
+import type { Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { toast } from 'sonner'
@@ -12,36 +12,8 @@ import { getErrorMessage } from '@/lib/tx'
 import { findDebtBalanceShortfall } from '@/lib/balance'
 import type { TransactionProgress } from '@/hooks/useTransactionProgress'
 import { useWalletSign } from '@/hooks/useWalletSign'
-
-function toSdkAssets(arr: Record<string, string>[] | undefined): Asset[] {
-  return (arr || []).map((a) => ({
-    asset_address: a.asset_address,
-    asset_type: a.asset_type as AssetType,
-    value: BigInt(a.value),
-    token_id: BigInt(a.token_id ?? '0'),
-  }))
-}
-
-function parseSigToArray(raw: string | string[]): string[] {
-  if (Array.isArray(raw)) return raw.map(String)
-  if (typeof raw === 'string') {
-    if (raw.startsWith('[')) return JSON.parse(raw) as string[]
-    if (raw.startsWith('{')) {
-      const obj = JSON.parse(raw) as { r: string; s: string }
-      return [obj.r, obj.s]
-    }
-    return raw.split(',')
-  }
-  throw new Error('Invalid signature format')
-}
-
-function formatSig(signature: unknown): string[] {
-  if (Array.isArray(signature)) {
-    return signature.map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s))
-  }
-  const sig = signature as { r: unknown; s: unknown }
-  return [sig.r, sig.s].map((s: unknown) => typeof s === 'bigint' ? '0x' + s.toString(16) : String(s))
-}
+import { parseSigToArray } from '@/lib/signature'
+import { toSdkAssets } from '@/lib/asset-conversion'
 
 export function useSignOrder(orderId: string) {
   const { address, account } = useAccount()

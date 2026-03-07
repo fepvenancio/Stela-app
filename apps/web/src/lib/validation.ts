@@ -110,7 +110,13 @@ export const createOrderSchema = z.object({
   })]),
   borrower_signature: signatureInput,
   nonce: z.string().min(1, 'Nonce is required'),
-  deadline: z.coerce.number().int().positive('Deadline must be a positive integer'),
+  deadline: z.coerce.number().int().positive('Deadline must be a positive integer').refine(
+    (val) => val > Math.floor(Date.now() / 1000) + 60,
+    'Deadline must be at least 1 minute in the future'
+  ).refine(
+    (val) => val < Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+    'Deadline cannot be more than 1 year in the future'
+  ),
 })
 
 /** POST /api/orders/:id/offer request body */

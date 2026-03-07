@@ -71,3 +71,7 @@ CREATE INDEX IF NOT EXISTS idx_shares_account ON share_balances(account);
 
 -- Dedup index: prevents duplicate events from being inserted (idempotency)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_events_dedup ON inscription_events(inscription_id, event_type, tx_hash);
+
+CREATE INDEX IF NOT EXISTS idx_inscriptions_liquidatable ON inscriptions(status, signed_at, duration);
+CREATE INDEX IF NOT EXISTS idx_assets_role ON inscription_assets(asset_role);
+CREATE INDEX IF NOT EXISTS idx_assets_address ON inscription_assets(asset_address);

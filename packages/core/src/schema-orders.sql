@@ -36,3 +36,9 @@ CREATE INDEX IF NOT EXISTS idx_order_offers_status ON order_offers(status);
 CREATE INDEX IF NOT EXISTS idx_orders_match ON orders(status, debt_token, collateral_token, duration_seconds);
 -- Bot settlement queries
 CREATE INDEX IF NOT EXISTS idx_orders_status_deadline ON orders(status, deadline);
+
+CREATE INDEX IF NOT EXISTS idx_orders_pending_deadline ON orders(status, deadline);
+CREATE INDEX IF NOT EXISTS idx_orders_match_deadline ON orders(status, debt_token, collateral_token, duration_seconds, deadline);
+CREATE INDEX IF NOT EXISTS idx_orders_borrower_status ON orders(borrower, status);
+CREATE INDEX IF NOT EXISTS idx_order_offers_lender_status ON order_offers(lender, status);
+CREATE INDEX IF NOT EXISTS idx_order_offers_status_order_id ON order_offers(status, order_id);

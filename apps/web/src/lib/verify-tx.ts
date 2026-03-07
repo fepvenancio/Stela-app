@@ -7,11 +7,7 @@
  */
 
 import { RPC_URL, CONTRACT_ADDRESS } from '@/lib/config'
-
-/** Normalize a StarkNet address for comparison (strip 0x and leading zeros). */
-function normalizeAddr(addr: string): string {
-  return addr.replace(/^0x0*/i, '').toLowerCase() || '0'
-}
+import { normalizeAddress } from '@stela/core'
 
 /**
  * Verify that a transaction hash corresponds to a successful on-chain transaction
@@ -49,9 +45,9 @@ export async function verifySettleTransaction(txHash: string): Promise<boolean> 
     if (data.result.execution_status !== 'SUCCEEDED') return false
 
     // Must involve the Stela contract (check events emitted from it)
-    const stelaNorm = normalizeAddr(CONTRACT_ADDRESS)
+    const stelaNorm = normalizeAddress(CONTRACT_ADDRESS)
     const involvesStela = data.result.events?.some(
-      (e) => normalizeAddr(e.from_address) === stelaNorm,
+      (e) => normalizeAddress(e.from_address) === stelaNorm,
     )
 
     return involvesStela ?? false

@@ -7,6 +7,7 @@
 
 import type { InscriptionStatus } from './types.js'
 import { VALID_STATUSES } from './types.js'
+import { normalizeAddress } from './u256.js'
 
 /** Minimal D1 interface so callers don't need wrangler types at compile time */
 export interface D1Database {
@@ -48,15 +49,6 @@ function isValidStatus(s: string): s is InscriptionStatus {
   return (VALID_STATUSES as readonly string[]).includes(s)
 }
 
-/**
- * Normalize a StarkNet address to a canonical lowercase 0x-padded form.
- * This avoids needing separate padded/unpadded comparisons in SQL queries.
- */
-function normalizeAddress(address: string): string {
-  const stripped = address.replace(/^0x/i, '').toLowerCase()
-  return '0x' + stripped.padStart(64, '0')
-}
-
 // ---------------------------------------------------------------------------
 // Query helpers
 // ---------------------------------------------------------------------------
@@ -70,6 +62,8 @@ export interface GetInscriptionsParams {
 
 export function createD1Queries(db: D1Database) {
   return {
+    /** Expose the raw D1 database handle for batch operations */
+    get db() { return db },
     // -----------------------------------------------------------------------
     // Reads
     // -----------------------------------------------------------------------
