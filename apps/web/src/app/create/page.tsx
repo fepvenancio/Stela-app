@@ -676,51 +676,44 @@ export default function CreatePage() {
       <div className="fixed top-1/4 -left-20 w-64 h-64 bg-star/[0.04] rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-1/4 -right-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
-      {/* ── Header + Type Toggle ──────────────────────────── */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl sm:text-3xl tracking-[0.3em] text-chalk uppercase">
-          Inscribe
-        </h1>
-
-        <div className="flex items-center gap-3">
-          {/* Lending / Swap toggle */}
-          <div className="bg-void/60 backdrop-blur border border-edge/30 p-1 rounded-xl flex items-center gap-0.5">
-            {(['lending', 'swap'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => {
-                  setOrderType(t)
-                  if (t === 'swap') { setInterestAssets([]); setUseCustomDuration(false) }
-                  else if (durationPreset === '0') setDurationPreset('86400')
-                }}
-                className={`px-5 py-1.5 rounded-lg text-[11px] font-display tracking-[0.15em] transition-all duration-200 cursor-pointer uppercase ${
-                  orderType === t
-                    ? 'bg-star/10 text-star border border-star/20'
-                    : 'text-dust/60 hover:text-dust border border-transparent'
-                }`}
-              >
-                {t === 'lending' ? 'Lending' : 'Swap'}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={resetForm}
-            className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer px-2 py-1.5"
-            title="Reset form"
-          >
-            Reset
-          </button>
+      {/* ── Step 1: Type Toggle (first choice, left-aligned) ── */}
+      <div className="flex items-center gap-4 mb-5">
+        <div className="bg-void/60 backdrop-blur border border-edge/30 p-1 rounded-xl flex items-center gap-0.5">
+          {(['lending', 'swap'] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setOrderType(t)
+                if (t === 'swap') { setInterestAssets([]); setUseCustomDuration(false) }
+                else if (durationPreset === '0') setDurationPreset('86400')
+              }}
+              className={`px-6 py-2 rounded-lg text-[12px] font-display tracking-[0.15em] transition-all duration-200 cursor-pointer uppercase ${
+                orderType === t
+                  ? 'bg-star/10 text-star border border-star/20'
+                  : 'text-dust/60 hover:text-dust border border-transparent'
+              }`}
+            >
+              {t === 'lending' ? 'Lending' : 'Swap'}
+            </button>
+          ))}
         </div>
+
+        <button
+          type="button"
+          onClick={resetForm}
+          className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer px-2 py-1.5 ml-auto"
+          title="Reset form"
+        >
+          Reset
+        </button>
       </div>
 
       {/* ── Main 2-Column Layout ─────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
 
         {/* ── Left Column: Form ──────────────────────────── */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
 
           {/* ── Settings Row (Mode + Funding) ─────────────── */}
           <div className="rounded-xl border border-edge/30 bg-surface/5 px-4 py-3">
@@ -952,8 +945,9 @@ export default function CreatePage() {
         </div>
 
         {/* ── Right Column: Summary + Submit ─────────────── */}
-        <div>
-          <section className="rounded-xl border border-star/30 bg-star/5 p-4 space-y-4 lg:sticky lg:top-20">
+        <div className="lg:row-span-full">
+          <section className="rounded-xl border border-star/30 bg-star/5 p-4 flex flex-col lg:sticky lg:top-20 lg:min-h-[calc(100vh-120px)]">
+            {/* Summary details at top */}
             <div className="space-y-2.5">
               <span className="text-[10px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-1.5">
                 Summary
@@ -994,6 +988,10 @@ export default function CreatePage() {
               </div>
             </div>
 
+            {/* Spacer pushes submit to bottom */}
+            <div className="flex-1 min-h-6" />
+
+            {/* Submit button pinned at bottom */}
             <Web3ActionWrapper message="Connect wallet to inscribe">
               <Button
                 variant="gold"
