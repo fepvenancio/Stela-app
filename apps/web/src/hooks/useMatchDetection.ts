@@ -14,6 +14,7 @@ export interface MatchAsset {
 /** On-chain inscription match returned by /api/inscriptions/match */
 export interface OnChainMatch {
   id: string
+  creator: string
   borrower: string
   duration: number
   deadline: number

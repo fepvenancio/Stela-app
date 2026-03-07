@@ -5,7 +5,6 @@ import { useAccount } from '@starknet-react/core'
 import { normalizeAddress } from '@/lib/address'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
-import { SummaryBar } from '@/components/portfolio/SummaryBar'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
 import { OrderListRow } from '@/components/OrderListRow'
 import { ListingTableHeader } from '@/components/ListingTableHeader'
@@ -104,7 +103,7 @@ const TAB_CONFIG = [
 export default function PortfolioPage() {
   const { address } = useAccount()
   const normalized = address ? normalizeAddress(address) : undefined
-  const { lending, borrowing, repaid, redeemable, orders, borrowingOrders, lendingOrders, swapOrders, summary, isLoading, error } = usePortfolio(normalized)
+  const { lending, borrowing, repaid, redeemable, orders, borrowingOrders, lendingOrders, swapOrders, isLoading, error } = usePortfolio(normalized)
   const [search, setSearch] = useState('')
 
   const q = search.trim().toLowerCase()
@@ -187,11 +186,6 @@ export default function PortfolioPage() {
         {/* Loading */}
         {isLoading && !error && (
           <div role="status" aria-busy="true" aria-label="Loading portfolio">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-2xl bg-surface/20 border border-edge/20" />
-              ))}
-            </div>
             <div className="space-y-px">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-9 w-full bg-surface/10" />
@@ -204,8 +198,6 @@ export default function PortfolioPage() {
         {/* Loaded content */}
         {!isLoading && !error && (
           <>
-            <SummaryBar summary={summary} />
-
             {/* Search */}
             <div className="relative mb-5">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ash" aria-hidden="true" />

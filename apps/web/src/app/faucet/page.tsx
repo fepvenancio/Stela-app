@@ -107,9 +107,17 @@ function MintCard({
       <div className="p-5 space-y-4">
         <div className="space-y-1">
           <span className="text-[9px] text-dust uppercase tracking-widest font-bold">Contract Address</span>
-          <p className="text-[10px] font-mono text-dust truncate bg-void/30 px-2 py-1.5 rounded border border-edge/10">
-            {token.address}
-          </p>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(token.address)
+              toast.success('Address copied', { description: formatAddress(token.address) })
+            }}
+            className="w-full text-left text-[10px] font-mono text-dust bg-void/30 px-2 py-1.5 rounded border border-edge/10 hover:border-star/30 hover:text-chalk transition-colors cursor-pointer truncate"
+            title={token.address}
+          >
+            {formatAddress(token.address)}
+          </button>
         </div>
 
         <div className="flex gap-3 items-end">

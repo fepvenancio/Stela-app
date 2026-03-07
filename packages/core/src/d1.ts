@@ -560,6 +560,7 @@ export function createD1Queries(db: D1Database) {
       limit?: number
     }): Promise<Array<{
       id: string
+      creator: string
       borrower: string
       duration: number
       deadline: number
@@ -573,7 +574,7 @@ export function createD1Queries(db: D1Database) {
       const conditions: string[] = [
         `i.status = 'open'`,
         `i.multi_lender = 0`,
-        `LOWER(i.borrower) != LOWER(?)`,
+        `LOWER(i.creator) != LOWER(?)`,
       ]
       const bindParams: unknown[] = [normalizedBorrower]
 
@@ -586,7 +587,7 @@ export function createD1Queries(db: D1Database) {
 
       const result = await db
         .prepare(
-          `SELECT DISTINCT i.id, i.borrower, i.duration, i.deadline, i.status
+          `SELECT DISTINCT i.id, i.creator, i.borrower, i.duration, i.deadline, i.status
            FROM inscriptions i
            JOIN inscription_assets ia_debt
              ON ia_debt.inscription_id = i.id
@@ -603,6 +604,7 @@ export function createD1Queries(db: D1Database) {
         .bind(normalizedDebt, normalizedCollateral, ...bindParams, limit)
         .all<{
           id: string
+          creator: string
           borrower: string
           duration: number
           deadline: number

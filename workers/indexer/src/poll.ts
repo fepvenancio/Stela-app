@@ -155,7 +155,7 @@ async function rpcEventToWebhookEvent(event: RpcEvent, stelaAddress: string): Pr
           params: {
             request: {
               contract_address: stelaAddress,
-              entry_point_selector: '0x0227891b6da5e8ab05fa75b1e87ab12e6f4537e6f4b1e3c6b1b0e3b2e7ec55d',
+              entry_point_selector: '0x188e727afe1a34c180f91cc3f0f83cff51bf2da5bcd6c00f050164bc8bea06e',
               calldata: [
                 // inscription_id as u256 (low, high)
                 '0x' + BigInt(event.keys[1]).toString(16),
