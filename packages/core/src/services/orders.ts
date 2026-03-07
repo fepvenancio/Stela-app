@@ -73,15 +73,24 @@ export async function processCreateOrder(
   // but implemented here without external SDK dependency for server-side purity
   const messageHash = computeOrderHash(order_data, options.chainId)
 
-  // Verify signature + nonce in parallel
-  const [sigValid, nonceCheck] = await Promise.all([
+  // Verify signature + nonce + count pending orders in parallel
+  const submittedNonce = BigInt(order_data.nonce)
+  const [sigValid, nonceCheck, pendingOrders] = await Promise.all([
     options.verifySignature(borrower, messageHash, borrower_signature),
-    options.verifyNonce(borrower, BigInt(order_data.nonce)),
+    options.verifyNonce(borrower, submittedNonce),
+    db.getOrders({ status: 'pending', address: borrower, page: 1, limit: 100 }),
   ])
 
   if (!sigValid) throw new Error('Invalid borrower signature')
+
   if (!nonceCheck.valid) {
-    throw new Error(`Nonce mismatch: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}`)
+    // Allow if submitted nonce accounts for pending orders that haven't settled yet.
+    // E.g., on-chain=0, 1 pending order at nonce 0, submitted=1 is valid (next in queue).
+    const pendingCount = BigInt((pendingOrders as unknown[]).length)
+    const onChain = nonceCheck.onChain ?? 0n
+    if (submittedNonce > onChain + pendingCount || submittedNonce < onChain) {
+      throw new Error(`Nonce mismatch: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}, pending=${pendingCount}`)
+    }
   }
 
   // Idempotency check
