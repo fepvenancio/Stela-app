@@ -428,6 +428,31 @@ export default function CreatePage() {
         deadline: BigInt(deadline || '0'),
         multiLender,
       }, onchainProgress)
+
+      // On-chain inscription optimistic update
+      const tempId = `pending-onchain-${Date.now()}`
+      addOptimisticInscription({
+        id: tempId,
+        creator: address,
+        borrower: address,
+        lender: null,
+        status: 'pending',
+        issued_debt_percentage: '0',
+        multi_lender: multiLender,
+        duration: String(duration),
+        deadline: String(deadline),
+        signed_at: null,
+        debt_asset_count: sdkDebtAssets.length,
+        interest_asset_count: sdkInterestAssets.length,
+        collateral_asset_count: sdkCollateralAssets.length,
+        created_at_ts: String(Math.floor(Date.now() / 1000)),
+        assets: [
+          ...sdkDebtAssets.map((a, i) => ({ inscription_id: tempId, asset_role: 'debt' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+          ...sdkInterestAssets.map((a, i) => ({ inscription_id: tempId, asset_role: 'interest' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+          ...sdkCollateralAssets.map((a, i) => ({ inscription_id: tempId, asset_role: 'collateral' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+        ]
+      })
+
       resetForm()
     } catch (err: unknown) {
       onchainProgress.fail(getErrorMessage(err))

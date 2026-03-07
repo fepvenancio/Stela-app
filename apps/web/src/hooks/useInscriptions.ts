@@ -47,13 +47,16 @@ export function useInscriptions(params?: InscriptionListParams) {
 
   const data = useMemo(() => {
     const indexed = raw?.data ?? []
-    // Filter out duplicates if any (should be handled by the clear logic above but safe-guarded here)
     const indexedIds = new Set(indexed.map(i => i.id))
-    const filteredOptimistic = optimisticInscriptions.filter(i => !indexedIds.has(i.id))
     
-    // Sort combined data: pending first, then by creation date
+    // Include optimistic entries if we are viewing "all" or "open"
+    const showPending = !params?.status || params.status === 'all' || params.status === 'open'
+    const filteredOptimistic = showPending 
+      ? optimisticInscriptions.filter(i => !indexedIds.has(i.id))
+      : []
+    
     return [...filteredOptimistic, ...indexed]
-  }, [raw?.data, optimisticInscriptions])
+  }, [raw?.data, optimisticInscriptions, params?.status])
 
   return { data, isLoading, error, refetch }
 }
