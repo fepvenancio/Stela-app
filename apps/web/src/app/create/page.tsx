@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, toU256, getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
@@ -9,15 +9,10 @@ import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID, NETWORK } from '@/lib/config'
 import { getInscriptionOrderTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
 import type { AssetInputValue } from '@/components/AssetInput'
-import { TokenSelectorModal } from '@/components/TokenSelectorModal'
-import { TokenAvatar, TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { formatTimestamp, formatDisplayAmount } from '@/lib/format'
@@ -646,44 +641,85 @@ export default function CreatePage() {
         </p>
       </div>
 
-      {/* Options & Controls */}
-      <div className="space-y-6 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="space-y-1.5">
-              <span className="text-[10px] text-dust uppercase tracking-widest font-bold ml-1">Type</span>
-              <ToggleGroup type="single" value={orderType} onValueChange={(v) => { if (v) { setOrderType(v as 'lending' | 'swap'); if (v === 'swap') { setInterestAssets([]); setUseCustomDuration(false); } else if (durationPreset === '0') setDurationPreset('86400'); } }} className="flex gap-2">
-                <ToggleGroupItem value="lending" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Lending</ToggleGroupItem>
-                <ToggleGroupItem value="swap" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Swap</ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] text-dust uppercase tracking-widest font-bold ml-1">Mode</span>
-              <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v as 'offchain' | 'onchain')} className="flex gap-2">
-                <ToggleGroupItem value="offchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Off-Chain</ToggleGroupItem>
-                <ToggleGroupItem value="onchain" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">On-Chain</ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] text-dust uppercase tracking-widest font-bold ml-1">Funding</span>
-              <ToggleGroup type="single" value={multiLender ? 'multi' : 'single'} onValueChange={(v) => v && setMultiLender(v === 'multi')} className="flex gap-2">
-                <ToggleGroupItem value="single" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Single Lender</ToggleGroupItem>
-                <ToggleGroupItem value="multi" className="px-4 py-2 rounded-xl text-sm data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50">Multi-Lender</ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          </div>
-
-          <div className="flex items-end">
-            <Button
-              variant="ghost"
-              onClick={resetForm}
-              className="text-ash hover:text-nova hover:bg-nova/10 text-xs uppercase tracking-widest h-9"
+      {/* ── Primary Tabs: Lending / Swap ─────────────────── */}
+      <div className="mb-8 space-y-4">
+        <div className="flex items-center gap-1 rounded-xl bg-surface/40 border border-edge/30 p-1 w-fit">
+          {(['lending', 'swap'] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setOrderType(t)
+                if (t === 'swap') { setInterestAssets([]); setUseCustomDuration(false) }
+                else if (durationPreset === '0') setDurationPreset('86400')
+              }}
+              className={`relative px-6 py-2.5 rounded-lg text-sm font-semibold tracking-wider uppercase transition-all cursor-pointer ${
+                orderType === t
+                  ? 'bg-star/15 text-star shadow-[0_0_12px_rgba(232,168,37,0.1)] border border-star/30'
+                  : 'text-dust hover:text-chalk border border-transparent'
+              }`}
             >
-              Reset Form
-            </Button>
+              {t === 'lending' ? 'Lending' : 'Swap'}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Inline Settings Row ──────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
+            <div className="flex gap-1">
+              {(['offchain', 'onchain'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMode(m)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    mode === m
+                      ? 'bg-star/10 text-star border border-star/25'
+                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  }`}
+                >
+                  {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                </button>
+              ))}
+            </div>
           </div>
+
+          <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
+            <div className="flex gap-1">
+              {([
+                { value: 'single', label: 'Single Lender' },
+                { value: 'multi', label: 'Multi-Lender' },
+              ] as const).map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setMultiLender(f.value === 'multi')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    (multiLender ? 'multi' : 'single') === f.value
+                      ? 'bg-star/10 text-star border border-star/25'
+                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+
+          <button
+            type="button"
+            onClick={resetForm}
+            className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
+          >
+            Reset
+          </button>
         </div>
       </div>
 
