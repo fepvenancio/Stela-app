@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { typedData as starknetTypedData, hash, shortString } from 'starknet'
-import { normalizeAddress, standardizeHex } from '../u256.js'
+import { typedData as starknetTypedData } from 'starknet'
+import { normalizeAddress } from '../u256.js'
 import { hashAssets } from '../calldata.js'
 import type { D1Queries } from '../d1.js'
 import type { AssetType } from '../types.js'
@@ -116,61 +116,59 @@ export async function processCreateOrder(
   return { id, existing: false }
 }
 
-/** Reconstruct SNIP-12 hash server-side */
+/** Reconstruct SNIP-12 hash server-side — MUST match SDK's getInscriptionOrderTypedData */
 function computeOrderHash(data: z.infer<typeof orderDataSchema>, chainId: string): string {
-  const domain = {
-    name: 'Stela',
-    version: '1',
-    chainId,
+  const toStoredAssets = (arr: { asset_address: string; asset_type: string; value: string; token_id: string }[]) =>
+    arr.map(a => ({
+      asset_address: a.asset_address,
+      asset_type: a.asset_type as AssetType,
+      value: a.value,
+      token_id: a.token_id,
+    }))
+
+  const typedData = {
+    types: {
+      StarknetDomain: [
+        { name: 'name', type: 'shortstring' },
+        { name: 'version', type: 'shortstring' },
+        { name: 'chainId', type: 'shortstring' },
+        { name: 'revision', type: 'shortstring' },
+      ],
+      InscriptionOrder: [
+        { name: 'borrower', type: 'ContractAddress' },
+        { name: 'debt_hash', type: 'felt' },
+        { name: 'interest_hash', type: 'felt' },
+        { name: 'collateral_hash', type: 'felt' },
+        { name: 'debt_count', type: 'u128' },
+        { name: 'interest_count', type: 'u128' },
+        { name: 'collateral_count', type: 'u128' },
+        { name: 'duration', type: 'u128' },
+        { name: 'deadline', type: 'u128' },
+        { name: 'multi_lender', type: 'bool' },
+        { name: 'nonce', type: 'felt' },
+      ],
+    },
+    primaryType: 'InscriptionOrder' as const,
+    domain: {
+      name: 'Stela',
+      version: 'v1',
+      chainId,
+      revision: '1',
+    },
+    message: {
+      borrower: data.borrower,
+      debt_hash: hashAssets(toStoredAssets(data.debtAssets)),
+      interest_hash: hashAssets(toStoredAssets(data.interestAssets)),
+      collateral_hash: hashAssets(toStoredAssets(data.collateralAssets)),
+      debt_count: String(data.debtAssets.length),
+      interest_count: String(data.interestAssets.length),
+      collateral_count: String(data.collateralAssets.length),
+      duration: data.duration,
+      deadline: data.deadline,
+      multi_lender: data.multiLender,
+      nonce: data.nonce,
+    },
   }
 
-  const types = {
-    StarkNetDomain: [
-      { name: 'name', type: 'felt' },
-      { name: 'version', type: 'felt' },
-      { name: 'chainId', type: 'felt' },
-    ],
-    Asset: [
-      { name: 'asset', type: 'felt' },
-      { name: 'asset_type', type: 'felt' },
-      { name: 'value', type: 'u256' },
-      { name: 'token_id', type: 'u256' },
-    ],
-    InscriptionOrder: [
-      { name: 'borrower', type: 'felt' },
-      { name: 'debt_assets', type: 'Asset*' },
-      { name: 'interest_assets', type: 'Asset*' },
-      { name: 'collateral_assets', type: 'Asset*' },
-      { name: 'debt_count', type: 'felt' },
-      { name: 'interest_count', type: 'felt' },
-      { name: 'collateral_count', type: 'felt' },
-      { name: 'duration', type: 'felt' },
-      { name: 'deadline', type: 'felt' },
-      { name: 'multi_lender', type: 'felt' },
-      { name: 'nonce', type: 'felt' },
-    ],
-  }
-
-  const toSdkAssets = (arr: any[]) => arr.map(a => ({
-    asset: a.asset_address,
-    asset_type: a.asset_type,
-    value: BigInt(a.value),
-    token_id: BigInt(a.token_id)
-  }))
-
-  const message = {
-    borrower: data.borrower,
-    debt_assets: toSdkAssets(data.debtAssets),
-    interest_assets: toSdkAssets(data.interestAssets),
-    collateral_assets: toSdkAssets(data.collateralAssets),
-    debt_count: data.debtAssets.length,
-    interest_count: data.interestAssets.length,
-    collateral_count: data.collateralAssets.length,
-    duration: data.duration,
-    deadline: data.deadline,
-    multi_lender: data.multiLender ? '1' : '0',
-    nonce: data.nonce,
-  }
-
-  return starknetTypedData.getMessageHash({ types, primaryType: 'InscriptionOrder', domain, message }, data.borrower)
+  return starknetTypedData.getMessageHash(typedData, data.borrower)
 }
