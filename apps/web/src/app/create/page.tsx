@@ -34,6 +34,7 @@ import { InlineMatchList } from '@/components/InlineMatchList'
 import { useMultiSettle } from '@/hooks/useMultiSettle'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
 import { selectOrders } from '@/lib/multi-match'
+import { addOptimisticInscription } from '@/hooks/useInscriptions'
 
 /* ── Types ──────────────────────────────────────────────── */
 
@@ -918,6 +919,30 @@ export default function CreatePage() {
       toast.success('Order signed & submitted', {
         description: 'Your inscription order is now live. No gas was spent!',
       })
+
+      // Push optimistic update to other pages (Portfolio/Stelas)
+      addOptimisticInscription({
+        id: orderId,
+        creator: address,
+        borrower: address,
+        lender: null,
+        status: 'pending', // Special status for optimistic UI
+        issued_debt_percentage: '0',
+        multi_lender: multiLender,
+        duration: String(duration),
+        deadline: String(deadline),
+        signed_at: null,
+        debt_asset_count: sdkDebtAssets.length,
+        interest_asset_count: sdkInterestAssets.length,
+        collateral_asset_count: sdkCollateralAssets.length,
+        created_at_ts: String(Math.floor(Date.now() / 1000)),
+        assets: [
+          ...sdkDebtAssets.map((a, i) => ({ inscription_id: orderId, asset_role: 'debt' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+          ...sdkInterestAssets.map((a, i) => ({ inscription_id: orderId, asset_role: 'interest' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+          ...sdkCollateralAssets.map((a, i) => ({ inscription_id: orderId, asset_role: 'collateral' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+        ]
+      })
+
       resetForm()
     } catch (err: unknown) {
       createProgress.fail(getErrorMessage(err))

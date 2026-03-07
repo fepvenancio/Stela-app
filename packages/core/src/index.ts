@@ -37,6 +37,8 @@ export {
   serializeAssetCalldata,
   hashAssets,
   serializeSignatureCalldata,
+  parseAssetArray,
+  parseInscriptionCalldata,
 } from './calldata.js'
 
 export type { TokenInfo } from './tokens.js'

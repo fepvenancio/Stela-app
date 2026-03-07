@@ -1,6 +1,6 @@
-import { createD1Queries, normalizeAddress, standardizeHex } from '@stela/core'
+import { createD1Queries, normalizeAddress, standardizeHex, parseInscriptionCalldata } from '@stela/core'
 import type { D1Queries } from '@stela/core'
-import { inscriptionIdToHex, fromU256, MAX_BPS, ASSET_TYPE_NAMES } from '@stela/core'
+import { inscriptionIdToHex, fromU256, MAX_BPS } from '@stela/core'
 import type { Env } from './types.js'
 import { processWebhookEvent } from './handlers/index.js'
 
@@ -119,74 +119,6 @@ interface ParsedAsset {
   token_id: string
 }
 
-function parseAssetArray(
-  calldata: string[],
-  offset: number,
-): { assets: ParsedAsset[]; nextOffset: number } {
-  const count = Number(BigInt(calldata[offset]))
-  let pos = offset + 1
-  const assets: ParsedAsset[] = []
-
-  for (let i = 0; i < count; i++) {
-    const address = normalizeAddress(calldata[pos])
-    const typeEnum = Number(BigInt(calldata[pos + 1]))
-    const valueLow = BigInt(calldata[pos + 2])
-    const valueHigh = BigInt(calldata[pos + 3])
-    const tokenIdLow = BigInt(calldata[pos + 4])
-    const tokenIdHigh = BigInt(calldata[pos + 5])
-
-    assets.push({
-      asset_address: address,
-      asset_type: ASSET_TYPE_NAMES[typeEnum] ?? `unknown(${typeEnum})`,
-      value: fromU256({ low: valueLow, high: valueHigh }).toString(),
-      token_id: fromU256({ low: tokenIdLow, high: tokenIdHigh }).toString(),
-    })
-    pos += 6
-  }
-
-  return { assets, nextOffset: pos }
-}
-
-/** Extract create_inscription inner calldata from multicall */
-function extractCreateCalldata(calldata: string[], createSelectorNorm: string): string[] | null {
-  try {
-    const numCalls = Number(BigInt(calldata[0]))
-    let pos = 1
-
-    for (let i = 0; i < numCalls; i++) {
-      const selector = standardizeHex(calldata[pos + 1])
-      const cdLen = Number(BigInt(calldata[pos + 2]))
-      const cdStart = pos + 3
-
-      if (selector === createSelectorNorm) {
-        return calldata.slice(cdStart, cdStart + cdLen)
-      }
-      pos = cdStart + cdLen
-    }
-    return null
-  } catch {
-    return null
-  }
-}
-
-/** Parse create_inscription calldata into asset arrays */
-function parseCreateCalldata(innerCd: string[]): { debt: ParsedAsset[]; interest: ParsedAsset[]; collateral: ParsedAsset[] } | null {
-  try {
-    let offset = 1 // skip is_borrow
-    const { assets: debt, nextOffset: afterDebt } = parseAssetArray(innerCd, offset)
-    const { assets: interest, nextOffset: afterInterest } = parseAssetArray(innerCd, afterDebt)
-    const { assets: collateral } = parseAssetArray(innerCd, afterInterest)
-    return { debt, interest, collateral }
-  } catch {
-    return null
-  }
-}
-
-// The create_inscription selector — we need to compute it
-// keccak256("create_inscription") truncated to felt252
-// From starknet.js: hash.getSelectorFromName('create_inscription')
-const CREATE_INSCRIPTION_SELECTOR = '0x2c9e2d5cdae3b0cd945fbb8b55cded1be7e4e2e0c648940defcacbc5cbfb9cd'
-
 async function rpcEventToWebhookEvent(event: RpcEvent, stelaAddress: string): Promise<import('@stela/core').WebhookEvent | null> {
   const selector = standardizeHex(event.keys[0])
   const now = Math.floor(Date.now() / 1000)
@@ -205,19 +137,8 @@ async function rpcEventToWebhookEvent(event: RpcEvent, stelaAddress: string): Pr
     try {
       const tx = await fetchTxReceipt(event.transaction_hash)
       if (tx.calldata) {
-        const innerCd = extractCreateCalldata(tx.calldata, standardizeHex(CREATE_INSCRIPTION_SELECTOR))
-        if (innerCd) {
-          const parsed = parseCreateCalldata(innerCd)
-          if (parsed) assets = parsed
-
-          // Parse duration, deadline, multi_lender from end of calldata
-          // Layout after collateral array: duration (u64), deadline (u64), multi_lender (bool)
-          try {
-            const { nextOffset: afterCollateral } = parseAssetArray(innerCd, 1) // skip is_borrow
-            const { nextOffset: afterInterest2 } = parseAssetArray(innerCd, afterCollateral)
-            // Actually need to re-parse properly
-          } catch { /* fallback to RPC below */ }
-        }
+        const parsed = parseInscriptionCalldata(tx.calldata)
+        if (parsed) assets = parsed
       }
     } catch (err) {
       console.warn(`Failed to fetch tx ${event.transaction_hash}:`, err)
