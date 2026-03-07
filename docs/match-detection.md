@@ -129,7 +129,7 @@ ORDER BY i.created_at_ts DESC
 LIMIT ?
 ```
 
-**Key detail:** This query matches on the SAME tokens (not mirrored). An on-chain inscription's `debt` is what the creator wants to borrow and `collateral` is what they locked. The frontend passes the user's desired tokens directly — if both inscriptions want the same debt/collateral pair, they're compatible for a swap where one becomes the lender for the other.
+**Key detail:** This query uses **mirror matching** (same as off-chain). The user's `debtToken` (what they want) is matched against `ia_coll.asset_address` (what the counterparty locked as collateral), and the user's `collateralToken` (what they offer) is matched against `ia_debt.asset_address` (what the counterparty wants to borrow). The SQL column names match the role labels, but the bind order swaps them.
 
 **Returns:** Up to 10 inscriptions with `id`, `creator`, `borrower`, `duration`, `deadline`, `status`.
 

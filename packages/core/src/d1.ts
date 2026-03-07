@@ -601,7 +601,7 @@ export function createD1Queries(db: D1Database) {
            ORDER BY i.created_at_ts DESC
            LIMIT ?`
         )
-        .bind(normalizedDebt, normalizedCollateral, ...bindParams, limit)
+        .bind(normalizedCollateral, normalizedDebt, ...bindParams, limit)
         .all<{
           id: string
           creator: string
