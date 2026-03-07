@@ -239,13 +239,13 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement (Lending)</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">0.20%</span>
+                  <span className="text-sm text-star font-semibold">0.25%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-dust">0.05%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">0.15%</span>
+                  <span className="text-sm text-dust">0.20%</span>
                 </div>
               </div>
               {/* Swap */}
@@ -254,13 +254,13 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Swap</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">0.10%</span>
+                  <span className="text-sm text-star font-semibold">0.15%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-dust">0.05%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">0.05%</span>
+                  <span className="text-sm text-dust">0.10%</span>
                 </div>
               </div>
               {/* Redemption */}
@@ -269,13 +269,13 @@ export default function DocsPage() {
                   <span className="text-sm text-chalk font-display uppercase tracking-widest">Redemption</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-star font-semibold">0.10%</span>
+                  <span className="text-sm text-star font-semibold">0%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
                   <span className="text-sm text-dust">0%</span>
                 </div>
                 <div className="bg-surface/10 p-5 text-center">
-                  <span className="text-sm text-dust">0.10%</span>
+                  <span className="text-sm text-dust">0%</span>
                 </div>
               </div>
               {/* Liquidation */}
@@ -645,11 +645,11 @@ export default function DocsPage() {
                 <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
                     <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
-                    <span className="text-star font-mono">0.20% lending / 0.10% swap</span>
+                    <span className="text-star font-mono">0.25% lending / 0.15% swap</span>
                   </div>
                   <div>
                     <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
-                    <span className="text-chalk font-mono">0.05% relayer / 0.15% treasury (lending) or 0.05%+0.05% (swap)</span>
+                    <span className="text-chalk font-mono">0.05% relayer / 0.20% treasury (lending) or 0.05%+0.10% (swap)</span>
                   </div>
                   <div>
                     <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>

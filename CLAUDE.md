@@ -281,7 +281,7 @@ Variables are set in `wrangler.jsonc` for production:
 ```json
 "vars": {
   "NEXT_PUBLIC_NETWORK": "sepolia",
-  "NEXT_PUBLIC_STELA_ADDRESS": "0x012998e49cc8205d0bb56b5c10202bd32994091b1cacdb7bcbd03dc6781d4974",
+  "NEXT_PUBLIC_STELA_ADDRESS": "0x038a0b195e011fbfd75e9bce9bbc4137ebc5296882e11c5769c333b90bda4f89",
   "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia"
 }
 ```
@@ -524,14 +524,16 @@ Off-chain orders use SNIP-12 typed data signatures stored in D1, settled on-chai
 
 ## Genesis NFT Fee Discount System
 
-The Stela contract applies protocol fees at settle and redeem, split between a relayer and treasury. Genesis NFT holders receive on-chain fee discounts (up to 50%) — no staking or claiming required.
+The Stela contract applies protocol fees at settle only, split between a relayer and treasury. Genesis NFT holders receive on-chain fee discounts (up to 50%) — no staking or claiming required.
 
 | Event | Total BPS | Relayer | Treasury |
 |-------|-----------|---------|----------|
-| SETTLE (Lending) | 20 (0.20%) | 5 | 15 |
-| SWAP (duration=0) | 10 (0.10%) | 5 | 5 |
-| REDEEM | 10 (0.1%) | 0 | 10 |
+| SETTLE (Lending) | 25 (0.25%) | 5 | 20 |
+| SWAP (duration=0) | 15 (0.15%) | 5 | 10 |
+| REDEEM | 0 | 0 | 0 |
 | LIQUIDATE | 0 | 0 | 0 |
+
+All fees charged at settle only. No redeem fee. No share dilution.
 
 **Fee discount model:**
 - 15% base discount for holding 1+ Genesis NFT
@@ -539,7 +541,7 @@ The Stela contract applies protocol fees at settle and redeem, split between a r
 - +2% per additional NFT held
 - Hard cap: 50% total discount
 - Discount applies to treasury portion only — relayer 5 BPS never discounted
-- Floors: settle (lending) treasury min 10 BPS, swap treasury min 3 BPS, redeem treasury min 5 BPS
+- Floors: settle (lending) treasury min 10 BPS, swap treasury min 5 BPS
 
 **Mainnet deployment notes:**
 - Before renouncing ownership, `set_treasury()` and `set_genesis_contract()` MUST be called.
@@ -771,7 +773,7 @@ Each borrower has a nonce counter starting at 0, incremented each time `settle()
 
 | Contract | Address | Notes |
 |----------|---------|-------|
-| **Stela** | `0x012998e49cc8205d0bb56b5c10202bd32994091b1cacdb7bcbd03dc6781d4974` | batch-settle-2026-03-06 |
+| **Stela** | `0x038a0b195e011fbfd75e9bce9bbc4137ebc5296882e11c5769c333b90bda4f89` | fee-overhaul-2026-03-07 |
 | **StelaGenesis NFT** | `0x0265ea52ffbf1b7e1a029b94fe1a2023899dd0bc02eb1f11c9b04ea90e957d28` | ERC721, 300 supply, 50 treasury, 5/wallet cap, 1000 STRK |
 
 ### D1 Access Security

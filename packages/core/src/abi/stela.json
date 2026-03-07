@@ -554,17 +554,6 @@
       },
       {
         "type": "function",
-        "name": "get_inscription_fee",
-        "inputs": [],
-        "outputs": [
-          {
-            "type": "core::integer::u256"
-          }
-        ],
-        "state_mutability": "view"
-      },
-      {
-        "type": "function",
         "name": "nonces",
         "inputs": [
           {
@@ -575,17 +564,6 @@
         "outputs": [
           {
             "type": "core::felt252"
-          }
-        ],
-        "state_mutability": "view"
-      },
-      {
-        "type": "function",
-        "name": "get_relayer_fee",
-        "inputs": [],
-        "outputs": [
-          {
-            "type": "core::integer::u256"
           }
         ],
         "state_mutability": "view"
@@ -705,15 +683,19 @@
       },
       {
         "type": "function",
-        "name": "set_inscription_fee",
+        "name": "is_volume_token_whitelisted",
         "inputs": [
           {
-            "name": "fee",
-            "type": "core::integer::u256"
+            "name": "token",
+            "type": "core::starknet::contract_address::ContractAddress"
           }
         ],
-        "outputs": [],
-        "state_mutability": "external"
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
       },
       {
         "type": "function",
@@ -753,11 +735,11 @@
       },
       {
         "type": "function",
-        "name": "set_relayer_fee",
+        "name": "set_implementation_hash",
         "inputs": [
           {
-            "name": "fee",
-            "type": "core::integer::u256"
+            "name": "implementation_hash",
+            "type": "core::felt252"
           }
         ],
         "outputs": [],
@@ -765,11 +747,15 @@
       },
       {
         "type": "function",
-        "name": "set_implementation_hash",
+        "name": "set_volume_token_whitelisted",
         "inputs": [
           {
-            "name": "implementation_hash",
-            "type": "core::felt252"
+            "name": "token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "whitelisted",
+            "type": "core::bool"
           }
         ],
         "outputs": [],
@@ -814,10 +800,26 @@
       },
       {
         "type": "function",
+        "name": "set_pauser",
+        "inputs": [
+          {
+            "name": "new_pauser",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
         "name": "set_locker_allowed_selector",
         "inputs": [
           {
             "name": "locker",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "target",
             "type": "core::starknet::contract_address::ContractAddress"
           },
           {

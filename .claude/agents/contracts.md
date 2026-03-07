@@ -89,7 +89,7 @@ For `create_inscription`, verify:
 - `repay` only works within `signed_at + duration` window
 - `liquidate` only works after `signed_at + duration` has passed
 - Multi-lender: `sign_inscription` can be called multiple times with partial percentages summing to MAX_BPS (10,000)
-- Default protocol fee: 10 BPS (0.1%)
+- Fees at settle only: loans 25 BPS (5 relayer + 20 treasury), swaps 15 BPS (5 relayer + 10 treasury). No redeem or liquidation fees.
 
 ## Testing Checklist
 

@@ -89,7 +89,7 @@ export default function LandingPage() {
             <p className="text-dust text-base sm:text-lg leading-relaxed mb-10 max-w-md">
               Every position is an isolated, peer-to-peer agreement.
               Collateral locked in its own contract. Terms set by you.
-              0.30% total fees.
+              0.25% lending fees. 0.15% swap fees.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-2px_rgba(232,168,37,0.4)] cursor-pointer">
@@ -150,9 +150,9 @@ export default function LandingPage() {
         {/* Stats bar */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-edge/15">
           <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-center gap-8 sm:gap-12">
-            <Stat value="0.20%" label="Lending Fee" />
-            <Stat value="0.10%" label="Swap Fee" />
-            <Stat value="0.10%" label="Redemption Fee" />
+            <Stat value="0.25%" label="Lending Fee" />
+            <Stat value="0.15%" label="Swap Fee" />
+            <Stat value="0%" label="Redemption Fee" />
             <Stat value="0%" label="Liquidation Fee" />
             <Stat value="50%" label="Max NFT Discount" />
           </div>
@@ -324,17 +324,17 @@ export default function LandingPage() {
                 <div className="space-y-5 mb-8">
                   <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Settlement</span>
-                    <span className="font-display text-xl text-chalk">0.20<span className="text-sm text-dust">%</span></span>
+                    <span className="font-display text-xl text-chalk">0.25<span className="text-sm text-dust">%</span></span>
                   </div>
                   <div className="w-full h-px bg-edge/20" />
                   <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Swap</span>
-                    <span className="font-display text-xl text-chalk">0.10<span className="text-sm text-dust">%</span></span>
+                    <span className="font-display text-xl text-chalk">0.15<span className="text-sm text-dust">%</span></span>
                   </div>
                   <div className="w-full h-px bg-edge/20" />
                   <div className="flex justify-between items-baseline">
                     <span className="text-dust text-sm">Redemption</span>
-                    <span className="font-display text-xl text-chalk">0.10<span className="text-sm text-dust">%</span></span>
+                    <span className="font-display text-xl text-chalk">0<span className="text-sm text-dust">%</span></span>
                   </div>
                   <div className="w-full h-px bg-edge/20" />
                   <div className="flex justify-between items-baseline">
@@ -344,9 +344,9 @@ export default function LandingPage() {
                 </div>
 
                 <div className="bg-void/60 rounded-2xl p-5 border border-edge/15">
-                  <div className="font-display text-2xl text-star mb-1">0.30%</div>
+                  <div className="font-display text-2xl text-star mb-1">0.25%</div>
                   <p className="text-dust text-xs leading-relaxed">
-                    Total round-trip. Aave and Compound charge 0.50–1.00%.
+                    Max lending fee. Swaps just 0.15%. No redeem or liquidation fees.
                     Genesis NFT holders pay up to 50% less.
                   </p>
                 </div>

@@ -964,7 +964,7 @@ export default function CreatePage() {
                 {isSwap && (
                   <div className="flex justify-between text-sm">
                     <span className="text-dust">Protocol Fee</span>
-                    <span className="text-chalk font-medium">0.10%</span>
+                    <span className="text-chalk font-medium">0.15%</span>
                   </div>
                 )}
               </div>

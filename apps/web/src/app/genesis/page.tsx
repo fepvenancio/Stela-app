@@ -191,7 +191,7 @@ function FeeInfo() {
         </div>
         <p className="text-[11px] text-dust leading-relaxed">
           Genesis NFT holders receive protocol fee discounts up to 50%. Base 15% for holding any NFT,
-          +5% per volume tier, +2% per additional NFT. Applies to treasury fees only (floors: settle 0.10%, redeem 0.05%).
+          +5% per volume tier, +2% per additional NFT. Applies to treasury fees only (floors: settle 0.10%, swap 0.05%). No redeem fee.
           Ownership is renounced; supply is immutable.
         </p>
       </div>
