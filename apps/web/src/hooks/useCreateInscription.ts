@@ -112,7 +112,11 @@ export function useCreateInscription() {
           description: `Tx: ${result.transaction_hash.slice(0, 16)}...`,
         })
 
-        sync(result.transaction_hash).catch(() => {})
+        sync(result.transaction_hash, {
+          debt: input.debtAssets.map(a => ({ asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+          interest: input.interestAssets.map(a => ({ asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+          collateral: input.collateralAssets.map(a => ({ asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
+        }).catch(() => {})
         progress?.advance()
       } catch (err: unknown) {
         const msg = getErrorMessage(err)
