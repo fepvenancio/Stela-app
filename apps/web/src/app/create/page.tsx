@@ -428,9 +428,6 @@ export default function CreatePage() {
         deadline: BigInt(deadline || '0'),
         multiLender,
       }, onchainProgress)
-      toast.success(isSwap ? 'On-chain swap created!' : 'On-chain inscription created!', {
-        description: 'Your collateral has been locked on-chain.',
-      })
       resetForm()
     } catch (err: unknown) {
       onchainProgress.fail(getErrorMessage(err))
