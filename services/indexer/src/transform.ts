@@ -75,6 +75,85 @@ export function parseCreateInscriptionCalldata(
 }
 
 /**
+ * Parse the inner calldata of a `settle` call.
+ * Layout: InscriptionOrder(11 fields), debt_assets[], interest_assets[], collateral_assets[],
+ *         borrower_sig[], LendOffer, lender_sig[], bps(u256)
+ */
+export function parseSettleCalldata(
+  innerCalldata: string[]
+): { debt: ParsedAsset[]; interest: ParsedAsset[]; collateral: ParsedAsset[] } | null {
+  try {
+    // Skip InscriptionOrder struct (11 fields: borrower, debt_hash, interest_hash,
+    // collateral_hash, debt_count, interest_count, collateral_count, duration, deadline,
+    // multi_lender, nonce)
+    const offset = 11
+
+    const { assets: debt, nextOffset: afterDebt } = parseAssetArray(innerCalldata, offset)
+    const { assets: interest, nextOffset: afterInterest } = parseAssetArray(innerCalldata, afterDebt)
+    const { assets: collateral } = parseAssetArray(innerCalldata, afterInterest)
+
+    return { debt, interest, collateral }
+  } catch (err) {
+    console.warn('Failed to parse settle calldata:', err)
+    return null
+  }
+}
+
+/**
+ * Parse the inner calldata of a `batch_settle` call and return per-order assets.
+ * Layout: orders[](InscriptionOrder×N), debt_flat[], interest_flat[], collateral_flat[],
+ *         borrower_sigs[][], BatchLendOffer, lender_sig[], bps_list[]
+ *
+ * Each InscriptionOrder has debt_count, interest_count, collateral_count fields
+ * that tell us how to split the flat asset arrays into per-order chunks.
+ */
+export function parseBatchSettleCalldata(
+  innerCalldata: string[]
+): { debt: ParsedAsset[]; interest: ParsedAsset[]; collateral: ParsedAsset[] }[] | null {
+  try {
+    // Parse orders array to get per-order asset counts
+    const orderCount = Number(BigInt(innerCalldata[0]))
+    let pos = 1
+
+    const orderCounts: { debt: number; interest: number; collateral: number }[] = []
+    for (let i = 0; i < orderCount; i++) {
+      // InscriptionOrder: borrower(1), debt_hash(1), interest_hash(1), collateral_hash(1),
+      //   debt_count(1), interest_count(1), collateral_count(1), duration(1), deadline(1),
+      //   multi_lender(1), nonce(1) = 11 fields
+      const debtCount = Number(BigInt(innerCalldata[pos + 4]))
+      const interestCount = Number(BigInt(innerCalldata[pos + 5]))
+      const collateralCount = Number(BigInt(innerCalldata[pos + 6]))
+      orderCounts.push({ debt: debtCount, interest: interestCount, collateral: collateralCount })
+      pos += 11
+    }
+
+    // Parse flat asset arrays
+    const { assets: debtFlat, nextOffset: afterDebt } = parseAssetArray(innerCalldata, pos)
+    const { assets: interestFlat, nextOffset: afterInterest } = parseAssetArray(innerCalldata, afterDebt)
+    const { assets: collateralFlat } = parseAssetArray(innerCalldata, afterInterest)
+
+    // Split flat arrays into per-order chunks
+    const results: { debt: ParsedAsset[]; interest: ParsedAsset[]; collateral: ParsedAsset[] }[] = []
+    let dIdx = 0, iIdx = 0, cIdx = 0
+    for (const counts of orderCounts) {
+      results.push({
+        debt: debtFlat.slice(dIdx, dIdx + counts.debt),
+        interest: interestFlat.slice(iIdx, iIdx + counts.interest),
+        collateral: collateralFlat.slice(cIdx, cIdx + counts.collateral),
+      })
+      dIdx += counts.debt
+      iIdx += counts.interest
+      cIdx += counts.collateral
+    }
+
+    return results
+  } catch (err) {
+    console.warn('Failed to parse batch_settle calldata:', err)
+    return null
+  }
+}
+
+/**
  * Extract the inner calldata for a `create_inscription` call from an
  * __execute__ SNIP-6 multicall transaction calldata.
  *
@@ -147,7 +226,9 @@ export async function transformEvent(
           inscriptionId
         )
 
-        // Try to parse asset details from tx calldata
+        // Try to parse asset details from tx calldata.
+        // Inscriptions can be created via create_inscription, settle, or batch_settle —
+        // try each selector as a fallback.
         let assets: {
           debt: ParsedAsset[]
           interest: ParsedAsset[]
@@ -155,13 +236,44 @@ export async function transformEvent(
         } | null = null
 
         if (event.transaction?.calldata) {
+          // 1. Try create_inscription (direct inscription creation)
           const createSelector = hash.getSelectorFromName('create_inscription')
-          const innerCd = extractInnerCalldata(event.transaction.calldata, createSelector)
-          if (innerCd) {
-            assets = parseCreateInscriptionCalldata(innerCd)
-            if (!assets) console.warn(`Failed to parse calldata for inscription ${inscriptionId}`)
-          } else {
-            console.warn(`create_inscription selector not found in multicall for ${inscriptionId}`)
+          const createCd = extractInnerCalldata(event.transaction.calldata, createSelector)
+          if (createCd) {
+            assets = parseCreateInscriptionCalldata(createCd)
+          }
+
+          // 2. Try settle (single off-chain order settlement)
+          if (!assets) {
+            const settleSelector = hash.getSelectorFromName('settle')
+            const settleCd = extractInnerCalldata(event.transaction.calldata, settleSelector)
+            if (settleCd) {
+              assets = parseSettleCalldata(settleCd)
+            }
+          }
+
+          // 3. Try batch_settle (multi-order settlement)
+          if (!assets) {
+            const batchSelector = hash.getSelectorFromName('batch_settle')
+            const batchCd = extractInnerCalldata(event.transaction.calldata, batchSelector)
+            if (batchCd) {
+              const allOrders = parseBatchSettleCalldata(batchCd)
+              if (allOrders && allOrders.length > 0) {
+                // Match this inscription to the right order using on-chain asset counts
+                const dCount = onChain?.debt_asset_count ?? 0
+                const iCount = onChain?.interest_asset_count ?? 0
+                const cCount = onChain?.collateral_asset_count ?? 0
+
+                const matched = allOrders.find(
+                  (o) => o.debt.length === dCount && o.interest.length === iCount && o.collateral.length === cCount
+                )
+                assets = matched ?? allOrders[0]
+              }
+            }
+          }
+
+          if (!assets) {
+            console.warn(`Could not parse assets from calldata for inscription ${inscriptionId}`)
           }
         }
 
