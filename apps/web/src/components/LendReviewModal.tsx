@@ -1,11 +1,15 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useBatchSelection } from '@/hooks/useBatchSelection'
 import { useBatchSign, type BatchSignItem } from '@/hooks/useBatchSign'
 import { useMultiSettle } from '@/hooks/useMultiSettle'
+import type { MultiSettlePhase } from '@/hooks/useMultiSettle'
 import type { SelectedOffchainOrder } from '@/lib/multi-match'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
+import { useTransactionProgress } from '@/hooks/useTransactionProgress'
+import type { StepDefinition } from '@/hooks/useTransactionProgress'
+import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { formatTokenValue } from '@/lib/format'
 import { TokenAvatarByAddress } from '@/components/TokenAvatar'
@@ -28,20 +32,56 @@ interface LendReviewModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+const LEND_STEPS: StepDefinition[] = [
+  { label: 'Verify balances', description: 'Checking your token balances' },
+  { label: 'Approve & sign', description: 'Approve tokens and sign transactions' },
+  { label: 'Confirm on-chain', description: 'Waiting for transaction confirmation' },
+  { label: 'Record settlement', description: 'Saving results' },
+]
+
 export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
   const { selected, toggle, clearAll, count } = useBatchSelection()
   const { batchSign, isPending: isBatchSignPending } = useBatchSign()
   const { settleMultiple, state: multiSettleState } = useMultiSettle()
   const { balances, isLoading: balancesLoading } = useTokenBalances()
+  const progress = useTransactionProgress(LEND_STEPS)
+  const lastPhaseRef = useRef<MultiSettlePhase>('idle')
 
-  const isPending = isBatchSignPending || multiSettleState.phase !== 'idle'
+  const isPending = isBatchSignPending || multiSettleState.phase !== 'idle' || progress.open
+
+  // Track multiSettle phase changes → advance progress modal steps
+  useEffect(() => {
+    if (!progress.open) return
+    const phase = multiSettleState.phase
+    if (phase === lastPhaseRef.current) return
+    const prev = lastPhaseRef.current
+    lastPhaseRef.current = phase
+
+    // Step 0: Verify balances (already advanced past by handleConfirm)
+    // Step 1: Approve & sign (validating, signing phases)
+    // Step 2: Confirm on-chain (executing, confirming phases)
+    // Step 3: Record settlement (recording phase)
+    if (phase === 'executing' && (prev === 'idle' || prev === 'validating' || prev === 'signing')) {
+      progress.advance() // 1 → 2
+    } else if (phase === 'recording' && (prev === 'executing' || prev === 'confirming')) {
+      progress.advance() // 2 → 3
+    } else if (phase === 'done' && (prev === 'recording' || prev === 'confirming')) {
+      progress.advance() // 3 → complete
+    } else if (phase === 'error') {
+      progress.fail(multiSettleState.error || 'Settlement failed')
+    }
+
+    if (multiSettleState.txHash) {
+      progress.setTxHash(multiSettleState.txHash)
+    }
+  }, [multiSettleState.phase, multiSettleState.txHash, multiSettleState.error, progress])
 
   // Auto-close when all items removed
   useEffect(() => {
-    if (open && count === 0) {
+    if (open && count === 0 && !progress.open) {
       onOpenChange(false)
     }
-  }, [open, count, onOpenChange])
+  }, [open, count, onOpenChange, progress.open])
 
   // Split selections by source
   const { onchainItems, offchainItems } = useMemo(() => {
@@ -91,55 +131,72 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
       }
     }
 
-    // Handle on-chain inscriptions via batchSign
-    if (onchainItems.length > 0) {
-      const items: BatchSignItem[] = onchainItems.map((item) => ({
-        inscriptionId: item.id,
-        bps: 10000,
-        debtAssets: item.assets
-          .filter((a) => a.asset_role === 'debt')
-          .map((a) => ({ address: a.asset_address, value: a.value ?? '0' })),
-      }))
-      await batchSign(items)
-    }
+    // Reset phase tracking and open progress modal
+    lastPhaseRef.current = 'idle'
+    progress.start() // Step 0: Verify balances → active
+    progress.advance() // Step 1: Approve & sign → active
 
-    // Handle off-chain orders via settleMultiple
-    if (offchainItems.length > 0) {
-      const offchainOrders: SelectedOffchainOrder[] = offchainItems
-        .filter((item) => item.orderData)
-        .map((item) => {
-          // Compute give/receive from debt assets (lender gives debt tokens)
-          const debtTotal = item.assets
+    try {
+      // Handle on-chain inscriptions via batchSign
+      if (onchainItems.length > 0) {
+        const items: BatchSignItem[] = onchainItems.map((item) => ({
+          inscriptionId: item.id,
+          bps: 10000,
+          debtAssets: item.assets
             .filter((a) => a.asset_role === 'debt')
-            .reduce((sum, a) => sum + BigInt(a.value || '0'), 0n)
-          return {
-            type: 'offchain' as const,
-            order: {
-              id: item.id,
-              borrower: item.orderData!.borrower,
-              borrower_signature: item.orderData!.borrower_signature,
-              nonce: item.orderData!.nonce,
-              deadline: Number(item.orderData!.deadline),
-              created_at: Number(item.orderData!.created_at),
-              order_data: item.orderData!.order_data,
-            },
-            bps: 10000,
-            giveAmount: debtTotal,
-            receiveAmount: debtTotal,
-          }
-        })
-
-      if (offchainOrders.length > 0) {
-        await settleMultiple(offchainOrders)
+            .map((a) => ({ address: a.asset_address, value: a.value ?? '0' })),
+        }))
+        await batchSign(items)
       }
-    }
 
-    clearAll()
-    onOpenChange(false)
+      // Handle off-chain orders via settleMultiple
+      if (offchainItems.length > 0) {
+        const offchainOrders: SelectedOffchainOrder[] = offchainItems
+          .filter((item) => item.orderData)
+          .map((item) => {
+            const debtTotal = item.assets
+              .filter((a) => a.asset_role === 'debt')
+              .reduce((sum, a) => sum + BigInt(a.value || '0'), 0n)
+            return {
+              type: 'offchain' as const,
+              order: {
+                id: item.id,
+                borrower: item.orderData!.borrower,
+                borrower_signature: item.orderData!.borrower_signature,
+                nonce: item.orderData!.nonce,
+                deadline: Number(item.orderData!.deadline),
+                created_at: Number(item.orderData!.created_at),
+                order_data: item.orderData!.order_data,
+              },
+              bps: 10000,
+              giveAmount: debtTotal,
+              receiveAmount: debtTotal,
+            }
+          })
+
+        if (offchainOrders.length > 0) {
+          // useEffect watches multiSettleState.phase and advances steps 1→2→3→done
+          await settleMultiple(offchainOrders)
+        }
+      }
+
+      // For on-chain only (no off-chain), advance through remaining steps
+      if (offchainItems.length === 0) {
+        progress.advance() // 1 → 2 (Confirm on-chain)
+        progress.advance() // 2 → 3 (Record settlement)
+        progress.advance() // 3 → complete
+      }
+
+      clearAll()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Transaction failed'
+      progress.fail(msg)
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+    <Dialog open={open && !progress.open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-void border-edge/50 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
@@ -250,5 +307,16 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <TransactionProgressModal
+      open={progress.open}
+      steps={progress.steps}
+      txHash={progress.txHash}
+      onClose={() => {
+        progress.close()
+        onOpenChange(false)
+      }}
+    />
+    </>
   )
 }
