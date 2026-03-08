@@ -68,7 +68,8 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
   }, [selected])
 
   const hasInsufficientBalance = useMemo(() => {
-    if (balancesLoading) return false // Don't block while loading
+    // Don't block while balances are loading or haven't been fetched yet
+    if (balancesLoading || (totals.size > 0 && balances.size === 0)) return false
     for (const [tokenAddr, required] of totals) {
       const available = balances.get(tokenAddr) ?? 0n
       if (available < required) return true
@@ -202,7 +203,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
               const available = balances.get(addr) ?? 0n
               const hasEnough = available >= total
               return (
-                <div key={addr} className={`p-3 rounded-2xl border ${balancesLoading || hasEnough ? 'bg-surface/20 border-edge/30' : 'bg-nova/5 border-nova/20'}`}>
+                <div key={addr} className={`p-3 rounded-2xl border ${balancesLoading || balances.size === 0 || hasEnough ? 'bg-surface/20 border-edge/30' : 'bg-nova/5 border-nova/20'}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <TokenAvatarByAddress address={addr} size={16} />
                     <span className="text-xs font-bold text-chalk">{token?.symbol}</span>
@@ -210,7 +211,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
                   <div className="text-sm font-display text-star">
                     {formatTokenValue(total.toString(), token?.decimals ?? 18)}
                   </div>
-                  {balancesLoading ? (
+                  {balancesLoading || balances.size === 0 ? (
                     <div className="mt-1 flex items-center gap-1 text-[9px] text-dust">
                       <Wallet2 className="w-3 h-3 animate-pulse" />
                       <span>Checking balance...</span>

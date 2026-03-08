@@ -22,7 +22,8 @@ export interface TokenBalance {
 export function useTokenBalances() {
   const { address } = useAccount()
   const [balances, setBalances] = useState<Map<string, bigint>>(new Map())
-  const [isLoading, setIsLoading] = useState(false)
+  // Start as loading when address exists so consumers don't flash "insufficient"
+  const [isLoading, setIsLoading] = useState(!!address)
   const addressRef = useRef(address)
   addressRef.current = address
 
