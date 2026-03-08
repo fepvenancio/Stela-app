@@ -16,10 +16,11 @@ export function ListingTableHeader() {
           Interest
           <InfoTooltip content={CONCEPT_DESCRIPTIONS.interest} side="bottom" />
         </div>
-        <div className="col-span-3 flex items-center gap-1">
+        <div className="col-span-2 flex items-center gap-1">
           Collateral
           <InfoTooltip content={CONCEPT_DESCRIPTIONS.collateral} side="bottom" />
         </div>
+        <div className="col-span-1 text-right">Yield</div>
         <div className="col-span-2 text-right">Action</div>
       </div>
     </div>

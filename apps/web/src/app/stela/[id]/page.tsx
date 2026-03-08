@@ -130,7 +130,7 @@ function OrderView({ id }: { id: string }) {
     return null
   }, [debtAssets, interestAssets])
 
-  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load order</p><Link href="/stelas" className="text-star text-sm hover:underline">Back to Stelas</Link></div>
+  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load order</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
 
   const isPending = order?.status === 'pending'
   const hasOffers = (order?.offers?.length ?? 0) > 0
@@ -264,7 +264,7 @@ function InscriptionView({ id }: { id: string }) {
     return null
   }, [assets])
 
-  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/stelas" className="text-star text-sm hover:underline">Back to Stelas</Link></div>
+  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
 
   const debtAssets = assets?.filter(r => r.asset_role === 'debt') ?? []
   const interestAssets = assets?.filter(r => r.asset_role === 'interest') ?? []
@@ -362,7 +362,7 @@ function StelaLayout({
     <div className="animate-fade-in max-w-5xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center justify-between mb-6">
-        <Link href={isOwner ? '/portfolio' : '/stelas'} className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
+        <Link href={isOwner ? '/portfolio' : '/markets'} className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
@@ -476,7 +476,7 @@ export default function StelaPage({ params }: StelaPageProps) {
   const idType = detectIdType(id)
 
   if (idType === 'invalid') {
-    return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Invalid ID format</p><Link href="/stelas" className="text-star text-sm hover:underline">Back to Stelas</Link></div>
+    return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Invalid ID format</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
   }
 
   if (idType === 'order') {

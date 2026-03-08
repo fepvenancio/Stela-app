@@ -38,11 +38,11 @@ export default function GenesisClaimPage() {
     <div className="animate-fade-up max-w-2xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6">
-        <Link href="/genesis" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
+        <Link href="/nft" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          Genesis
+          NFT
         </Link>
       </div>
 
@@ -67,7 +67,7 @@ export default function GenesisClaimPage() {
             </div>
             <p className="text-dust text-sm mb-4">You don&apos;t own any Genesis NFTs yet.</p>
             <Button asChild variant="gold" className="rounded-full px-8">
-              <Link href="/genesis">Mint Genesis NFT</Link>
+              <Link href="/nft">Mint Genesis NFT</Link>
             </Button>
           </div>
         ) : (

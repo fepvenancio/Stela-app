@@ -18,8 +18,6 @@ interface FilterSectionProps {
   setStatusFilter: (v: string) => void
   typeFilter: 'all' | 'swap' | 'lend'
   setTypeFilter: (v: 'all' | 'swap' | 'lend') => void
-  sourceFilter: 'all' | 'onchain' | 'offchain'
-  setSourceFilter: (v: 'all' | 'onchain' | 'offchain') => void
 }
 
 export function FilterSection({
@@ -27,8 +25,6 @@ export function FilterSection({
   setStatusFilter,
   typeFilter,
   setTypeFilter,
-  sourceFilter,
-  setSourceFilter,
 }: FilterSectionProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -59,25 +55,14 @@ export function FilterSection({
           <ToggleGroupItem value="lend" className={TOGGLE_STYLE}>Lend</ToggleGroupItem>
         </ToggleGroup>
 
-        <ToggleGroup
-          type="single"
-          value={sourceFilter}
-          onValueChange={(v) => v && setSourceFilter(v as typeof sourceFilter)}
-          className="flex gap-2"
-          aria-label="Filter by source"
-        >
-          <ToggleGroupItem value="all" className={TOGGLE_STYLE}>All</ToggleGroupItem>
-          <ToggleGroupItem value="onchain" className={TOGGLE_STYLE}>On-chain</ToggleGroupItem>
-          <ToggleGroupItem value="offchain" className={TOGGLE_STYLE}>Off-chain</ToggleGroupItem>
-        </ToggleGroup>
       </div>
 
       <Link
-        href="/inscribe"
+        href="/borrow"
         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
-        Inscribe
+        Borrow
       </Link>
     </div>
   )

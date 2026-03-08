@@ -90,15 +90,25 @@ function matchesOrderSearch(q: string, order: OrderRow): boolean {
   })
 }
 
+/** Sub-section heading within a tab */
+function SectionHeading({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2 bg-surface/20 border-b border-edge/20">
+      <span className="text-[11px] font-mono uppercase tracking-wider text-dust">{label}</span>
+      <div className="flex-1 h-px bg-edge/15" />
+    </div>
+  )
+}
+
 /* Tab config — full static class strings so Tailwind doesn't purge them */
 const TAB_CONFIG = [
-  { value: 'orders', label: 'Orders', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
-  { value: 'swaps', label: 'Swaps', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-aurora' },
-  { value: 'lending', label: 'Lending', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
-  { value: 'borrowing', label: 'Borrowing', activeClass: 'data-[state=active]:text-nebula data-[state=active]:after:bg-nebula' },
-  { value: 'repaid', label: 'Repaid', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-aurora' },
-  { value: 'redeemable', label: 'Redeemable', activeClass: 'data-[state=active]:text-cosmic data-[state=active]:after:bg-cosmic' },
+  { value: 'active', label: 'Active', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
+  { value: 'pending', label: 'Pending', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-aurora' },
+  { value: 'history', label: 'History', activeClass: 'data-[state=active]:text-cosmic data-[state=active]:after:bg-cosmic' },
 ] as const
+
+const PENDING_ORDER_STATUSES = new Set(['pending', 'matched'])
+const HISTORY_ORDER_STATUSES = new Set(['expired', 'cancelled', 'settled'])
 
 export default function PortfolioPage() {
   const { address } = useAccount()
@@ -108,52 +118,82 @@ export default function PortfolioPage() {
 
   const q = search.trim().toLowerCase()
 
-  const filteredLending = useMemo(
+  /* ---- Compute merged data for 3 tabs ---- */
+
+  // Active: lending inscriptions + borrowing inscriptions + non-pending lending/borrowing orders
+  const activeLendingInscriptions = useMemo(
     () => q ? lending.filter((ins) => matchesSearch(q, ins)) : lending,
     [lending, q],
   )
-  const filteredBorrowing = useMemo(
+  const activeBorrowingInscriptions = useMemo(
     () => q ? borrowing.filter((ins) => matchesSearch(q, ins)) : borrowing,
     [borrowing, q],
+  )
+  const activeLendingOrders = useMemo(
+    () => q ? lendingOrders.filter((o) => matchesOrderSearch(q, o)) : lendingOrders,
+    [lendingOrders, q],
+  )
+  const activeBorrowingOrders = useMemo(
+    () => q ? borrowingOrders.filter((o) => matchesOrderSearch(q, o)) : borrowingOrders,
+    [borrowingOrders, q],
+  )
+  const activeCount = activeLendingInscriptions.length + activeBorrowingInscriptions.length +
+    activeLendingOrders.length + activeBorrowingOrders.length
+
+  // Pending: pending orders + pending swap orders
+  const pendingOrders = useMemo(() => {
+    const filtered = orders.filter((o) => PENDING_ORDER_STATUSES.has(o.status))
+    return q ? filtered.filter((o) => matchesOrderSearch(q, o)) : filtered
+  }, [orders, q])
+  const pendingSwaps = useMemo(() => {
+    const filtered = swapOrders.filter((o) => PENDING_ORDER_STATUSES.has(o.status))
+    return q ? filtered.filter((o) => matchesOrderSearch(q, o)) : filtered
+  }, [swapOrders, q])
+  const pendingCount = pendingOrders.length + pendingSwaps.length
+
+  // History: repaid + redeemable + expired/cancelled orders + settled swaps
+  const filteredRepaid = useMemo(
+    () => q ? repaid.filter((ins) => matchesSearch(q, ins)) : repaid,
+    [repaid, q],
   )
   const filteredRedeemable = useMemo(
     () => q ? redeemable.filter((ins) => matchesSearch(q, ins)) : redeemable,
     [redeemable, q],
   )
-  const filteredRepaid = useMemo(
-    () => q ? repaid.filter((ins) => matchesSearch(q, ins)) : repaid,
-    [repaid, q],
-  )
-  const filteredOrders = useMemo(
-    () => q ? orders.filter((o) => matchesOrderSearch(q, o)) : orders,
-    [orders, q],
-  )
-  const filteredSwaps = useMemo(
-    () => q ? swapOrders.filter((o) => matchesOrderSearch(q, o)) : swapOrders,
-    [swapOrders, q],
-  )
+  const historyOrders = useMemo(() => {
+    const filtered = orders.filter((o) => HISTORY_ORDER_STATUSES.has(o.status))
+    return q ? filtered.filter((o) => matchesOrderSearch(q, o)) : filtered
+  }, [orders, q])
+  const historySwaps = useMemo(() => {
+    const filtered = swapOrders.filter((o) => HISTORY_ORDER_STATUSES.has(o.status))
+    return q ? filtered.filter((o) => matchesOrderSearch(q, o)) : filtered
+  }, [swapOrders, q])
+  const historyCount = filteredRepaid.length + filteredRedeemable.length +
+    historyOrders.length + historySwaps.length
 
   /* Smart default tab */
   const defaultTab = useMemo(() => {
-    if (swapOrders.length > 0) return 'swaps'
-    if (lending.length > 0 || lendingOrders.length > 0) return 'lending'
-    if (borrowing.length > 0 || borrowingOrders.length > 0) return 'borrowing'
-    if (orders.length > 0) return 'orders'
-    if (redeemable.length > 0) return 'redeemable'
-    return 'orders'
-  }, [lending, borrowing, orders, redeemable, lendingOrders, borrowingOrders, swapOrders])
+    const hasActive = lending.length > 0 || borrowing.length > 0 ||
+      lendingOrders.length > 0 || borrowingOrders.length > 0
+    if (hasActive) return 'active'
+
+    const hasPending = orders.some((o) => PENDING_ORDER_STATUSES.has(o.status)) ||
+      swapOrders.some((o) => PENDING_ORDER_STATUSES.has(o.status))
+    if (hasPending) return 'pending'
+
+    return 'history'
+  }, [lending, borrowing, orders, lendingOrders, borrowingOrders, swapOrders])
 
   /* Tab counts */
   const tabCounts: Record<string, number> = {
-    orders: filteredOrders.length,
-    swaps: filteredSwaps.length,
-    lending: filteredLending.length + lendingOrders.length,
-    borrowing: filteredBorrowing.length + borrowingOrders.length,
-    repaid: filteredRepaid.length,
-    redeemable: filteredRedeemable.length,
+    active: activeCount,
+    pending: pendingCount,
+    history: historyCount,
   }
 
   const totalPositions = lending.length + borrowing.length + repaid.length + redeemable.length + orders.length + swapOrders.length
+
+  const hasRedeemable = redeemable.length > 0
 
   return (
     <div className="animate-fade-up pb-24">
@@ -168,11 +208,11 @@ export default function PortfolioPage() {
           </p>
         </div>
         <Link
-          href="/inscribe"
+          href="/borrow"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
         >
           <Plus className="w-3.5 h-3.5 text-star" />
-          Inscribe
+          Borrow
         </Link>
       </div>
 
@@ -227,11 +267,11 @@ export default function PortfolioPage() {
                   </p>
                 </div>
                 <Link
-                  href="/inscribe"
+                  href="/borrow"
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5 text-star" />
-                  Inscribe a Stela
+                  Create a Position
                 </Link>
               </div>
             ) : (
@@ -243,7 +283,12 @@ export default function PortfolioPage() {
                       value={tab.value}
                       className={`text-chalk ${tab.activeClass}`}
                     >
-                      {tab.label}
+                      <span className="relative inline-flex items-center">
+                        {tab.label}
+                        {tab.value === 'history' && hasRedeemable && (
+                          <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-star animate-pulse" />
+                        )}
+                      </span>
                       {tabCounts[tab.value] > 0 && (
                         <span className="ml-1.5 text-[10px] font-mono bg-surface/60 px-1.5 py-0.5 rounded-md">
                           {tabCounts[tab.value]}
@@ -253,17 +298,65 @@ export default function PortfolioPage() {
                   ))}
                 </TabsList>
 
-                <TabsContent value="orders">
-                  {filteredOrders.length === 0 ? (
+                {/* Active tab */}
+                <TabsContent value="active">
+                  {activeCount === 0 ? (
                     <EmptyTab
-                      message={q ? 'No orders match your search.' : 'No off-chain orders yet.'}
-                      cta={!q ? { label: 'Create Order', href: '/inscribe' } : undefined}
+                      message={q ? 'No active positions match your search.' : 'No active positions yet.'}
+                      cta={!q ? { label: 'Browse Markets', href: '/markets' } : undefined}
+                    />
+                  ) : (
+                    <div className="rounded-xl border border-edge/30 overflow-clip">
+                      <ListingTableHeader />
+
+                      {/* Lending sub-section */}
+                      {(activeLendingInscriptions.length > 0 || activeLendingOrders.length > 0) && (
+                        <>
+                          <SectionHeading label="Lending" />
+                          {activeLendingOrders.length > 0 && (
+                            <div className="flex flex-col">
+                              {activeLendingOrders.map((order) => (
+                                <OrderListRow key={order.id} order={order} />
+                              ))}
+                            </div>
+                          )}
+                          <InscriptionList items={activeLendingInscriptions} />
+                        </>
+                      )}
+
+                      {/* Borrowing sub-section */}
+                      {(activeBorrowingInscriptions.length > 0 || activeBorrowingOrders.length > 0) && (
+                        <>
+                          <SectionHeading label="Borrowing" />
+                          {activeBorrowingOrders.length > 0 && (
+                            <div className="flex flex-col">
+                              {activeBorrowingOrders.map((order) => (
+                                <OrderListRow key={order.id} order={order} />
+                              ))}
+                            </div>
+                          )}
+                          <InscriptionList items={activeBorrowingInscriptions} />
+                        </>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Pending tab */}
+                <TabsContent value="pending">
+                  {pendingCount === 0 ? (
+                    <EmptyTab
+                      message={q ? 'No pending items match your search.' : 'No pending orders or swaps.'}
+                      cta={!q ? { label: 'Create Order', href: '/borrow' } : undefined}
                     />
                   ) : (
                     <div className="rounded-xl border border-edge/30 overflow-clip">
                       <ListingTableHeader />
                       <div className="flex flex-col">
-                        {filteredOrders.map((order) => (
+                        {pendingOrders.map((order) => (
+                          <OrderListRow key={order.id} order={order} />
+                        ))}
+                        {pendingSwaps.map((order) => (
                           <OrderListRow key={order.id} order={order} />
                         ))}
                       </div>
@@ -271,84 +364,44 @@ export default function PortfolioPage() {
                   )}
                 </TabsContent>
 
-                <TabsContent value="swaps">
-                  {filteredSwaps.length === 0 ? (
-                    <EmptyTab
-                      message={q ? 'No swaps match your search.' : 'No swaps yet.'}
-                      cta={!q ? { label: 'Create Swap', href: '/inscribe' } : undefined}
-                    />
+                {/* History tab */}
+                <TabsContent value="history">
+                  {historyCount === 0 ? (
+                    <EmptyTab message={q ? 'No history items match your search.' : 'No history yet.'} />
                   ) : (
                     <div className="rounded-xl border border-edge/30 overflow-clip">
                       <ListingTableHeader />
-                      <div className="flex flex-col">
-                        {filteredSwaps.map((order) => (
-                          <OrderListRow key={order.id} order={order} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
 
-                <TabsContent value="lending">
-                  {filteredLending.length === 0 && lendingOrders.length === 0 ? (
-                    <EmptyTab
-                      message={q ? 'No lending positions match your search.' : 'No lending positions yet.'}
-                      cta={!q ? { label: 'Browse Stelas', href: '/stelas' } : undefined}
-                    />
-                  ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-clip">
-                      <ListingTableHeader />
-                      {lendingOrders.length > 0 && (
-                        <div className="flex flex-col">
-                          {lendingOrders.map((order) => (
-                            <OrderListRow key={order.id} order={order} />
-                          ))}
-                        </div>
+                      {/* Redeemable positions first (most actionable) */}
+                      {filteredRedeemable.length > 0 && (
+                        <>
+                          <SectionHeading label="Redeemable" />
+                          <InscriptionList items={filteredRedeemable} />
+                        </>
                       )}
-                      <InscriptionList items={filteredLending} />
-                    </div>
-                  )}
-                </TabsContent>
 
-                <TabsContent value="borrowing">
-                  {filteredBorrowing.length === 0 && borrowingOrders.length === 0 ? (
-                    <EmptyTab
-                      message={q ? 'No borrowing positions match your search.' : 'No borrowing positions yet.'}
-                      cta={!q ? { label: 'Create Inscription', href: '/inscribe' } : undefined}
-                    />
-                  ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-clip">
-                      <ListingTableHeader />
-                      {borrowingOrders.length > 0 && (
-                        <div className="flex flex-col">
-                          {borrowingOrders.map((order) => (
-                            <OrderListRow key={order.id} order={order} />
-                          ))}
-                        </div>
+                      {/* Repaid positions */}
+                      {filteredRepaid.length > 0 && (
+                        <>
+                          <SectionHeading label="Repaid" />
+                          <InscriptionList items={filteredRepaid} />
+                        </>
                       )}
-                      <InscriptionList items={filteredBorrowing} />
-                    </div>
-                  )}
-                </TabsContent>
 
-                <TabsContent value="repaid">
-                  {filteredRepaid.length === 0 ? (
-                    <EmptyTab message={q ? 'No repaid positions match your search.' : 'No repaid positions yet.'} />
-                  ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-clip">
-                      <ListingTableHeader />
-                      <InscriptionList items={filteredRepaid} />
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="redeemable">
-                  {filteredRedeemable.length === 0 ? (
-                    <EmptyTab message={q ? 'No redeemable positions match your search.' : 'No redeemable positions.'} />
-                  ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-clip">
-                      <ListingTableHeader />
-                      <InscriptionList items={filteredRedeemable} />
+                      {/* Expired/cancelled/settled orders */}
+                      {(historyOrders.length > 0 || historySwaps.length > 0) && (
+                        <>
+                          <SectionHeading label="Past Orders" />
+                          <div className="flex flex-col">
+                            {historyOrders.map((order) => (
+                              <OrderListRow key={order.id} order={order} />
+                            ))}
+                            {historySwaps.map((order) => (
+                              <OrderListRow key={order.id} order={order} />
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </TabsContent>

@@ -33,6 +33,7 @@ import { selectOrders } from '@/lib/multi-match'
 import { addOptimisticInscription } from '@/hooks/useInscriptions'
 import { AssetRow } from './components/AssetRow'
 import { AddAssetModal } from './components/AddAssetModal'
+import { InlineBorrowForm } from './components/InlineBorrowForm'
 
 /* ── Types ──────────────────────────────────────────────── */
 
@@ -146,6 +147,7 @@ export default function CreatePage() {
   const [showErrors, setShowErrors] = useState(false)
   const { balances } = useTokenBalances()
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const createProgress = useTransactionProgress([
     { label: 'Approving collateral', description: 'Confirm token approvals in your wallet' },
@@ -260,6 +262,14 @@ export default function CreatePage() {
     }
     return null
   }, [debtAssets, interestAssets])
+
+  // Default role for AddAssetModal — auto-select the first missing role
+  const advancedDefaultRole = useMemo((): 'debt' | 'collateral' | 'interest' => {
+    if (!hasDebt) return 'debt'
+    if (!hasCollateral) return 'collateral'
+    if (!isSwap && !interestAssets.some(a => a.asset)) return 'interest'
+    return 'debt'
+  }, [hasDebt, hasCollateral, isSwap, interestAssets])
 
   const giveSymbol = useMemo(() => {
     if (collateralAssets.length !== 1 || !collateralAssets[0].asset) return undefined
@@ -787,7 +797,7 @@ export default function CreatePage() {
           Lend or swap any ERC20 — stables, vault shares, LP tokens — fully peer-to-peer. Every position becomes a tradeable share on a built-in secondary market.
         </p>
 
-        {/* Controls row: Type + Mode + Funding + Reset */}
+        {/* Controls row: Type + Reset */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           {/* Lending / Swap Toggle */}
           <div className="bg-void/60 backdrop-blur border border-edge/30 p-1 rounded-xl flex items-center gap-0.5">
@@ -813,55 +823,6 @@ export default function CreatePage() {
 
           <div className="w-px h-5 bg-edge/40 hidden sm:block" />
 
-          {/* Mode */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
-            <div className="flex gap-1">
-              {(['offchain', 'onchain'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
-                    mode === m
-                      ? 'bg-star/10 text-star border border-star/25'
-                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
-                  }`}
-                >
-                  {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-px h-5 bg-edge/40 hidden sm:block" />
-
-          {/* Funding */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
-            <div className="flex gap-1">
-              {([
-                { value: 'single', label: 'Single' },
-                { value: 'multi', label: 'Multi' },
-              ] as const).map((f) => (
-                <button
-                  key={f.value}
-                  type="button"
-                  onClick={() => setMultiLender(f.value === 'multi')}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
-                    (multiLender ? 'multi' : 'single') === f.value
-                      ? 'bg-star/10 text-star border border-star/25'
-                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-px h-5 bg-edge/40 hidden sm:block" />
-
           {/* Reset */}
           <button
             type="button"
@@ -871,6 +832,20 @@ export default function CreatePage() {
             Reset
           </button>
         </div>
+      </div>
+
+      {/* ── Inline Borrow Form ──────────────────────────── */}
+      <div className="mb-8">
+        <InlineBorrowForm
+          orderType={orderType}
+          debtAssets={debtAssets}
+          collateralAssets={collateralAssets}
+          interestAssets={interestAssets}
+          onDebtChange={setDebtAssets}
+          onCollateralChange={setCollateralAssets}
+          onInterestChange={setInterestAssets}
+          balances={balances}
+        />
       </div>
 
       {/* ── Terms & Duration ─────────────────────────────── */}
@@ -964,153 +939,216 @@ export default function CreatePage() {
         </div>
       </section>
 
-      {/* ── Asset Table + Summary Grid ───────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-        {/* Left: Asset List */}
-        <div className="lg:col-span-2 flex flex-col">
-          <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5 flex flex-col flex-1">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
-              <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
-                Inscription Assets
-                {allAssets.length > 0 && <span className="ml-2 text-star">({allAssets.length})</span>}
-              </span>
-              <button
-                type="button"
-                onClick={() => setAddModalOpen(true)}
-                className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
-              >
-                <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
-                Add Asset
-              </button>
+      {/* ── Advanced Options (collapsible) ─────────────────── */}
+      <div className="mb-8">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-[11px] text-dust hover:text-chalk uppercase tracking-widest font-bold transition-colors cursor-pointer group"
+        >
+          <svg
+            className={`w-3 h-3 text-ash group-hover:text-chalk transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M4 2l4 4-4 4" />
+          </svg>
+          Advanced Options
+          {allAssets.length > 0 && <span className="text-star">({allAssets.length} assets)</span>}
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 space-y-4 animate-fade-up">
+            {/* Mode + Funding toggles */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              {/* Mode */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
+                <div className="flex gap-1">
+                  {(['offchain', 'onchain'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMode(m)}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                        mode === m
+                          ? 'bg-star/10 text-star border border-star/25'
+                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                      }`}
+                    >
+                      {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+
+              {/* Funding */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
+                <div className="flex gap-1">
+                  {([
+                    { value: 'single', label: 'Single' },
+                    { value: 'multi', label: 'Multi' },
+                  ] as const).map((f) => (
+                    <button
+                      key={f.value}
+                      type="button"
+                      onClick={() => setMultiLender(f.value === 'multi')}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                        (multiLender ? 'multi' : 'single') === f.value
+                          ? 'bg-star/10 text-star border border-star/25'
+                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Table Header */}
-            <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
-              <div className="flex-1">Asset</div>
-              <div className="w-32 text-center">Amount / ID</div>
-              <div className="w-32 text-center">Role</div>
-              <div className="w-10"></div>
-            </div>
-
-            {/* Asset Rows */}
-            {allAssets.length === 0 ? (
-              <div
-                onClick={() => setAddModalOpen(true)}
-                className="w-full flex-1 min-h-[200px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-surface/30 border border-edge/50 flex items-center justify-center">
-                  <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
-                </div>
-                <div className="text-center">
-                  <p className="text-chalk font-medium">No assets added yet</p>
-                  <p className="text-xs text-dust max-w-[200px] mx-auto mt-1 leading-relaxed">
-                    At least one debt and one collateral asset are required to create an inscription.
-                  </p>
-                </div>
+            {/* Asset Table */}
+            <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
+                <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
+                  Inscription Assets
+                  {allAssets.length > 0 && <span className="ml-2 text-star">({allAssets.length})</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAddModalOpen(true)}
+                  className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
+                  Add Asset
+                </button>
               </div>
-            ) : (
-              <div className="divide-y divide-edge/10 flex-1">
-                {allAssets.map((item) => (
-                  <AssetRow
-                    key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
-                    asset={item.asset}
-                    role={item.role}
-                    onRemove={() => handleRemoveAsset(item.role, item.index)}
-                  />
-                ))}
-              </div>
-            )}
 
-            {showErrors && (!hasDebt || !hasCollateral) && (
-              <div className="px-4 py-3 border-t border-edge/20 bg-nova/5">
-                <p className="text-xs text-nova font-medium">
-                  {!hasDebt && '• Add at least one borrow asset. '}
-                  {!hasCollateral && '• Add at least one collateral asset.'}
-                </p>
+              {/* Table Header */}
+              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
+                <div className="flex-1">Asset</div>
+                <div className="w-32 text-center">Amount / ID</div>
+                <div className="w-32 text-center">Role</div>
+                <div className="w-10"></div>
               </div>
-            )}
-          </section>
-        </div>
 
-        {/* Right: Agreement Summary — stretches to match asset table height */}
-        <div className="flex flex-col">
-          <section className="rounded-xl border border-star/30 bg-star/5 p-5 flex flex-col flex-1 lg:sticky lg:top-24">
-            <div className="space-y-3">
-              <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
-                Agreement Summary
-              </span>
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-sm">
-                  <span className="text-dust">Intent</span>
-                  <span className="text-chalk font-medium uppercase tracking-wider">{orderType}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-dust">Network Mode</span>
-                  <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
-                    {mode === 'offchain' ? 'Gasless (Off-Chain)' : 'On-Chain'}
-                  </span>
-                </div>
-                {!isSwap && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-dust">Duration</span>
-                    <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
+              {/* Asset Rows */}
+              {allAssets.length === 0 ? (
+                <div
+                  onClick={() => setAddModalOpen(true)}
+                  className="w-full min-h-[120px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-6"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
                   </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-dust">Expiry</span>
-                  <span className="text-chalk font-medium" suppressHydrationWarning>{formatTimestamp(BigInt(deadline))}</span>
+                  <p className="text-xs text-dust">Add extra assets via the modal for multi-asset orders</p>
                 </div>
-                {roiInfo && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-dust">Est. Yield</span>
-                    <span className="text-aurora font-bold">+{roiInfo.yieldPct}%</span>
-                  </div>
-                )}
-                {isSwap && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-dust">Protocol Fee</span>
-                    <span className="text-chalk font-medium">0.15%</span>
-                  </div>
-                )}
-                {matchesVisible && hasMatches && (
-                  <div className="flex justify-between items-center text-sm pt-1 border-t border-star/10">
-                    <span className="text-dust">Broadcast</span>
-                    <Switch
-                      size="sm"
-                      checked={broadcastMode}
-                      onCheckedChange={setBroadcastMode}
-                      className="data-[state=checked]:bg-star"
+              ) : (
+                <div className="divide-y divide-edge/10">
+                  {allAssets.map((item) => (
+                    <AssetRow
+                      key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
+                      asset={item.asset}
+                      role={item.role}
+                      onRemove={() => handleRemoveAsset(item.role, item.index)}
                     />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Spacer — pushes button to bottom when sidebar is taller than content */}
-            <div className="flex-1 min-h-5" />
-
-            <Web3ActionWrapper message="Connect your wallet to create an inscription">
-              <Button
-                variant="gold"
-                size="lg"
-                className="w-full h-14 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
-                onClick={handleSubmit}
-                disabled={isPending || isCreatingOnChain || isChecking}
-              >
-                {isPending || isCreatingOnChain ? (
-                  <div className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Processing...
-                  </div>
-                ) : isChecking ? 'Checking matches...' : submitButtonText}
-              </Button>
-            </Web3ActionWrapper>
-          </section>
-        </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
       </div>
+
+      {/* ── Validation Errors ──────────────────────────────── */}
+      {showErrors && (!hasDebt || !hasCollateral) && (
+        <div className="mb-8 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5">
+          <p className="text-xs text-nova font-medium">
+            {!hasDebt && '• Add at least one borrow asset. '}
+            {!hasCollateral && '• Add at least one collateral asset.'}
+          </p>
+        </div>
+      )}
+
+      {/* ── Agreement Summary + Submit ─────────────────────── */}
+      <section className="rounded-xl border border-star/30 bg-star/5 p-5 max-w-md">
+        <div className="space-y-3">
+          <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
+            Agreement Summary
+          </span>
+          <div className="space-y-2.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-dust">Intent</span>
+              <span className="text-chalk font-medium uppercase tracking-wider">{orderType}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-dust">Network Mode</span>
+              <span className={`font-medium ${mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
+                {mode === 'offchain' ? 'Gasless (Off-Chain)' : 'On-Chain'}
+              </span>
+            </div>
+            {!isSwap && (
+              <div className="flex justify-between text-sm">
+                <span className="text-dust">Duration</span>
+                <span className="text-chalk font-medium">{formatDurationHuman(Number(duration))}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-dust">Expiry</span>
+              <span className="text-chalk font-medium" suppressHydrationWarning>{formatTimestamp(BigInt(deadline))}</span>
+            </div>
+            {roiInfo && (
+              <div className="flex justify-between text-sm">
+                <span className="text-dust">Est. Yield</span>
+                <span className="text-aurora font-bold">+{roiInfo.yieldPct}%</span>
+              </div>
+            )}
+            {isSwap && (
+              <div className="flex justify-between text-sm">
+                <span className="text-dust">Protocol Fee</span>
+                <span className="text-chalk font-medium">0.15%</span>
+              </div>
+            )}
+            {matchesVisible && hasMatches && (
+              <div className="flex justify-between items-center text-sm pt-1 border-t border-star/10">
+                <span className="text-dust">Broadcast</span>
+                <Switch
+                  size="sm"
+                  checked={broadcastMode}
+                  onCheckedChange={setBroadcastMode}
+                  className="data-[state=checked]:bg-star"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <Web3ActionWrapper message="Connect your wallet to create an inscription">
+            <Button
+              variant="gold"
+              size="lg"
+              className="w-full h-14 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
+              onClick={handleSubmit}
+              disabled={isPending || isCreatingOnChain || isChecking}
+            >
+              {isPending || isCreatingOnChain ? (
+                <div className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Processing...
+                </div>
+              ) : isChecking ? 'Checking matches...' : submitButtonText}
+            </Button>
+          </Web3ActionWrapper>
+        </div>
+      </section>
 
       {/* ── Match Detection ──────────────────────────────── */}
       {matchesVisible && hasMatches && !broadcastMode && (
@@ -1147,6 +1185,7 @@ export default function CreatePage() {
         onAdd={handleAddAsset}
         balances={balances}
         availableRoles={isSwap ? (['debt', 'collateral'] as AssetRole[]) : ROLES}
+        defaultRole={advancedDefaultRole}
       />
 
       {(() => {

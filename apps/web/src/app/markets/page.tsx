@@ -57,7 +57,6 @@ function orderDataToAssetRows(orderId: string, raw: RawOrderData): AssetRow[] {
 function BrowseContent() {
   const [statusFilter, setStatusFilter] = useState('open')
   const [typeFilter, setTypeFilter] = useState<'all' | 'swap' | 'lend'>('all')
-  const [sourceFilter, setSourceFilter] = useState<'all' | 'onchain' | 'offchain'>('all')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -280,8 +279,6 @@ function BrowseContent() {
           setStatusFilter={setStatusFilter}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
-          sourceFilter={sourceFilter}
-          setSourceFilter={setSourceFilter}
         />
 
         <BrowseControls
@@ -318,12 +315,10 @@ function BrowseContent() {
         </div>
       )}
 
-      {/* Content — unified table based on source filter */}
+      {/* Content — unified table */}
       {(() => {
-        const showOnchain = sourceFilter !== 'offchain'
-        const showOffchain = sourceFilter !== 'onchain'
-        const onchainRows = showOnchain ? data : []
-        const offchainRows = showOffchain ? filteredOrders : []
+        const onchainRows = data
+        const offchainRows = filteredOrders
         const hasRows = onchainRows.length > 0 || offchainRows.length > 0
         const isEmpty = !isLoading && !error && !hasRows
 
@@ -434,13 +429,11 @@ function BrowseContent() {
                 </div>
                 <div className="text-center space-y-1.5">
                   <p className="text-chalk text-sm font-medium">
-                    {sourceFilter === 'onchain' ? 'No on-chain inscriptions found' :
-                     sourceFilter === 'offchain' ? 'No off-chain orders found' :
-                     'No inscriptions found'}
+                    No inscriptions found
                   </p>
                   <p className="text-dust text-xs">Try a different filter or search query</p>
                 </div>
-                <Link href="/inscribe" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors">
+                <Link href="/borrow" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
                   Create Inscription
                 </Link>

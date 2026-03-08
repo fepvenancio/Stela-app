@@ -57,6 +57,26 @@ const nextConfig: NextConfig = {
         destination: '/stela/:id',
         permanent: true,
       },
+      {
+        source: '/stelas',
+        destination: '/markets',
+        permanent: true,
+      },
+      {
+        source: '/inscribe',
+        destination: '/borrow',
+        permanent: true,
+      },
+      {
+        source: '/genesis',
+        destination: '/nft',
+        permanent: true,
+      },
+      {
+        source: '/genesis/claim',
+        destination: '/nft/claim',
+        permanent: true,
+      },
     ]
   },
 }

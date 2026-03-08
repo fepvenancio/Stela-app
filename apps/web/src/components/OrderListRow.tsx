@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { formatDuration } from '@/lib/format'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import { getOrderStatusBadgeVariant, getOrderStatusLabel, STATUS_DESCRIPTIONS } from '@/lib/status'
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
 import type { OrderRow } from '@/hooks/useOrders'
 import Link from 'next/link'
+import { computeYieldPercent } from '@/lib/filter-utils'
 
 interface OrderListRowProps {
   order: OrderRow
@@ -33,6 +34,14 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
   const statusVariant = getOrderStatusBadgeVariant(order.status)
   const statusLabel = getOrderStatusLabel(order.status)
   const isSwap = Number(duration) === 0
+  const [confirming, setConfirming] = useState(false)
+
+  const yieldDisplay = useMemo(() => {
+    if (isSwap) return 'Swap'
+    const pct = computeYieldPercent(debtAssets, interestAssets)
+    if (pct === null) return '\u2014'
+    return `${pct.toFixed(1)}%`
+  }, [debtAssets, interestAssets, isSwap])
 
   const inner = (
     <div
@@ -97,26 +106,53 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
         </div>
 
         {/* Collateral */}
-        <div className="col-span-3">
+        <div className="col-span-2">
           <CompactAssetSummary assets={collateralAssets} />
+        </div>
+
+        {/* Yield */}
+        <div className="col-span-1 flex items-center justify-end">
+          <span className={`text-[11px] font-medium ${isSwap ? 'text-dust' : 'text-chalk'}`}>
+            {yieldDisplay}
+          </span>
         </div>
 
         {/* Action */}
         <div className="col-span-2 flex flex-col items-end gap-0.5">
           {onAction ? (
-            <>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAction() }}
-                disabled={actionPending}
-                className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
-              >
-                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
-              </button>
-              {!isSwap && (
-                <span className="text-dust text-[9px]">{formatDuration(Number(duration))}</span>
-              )}
-            </>
+            confirming ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false); onAction() }}
+                  disabled={actionPending}
+                  className="h-7 px-2.5 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false) }}
+                  className="h-7 px-2.5 bg-surface border border-edge/30 text-dust text-[10px] font-bold uppercase tracking-wider rounded-lg hover:text-chalk transition-colors cursor-pointer"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true) }}
+                  disabled={actionPending}
+                  className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+                >
+                  {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+                </button>
+                {!isSwap && (
+                  <span className="text-dust text-[9px]">{formatDuration(Number(duration))}</span>
+                )}
+              </>
+            )
           ) : (
             <div className="flex items-center gap-1.5">
               <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[20px] text-[9px] px-1.5 py-0 uppercase font-bold">

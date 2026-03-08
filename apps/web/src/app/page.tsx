@@ -28,6 +28,31 @@ const icon = {
       <path d="M20.5 11.5L14 18l-3-3-5 5" /><path d="M20.5 16.5v-5h-5" /><path d="M3.5 7.5L10 1l3 3 5-5" /><path d="M3.5 2.5v5h5" />
     </svg>
   ),
+  shield: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+  code: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+    </svg>
+  ),
+  lock: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
+    </svg>
+  ),
+  chain: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+    </svg>
+  ),
+  check: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  ),
   hourglass: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 00-.586-1.414L12 12l-4.414 4.414A2 2 0 007 17.828V22" /><path d="M7 2v4.172a2 2 0 00.586 1.414L12 12l4.414-4.414A2 2 0 0017 6.172V2" />
@@ -78,9 +103,14 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto w-full grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left: Copy */}
           <div className="animate-fade-up">
-            <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-6">
-              P2P Lending on StarkNet
-            </p>
+            <div className="flex items-center gap-3 mb-6">
+              <p className="text-star font-mono text-xs uppercase tracking-[0.3em]">
+                P2P Lending & Swaps on StarkNet
+              </p>
+              <span className="text-[10px] text-star/80 bg-star/10 border border-star/20 px-2.5 py-1 rounded-full font-mono uppercase tracking-wider whitespace-nowrap">
+                First on StarkNet
+              </span>
+            </div>
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tight text-chalk leading-[1.1] mb-6">
               Lend directly.<br />
               No pools.<br />
@@ -88,15 +118,15 @@ export default function LandingPage() {
             </h1>
             <p className="text-dust text-base sm:text-lg leading-relaxed mb-10 max-w-md">
               Every position is an isolated, peer-to-peer agreement.
-              Collateral locked in its own contract. Terms set by you.
-              0.25% lending fees. 0.15% swap fees.
+              Lend, borrow, or atomic swap — collateral locked in its own contract, terms set by you.
+              One wallet popup — approve & execute together via StarkNet multicall.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-2px_rgba(232,168,37,0.4)] cursor-pointer">
-                <Link href="/stelas">Browse Stelas</Link>
+                <Link href="/markets">Browse Markets</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/40 hover:bg-surface text-chalk px-8 h-13 rounded-full transition-all cursor-pointer">
-                <Link href="/inscribe">Create Order</Link>
+                <Link href="/borrow">Create Order</Link>
               </Button>
             </div>
           </div>
@@ -199,6 +229,79 @@ export default function LandingPage() {
                 Borrowers set the terms. Lenders choose what to fund.
                 No intermediary, no governance vote, no committee.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 2b. WHY P2P? COMPARISON ────────────────────────── */}
+      <section className="px-4 py-24 sm:py-32 border-t border-edge/10">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">Why P2P?</p>
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-chalk tracking-tight mb-16 max-w-xl">
+            Pool-based vs peer-to-peer
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-px bg-edge/20 rounded-3xl overflow-hidden">
+            {/* Column Headers */}
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/20">
+              <h3 className="font-display text-sm text-dust uppercase tracking-widest">Pool-Based Lending</h3>
+              <p className="text-dust/60 text-xs mt-1">Nostra, Vesu, zkLend</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-star/[0.06] rounded-full blur-[50px] pointer-events-none" />
+              <h3 className="font-display text-sm text-star uppercase tracking-widest relative z-10">Stela P2P</h3>
+              <p className="text-dust/60 text-xs mt-1 relative z-10">First on StarkNet</p>
+            </div>
+
+            {/* Row: Interest Rates */}
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Interest Rates</span>
+              <p className="text-dust/80 text-sm leading-relaxed">Variable, changes hourly</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Interest Rates</span>
+              <p className="text-chalk text-sm leading-relaxed">Fixed, set at creation</p>
+            </div>
+
+            {/* Row: Liquidation */}
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Liquidation</span>
+              <p className="text-dust/80 text-sm leading-relaxed">Oracle-dependent, cascading</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Liquidation</span>
+              <p className="text-chalk text-sm leading-relaxed">Time-based only, no oracles</p>
+            </div>
+
+            {/* Row: Risk */}
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Risk</span>
+              <p className="text-dust/80 text-sm leading-relaxed">Shared pool — one bad asset affects all</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Risk</span>
+              <p className="text-chalk text-sm leading-relaxed">Isolated per-loan</p>
+            </div>
+
+            {/* Row: Collateral */}
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Collateral</span>
+              <p className="text-dust/80 text-sm leading-relaxed">ERC20 only</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Collateral</span>
+              <p className="text-chalk text-sm leading-relaxed">ERC20, ERC721, ERC1155, ERC4626</p>
+            </div>
+
+            {/* Row: UX */}
+            <div className="bg-abyss/60 p-6 sm:p-8">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">UX</span>
+              <p className="text-dust/80 text-sm leading-relaxed">2-step approve then transact (EVM)</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">UX</span>
+              <p className="text-star text-sm leading-relaxed">One wallet popup (StarkNet multicall)</p>
             </div>
           </div>
         </div>
@@ -440,14 +543,52 @@ export default function LandingPage() {
 
             <div className="mt-8">
               <Button asChild variant="outline" className="border-star/30 hover:border-star hover:bg-star/5 text-star px-6 h-11 rounded-full transition-all cursor-pointer">
-                <Link href="/genesis">Mint Genesis NFT</Link>
+                <Link href="/nft">Mint Genesis NFT</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 6. CTA ───────────────────────────────────────────── */}
+      {/* ── 6. TRUST SIGNALS ──────────────────────────────────── */}
+      <section className="px-4 py-16 sm:py-20 border-t border-edge/10">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 lg:gap-16">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">
+                {icon.shield}
+              </div>
+              <span className="text-dust text-sm">Security Audited</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">
+                {icon.code}
+              </div>
+              <span className="text-dust text-sm">Open Source</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">
+                {icon.lock}
+              </div>
+              <span className="text-dust text-sm">Immutable Contracts</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">
+                {icon.chain}
+              </div>
+              <span className="text-dust text-sm">Built on StarkNet</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">
+                {icon.check}
+              </div>
+              <span className="text-dust text-sm">Ownership Renounced</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. CTA ───────────────────────────────────────────── */}
       <section className="relative py-24 sm:py-32 text-center px-4 border-t border-edge/10">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-star/[0.07] rounded-full blur-[100px] -z-10" />
         <div className="w-20 h-px bg-gradient-to-r from-transparent via-star/40 to-transparent mx-auto mb-10" />
@@ -460,10 +601,10 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
-            <Link href="/stelas">Explore Stelas</Link>
+            <Link href="/markets">Explore Markets</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/30 hover:bg-surface text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer">
-            <Link href="/inscribe">Create Order</Link>
+            <Link href="/borrow">Create Order</Link>
           </Button>
         </div>
       </section>

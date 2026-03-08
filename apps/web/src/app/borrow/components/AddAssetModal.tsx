@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { AssetType, TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
 import type { AssetInputValue } from '@/components/AssetInput'
@@ -48,12 +48,14 @@ export function AddAssetModal({
   onAdd,
   balances,
   availableRoles = ROLES,
+  defaultRole,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAdd: (asset: AssetInputValue, role: AssetRole) => void
   balances?: Map<string, bigint>
   availableRoles?: AssetRole[]
+  defaultRole?: AssetRole
 }) {
   const [step, setStep] = useState<'token' | 'configure'>('token')
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null)
@@ -76,8 +78,15 @@ export function AddAssetModal({
     setAssetType('ERC20')
     setAmount('')
     setTokenId('0')
-    setRole('debt')
-  }, [])
+    setRole(defaultRole ?? 'debt')
+  }, [defaultRole])
+
+  // When modal opens, apply the defaultRole if provided
+  useEffect(() => {
+    if (open && defaultRole) {
+      setRole(defaultRole)
+    }
+  }, [open, defaultRole])
 
   function handleTokenSelect(token: TokenInfo) {
     transitionRef.current = true
