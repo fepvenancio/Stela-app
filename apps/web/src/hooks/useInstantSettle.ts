@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import { InscriptionClient, toU256, findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce } from '@/lib/offchain'
@@ -133,6 +133,34 @@ export function useInstantSettle() {
           throw new Error(
             `Insufficient ${shortfall.symbol} balance. You need ${shortfall.neededFormatted} but only have ${shortfall.balanceFormatted}.`
           )
+        }
+
+        // 9b. Pre-flight borrower collateral allowance check.
+        // The borrower must have approved the Stela contract for their collateral
+        // when they created the order. If the approval was consumed or never set,
+        // settle() will revert with "ERC20: insufficient allowance".
+        for (const asset of sdkCollateralAssets) {
+          if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
+          if (asset.value <= 0n) continue
+          try {
+            const result = await provider.callContract({
+              contractAddress: asset.asset_address,
+              entrypoint: 'allowance',
+              calldata: [borrowerAddress, CONTRACT_ADDRESS],
+            })
+            const allowance = BigInt(result[0]) + (BigInt(result[1] ?? '0') << 128n)
+            if (allowance < asset.value) {
+              const token = findTokenByAddress(asset.asset_address)
+              const sym = token?.symbol ?? asset.asset_address.slice(0, 10) + '...'
+              throw new Error(
+                `The borrower hasn't approved enough ${sym} collateral. ` +
+                `They need to re-approve the Stela contract before this order can be settled.`
+              )
+            }
+          } catch (err) {
+            if (err instanceof Error && err.message.includes('borrower hasn\'t approved')) throw err
+            // allowance check failed — proceed and let the tx revert with a clear error
+          }
         }
 
         // 10. Build approve calls for debt tokens (we are lending these)

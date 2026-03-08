@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import { InscriptionClient, toU256, findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getBatchLendOfferTypedData, hashAssets, hashBatchEntries, getNonce } from '@/lib/offchain'
@@ -132,6 +132,38 @@ export function useMultiSettle() {
           throw new Error(
             `Insufficient ${shortfall.symbol} balance. You need ${shortfall.neededFormatted} but only have ${shortfall.balanceFormatted}.`
           )
+        }
+
+        // 3b. Pre-flight borrower collateral allowance check for off-chain orders.
+        // The borrower must have approved the Stela contract for collateral when
+        // they created their order. If consumed or missing, settle() reverts.
+        for (const so of validOffchain) {
+          const d = so.order.order_data
+          const collateralArr = (d.collateralAssets ?? d.collateral_assets) as Record<string, string>[] | undefined
+          const sdkCollateral = toSdkAssets(collateralArr)
+          const borrowerAddr = (d.borrower as string) || so.order.borrower
+          for (const asset of sdkCollateral) {
+            if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
+            if (asset.value <= 0n) continue
+            try {
+              const result = await provider.callContract({
+                contractAddress: asset.asset_address,
+                entrypoint: 'allowance',
+                calldata: [borrowerAddr, CONTRACT_ADDRESS],
+              })
+              const allowance = BigInt(result[0]) + (BigInt(result[1] ?? '0') << 128n)
+              if (allowance < asset.value) {
+                const token = findTokenByAddress(asset.asset_address)
+                const sym = token?.symbol ?? asset.asset_address.slice(0, 10) + '...'
+                throw new Error(
+                  `Borrower ${borrowerAddr.slice(0, 10)}... hasn't approved enough ${sym} collateral. ` +
+                  `They need to re-approve the Stela contract before this order can be settled.`
+                )
+              }
+            } catch (err) {
+              if (err instanceof Error && err.message.includes('approved enough')) throw err
+            }
+          }
         }
 
         // 4. Get lender nonce (needed for batch offer)

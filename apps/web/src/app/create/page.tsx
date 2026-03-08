@@ -588,31 +588,21 @@ export default function CreatePage() {
       const nftCollateral = sdkCollateralAssets.filter(a => a.asset_type === 'ERC721' || a.asset_type === 'ERC1155')
 
       const pendingApprovals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+      const U128_MAX = (1n << 128n) - 1n
 
+      // Always approve U128_MAX for collateral tokens — exact approvals get
+      // consumed when settle() is called, breaking subsequent matches.
       if (erc20Collateral.length > 0) {
-        const checks = await Promise.all(
-          erc20Collateral.map(async (asset) => {
-            try {
-              const result = await provider.callContract({
-                contractAddress: asset.asset_address,
-                entrypoint: 'allowance',
-                calldata: CallData.compile({ owner: address, spender: CONTRACT_ADDRESS }),
-              })
-              const currentAllowance = BigInt(result[0])
-              return { asset, sufficient: currentAllowance >= asset.value }
-            } catch {
-              return { asset, sufficient: false }
-            }
-          }),
-        )
-        for (const { asset, sufficient } of checks) {
-          if (!sufficient) {
-            pendingApprovals.push({
-              contractAddress: asset.asset_address,
-              entrypoint: 'approve',
-              calldata: [CONTRACT_ADDRESS, ...toU256(asset.value)],
-            })
-          }
+        const approvedTokens = new Set<string>()
+        for (const asset of erc20Collateral) {
+          const key = asset.asset_address.toLowerCase()
+          if (approvedTokens.has(key)) continue
+          approvedTokens.add(key)
+          pendingApprovals.push({
+            contractAddress: asset.asset_address,
+            entrypoint: 'approve',
+            calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
+          })
         }
       }
 
