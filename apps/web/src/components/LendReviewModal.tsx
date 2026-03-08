@@ -223,10 +223,10 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
 
         <DialogFooter>
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
-            className="text-ash hover:text-chalk"
+            className="rounded-xl border-edge/50 text-dust hover:text-chalk hover:border-edge"
           >
             Cancel
           </Button>

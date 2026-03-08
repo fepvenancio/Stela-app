@@ -136,28 +136,21 @@ export function useInstantSettle() {
         }
 
         // 10. Build approve calls for debt tokens (we are lending these)
-        // Check existing allowance and only approve if needed (prevents wasted gas)
+        // Always approve U128_MAX — the on-chain contract reads real amounts from
+        // its own storage, so D1 values may differ. This matches useBatchSign behavior.
+        const U128_MAX = (1n << 128n) - 1n
+        const approvedTokens = new Set<string>()
         const approveCalls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
         for (const asset of sdkDebtAssets) {
           if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
-          const needed = (asset.value * BigInt(bps) + 9999n) / 10000n
-          if (needed === 0n) continue
-          let currentAllowance = 0n
-          try {
-            const result = await provider.callContract({
-              contractAddress: asset.asset_address,
-              entrypoint: 'allowance',
-              calldata: [address, CONTRACT_ADDRESS],
-            })
-            currentAllowance = BigInt(result[0]) + (BigInt(result[1] ?? '0') << 128n)
-          } catch { /* default to 0, will approve */ }
-          if (currentAllowance < needed) {
-            approveCalls.push({
-              contractAddress: asset.asset_address,
-              entrypoint: 'approve',
-              calldata: [CONTRACT_ADDRESS, ...toU256(needed)],
-            })
-          }
+          const key = asset.asset_address.toLowerCase()
+          if (approvedTokens.has(key)) continue
+          approvedTokens.add(key)
+          approveCalls.push({
+            contractAddress: asset.asset_address,
+            entrypoint: 'approve',
+            calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
+          })
         }
 
         // 11. Build settle call

@@ -64,17 +64,20 @@ export function useSignOnChainMatch() {
       progress?.start()
 
       try {
-        // Build ERC20 approval calls for each debt asset
+        // Build ERC20 approval calls for each debt asset.
+        // Always approve U128_MAX — D1 may store null/0 values while the on-chain
+        // contract has real amounts. This matches useBatchSign behavior.
+        const U128_MAX = (1n << 128n) - 1n
+        const approvedTokens = new Set<string>()
         const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
         for (const asset of debtAssets) {
-          const totalValue = BigInt(asset.value || '0')
-          if (totalValue <= 0n) continue
-          // Calculate proportional amount with ceiling: ceil(value * bps / 10000)
-          const amount = (totalValue * BigInt(bps) + 9999n) / 10000n
+          const key = asset.address.toLowerCase()
+          if (approvedTokens.has(key)) continue
+          approvedTokens.add(key)
           approvals.push({
             contractAddress: asset.address,
             entrypoint: 'approve',
-            calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+            calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
           })
         }
 

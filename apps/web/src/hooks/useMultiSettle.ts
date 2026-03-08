@@ -236,18 +236,16 @@ export function useMultiSettle() {
         // 8. Build unified multicall
         setState((s) => ({ ...s, phase: 'executing' }))
 
-        // Aggregate approve amounts per token across ALL orders (ceiling division)
-        const approveAmounts = new Map<string, { amount: bigint; address: string }>()
+        // Collect unique debt token addresses that need approval.
+        // Always approve U128_MAX — the on-chain contract reads real amounts from
+        // its own storage, so D1 values may differ. This matches useBatchSign behavior.
+        const U128_MAX = (1n << 128n) - 1n
+        const approveTokens = new Map<string, string>() // key → original address
 
         for (const p of preparedOrders) {
           for (const asset of p.sdkDebtAssets) {
             if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
-            const needed = (asset.value * BigInt(p.so.bps) + 9999n) / 10000n
-            if (needed === 0n) continue
-            const key = asset.asset_address.toLowerCase()
-            const existing = approveAmounts.get(key)
-            if (existing) existing.amount += needed
-            else approveAmounts.set(key, { amount: needed, address: asset.asset_address })
+            approveTokens.set(asset.asset_address.toLowerCase(), asset.asset_address)
           }
         }
 
@@ -255,29 +253,22 @@ export function useMultiSettle() {
           const debtAssets = toSdkAssets(so.match.debtAssets as Record<string, string>[] | undefined)
           for (const asset of debtAssets) {
             if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
-            const needed = (asset.value * BigInt(so.bps) + 9999n) / 10000n
-            if (needed === 0n) continue
-            const key = asset.asset_address.toLowerCase()
-            const existing = approveAmounts.get(key)
-            if (existing) existing.amount += needed
-            else approveAmounts.set(key, { amount: needed, address: asset.asset_address })
+            approveTokens.set(asset.asset_address.toLowerCase(), asset.asset_address)
           }
         }
 
-        // Merge extra approval amounts (e.g. collateral for remainder inscription)
+        // Merge extra approval tokens (e.g. collateral for remainder inscription)
         if (options?.extraApproveAmounts) {
-          for (const [key, { amount, address: tokenAddr }] of options.extraApproveAmounts) {
-            const existing = approveAmounts.get(key)
-            if (existing) existing.amount += amount
-            else approveAmounts.set(key, { amount, address: tokenAddr })
+          for (const [key, { address: tokenAddr }] of options.extraApproveAmounts) {
+            approveTokens.set(key, tokenAddr)
           }
         }
 
         // Build approve calls for all needed tokens
-        const approveCalls = Array.from(approveAmounts.values()).map(({ amount, address: tokenAddr }) => ({
+        const approveCalls = Array.from(approveTokens.values()).map((tokenAddr) => ({
           contractAddress: tokenAddr,
           entrypoint: 'approve',
-          calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+          calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
         }))
 
         // Build on-chain sign_inscription calls
