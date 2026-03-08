@@ -262,7 +262,7 @@ function BrowseContent() {
   const isActionPending = isBatchSignPending || isInstantSettlePending
 
   return (
-    <div className="animate-fade-up">
+    <div className="animate-fade-up pb-24">
       {/* Hero */}
       <div className="mb-10">
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
@@ -305,7 +305,7 @@ function BrowseContent() {
       {isLoading && (
         <div className="space-y-3" role="status" aria-busy="true" aria-label="Loading inscriptions">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full bg-surface/20 rounded-xl" />
+            <Skeleton key={i} className="h-14 w-full rounded-xl bg-surface/20" />
           ))}
           <span className="sr-only">Loading inscriptions...</span>
         </div>
@@ -426,19 +426,21 @@ function BrowseContent() {
             )}
 
             {isEmpty && (
-              <div className="text-center py-24">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge mb-4">
+              <div className="flex flex-col items-center justify-center py-24 gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
                     <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
                   </svg>
                 </div>
-                <p className="text-dust text-sm">
-                  {sourceFilter === 'onchain' ? 'No on-chain inscriptions found' :
-                   sourceFilter === 'offchain' ? 'No off-chain orders found' :
-                   'No inscriptions found'}
-                </p>
-                <p className="text-dust text-xs mt-1 mb-4">Try a different filter or search query</p>
-                <Link href="/create" className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm text-void bg-star hover:bg-star-bright transition-colors font-medium">
+                <div className="text-center space-y-1.5">
+                  <p className="text-chalk text-sm font-medium">
+                    {sourceFilter === 'onchain' ? 'No on-chain inscriptions found' :
+                     sourceFilter === 'offchain' ? 'No off-chain orders found' :
+                     'No inscriptions found'}
+                  </p>
+                  <p className="text-dust text-xs">Try a different filter or search query</p>
+                </div>
+                <Link href="/create" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
                   Create Inscription
                 </Link>

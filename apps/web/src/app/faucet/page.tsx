@@ -161,7 +161,7 @@ function MintCard({
 
 export default function FaucetPage() {
   return (
-    <div className="animate-fade-up max-w-7xl mx-auto">
+    <div className="animate-fade-up pb-24">
       {/* Hero */}
       <div className="mb-10">
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">

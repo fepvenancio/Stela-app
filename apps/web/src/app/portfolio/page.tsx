@@ -20,8 +20,8 @@ import Link from 'next/link'
 
 function EmptyTab({ message, cta }: { message: string; cta?: { label: string; href: string } }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-4">
-      <div className="w-12 h-12 rounded-2xl bg-surface/40 border border-edge/20 flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center py-24 gap-5">
+      <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
           <rect x="3" y="3" width="14" height="14" rx="2" />
           <path d="M7 10h6M10 7v6" />
@@ -156,7 +156,7 @@ export default function PortfolioPage() {
   const totalPositions = lending.length + borrowing.length + repaid.length + redeemable.length + orders.length + swapOrders.length
 
   return (
-    <div className="animate-fade-up max-w-6xl mx-auto">
+    <div className="animate-fade-up pb-24">
       {/* Header */}
       <div className="flex items-end justify-between mb-10 gap-4">
         <div>
@@ -187,9 +187,9 @@ export default function PortfolioPage() {
         {/* Loading */}
         {isLoading && !error && (
           <div role="status" aria-busy="true" aria-label="Loading portfolio">
-            <div className="space-y-px">
+            <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 w-full bg-surface/10" />
+                <Skeleton key={i} className="h-14 w-full rounded-xl bg-surface/20" />
               ))}
             </div>
             <span className="sr-only">Loading portfolio...</span>
@@ -214,8 +214,8 @@ export default function PortfolioPage() {
             {totalPositions === 0 ? (
               /* Global empty state */
               <div className="flex flex-col items-center justify-center py-24 gap-5">
-                <div className="w-16 h-16 rounded-3xl bg-star/5 border border-star/15 flex items-center justify-center">
-                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star/60">
+                <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
                     <rect x="4" y="4" width="20" height="20" rx="4" />
                     <path d="M10 14h8M14 10v8" />
                   </svg>
@@ -228,9 +228,9 @@ export default function PortfolioPage() {
                 </div>
                 <Link
                   href="/create"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
                 >
-                  <Plus className="w-4 h-4 text-star" />
+                  <Plus className="w-3.5 h-3.5 text-star" />
                   Inscribe a Stela
                 </Link>
               </div>

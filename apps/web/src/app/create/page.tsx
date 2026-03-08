@@ -764,7 +764,7 @@ export default function CreatePage() {
   /* ── Render ────────────────────────────────────────────── */
 
   return (
-    <div className="animate-fade-up max-w-7xl mx-auto pb-24 relative">
+    <div className="animate-fade-up pb-24 relative">
 
       {/* ── Ambient Background ───────────────────────────── */}
       <div className="fixed top-1/4 -left-20 w-64 h-64 bg-star/[0.04] rounded-full blur-[120px] pointer-events-none" />

@@ -137,12 +137,12 @@ function FlowArrow({ label, vertical = false, className = '' }: { label?: string
 
 export default function DocsPage() {
   return (
-    <div className="animate-fade-in max-w-6xl mx-auto pb-32 px-4">
+    <div className="animate-fade-up pb-24">
       {/* Hero */}
       <div className="mb-16 relative py-12">
         <div className="absolute inset-0 bg-star/2 blur-[120px] rounded-full -z-10" />
         <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-6">Protocol Documentation</p>
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-6 uppercase">
+        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
           The Stela Codex
         </h1>
         <p className="text-dust max-w-2xl leading-relaxed text-lg">

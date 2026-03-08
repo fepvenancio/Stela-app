@@ -235,7 +235,7 @@ export default function GenesisPage() {
   const isHolder = pos.balance > 0n
 
   return (
-    <div className="animate-fade-up max-w-7xl mx-auto">
+    <div className="animate-fade-up pb-24">
       {/* Hero */}
       <div className="mb-10">
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
@@ -298,7 +298,7 @@ export default function GenesisPage() {
               <div className="flex justify-between items-end border-b border-edge/10 pb-4">
                 <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Total Minted</span>
                 {pos.isLoading ? (
-                  <Skeleton className="h-7 w-16 bg-edge/20" />
+                  <Skeleton className="h-7 w-16 rounded-xl bg-surface/20" />
                 ) : (
                   <div className="text-right">
                     <span className="text-2xl font-display text-chalk leading-none">
