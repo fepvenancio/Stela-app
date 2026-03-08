@@ -60,12 +60,23 @@ const DURATION_PRESETS = [
   { label: '1y', seconds: 31536000 },
 ]
 
-const DEADLINE_PRESETS = [
+const LOAN_DEADLINE_PRESETS = [
   { label: '7d', seconds: 604800 },
   { label: '14d', seconds: 1209600 },
   { label: '30d', seconds: 2592000 },
   { label: '60d', seconds: 5184000 },
   { label: '90d', seconds: 7776000 },
+]
+
+const SWAP_DEADLINE_PRESETS = [
+  { label: '5m', seconds: 300 },
+  { label: '15m', seconds: 900 },
+  { label: '30m', seconds: 1800 },
+  { label: '1h', seconds: 3600 },
+  { label: '12h', seconds: 43200 },
+  { label: '1d', seconds: 86400 },
+  { label: '7d', seconds: 604800 },
+  { label: '30d', seconds: 2592000 },
 ]
 
 const CUSTOM_DURATION_UNITS = [
@@ -118,8 +129,15 @@ export default function CreatePage() {
     return durationPreset
   }, [orderType, durationPreset, customDurationValue, customDurationUnit, useCustomDuration])
 
-  // Deadline
+  // Deadline — swap uses shorter timeframes, lending uses longer
+  const deadlinePresets = orderType === 'swap' ? SWAP_DEADLINE_PRESETS : LOAN_DEADLINE_PRESETS
   const [deadlinePreset, setDeadlinePreset] = useState('604800')
+
+  // Reset deadline preset when switching order type
+  useEffect(() => {
+    setDeadlinePreset(orderType === 'swap' ? '1800' : '604800')
+  }, [orderType])
+
   const deadline = useMemo(() => {
     const now = Math.floor(Date.now() / 1000)
     return (now + Number(deadlinePreset)).toString()
@@ -928,7 +946,7 @@ export default function CreatePage() {
           <div className="space-y-3 flex-1 min-w-0">
             <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
             <div className="flex flex-wrap gap-2">
-              {DEADLINE_PRESETS.map((p) => (
+              {deadlinePresets.map((p) => (
                 <button
                   key={p.seconds}
                   type="button"

@@ -30,30 +30,33 @@ export interface ParsedAsset {
   token_id: string
 }
 
-/** Fetch inscription data directly from the StarkNet contract */
+/** Fetch inscription data directly from the StarkNet contract (retries up to 3 times) */
 export async function fetchInscriptionFromContract(
   provider: RpcProvider,
   stelaAddress: string,
   abi: unknown[],
   inscriptionId: string
 ): Promise<OnChainInscription | null> {
-  try {
-    const contract = new Contract(abi, stelaAddress, provider)
-    const result = await contract.call('get_inscription', [inscriptionId], { blockIdentifier: 'latest' })
-    const r = result as Record<string, unknown>
+  const contract = new Contract(abi, stelaAddress, provider)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const result = await contract.call('get_inscription', [inscriptionId], { blockIdentifier: 'latest' })
+      const r = result as Record<string, unknown>
 
-    return {
-      multi_lender: Boolean(r.multi_lender),
-      duration: Number(BigInt(r.duration as string | bigint)),
-      deadline: Number(BigInt(r.deadline as string | bigint)),
-      debt_asset_count: Number(r.debt_asset_count),
-      interest_asset_count: Number(r.interest_asset_count),
-      collateral_asset_count: Number(r.collateral_asset_count),
+      return {
+        multi_lender: Boolean(r.multi_lender),
+        duration: Number(BigInt(r.duration as string | bigint)),
+        deadline: Number(BigInt(r.deadline as string | bigint)),
+        debt_asset_count: Number(r.debt_asset_count),
+        interest_asset_count: Number(r.interest_asset_count),
+        collateral_asset_count: Number(r.collateral_asset_count),
+      }
+    } catch (err) {
+      console.error(`Failed to fetch inscription ${inscriptionId} (attempt ${attempt + 1}/3):`, err)
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)))
     }
-  } catch (err) {
-    console.error(`Failed to fetch inscription ${inscriptionId} from contract:`, err)
-    return null
   }
+  return null
 }
 
 /** Fetch the locker TBA address for a given inscription from the contract */

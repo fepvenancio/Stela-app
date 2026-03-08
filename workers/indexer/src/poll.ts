@@ -144,38 +144,44 @@ async function rpcEventToWebhookEvent(event: RpcEvent, stelaAddress: string): Pr
       console.warn(`Failed to fetch tx ${event.transaction_hash}:`, err)
     }
 
-    // Fetch on-chain data for duration/deadline/counts
-    try {
-      const rpcRes = await fetch(RPC_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'starknet_call',
-          params: {
-            request: {
-              contract_address: stelaAddress,
-              entry_point_selector: '0x188e727afe1a34c180f91cc3f0f83cff51bf2da5bcd6c00f050164bc8bea06e',
-              calldata: [
-                // inscription_id as u256 (low, high)
-                '0x' + BigInt(event.keys[1]).toString(16),
-                '0x' + BigInt(event.keys[2]).toString(16),
-              ],
+    // Fetch on-chain data for duration/deadline/counts (retry up to 3 times)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const rpcRes = await fetch(RPC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'starknet_call',
+            params: {
+              request: {
+                contract_address: stelaAddress,
+                entry_point_selector: '0x188e727afe1a34c180f91cc3f0f83cff51bf2da5bcd6c00f050164bc8bea06e',
+                calldata: [
+                  // inscription_id as u256 (low, high)
+                  '0x' + BigInt(event.keys[1]).toString(16),
+                  '0x' + BigInt(event.keys[2]).toString(16),
+                ],
+              },
+              block_id: 'latest',
             },
-            block_id: 'latest',
-          },
-          id: 1,
-        }),
-      })
-      const rpcJson = (await rpcRes.json()) as { result?: string[] }
-      if (rpcJson.result && rpcJson.result.length >= 6) {
-        const r = rpcJson.result
-        // get_inscription returns: multi_lender, duration, deadline, debt_count, interest_count, collateral_count, ...
-        multiLender = BigInt(r[0]) !== 0n
-        duration = Number(BigInt(r[1]))
-        deadline = Number(BigInt(r[2]))
+            id: 1,
+          }),
+        })
+        const rpcJson = (await rpcRes.json()) as { result?: string[] }
+        if (rpcJson.result && rpcJson.result.length >= 6) {
+          const r = rpcJson.result
+          // get_inscription returns: multi_lender, duration, deadline, debt_count, interest_count, collateral_count, ...
+          multiLender = BigInt(r[0]) !== 0n
+          duration = Number(BigInt(r[1]))
+          deadline = Number(BigInt(r[2]))
+          break // success
+        }
+      } catch (err) {
+        console.warn(`[poll] get_inscription RPC failed (attempt ${attempt + 1}/3):`, err)
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)))
       }
-    } catch { /* use defaults */ }
+    }
 
     return {
       event_type: 'created',
