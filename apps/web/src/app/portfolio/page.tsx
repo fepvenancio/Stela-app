@@ -168,7 +168,7 @@ export default function PortfolioPage() {
           </p>
         </div>
         <Link
-          href="/create"
+          href="/inscribe"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
         >
           <Plus className="w-3.5 h-3.5 text-star" />
@@ -227,7 +227,7 @@ export default function PortfolioPage() {
                   </p>
                 </div>
                 <Link
-                  href="/create"
+                  href="/inscribe"
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5 text-star" />
@@ -257,7 +257,7 @@ export default function PortfolioPage() {
                   {filteredOrders.length === 0 ? (
                     <EmptyTab
                       message={q ? 'No orders match your search.' : 'No off-chain orders yet.'}
-                      cta={!q ? { label: 'Create Order', href: '/create' } : undefined}
+                      cta={!q ? { label: 'Create Order', href: '/inscribe' } : undefined}
                     />
                   ) : (
                     <div className="rounded-xl border border-edge/30 overflow-clip">
@@ -275,7 +275,7 @@ export default function PortfolioPage() {
                   {filteredSwaps.length === 0 ? (
                     <EmptyTab
                       message={q ? 'No swaps match your search.' : 'No swaps yet.'}
-                      cta={!q ? { label: 'Create Swap', href: '/create' } : undefined}
+                      cta={!q ? { label: 'Create Swap', href: '/inscribe' } : undefined}
                     />
                   ) : (
                     <div className="rounded-xl border border-edge/30 overflow-clip">
@@ -293,7 +293,7 @@ export default function PortfolioPage() {
                   {filteredLending.length === 0 && lendingOrders.length === 0 ? (
                     <EmptyTab
                       message={q ? 'No lending positions match your search.' : 'No lending positions yet.'}
-                      cta={!q ? { label: 'Browse Stelas', href: '/browse' } : undefined}
+                      cta={!q ? { label: 'Browse Stelas', href: '/stelas' } : undefined}
                     />
                   ) : (
                     <div className="rounded-xl border border-edge/30 overflow-clip">
@@ -314,7 +314,7 @@ export default function PortfolioPage() {
                   {filteredBorrowing.length === 0 && borrowingOrders.length === 0 ? (
                     <EmptyTab
                       message={q ? 'No borrowing positions match your search.' : 'No borrowing positions yet.'}
-                      cta={!q ? { label: 'Create Inscription', href: '/create' } : undefined}
+                      cta={!q ? { label: 'Create Inscription', href: '/inscribe' } : undefined}
                     />
                   ) : (
                     <div className="rounded-xl border border-edge/30 overflow-clip">

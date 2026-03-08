@@ -90,7 +90,7 @@ export function OffchainMatchListRow({
       <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
         {/* Status + source */}
         <div className="col-span-2 flex items-center gap-1.5 min-w-0">
-          <Badge variant="pending" className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
+          <Badge variant="pending" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
           <span className="text-[7px] text-ash/40 uppercase tracking-wider shrink-0">oc</span>
@@ -135,7 +135,7 @@ export function OffchainMatchListRow({
       <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <Badge variant="pending" className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
+            <Badge variant="pending" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
               {isSwap ? 'Swap' : 'Loan'}
             </Badge>
             <span className="text-[7px] text-ash/40 uppercase tracking-wider">oc</span>
@@ -192,7 +192,7 @@ export function OnchainMatchListRow({
       {/* Desktop */}
       <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
         <div className="col-span-2 flex items-center gap-1.5 min-w-0">
-          <Badge variant="open" className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
+          <Badge variant="open" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
           <span className="font-mono text-[10px] text-dust tracking-wider truncate">
@@ -228,7 +228,7 @@ export function OnchainMatchListRow({
       <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <Badge variant="open" className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
+            <Badge variant="open" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
               {isSwap ? 'Swap' : 'Loan'}
             </Badge>
             <span className="font-mono text-[10px] text-dust">{formatAddress(match.creator || match.borrower)}</span>

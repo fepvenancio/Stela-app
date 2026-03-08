@@ -72,7 +72,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
       <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
         {/* Status + ID */}
         <div className="col-span-2 flex items-center gap-1.5 min-w-0">
-          <Badge variant={statusVariant} className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
+          <Badge variant={statusVariant} className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
             {statusLabel}
           </Badge>
           <Link
@@ -119,7 +119,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
             </>
           ) : (
             <div className="flex items-center gap-1.5">
-              <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[16px] text-[7px] px-1 py-0 uppercase font-bold">
+              <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[20px] text-[9px] px-1.5 py-0 uppercase font-bold">
                 {isSwap ? 'Swap' : 'Loan'}
               </Badge>
               {!isSwap && (
@@ -134,10 +134,10 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
       <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <Badge variant={statusVariant} className="w-fit h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold shrink-0">
+            <Badge variant={statusVariant} className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
               {statusLabel}
             </Badge>
-            <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[16px] text-[7px] px-1 py-0 uppercase font-bold shrink-0">
+            <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[20px] text-[9px] px-1.5 py-0 uppercase font-bold shrink-0">
               {isSwap ? 'Swap' : 'Loan'}
             </Badge>
             <span className="text-[7px] text-ash/40 uppercase tracking-wider">oc</span>

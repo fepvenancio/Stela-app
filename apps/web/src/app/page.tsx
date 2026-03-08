@@ -93,10 +93,10 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-2px_rgba(232,168,37,0.4)] cursor-pointer">
-                <Link href="/browse">Browse Stelas</Link>
+                <Link href="/stelas">Browse Stelas</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/40 hover:bg-surface text-chalk px-8 h-13 rounded-full transition-all cursor-pointer">
-                <Link href="/create">Create Order</Link>
+                <Link href="/inscribe">Create Order</Link>
               </Button>
             </div>
           </div>
@@ -460,10 +460,10 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
-            <Link href="/browse">Explore Stelas</Link>
+            <Link href="/stelas">Explore Stelas</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/30 hover:bg-surface text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer">
-            <Link href="/create">Create Order</Link>
+            <Link href="/inscribe">Create Order</Link>
           </Button>
         </div>
       </section>

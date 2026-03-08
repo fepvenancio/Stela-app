@@ -940,13 +940,13 @@ export default function DocsPage() {
           <h2 className="font-display text-4xl text-chalk mb-10">Start building</h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link
-              href="/browse"
+              href="/stelas"
               className="bg-star hover:bg-star-bright text-void font-bold px-12 py-4 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105"
             >
               Explore Stelas
             </Link>
             <Link
-              href="/create"
+              href="/inscribe"
               className="border border-edge hover:bg-surface text-chalk px-12 py-4 rounded-full text-lg transition-all hover:border-star/30"
             >
               Inscribe Now
