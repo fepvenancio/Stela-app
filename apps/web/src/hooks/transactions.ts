@@ -48,20 +48,23 @@ export function useSignInscription(inscriptionId: string) {
       progress?.start()
 
       try {
-        // Build ERC20 approval calls for each debt asset
+        // Build ERC20 approval calls for each debt asset.
+        // Always approve U128_MAX — D1 may store null/0 values while the
+        // on-chain contract has real amounts.
+        const U128_MAX = (1n << 128n) - 1n
         const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
         if (!debtAssets || debtAssets.length === 0) {
           throw new Error('No debt asset data available — the inscription may still be indexing. Please wait a moment and refresh.')
         }
+        const approvedTokens = new Set<string>()
         for (const asset of debtAssets) {
-          const totalValue = BigInt(asset.value || '0')
-          if (totalValue <= 0n) continue
-          // Calculate proportional amount with ceiling: ceil(value * bps / 10000)
-          const amount = (totalValue * BigInt(bps) + 9999n) / 10000n
+          const key = asset.address.toLowerCase()
+          if (approvedTokens.has(key)) continue
+          approvedTokens.add(key)
           approvals.push({
             contractAddress: asset.address,
             entrypoint: 'approve',
-            calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
+            calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
           })
         }
 

@@ -56,16 +56,22 @@ export function useCreateInscription() {
       progress?.start()
 
       try {
-        // Build ERC20/ERC4626 approval calls for collateral tokens
+        // Build ERC20/ERC4626 approval calls for collateral tokens.
+        // Always approve U128_MAX so subsequent settle/match flows don't fail
+        // when the exact approval gets consumed.
+        const U128_MAX = (1n << 128n) - 1n
         const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+        const approvedTokens = new Set<string>()
 
         for (const asset of input.collateralAssets) {
           if (asset.asset_type === 'ERC20' || asset.asset_type === 'ERC4626') {
-            if (asset.value <= 0n) continue
+            const key = asset.asset_address.toLowerCase()
+            if (approvedTokens.has(key)) continue
+            approvedTokens.add(key)
             approvals.push({
               contractAddress: asset.asset_address,
               entrypoint: 'approve',
-              calldata: [CONTRACT_ADDRESS, ...toU256(asset.value)],
+              calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
             })
           } else if (asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155') {
             approvals.push({

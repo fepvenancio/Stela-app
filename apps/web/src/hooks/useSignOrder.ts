@@ -175,17 +175,24 @@ async function settlePublic(params: {
     )
   }
 
-  // 11. Build ERC20 approve calls for debt tokens (lender provides debt)
+  // 11. Build ERC20 approve calls for debt tokens (lender provides debt).
+  // Always approve U128_MAX — D1 may store null/0 values while the
+  // on-chain contract has real amounts.
+  const U128_MAX = (1n << 128n) - 1n
+  const seenTokens = new Set<string>()
   const approveCalls = sdkDebtAssets
-    .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
-    .map(asset => {
-      const amount = (asset.value * BigInt(bps)) / 10000n
-      return {
-        contractAddress: asset.asset_address,
-        entrypoint: 'approve',
-        calldata: [CONTRACT_ADDRESS, ...toU256(amount)],
-      }
+    .filter(a => {
+      if (a.asset_type !== 'ERC20' && a.asset_type !== 'ERC4626') return false
+      const key = a.asset_address.toLowerCase()
+      if (seenTokens.has(key)) return false
+      seenTokens.add(key)
+      return true
     })
+    .map(asset => ({
+      contractAddress: asset.asset_address,
+      entrypoint: 'approve',
+      calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
+    }))
 
   // 11. Build settle call using SDK
   const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })
