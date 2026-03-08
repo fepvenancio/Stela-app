@@ -29,9 +29,9 @@ const ROW_CONFIGS: RowConfig[] = [
     label: '',
     loanLabel: 'I want to borrow',
     swapLabel: 'I receive',
-    accentClass: 'text-nebula',
-    borderClass: 'border-nebula/20',
-    bgClass: 'bg-nebula/5',
+    accentClass: 'text-aurora',
+    borderClass: 'border-aurora/20',
+    bgClass: 'bg-aurora/5',
   },
   {
     key: 'collateral',
@@ -47,9 +47,9 @@ const ROW_CONFIGS: RowConfig[] = [
     label: '',
     loanLabel: "I'll pay interest",
     swapLabel: '',
-    accentClass: 'text-aurora',
-    borderClass: 'border-aurora/20',
-    bgClass: 'bg-aurora/5',
+    accentClass: 'text-nebula',
+    borderClass: 'border-nebula/20',
+    bgClass: 'bg-nebula/5',
   },
 ]
 
