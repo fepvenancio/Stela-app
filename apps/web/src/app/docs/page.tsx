@@ -227,8 +227,7 @@ export default function DocsPage() {
           <div className="bg-abyss border border-star/20 rounded-3xl p-8 mt-12">
             <h4 className="font-display text-star text-lg mb-3">Atomic Swaps</h4>
             <p className="text-dust text-sm leading-relaxed">
-              For swaps, set the <span className="text-chalk font-semibold">duration to 0</span> — your order becomes
-              an atomic swap instead of a loan. Assets exchange instantly in a single transaction with no repayment
+              Use the <Link href="/swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page for atomic peer-to-peer trades. Assets exchange instantly in a single transaction with no repayment
               period and a lower fee (0.15% vs 0.25%).
             </p>
           </div>
@@ -445,8 +444,7 @@ export default function DocsPage() {
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <p className="text-dust text-sm leading-relaxed">
-                  When you set <span className="text-chalk font-semibold">duration to 0</span>, the inscription
-                  becomes an <span className="text-star">atomic swap</span> instead of a loan. Both sides of the
+                  Head to the <Link href="/swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page to create an <span className="text-star">atomic swap</span>. Both sides of the
                   trade execute in a single transaction — assets swap atomically with no repayment period, no
                   interest assets required, and no liquidation risk.
                 </p>

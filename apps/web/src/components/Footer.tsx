@@ -27,6 +27,7 @@ export function Footer() {
             <nav className="flex flex-col">
               <Link href="/markets" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Markets</Link>
               <Link href="/borrow" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Borrow</Link>
+              <Link href="/swap" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Swap</Link>
               <Link href="/portfolio" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Portfolio</Link>
               <Link href="/nft" className="text-sm text-dust hover:text-chalk transition-colors block py-1">NFT</Link>
               <Link href="/faucet" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Faucet</Link>
