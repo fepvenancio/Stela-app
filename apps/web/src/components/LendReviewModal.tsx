@@ -78,14 +78,16 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
   }, [totals, balances, balancesLoading])
 
   const handleConfirm = async () => {
-    // Check balances
-    for (const [tokenAddr, required] of totals) {
-      const available = balances.get(tokenAddr) ?? 0n
-      if (available < required) {
-        toast.error('Insufficient balance', {
-          description: 'You need more tokens to fund all selected items.',
-        })
-        return
+    // Check balances (skip if balances haven't loaded yet — the on-chain tx will validate)
+    if (!balancesLoading && balances.size > 0) {
+      for (const [tokenAddr, required] of totals) {
+        const available = balances.get(tokenAddr) ?? 0n
+        if (available < required) {
+          toast.error('Insufficient balance', {
+            description: 'You need more tokens to fund all selected items.',
+          })
+          return
+        }
       }
     }
 
