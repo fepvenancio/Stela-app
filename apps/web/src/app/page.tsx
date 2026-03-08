@@ -112,21 +112,23 @@ export default function LandingPage() {
               </span>
             </div>
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tight text-chalk leading-[1.1] mb-6">
-              Lend directly.<br />
-              No pools.<br />
-              <span className="text-star">No oracles.</span>
+              If it exists,<br />
+              you can<br />
+              <span className="text-star">lend it.</span>
             </h1>
             <p className="text-dust text-base sm:text-lg leading-relaxed mb-10 max-w-md">
-              Every position is an isolated, peer-to-peer agreement.
-              Lend, borrow, or atomic swap — collateral locked in its own contract, terms set by you.
-              One wallet popup — approve & execute together via StarkNet multicall.
+              Any ERC20, ERC721, ERC1155, or ERC4626 — borrowable, lendable, swappable. Day one. No listing required, no oracles, no governance vote.
+              Every position is isolated. Multi-lender funding turns any loan into a permissionless vault with tradeable shares.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-2px_rgba(232,168,37,0.4)] cursor-pointer">
-                <Link href="/markets">Browse Markets</Link>
+                <Link href="/borrow">Borrow</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/40 hover:bg-surface text-chalk px-8 h-13 rounded-full transition-all cursor-pointer">
-                <Link href="/borrow">Create Order</Link>
+                <Link href="/swap">Swap</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="border-edge hover:border-edge-bright hover:bg-surface text-dust hover:text-chalk px-8 h-13 rounded-full transition-all cursor-pointer">
+                <Link href="/markets">Browse Markets</Link>
               </Button>
             </div>
           </div>
@@ -194,40 +196,40 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">Why Stela</p>
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-chalk tracking-tight mb-16 max-w-xl">
-            Lending without the middlemen
+            The mother of exotic lending
           </h2>
 
           <div className="grid lg:grid-cols-3 gap-px bg-edge/20 rounded-3xl overflow-hidden">
             <div className="bg-abyss p-8 sm:p-10 group">
               <div className="w-10 h-10 rounded-xl bg-star/10 flex items-center justify-center text-star mb-6 group-hover:scale-110 transition-transform">
-                {icon.split}
+                {icon.gem}
               </div>
-              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Isolated Positions</h3>
+              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Asset-Agnostic</h3>
               <p className="text-dust text-sm leading-relaxed">
-                Every loan deploys its own Locker contract. Your collateral is never pooled
-                with other users. No shared risk, no contagion.
+                ERC20, ERC721, ERC1155, ERC4626 — all supported day one. No listing proposals,
+                no oracle feeds, no governance votes. If it exists on-chain, you can lend it.
               </p>
             </div>
 
             <div className="bg-abyss p-8 sm:p-10 group">
               <div className="w-10 h-10 rounded-xl bg-aurora/10 flex items-center justify-center text-aurora mb-6 group-hover:scale-110 transition-transform">
-                {icon.hourglass}
+                {icon.vault}
               </div>
-              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Time, Not Price</h3>
+              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Permissionless Vaults</h3>
               <p className="text-dust text-sm leading-relaxed">
-                Liquidation is based on time, not price feeds. No oracle manipulation,
-                no cascading liquidations. The clock is the only judge.
+                Multi-lender funding turns any loan into a vault. Multiple lenders fill portions,
+                each receiving tradeable ERC1155 shares. No pool manager, no whitelists.
               </p>
             </div>
 
             <div className="bg-abyss p-8 sm:p-10 group">
               <div className="w-10 h-10 rounded-xl bg-nebula/10 flex items-center justify-center text-nebula mb-6 group-hover:scale-110 transition-transform">
-                {icon.handshake}
+                {icon.split}
               </div>
-              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Direct Agreement</h3>
+              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Isolated Risk</h3>
               <p className="text-dust text-sm leading-relaxed">
-                Borrowers set the terms. Lenders choose what to fund.
-                No intermediary, no governance vote, no committee.
+                Every loan deploys its own Locker contract. Your collateral is never pooled.
+                One bad position can never cascade into another. Zero contagion by design.
               </p>
             </div>
           </div>
@@ -252,6 +254,26 @@ export default function LandingPage() {
               <div className="absolute top-0 right-0 w-24 h-24 bg-star/[0.06] rounded-full blur-[50px] pointer-events-none" />
               <h3 className="font-display text-sm text-star uppercase tracking-widest relative z-10">Stela P2P</h3>
               <p className="text-dust/60 text-xs mt-1 relative z-10">First on StarkNet</p>
+            </div>
+
+            {/* Row: Supported Assets */}
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Supported Assets</span>
+              <p className="text-dust/80 text-sm leading-relaxed">Governance-approved ERC20 only</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Supported Assets</span>
+              <p className="text-star text-sm leading-relaxed">Any ERC20, ERC721, ERC1155, ERC4626</p>
+            </div>
+
+            {/* Row: New Asset Listing */}
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">New Asset Listing</span>
+              <p className="text-dust/80 text-sm leading-relaxed">Governance vote, oracle setup, weeks</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">New Asset Listing</span>
+              <p className="text-chalk text-sm leading-relaxed">Instant — just create an order</p>
             </div>
 
             {/* Row: Interest Rates */}
@@ -281,17 +303,17 @@ export default function LandingPage() {
             </div>
             <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
               <span className="text-dust text-xs uppercase tracking-widest block mb-2">Risk</span>
-              <p className="text-chalk text-sm leading-relaxed">Isolated per-loan</p>
+              <p className="text-chalk text-sm leading-relaxed">Isolated per-loan Locker contract</p>
             </div>
 
-            {/* Row: Collateral */}
+            {/* Row: Positions */}
             <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
-              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Collateral</span>
-              <p className="text-dust/80 text-sm leading-relaxed">ERC20 only</p>
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Positions</span>
+              <p className="text-dust/80 text-sm leading-relaxed">Fungible pool tokens</p>
             </div>
             <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
-              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Collateral</span>
-              <p className="text-chalk text-sm leading-relaxed">ERC20, ERC721, ERC1155, ERC4626</p>
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Positions</span>
+              <p className="text-chalk text-sm leading-relaxed">Tradeable ERC1155 shares (vault-like)</p>
             </div>
 
             {/* Row: UX */}
@@ -593,18 +615,21 @@ export default function LandingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-star/[0.07] rounded-full blur-[100px] -z-10" />
         <div className="w-20 h-px bg-gradient-to-r from-transparent via-star/40 to-transparent mx-auto mb-10" />
         <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-chalk tracking-tight mb-6">
-          Ready?
+          Ready to lend the unlendable?
         </h2>
         <p className="text-dust mb-10 max-w-md mx-auto leading-relaxed">
-          Create a lending order in seconds. Browse existing positions.
-          Or mint a Genesis NFT for fee discounts.
+          Borrow against any asset. Swap anything peer-to-peer. Fund loans and earn tradeable shares.
+          No listing required — just create an order.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
-            <Link href="/markets">Explore Markets</Link>
+            <Link href="/borrow">Borrow</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/30 hover:bg-surface text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer">
-            <Link href="/borrow">Create Order</Link>
+            <Link href="/swap">Swap</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="border-edge hover:border-edge-bright hover:bg-surface text-dust hover:text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer">
+            <Link href="/markets">Browse Markets</Link>
           </Button>
         </div>
       </section>
