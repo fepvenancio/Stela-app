@@ -64,6 +64,8 @@ export interface InlineBorrowFormProps {
   onCollateralChange: (assets: AssetInputValue[]) => void
   onInterestChange: (assets: AssetInputValue[]) => void
   balances: Map<string, bigint>
+  /** Open AddAssetModal pre-configured for a specific role */
+  onAddMore?: (role: RowKey) => void
 }
 
 /* ── Empty asset helper ─────────────────────────────────── */
@@ -83,6 +85,7 @@ export function InlineBorrowForm({
   onCollateralChange,
   onInterestChange,
   balances,
+  onAddMore,
 }: InlineBorrowFormProps) {
   const [openSelector, setOpenSelector] = useState<RowKey | null>(null)
 
@@ -147,16 +150,35 @@ export function InlineBorrowForm({
         const balance = address ? balances.get(address) : undefined
         const label = isSwap ? row.swapLabel : row.loanLabel
 
+        const arr = row.key === 'debt' ? debtAssets : row.key === 'collateral' ? collateralAssets : interestAssets
+        const extraCount = arr.length > 1 ? arr.length - 1 : 0
+        const hasFirstAsset = !!(asset.asset && asset.value)
+
         return (
           <div
             key={row.key}
             className={`rounded-xl border ${row.borderClass} ${row.bgClass} p-4 transition-colors`}
           >
-            {/* Label */}
+            {/* Label + Add More */}
             <div className="flex items-center justify-between mb-2">
               <span className={`text-[11px] uppercase tracking-widest font-bold ${row.accentClass}`}>
                 {label}
+                {extraCount > 0 && (
+                  <span className="ml-2 text-dust font-normal normal-case tracking-normal">
+                    +{extraCount} more
+                  </span>
+                )}
               </span>
+              {hasFirstAsset && onAddMore && (
+                <button
+                  type="button"
+                  onClick={() => onAddMore(row.key)}
+                  className="flex items-center gap-1 text-[10px] text-star hover:text-star-bright font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
+                  Add
+                </button>
+              )}
             </div>
 
             {/* Token selector + Amount input */}
