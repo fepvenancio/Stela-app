@@ -2,10 +2,11 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
-import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import { InscriptionClient } from '@fepvenancio/stela-sdk'
 import type { Asset, InscriptionParams } from '@fepvenancio/stela-sdk'
 import { RpcProvider } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
+import { buildApprovalsIfNeeded, isApprovedForAll } from '@/lib/allowance'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
@@ -56,31 +57,32 @@ export function useCreateInscription() {
       progress?.start()
 
       try {
-        // Build ERC20/ERC4626 approval calls for collateral tokens.
-        // Always approve U128_MAX so subsequent settle/match flows don't fail
-        // when the exact approval gets consumed.
-        const U128_MAX = (1n << 128n) - 1n
-        const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-        const approvedTokens = new Set<string>()
+        // Build approval calls only for tokens that need it
+        const provider = new RpcProvider({ nodeUrl: RPC_URL })
+        const erc20Tokens = [...new Set(
+          input.collateralAssets
+            .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
+            .map(a => a.asset_address)
+        )]
+        const erc20Approvals = await buildApprovalsIfNeeded(provider, address!, erc20Tokens)
 
+        const nftApprovals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+        const checkedNfts = new Set<string>()
         for (const asset of input.collateralAssets) {
-          if (asset.asset_type === 'ERC20' || asset.asset_type === 'ERC4626') {
-            const key = asset.asset_address.toLowerCase()
-            if (approvedTokens.has(key)) continue
-            approvedTokens.add(key)
-            approvals.push({
-              contractAddress: asset.asset_address,
-              entrypoint: 'approve',
-              calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
-            })
-          } else if (asset.asset_type === 'ERC721' || asset.asset_type === 'ERC1155') {
-            approvals.push({
+          if (asset.asset_type !== 'ERC721' && asset.asset_type !== 'ERC1155') continue
+          const key = asset.asset_address.toLowerCase()
+          if (checkedNfts.has(key)) continue
+          checkedNfts.add(key)
+          const alreadyApproved = await isApprovedForAll(provider, asset.asset_address, address!)
+          if (!alreadyApproved) {
+            nftApprovals.push({
               contractAddress: asset.asset_address,
               entrypoint: 'set_approval_for_all',
               calldata: [CONTRACT_ADDRESS, '1'],
             })
           }
         }
+        const approvals = [...erc20Approvals, ...nftApprovals]
 
         // Build the create_inscription call
         const params: InscriptionParams = {
@@ -104,7 +106,6 @@ export function useCreateInscription() {
 
         // Wait for confirmation and check receipt
         toast.info('Waiting for transaction confirmation...')
-        const provider = new RpcProvider({ nodeUrl: RPC_URL })
         const receipt = await provider.waitForTransaction(result.transaction_hash)
 
         if ('execution_status' in receipt && receipt.execution_status === 'REVERTED') {

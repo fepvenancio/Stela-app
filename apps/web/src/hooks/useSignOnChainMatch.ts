@@ -2,9 +2,10 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
-import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import { InscriptionClient } from '@fepvenancio/stela-sdk'
 import { RpcProvider } from 'starknet'
 import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
+import { buildApprovalsIfNeeded } from '@/lib/allowance'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { ensureStarknetContext } from './ensure-context'
@@ -64,22 +65,10 @@ export function useSignOnChainMatch() {
       progress?.start()
 
       try {
-        // Build ERC20 approval calls for each debt asset.
-        // Always approve U128_MAX — D1 may store null/0 values while the on-chain
-        // contract has real amounts. This matches useBatchSign behavior.
-        const U128_MAX = (1n << 128n) - 1n
-        const approvedTokens = new Set<string>()
-        const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-        for (const asset of debtAssets) {
-          const key = asset.address.toLowerCase()
-          if (approvedTokens.has(key)) continue
-          approvedTokens.add(key)
-          approvals.push({
-            contractAddress: asset.address,
-            entrypoint: 'approve',
-            calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
-          })
-        }
+        // Build approve calls only if allowance is insufficient
+        const uniqueDebtTokens = [...new Set(debtAssets.map(a => a.address))]
+        const provider = new RpcProvider({ nodeUrl: RPC_URL })
+        const approvals = await buildApprovalsIfNeeded(provider, address!, uniqueDebtTokens)
 
         // Build sign_inscription call
         const id = typeof inscriptionId === 'bigint' ? inscriptionId : BigInt(inscriptionId)
@@ -94,7 +83,6 @@ export function useSignOnChainMatch() {
 
         // Wait for confirmation
         toast.info('Waiting for transaction confirmation...')
-        const provider = new RpcProvider({ nodeUrl: RPC_URL })
         await provider.waitForTransaction(result.transaction_hash)
         progress?.advance() // confirmed
 

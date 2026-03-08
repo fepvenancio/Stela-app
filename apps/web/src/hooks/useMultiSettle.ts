@@ -3,12 +3,13 @@
 import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import { InscriptionClient, toU256, findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { InscriptionClient, findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getBatchLendOfferTypedData, hashAssets, hashBatchEntries, getNonce } from '@/lib/offchain'
 import type { BatchEntry } from '@/lib/offchain'
 import { findAggregatedBalanceShortfall } from '@/lib/balance'
+import { buildApprovalsIfNeeded } from '@/lib/allowance'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
 import { useWalletSign } from '@/hooks/useWalletSign'
@@ -268,40 +269,33 @@ export function useMultiSettle() {
         // 8. Build unified multicall
         setState((s) => ({ ...s, phase: 'executing' }))
 
-        // Collect unique debt token addresses that need approval.
-        // Always approve U128_MAX — the on-chain contract reads real amounts from
-        // its own storage, so D1 values may differ. This matches useBatchSign behavior.
-        const U128_MAX = (1n << 128n) - 1n
-        const approveTokens = new Map<string, string>() // key → original address
-
+        // Build approve calls only if allowance is insufficient
+        const allDebtTokenAddresses: string[] = []
         for (const p of preparedOrders) {
           for (const asset of p.sdkDebtAssets) {
-            if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
-            approveTokens.set(asset.asset_address.toLowerCase(), asset.asset_address)
+            if (asset.asset_type === 'ERC20' || asset.asset_type === 'ERC4626') {
+              allDebtTokenAddresses.push(asset.asset_address)
+            }
           }
         }
-
         for (const so of onchainOrders) {
           const debtAssets = toSdkAssets(so.match.debtAssets as Record<string, string>[] | undefined)
           for (const asset of debtAssets) {
-            if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
-            approveTokens.set(asset.asset_address.toLowerCase(), asset.asset_address)
+            if (asset.asset_type === 'ERC20' || asset.asset_type === 'ERC4626') {
+              allDebtTokenAddresses.push(asset.asset_address)
+            }
           }
         }
 
-        // Merge extra approval tokens (e.g. collateral for remainder inscription)
+        // Add extra approval tokens (e.g. collateral for remainder inscription)
         if (options?.extraApproveAmounts) {
-          for (const [key, { address: tokenAddr }] of options.extraApproveAmounts) {
-            approveTokens.set(key, tokenAddr)
+          for (const [, { address: tokenAddr }] of options.extraApproveAmounts) {
+            allDebtTokenAddresses.push(tokenAddr)
           }
         }
 
-        // Build approve calls for all needed tokens
-        const approveCalls = Array.from(approveTokens.values()).map((tokenAddr) => ({
-          contractAddress: tokenAddr,
-          entrypoint: 'approve',
-          calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
-        }))
+        const uniqueTokens = [...new Set(allDebtTokenAddresses)]
+        const approveCalls = await buildApprovalsIfNeeded(provider, address, uniqueTokens)
 
         // Build on-chain sign_inscription calls
         const onchainCalls = onchainOrders.map((so) => {

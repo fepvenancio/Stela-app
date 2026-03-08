@@ -3,12 +3,13 @@
 import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import { InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import { InscriptionClient } from '@fepvenancio/stela-sdk'
 import type { Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce } from '@/lib/offchain'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/tx'
+import { buildApprovalsIfNeeded } from '@/lib/allowance'
 import { findDebtBalanceShortfall } from '@/lib/balance'
 import type { TransactionProgress } from '@/hooks/useTransactionProgress'
 import { useWalletSign } from '@/hooks/useWalletSign'
@@ -175,24 +176,13 @@ async function settlePublic(params: {
     )
   }
 
-  // 11. Build ERC20 approve calls for debt tokens (lender provides debt).
-  // Always approve U128_MAX — D1 may store null/0 values while the
-  // on-chain contract has real amounts.
-  const U128_MAX = (1n << 128n) - 1n
-  const seenTokens = new Set<string>()
-  const approveCalls = sdkDebtAssets
-    .filter(a => {
-      if (a.asset_type !== 'ERC20' && a.asset_type !== 'ERC4626') return false
-      const key = a.asset_address.toLowerCase()
-      if (seenTokens.has(key)) return false
-      seenTokens.add(key)
-      return true
-    })
-    .map(asset => ({
-      contractAddress: asset.asset_address,
-      entrypoint: 'approve',
-      calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
-    }))
+  // 11. Build ERC20 approve calls only if allowance is insufficient
+  const uniqueDebtTokens = [...new Set(
+    sdkDebtAssets
+      .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
+      .map(a => a.asset_address)
+  )]
+  const approveCalls = await buildApprovalsIfNeeded(provider, address, uniqueDebtTokens)
 
   // 11. Build settle call using SDK
   const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })

@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
-import { InscriptionClient, toU256, findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { InscriptionClient, findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { Asset } from '@fepvenancio/stela-sdk'
 import { CONTRACT_ADDRESS, RPC_URL, CHAIN_ID } from '@/lib/config'
 import { getInscriptionOrderTypedData, getLendOfferTypedData, hashAssets, getNonce } from '@/lib/offchain'
@@ -14,6 +14,7 @@ import type { TransactionProgress } from '@/hooks/useTransactionProgress'
 import { useWalletSign } from '@/hooks/useWalletSign'
 import { parseSigToArray } from '@/lib/signature'
 import { toSdkAssets } from '@/lib/asset-conversion'
+import { buildApprovalsIfNeeded } from '@/lib/allowance'
 
 export interface MatchedOrder {
   id: string
@@ -163,23 +164,13 @@ export function useInstantSettle() {
           }
         }
 
-        // 10. Build approve calls for debt tokens (we are lending these)
-        // Always approve U128_MAX — the on-chain contract reads real amounts from
-        // its own storage, so D1 values may differ. This matches useBatchSign behavior.
-        const U128_MAX = (1n << 128n) - 1n
-        const approvedTokens = new Set<string>()
-        const approveCalls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-        for (const asset of sdkDebtAssets) {
-          if (asset.asset_type !== 'ERC20' && asset.asset_type !== 'ERC4626') continue
-          const key = asset.asset_address.toLowerCase()
-          if (approvedTokens.has(key)) continue
-          approvedTokens.add(key)
-          approveCalls.push({
-            contractAddress: asset.asset_address,
-            entrypoint: 'approve',
-            calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
-          })
-        }
+        // 10. Build approve calls only if allowance is insufficient
+        const uniqueDebtTokens = [...new Set(
+          sdkDebtAssets
+            .filter(a => a.asset_type === 'ERC20' || a.asset_type === 'ERC4626')
+            .map(a => a.asset_address)
+        )]
+        const approveCalls = await buildApprovalsIfNeeded(provider, address, uniqueDebtTokens)
 
         // 11. Build settle call
         const client = new InscriptionClient({ stelaAddress: CONTRACT_ADDRESS, provider })
