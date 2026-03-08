@@ -15,7 +15,6 @@ type RowKey = 'debt' | 'collateral' | 'interest'
 
 interface RowConfig {
   key: RowKey
-  label: string
   loanLabel: string
   swapLabel: string
   accentClass: string
@@ -26,7 +25,6 @@ interface RowConfig {
 const ROW_CONFIGS: RowConfig[] = [
   {
     key: 'debt',
-    label: '',
     loanLabel: 'I want to borrow',
     swapLabel: 'I receive',
     accentClass: 'text-aurora',
@@ -35,7 +33,6 @@ const ROW_CONFIGS: RowConfig[] = [
   },
   {
     key: 'collateral',
-    label: '',
     loanLabel: "I'll put up",
     swapLabel: 'I give',
     accentClass: 'text-star',
@@ -44,7 +41,6 @@ const ROW_CONFIGS: RowConfig[] = [
   },
   {
     key: 'interest',
-    label: '',
     loanLabel: "I'll pay interest",
     swapLabel: '',
     accentClass: 'text-nebula',
@@ -64,14 +60,123 @@ export interface InlineBorrowFormProps {
   onCollateralChange: (assets: AssetInputValue[]) => void
   onInterestChange: (assets: AssetInputValue[]) => void
   balances: Map<string, bigint>
-  /** Open AddAssetModal pre-configured for a specific role */
-  onAddMore?: (role: RowKey) => void
 }
 
 /* ── Empty asset helper ─────────────────────────────────── */
 
 function emptyAsset(): AssetInputValue {
   return { asset: '', asset_type: 'ERC20', value: '', token_id: '0', decimals: 18 }
+}
+
+/* ── Single Asset Row ───────────────────────────────────── */
+
+function AssetInputRow({
+  asset,
+  index,
+  rowConfig,
+  balances,
+  onTokenClick,
+  onAmountChange,
+  onRemove,
+  canRemove,
+}: {
+  asset: AssetInputValue
+  index: number
+  rowConfig: RowConfig
+  balances: Map<string, bigint>
+  onTokenClick: () => void
+  onAmountChange: (raw: string) => void
+  onRemove: () => void
+  canRemove: boolean
+}) {
+  const token = asset.asset ? findTokenByAddress(asset.asset) : null
+  const address = asset.asset?.toLowerCase() ?? ''
+  const balance = address ? balances.get(address) : undefined
+
+  return (
+    <div className="group">
+      <div className="flex flex-col sm:flex-row gap-2">
+        {/* Token selector button */}
+        <button
+          type="button"
+          onClick={onTokenClick}
+          className="flex items-center gap-2 h-11 px-4 rounded-xl bg-surface/60 border border-edge/40 text-sm transition-colors hover:bg-elevated hover:border-edge-bright focus-visible:border-star focus-visible:ring-1 focus-visible:ring-star/30 outline-none cursor-pointer shrink-0 sm:min-w-[160px]"
+        >
+          {token ? (
+            <>
+              <TokenAvatar token={token} size={22} />
+              <span className="text-chalk font-medium">{token.symbol}</span>
+            </>
+          ) : (
+            <span className="text-dust">Select Token</span>
+          )}
+          <svg
+            className="ml-auto shrink-0 text-ash"
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <path d="M4 6l4 4 4-4" />
+          </svg>
+        </button>
+
+        {/* Amount input */}
+        <div className="flex-1 relative">
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={asset.value}
+            onChange={(e) => onAmountChange(e.target.value)}
+            className={`w-full h-11 px-4 rounded-xl bg-surface/60 border border-edge/40 text-chalk text-lg font-mono placeholder:text-ash/40 outline-none focus:border-star focus:ring-1 focus:ring-star/30 transition-colors ${
+              token ? 'pr-16' : ''
+            }`}
+          />
+          {token && (
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-dust font-mono pointer-events-none">
+              {token.symbol}
+            </span>
+          )}
+        </div>
+
+        {/* Remove button */}
+        {canRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="flex items-center justify-center w-11 h-11 rounded-xl text-ash hover:text-nova hover:bg-nova/10 transition-colors cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+            aria-label="Remove asset"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* Balance display */}
+      {token && balance !== undefined && balance > 0n && (
+        <div className="mt-1 text-right pr-1">
+          <span className="text-[10px] text-dust font-mono">
+            Balance: {formatTokenValue(balance.toString(), token.decimals)}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const formatted = formatTokenValue(balance.toString(), token.decimals)
+              onAmountChange(formatted)
+            }}
+            className="ml-1.5 text-[10px] text-star hover:text-star-bright font-bold uppercase tracking-wider cursor-pointer transition-colors"
+          >
+            Max
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 /* ── Component ──────────────────────────────────────────── */
@@ -85,188 +190,150 @@ export function InlineBorrowForm({
   onCollateralChange,
   onInterestChange,
   balances,
-  onAddMore,
 }: InlineBorrowFormProps) {
-  const [openSelector, setOpenSelector] = useState<RowKey | null>(null)
+  // Track which (role, index) is selecting a token
+  const [openSelector, setOpenSelector] = useState<{ key: RowKey; index: number } | null>(null)
 
   const isSwap = orderType === 'swap'
   const rows = isSwap ? ROW_CONFIGS.filter((r) => r.key !== 'interest') : ROW_CONFIGS
 
-  /* Get the first asset value for a given role */
-  const getFirstAsset = useCallback(
-    (key: RowKey): AssetInputValue => {
-      const arr = key === 'debt' ? debtAssets : key === 'collateral' ? collateralAssets : interestAssets
-      return arr.length > 0 ? arr[0] : emptyAsset()
+  const getAssets = useCallback(
+    (key: RowKey): AssetInputValue[] => {
+      return key === 'debt' ? debtAssets : key === 'collateral' ? collateralAssets : interestAssets
     },
     [debtAssets, collateralAssets, interestAssets],
   )
 
-  /* Update the first asset for a role, preserving any additional assets */
-  const updateFirstAsset = useCallback(
-    (key: RowKey, updated: AssetInputValue) => {
-      const setter = key === 'debt' ? onDebtChange : key === 'collateral' ? onCollateralChange : onInterestChange
-      const arr = key === 'debt' ? debtAssets : key === 'collateral' ? collateralAssets : interestAssets
-
-      if (arr.length <= 1) {
-        // Replace the entire array with just the new first element
-        setter(updated.asset ? [updated] : [])
-      } else {
-        // Preserve additional assets beyond the first
-        setter([updated, ...arr.slice(1)])
-      }
+  const getSetter = useCallback(
+    (key: RowKey) => {
+      return key === 'debt' ? onDebtChange : key === 'collateral' ? onCollateralChange : onInterestChange
     },
-    [debtAssets, collateralAssets, interestAssets, onDebtChange, onCollateralChange, onInterestChange],
+    [onDebtChange, onCollateralChange, onInterestChange],
   )
 
   const handleTokenSelect = useCallback(
-    (key: RowKey, token: TokenInfo) => {
-      const current = getFirstAsset(key)
-      updateFirstAsset(key, {
+    (key: RowKey, index: number, token: TokenInfo) => {
+      const arr = [...getAssets(key)]
+      const current = arr[index] ?? emptyAsset()
+      arr[index] = {
         ...current,
         asset: token.addresses[NETWORK] ?? '',
         asset_type: 'ERC20',
         decimals: token.decimals,
-      })
+      }
+      getSetter(key)(arr)
       setOpenSelector(null)
     },
-    [getFirstAsset, updateFirstAsset],
+    [getAssets, getSetter],
   )
 
   const handleAmountChange = useCallback(
-    (key: RowKey, raw: string) => {
+    (key: RowKey, index: number, raw: string) => {
       if (raw !== '' && !/^\d*\.?\d{0,18}$/.test(raw)) return
-      const current = getFirstAsset(key)
-      updateFirstAsset(key, { ...current, value: raw })
+      const arr = [...getAssets(key)]
+      const current = arr[index] ?? emptyAsset()
+      arr[index] = { ...current, value: raw }
+      getSetter(key)(arr)
     },
-    [getFirstAsset, updateFirstAsset],
+    [getAssets, getSetter],
+  )
+
+  const handleAddRow = useCallback(
+    (key: RowKey) => {
+      const arr = [...getAssets(key), emptyAsset()]
+      getSetter(key)(arr)
+    },
+    [getAssets, getSetter],
+  )
+
+  const handleRemoveRow = useCallback(
+    (key: RowKey, index: number) => {
+      const arr = getAssets(key).filter((_, i) => i !== index)
+      getSetter(key)(arr)
+    },
+    [getAssets, getSetter],
   )
 
   return (
     <section className="space-y-3">
       {rows.map((row) => {
-        const asset = getFirstAsset(row.key)
-        const token = asset.asset ? findTokenByAddress(asset.asset) : null
-        const address = asset.asset?.toLowerCase() ?? ''
-        const balance = address ? balances.get(address) : undefined
+        const assets = getAssets(row.key)
+        // Always show at least one empty row
+        const displayAssets = assets.length > 0 ? assets : [emptyAsset()]
         const label = isSwap ? row.swapLabel : row.loanLabel
-
-        const arr = row.key === 'debt' ? debtAssets : row.key === 'collateral' ? collateralAssets : interestAssets
-        const extraCount = arr.length > 1 ? arr.length - 1 : 0
-        const hasFirstAsset = !!(asset.asset && asset.value)
+        // Allow adding more if the last asset has a token selected
+        const lastAsset = displayAssets[displayAssets.length - 1]
+        const canAddMore = lastAsset.asset !== ''
 
         return (
           <div
             key={row.key}
             className={`rounded-xl border ${row.borderClass} ${row.bgClass} p-4 transition-colors`}
           >
-            {/* Label + Add More */}
-            <div className="flex items-center justify-between mb-2">
+            {/* Section label */}
+            <div className="flex items-center justify-between mb-3">
               <span className={`text-[11px] uppercase tracking-widest font-bold ${row.accentClass}`}>
                 {label}
-                {extraCount > 0 && (
-                  <span className="ml-2 text-dust font-normal normal-case tracking-normal">
-                    +{extraCount} more
-                  </span>
-                )}
               </span>
-              {hasFirstAsset && onAddMore && (
-                <button
-                  type="button"
-                  onClick={() => onAddMore(row.key)}
-                  className="flex items-center gap-1 text-[10px] text-star hover:text-star-bright font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                >
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
-                  Add
-                </button>
+              {assets.length > 0 && (
+                <span className="text-[10px] text-dust font-mono">
+                  {assets.filter(a => a.asset).length} asset{assets.filter(a => a.asset).length !== 1 ? 's' : ''}
+                </span>
               )}
             </div>
 
-            {/* Token selector + Amount input */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Token selector button */}
-              <button
-                type="button"
-                onClick={() => setOpenSelector(row.key)}
-                className="flex items-center gap-2 h-12 px-4 rounded-xl bg-surface/60 border border-edge/40 text-sm transition-colors hover:bg-elevated hover:border-edge-bright focus-visible:border-star focus-visible:ring-1 focus-visible:ring-star/30 outline-none cursor-pointer shrink-0 sm:min-w-[160px]"
-              >
-                {token ? (
-                  <>
-                    <TokenAvatar token={token} size={24} />
-                    <span className="text-chalk font-medium">{token.symbol}</span>
-                  </>
-                ) : (
-                  <span className="text-dust">Select Token</span>
-                )}
-                {/* Chevron */}
-                <svg
-                  className="ml-auto shrink-0 text-ash"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M4 6l4 4 4-4" />
-                </svg>
-              </button>
-
-              {/* Amount input */}
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={asset.value}
-                  onChange={(e) => handleAmountChange(row.key, e.target.value)}
-                  className={`w-full h-12 px-4 rounded-xl bg-surface/60 border border-edge/40 text-chalk text-lg font-mono placeholder:text-ash/40 outline-none focus:border-star focus:ring-1 focus:ring-star/30 transition-colors ${
-                    token ? 'pr-16' : ''
-                  }`}
+            {/* Asset rows */}
+            <div className="space-y-2">
+              {displayAssets.map((asset, index) => (
+                <AssetInputRow
+                  key={`${row.key}-${index}`}
+                  asset={asset}
+                  index={index}
+                  rowConfig={row}
+                  balances={balances}
+                  onTokenClick={() => setOpenSelector({ key: row.key, index })}
+                  onAmountChange={(raw) => handleAmountChange(row.key, index, raw)}
+                  onRemove={() => handleRemoveRow(row.key, index)}
+                  canRemove={assets.length > 0 && (assets.length > 1 || asset.asset !== '')}
                 />
-                {token && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-dust font-mono pointer-events-none">
-                    {token.symbol}
-                  </span>
-                )}
-              </div>
+              ))}
             </div>
 
-            {/* Balance display */}
-            {token && balance !== undefined && balance > 0n && (
-              <div className="mt-1.5 text-right">
-                <span className="text-[10px] text-dust font-mono">
-                  Balance: {formatTokenValue(balance.toString(), token.decimals)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const formatted = formatTokenValue(balance.toString(), token.decimals)
-                    handleAmountChange(row.key, formatted)
-                  }}
-                  className="ml-1.5 text-[10px] text-star hover:text-star-bright font-bold uppercase tracking-wider cursor-pointer transition-colors"
-                >
-                  Max
-                </button>
-              </div>
+            {/* Add another button */}
+            {canAddMore && (
+              <button
+                type="button"
+                onClick={() => handleAddRow(row.key)}
+                className={`flex items-center gap-1.5 mt-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${row.accentClass} opacity-70 hover:opacity-100`}
+              >
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 2v8M2 6h8" />
+                </svg>
+                Add another
+              </button>
             )}
           </div>
         )
       })}
 
-      {/* Token Selector Modals — one per row, controlled via openSelector state */}
-      {rows.map((row) => (
-        <TokenSelectorModal
-          key={`selector-${row.key}`}
-          open={openSelector === row.key}
-          onOpenChange={(open) => {
-            if (!open) setOpenSelector(null)
-          }}
-          onSelect={(token) => handleTokenSelect(row.key, token)}
-          selectedAddress={getFirstAsset(row.key).asset}
-          showCustomOption={false}
-          balances={balances}
-        />
-      ))}
+      {/* Token Selector Modals — single modal controlled by openSelector state */}
+      {rows.map((row) => {
+        const assets = getAssets(row.key)
+        const displayAssets = assets.length > 0 ? assets : [emptyAsset()]
+        return displayAssets.map((asset, index) => (
+          <TokenSelectorModal
+            key={`selector-${row.key}-${index}`}
+            open={openSelector?.key === row.key && openSelector?.index === index}
+            onOpenChange={(open) => {
+              if (!open) setOpenSelector(null)
+            }}
+            onSelect={(token) => handleTokenSelect(row.key, index, token)}
+            selectedAddress={asset.asset}
+            showCustomOption={false}
+            balances={balances}
+          />
+        ))
+      })}
     </section>
   )
 }

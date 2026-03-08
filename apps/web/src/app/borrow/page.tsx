@@ -147,7 +147,6 @@ export default function CreatePage() {
   const [showErrors, setShowErrors] = useState(false)
   const { balances } = useTokenBalances()
   const [addModalOpen, setAddModalOpen] = useState(false)
-  const [addModalRole, setAddModalRole] = useState<'debt' | 'collateral' | 'interest' | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const createProgress = useTransactionProgress([
@@ -846,10 +845,6 @@ export default function CreatePage() {
           onCollateralChange={setCollateralAssets}
           onInterestChange={setInterestAssets}
           balances={balances}
-          onAddMore={(role) => {
-            setAddModalRole(role)
-            setAddModalOpen(true)
-          }}
         />
       </div>
 
@@ -1188,12 +1183,11 @@ export default function CreatePage() {
         open={addModalOpen}
         onOpenChange={(open) => {
           setAddModalOpen(open)
-          if (!open) setAddModalRole(null)
         }}
         onAdd={handleAddAsset}
         balances={balances}
         availableRoles={isSwap ? (['debt', 'collateral'] as AssetRole[]) : ROLES}
-        defaultRole={addModalRole ?? advancedDefaultRole}
+        defaultRole={advancedDefaultRole}
       />
 
       {(() => {
