@@ -208,7 +208,7 @@ export default function DocsPage() {
 
             <StepCard numeral="2" title="Create a Borrow Order">
               <p>
-                Go to the <Link href="/borrow" className="text-star underline hover:text-star-bright transition-colors">Borrow</Link> page.
+                Go to the <Link href="/trade?mode=lend" className="text-star underline hover:text-star-bright transition-colors">Borrow</Link> page.
                 Fill in what you want to borrow (debt), what you will put up as collateral, and the interest
                 you are offering to the lender. Set a duration and deadline, then sign the order with your wallet.
               </p>
@@ -226,7 +226,7 @@ export default function DocsPage() {
           <div className="bg-abyss border border-star/20 rounded-lg p-8 mt-12">
             <h4 className="font-display text-star text-lg mb-3">Atomic Swaps</h4>
             <p className="text-dust text-sm leading-relaxed">
-              Use the <Link href="/swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page for atomic peer-to-peer trades. Assets exchange instantly in a single transaction with no repayment
+              Use the <Link href="/trade?mode=swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page for atomic peer-to-peer trades. Assets exchange instantly in a single transaction with no repayment
               period and a lower fee (0.15% vs 0.25%).
             </p>
           </div>
@@ -443,7 +443,7 @@ export default function DocsPage() {
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <p className="text-dust text-sm leading-relaxed">
-                  Head to the <Link href="/swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page to create an <span className="text-star">atomic swap</span>. Both sides of the
+                  Head to the <Link href="/trade?mode=swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page to create an <span className="text-star">atomic swap</span>. Both sides of the
                   trade execute in a single transaction — assets swap atomically with no repayment period, no
                   interest assets required, and no liquidation risk.
                 </p>
@@ -1088,7 +1088,7 @@ export default function DocsPage() {
               Explore Markets
             </Link>
             <Link
-              href="/borrow"
+              href="/trade?mode=lend"
               className="border border-edge hover:bg-surface text-chalk px-12 py-4 rounded-full text-lg transition-all hover:border-star/30"
             >
               Borrow Now

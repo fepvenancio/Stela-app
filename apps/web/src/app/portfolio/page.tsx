@@ -200,7 +200,7 @@ export default function PortfolioPage() {
       {/* Actions */}
       <div className="flex justify-end mb-6">
         <Link
-          href="/borrow"
+          href="/trade?mode=lend"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
         >
           <Plus className="w-3.5 h-3.5 text-star" />
@@ -259,7 +259,7 @@ export default function PortfolioPage() {
                   </p>
                 </div>
                 <Link
-                  href="/borrow"
+                  href="/trade?mode=lend"
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5 text-star" />

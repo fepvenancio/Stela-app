@@ -423,7 +423,7 @@ function BrowseContent() {
                   </p>
                   <p className="text-dust text-xs">Try a different filter or search query</p>
                 </div>
-                <Link href="/borrow" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors">
+                <Link href="/trade?mode=lend" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
                   Create Inscription
                 </Link>

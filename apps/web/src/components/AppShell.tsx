@@ -7,13 +7,12 @@ import { WalletButton } from './WalletButton'
 import { NetworkMismatchBanner } from './NetworkMismatchBanner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
-import { NETWORK } from '@/lib/config'
 import { Footer } from '@/components/Footer'
 
 const NAV_LINKS = [
-  { href: '/', label: 'Home', icon: (props: React.SVGProps<SVGSVGElement>) => (
+  { href: '/trade', label: 'Trade', icon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
     </svg>
   )},
   { href: '/markets', label: 'Markets', icon: (props: React.SVGProps<SVGSVGElement>) => (
@@ -21,29 +20,9 @@ const NAV_LINKS = [
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
   )},
-  { href: '/trade', label: 'Trade', icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-    </svg>
-  )},
   { href: '/portfolio', label: 'Portfolio', icon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-2a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z" />
-    </svg>
-  )},
-  { href: '/nft', label: 'NFT', icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l8 4.5v7L12 22l-8-8.5v-7L12 2z" />
-    </svg>
-  )},
-  { href: '/docs', label: 'Docs', icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-    </svg>
-  )},
-  { href: '/faucet', label: 'Faucet', icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   )},
 ]
@@ -52,8 +31,7 @@ const EXTERNAL_LINKS = [
   { href: 'https://github.com/fepvenancio/Stela', label: 'Protocol' },
 ]
 
-// Filter faucet on mainnet
-const visibleLinks = NAV_LINKS.filter(l => l.href !== '/faucet' || NETWORK === 'sepolia')
+const visibleLinks = NAV_LINKS
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false)

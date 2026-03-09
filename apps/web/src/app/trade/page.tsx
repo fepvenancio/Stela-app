@@ -2,6 +2,7 @@
 
 import { useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
@@ -581,6 +582,565 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
   )
 }
 
+/* ── Home Helpers ─────────────────────────────────────────── */
+
+function Numeral({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-display text-6xl sm:text-7xl lg:text-8xl text-star/10 select-none leading-none" aria-hidden="true">
+      {children}
+    </span>
+  )
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="text-center min-w-[100px]">
+      <div className="font-display text-2xl sm:text-3xl text-chalk tracking-tight">{value}</div>
+      <div className="text-[11px] text-dust uppercase tracking-[0.2em] mt-1">{label}</div>
+    </div>
+  )
+}
+
+const icon = {
+  handshake: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.5 11.5L14 18l-3-3-5 5" /><path d="M20.5 16.5v-5h-5" /><path d="M3.5 7.5L10 1l3 3 5-5" /><path d="M3.5 2.5v5h5" />
+    </svg>
+  ),
+  shield: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+  code: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+    </svg>
+  ),
+  lock: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
+    </svg>
+  ),
+  chain: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+    </svg>
+  ),
+  check: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  ),
+  hourglass: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 00-.586-1.414L12 12l-4.414 4.414A2 2 0 007 17.828V22" /><path d="M7 2v4.172a2 2 0 00.586 1.414L12 12l4.414-4.414A2 2 0 0017 6.172V2" />
+    </svg>
+  ),
+  split: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 3h5v5" /><path d="M8 3H3v5" /><path d="M12 22v-8.3a4 4 0 00-1.172-2.872L3 3" /><path d="M15.828 10.828L21 3" />
+    </svg>
+  ),
+  signature: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 17c1.5-3 3-5 4.5-5s2 2 3.5 2 2.5-3 4-3 2.5 4 4 4 2-2 4-6" /><path d="M2 21h20" />
+    </svg>
+  ),
+  vault: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2" /><circle cx="12" cy="12" r="4" /><path d="M12 8v8" /><path d="M8 12h8" />
+    </svg>
+  ),
+  relay: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  ),
+  gem: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3h12l4 6-10 13L2 9z" /><path d="M11 3l1 10" /><path d="M2 9h20" /><path d="M6.5 3L12 13" /><path d="M17.5 3L12 13" />
+    </svg>
+  ),
+  receipt: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z" /><path d="M8 10h8" /><path d="M8 14h4" />
+    </svg>
+  ),
+}
+
+/* ── Info Sections ───────────────────────────────────────── */
+
+function InfoSections({ activeTab, onSwitchTab }: { activeTab: 'swap' | 'lend'; onSwitchTab: (tab: 'swap' | 'lend') => void }) {
+  const isLend = activeTab === 'lend'
+
+  return (
+    <div className="mt-20">
+      {/* ── Contextual Intro ─────────────────────────────── */}
+      <section className="text-center mb-16">
+        <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">
+          {isLend ? 'P2P Lending on StarkNet' : 'P2P Swaps on StarkNet'}
+        </p>
+        <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight text-chalk leading-[1.1] mb-6">
+          {isLend ? (
+            <>If it exists,<br />you can <span className="text-star">lend it.</span></>
+          ) : (
+            <>Swap anything,<br /><span className="text-star">peer-to-peer.</span></>
+          )}
+        </h2>
+        <p className="text-dust text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
+          {isLend
+            ? 'Any ERC20, ERC721, ERC1155, or ERC4626 — borrowable, lendable, day one. No listing required, no oracles, no governance vote. Every position is isolated. Multi-lender funding turns any loan into a permissionless vault with tradeable shares.'
+            : 'Any token pair, any amount. No liquidity pools, no slippage, no oracle dependency. Your order sits until matched — or gets filled instantly if a counterpart exists. Gasless off-chain signatures mean zero cost to create.'}
+        </p>
+      </section>
+
+      {/* ── Stats Bar ────────────────────────────────────── */}
+      <section className="border-t border-b border-edge/15 py-6 mb-16">
+        <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 sm:gap-12">
+          <Stat value={isLend ? '0.25%' : '0.15%'} label={isLend ? 'Lending Fee' : 'Swap Fee'} />
+          <Stat value="0%" label="Redemption Fee" />
+          <Stat value="0%" label="Liquidation Fee" />
+          <Stat value="50%" label="Max NFT Discount" />
+        </div>
+      </section>
+
+      {/* ── Three Pillars ────────────────────────────────── */}
+      <section className="mb-16">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">Why Stela</p>
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-chalk tracking-tight mb-16 max-w-xl">
+            {isLend ? 'The mother of exotic lending' : 'Trade without pools'}
+          </h2>
+
+          <div className="grid lg:grid-cols-3 gap-px bg-edge/20 rounded-lg overflow-hidden">
+            <div className="bg-abyss p-8 sm:p-10 group">
+              <div className="w-10 h-10 rounded-xl bg-star/10 flex items-center justify-center text-star mb-6 group-hover:scale-110 transition-transform">
+                {icon.gem}
+              </div>
+              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Asset-Agnostic</h3>
+              <p className="text-dust text-sm leading-relaxed">
+                {isLend
+                  ? 'ERC20, ERC721, ERC1155, ERC4626 — all supported day one. No listing proposals, no oracle feeds, no governance votes. If it exists on-chain, you can lend it.'
+                  : 'Swap any ERC20, ERC721, ERC1155, or ERC4626 token. No listing proposals, no oracle feeds. If it exists on-chain, you can trade it.'}
+              </p>
+            </div>
+
+            <div className="bg-abyss p-8 sm:p-10 group">
+              <div className="w-10 h-10 rounded-xl bg-aurora/10 flex items-center justify-center text-aurora mb-6 group-hover:scale-110 transition-transform">
+                {icon.vault}
+              </div>
+              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">
+                {isLend ? 'Permissionless Vaults' : 'Direct Settlement'}
+              </h3>
+              <p className="text-dust text-sm leading-relaxed">
+                {isLend
+                  ? 'Multi-lender funding turns any loan into a vault. Multiple lenders fill portions, each receiving tradeable ERC1155 shares. No pool manager, no whitelists.'
+                  : 'No AMM, no liquidity pools, no impermanent loss. Your swap is matched directly with a counterparty. One wallet popup via StarkNet multicall.'}
+              </p>
+            </div>
+
+            <div className="bg-abyss p-8 sm:p-10 group">
+              <div className="w-10 h-10 rounded-xl bg-nebula/10 flex items-center justify-center text-nebula mb-6 group-hover:scale-110 transition-transform">
+                {icon.split}
+              </div>
+              <h3 className="font-display text-lg text-chalk uppercase tracking-wider mb-3">Isolated Risk</h3>
+              <p className="text-dust text-sm leading-relaxed">
+                {isLend
+                  ? 'Every loan deploys its own Locker contract. Your collateral is never pooled. One bad position can never cascade into another. Zero contagion by design.'
+                  : 'Every trade is independent. No shared pool risk, no cascading liquidations. Your assets are only exposed to your specific trade.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Pool vs P2P Comparison ────────────────────────── */}
+      <section className="py-16 sm:py-20 border-t border-edge/10">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">Why P2P?</p>
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-chalk tracking-tight mb-16 max-w-xl">
+            {isLend ? 'Pool-based vs peer-to-peer' : 'AMMs vs peer-to-peer'}
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-px bg-edge/20 rounded-lg overflow-hidden">
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/20">
+              <h3 className="font-display text-sm text-dust uppercase tracking-widest">
+                {isLend ? 'Pool-Based Lending' : 'AMM / DEX'}
+              </h3>
+              <p className="text-dust/60 text-xs mt-1">{isLend ? 'Nostra, Vesu, zkLend' : 'Ekubo, JediSwap, 10KSwap'}</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-star/[0.06] rounded-full blur-[50px] pointer-events-none" />
+              <h3 className="font-display text-sm text-star uppercase tracking-widest relative z-10">Stela P2P</h3>
+              <p className="text-dust/60 text-xs mt-1 relative z-10">First on StarkNet</p>
+            </div>
+
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Supported Assets</span>
+              <p className="text-dust/80 text-sm leading-relaxed">{isLend ? 'Governance-approved ERC20 only' : 'Whitelisted token pairs only'}</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Supported Assets</span>
+              <p className="text-star text-sm leading-relaxed">Any ERC20, ERC721, ERC1155, ERC4626</p>
+            </div>
+
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">{isLend ? 'New Asset Listing' : 'New Pair'}</span>
+              <p className="text-dust/80 text-sm leading-relaxed">{isLend ? 'Governance vote, oracle setup, weeks' : 'Liquidity provisioning, pair creation'}</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">{isLend ? 'New Asset Listing' : 'New Pair'}</span>
+              <p className="text-chalk text-sm leading-relaxed">Instant — just create an order</p>
+            </div>
+
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">{isLend ? 'Interest Rates' : 'Pricing'}</span>
+              <p className="text-dust/80 text-sm leading-relaxed">{isLend ? 'Variable, changes hourly' : 'Curve-based, slippage dependent'}</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">{isLend ? 'Interest Rates' : 'Pricing'}</span>
+              <p className="text-chalk text-sm leading-relaxed">{isLend ? 'Fixed, set at creation' : 'Fixed, set by counterparties'}</p>
+            </div>
+
+            <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Risk</span>
+              <p className="text-dust/80 text-sm leading-relaxed">{isLend ? 'Shared pool — one bad asset affects all' : 'Impermanent loss, pool exploits'}</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8 border-b border-edge/10">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">Risk</span>
+              <p className="text-chalk text-sm leading-relaxed">{isLend ? 'Isolated per-loan Locker contract' : 'No pool risk, direct P2P settlement'}</p>
+            </div>
+
+            <div className="bg-abyss/60 p-6 sm:p-8">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">UX</span>
+              <p className="text-dust/80 text-sm leading-relaxed">{isLend ? '2-step approve then transact (EVM)' : 'Approve, swap, slippage settings'}</p>
+            </div>
+            <div className="bg-abyss p-6 sm:p-8">
+              <span className="text-dust text-xs uppercase tracking-widest block mb-2">UX</span>
+              <p className="text-star text-sm leading-relaxed">One wallet popup (StarkNet multicall)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── The Lifecycle ─────────────────────────────────── */}
+      <section className="py-16 sm:py-20 border-t border-edge/10">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-20">
+            <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">How It Works</p>
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-chalk tracking-tight max-w-lg mb-4">
+              {isLend ? 'Four steps, fully on-chain' : 'Two steps, fully settled'}
+            </h2>
+            <p className="text-dust text-sm leading-relaxed max-w-xl">
+              {isLend
+                ? 'Every lending position follows the same clear lifecycle. From inscription to redemption, each step is transparent and verifiable.'
+                : 'Create an order and wait for a match — or fill an existing one instantly. Every trade is settled on-chain.'}
+            </p>
+          </div>
+
+          {isLend ? (
+            <div className="grid sm:grid-cols-2 gap-x-12 gap-y-16 lg:gap-y-20">
+              <div className="flex items-center gap-6">
+                <Numeral>I</Numeral>
+                <div>
+                  <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Inscribe</h3>
+                  <p className="text-dust text-sm leading-relaxed">
+                    Define your terms: debt, interest, collateral, and duration.
+                    Your collateral is locked in a dedicated Locker contract — isolated from everyone else.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <Numeral>II</Numeral>
+                <div>
+                  <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Fund</h3>
+                  <p className="text-dust text-sm leading-relaxed">
+                    A lender provides the debt assets and receives ERC1155 shares as proof of their claim.
+                    The borrower gets their liquidity instantly.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <Numeral>III</Numeral>
+                <div>
+                  <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Repay</h3>
+                  <p className="text-dust text-sm leading-relaxed">
+                    Return the debt plus interest before the duration expires.
+                    Collateral is released. If time runs out, lenders claim the collateral.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <Numeral>IV</Numeral>
+                <div>
+                  <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Redeem</h3>
+                  <p className="text-dust text-sm leading-relaxed">
+                    After repayment or liquidation, shareholders burn their ERC1155 tokens
+                    for a proportional share of the underlying assets.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-x-12 gap-y-16 lg:gap-y-20">
+              <div className="flex items-center gap-6">
+                <Numeral>I</Numeral>
+                <div>
+                  <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Create or Match</h3>
+                  <p className="text-dust text-sm leading-relaxed">
+                    Select your tokens and amounts. If a matching order exists, fill it instantly.
+                    Otherwise, sign a gasless off-chain order and wait for a counterparty.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <Numeral>II</Numeral>
+                <div>
+                  <h3 className="font-display text-base text-chalk uppercase tracking-widest mb-2">Settle</h3>
+                  <p className="text-dust text-sm leading-relaxed">
+                    When matched, the relayer settles both sides atomically on-chain.
+                    One transaction, one wallet popup. Assets exchange hands directly.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Gasless + Fees ────────────────────────────────── */}
+      <section className="py-16 sm:py-20 border-t border-edge/10">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-5 gap-12 lg:gap-16">
+          <div className="lg:col-span-3">
+            <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">Off-Chain Signatures</p>
+            <h2 className="font-display text-3xl sm:text-4xl text-chalk tracking-tight mb-6">
+              Create orders for free
+            </h2>
+            <p className="text-dust text-sm leading-relaxed mb-10 max-w-lg">
+              {isLend
+                ? 'Sign SNIP-12 typed data with your wallet — no gas, no on-chain transaction. When a lender matches your order, a relayer bot settles it on-chain automatically.'
+                : 'Sign SNIP-12 typed data with your wallet — no gas, no on-chain transaction. When a counterparty matches your swap, settlement happens automatically.'}
+            </p>
+
+            <div className="space-y-6">
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star flex-shrink-0 mt-0.5">
+                  {icon.signature}
+                </div>
+                <div>
+                  <h4 className="text-chalk text-sm font-semibold mb-1">Sign, Don&apos;t Transact</h4>
+                  <p className="text-dust text-sm leading-relaxed">
+                    Your signed intent is stored off-chain until {isLend ? 'a lender' : 'a counterparty'} matches it.
+                    Cancel anytime with another signature.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-aurora/10 flex items-center justify-center text-aurora flex-shrink-0 mt-0.5">
+                  {icon.relay}
+                </div>
+                <div>
+                  <h4 className="text-chalk text-sm font-semibold mb-1">Permissionless Relayers</h4>
+                  <p className="text-dust text-sm leading-relaxed">
+                    Anyone can call <span className="font-mono text-xs text-star">settle()</span> and
+                    earn 0.05% per trade. No whitelist needed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            <div className="bg-abyss/60 border border-edge/30 rounded-lg p-6 sm:p-8 granite-noise relative overflow-hidden h-full">
+              <div className="absolute inset-0 bg-gradient-to-b from-star/[0.02] to-transparent pointer-events-none" />
+              <div className="relative z-10">
+                <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-6">Protocol Fees</p>
+                <div className="space-y-5 mb-8">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-dust text-sm">Settlement</span>
+                    <span className="font-display text-xl text-chalk">0.25<span className="text-sm text-dust">%</span></span>
+                  </div>
+                  <div className="w-full h-px bg-edge/20" />
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-dust text-sm">Swap</span>
+                    <span className="font-display text-xl text-chalk">0.15<span className="text-sm text-dust">%</span></span>
+                  </div>
+                  <div className="w-full h-px bg-edge/20" />
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-dust text-sm">Redemption</span>
+                    <span className="font-display text-xl text-chalk">0<span className="text-sm text-dust">%</span></span>
+                  </div>
+                  <div className="w-full h-px bg-edge/20" />
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-dust text-sm">Liquidation</span>
+                    <span className="font-display text-xl text-chalk">0<span className="text-sm text-dust">%</span></span>
+                  </div>
+                </div>
+                <div className="bg-void/60 rounded-lg p-5 border border-edge/15">
+                  <div className="font-display text-2xl text-star mb-1">{isLend ? '0.25%' : '0.15%'}</div>
+                  <p className="text-dust text-xs leading-relaxed">
+                    {isLend
+                      ? 'Max lending fee. Swaps just 0.15%. No redeem or liquidation fees. Genesis NFT holders pay up to 50% less.'
+                      : 'Swap fee. Lending at 0.25%. No redeem or liquidation fees. Genesis NFT holders pay up to 50% less.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Genesis NFT ───────────────────────────────────── */}
+      <section className="py-16 sm:py-20 border-t border-edge/10">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div className="bg-star/[0.03] border border-star/15 rounded-lg p-8 sm:p-10 relative overflow-hidden granite-noise">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-star/[0.06] rounded-full blur-[70px] pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-11 h-11 rounded-xl bg-star/10 border border-star/25 flex items-center justify-center text-star">
+                  {icon.gem}
+                </div>
+                <div>
+                  <h3 className="font-display text-xl text-star uppercase tracking-wider">Genesis NFT</h3>
+                  <p className="text-[10px] text-dust uppercase tracking-widest">ERC721 on StarkNet</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                  <span className="text-dust text-sm">Supply</span>
+                  <span className="text-chalk font-display text-lg tracking-wider">300</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                  <span className="text-dust text-sm">Mint Price</span>
+                  <span className="text-star font-display text-lg tracking-wider">1,000 STRK</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                  <span className="text-dust text-sm">Max Per Wallet</span>
+                  <span className="text-chalk font-display text-lg tracking-wider">5</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-edge/15">
+                  <span className="text-dust text-sm">Max Discount</span>
+                  <span className="text-star font-display text-lg tracking-wider">50%</span>
+                </div>
+                <div className="flex justify-between items-center py-3">
+                  <span className="text-dust text-sm">Staking Required</span>
+                  <span className="text-aurora text-sm tracking-wider">No</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-4">Genesis Collection</p>
+            <h2 className="font-display text-3xl sm:text-4xl text-chalk tracking-tight mb-6">
+              Hold the NFT, pay less fees
+            </h2>
+            <p className="text-dust leading-relaxed mb-8">
+              Genesis holders get automatic fee discounts — checked on-chain at transaction time.
+              No staking, no claiming, no lock-up. Sell the NFT and the discount transfers
+              to the new owner.
+            </p>
+            <div className="space-y-5">
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-cosmic/10 flex items-center justify-center text-cosmic flex-shrink-0 mt-0.5">
+                  {icon.receipt}
+                </div>
+                <div>
+                  <h4 className="text-chalk text-sm font-semibold mb-1">Discount Model</h4>
+                  <p className="text-dust text-sm leading-relaxed">
+                    15% base discount with 1+ NFT. Additional bonuses for volume tiers
+                    and multi-NFT holdings, capped at 50%.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-ember/10 flex items-center justify-center text-ember flex-shrink-0 mt-0.5">
+                  {icon.vault}
+                </div>
+                <div>
+                  <h4 className="text-chalk text-sm font-semibold mb-1">Transparent Treasury</h4>
+                  <p className="text-dust text-sm leading-relaxed">
+                    50 NFTs minted to treasury on deploy — hardcoded in the constructor.
+                    Ownership renounced after launch. Fully immutable.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8">
+              <Button asChild variant="outline" className="border-star/30 hover:border-star hover:bg-star/5 text-star px-6 h-11 rounded-full transition-all cursor-pointer">
+                <Link href="/nft">Mint Genesis NFT</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trust Signals ──────────────────────────────────── */}
+      <section className="py-12 sm:py-16 border-t border-edge/10">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 lg:gap-16">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">{icon.shield}</div>
+              <span className="text-dust text-sm">Security Audited</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">{icon.code}</div>
+              <span className="text-dust text-sm">Open Source</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">{icon.lock}</div>
+              <span className="text-dust text-sm">Immutable Contracts</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">{icon.chain}</div>
+              <span className="text-dust text-sm">Built on StarkNet</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-star/10 flex items-center justify-center text-star">{icon.check}</div>
+              <span className="text-dust text-sm">Ownership Renounced</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ───────────────────────────────────────────── */}
+      <section className="relative py-16 sm:py-20 text-center border-t border-edge/10">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-star/[0.07] rounded-full blur-[100px] -z-10" />
+        <div className="w-20 h-px bg-gradient-to-r from-transparent via-star/40 to-transparent mx-auto mb-10" />
+        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-chalk tracking-tight mb-6">
+          {isLend ? 'Ready to lend the unlendable?' : 'Ready to swap anything?'}
+        </h2>
+        <p className="text-dust mb-10 max-w-md mx-auto leading-relaxed">
+          {isLend
+            ? 'Borrow against any asset. Fund loans and earn tradeable shares. No listing required — just create an order.'
+            : 'Swap any token peer-to-peer. No pools, no slippage. Create a gasless order or fill one instantly.'}
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button
+            size="lg"
+            className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            onClick={() => { onSwitchTab(isLend ? 'lend' : 'swap'); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          >
+            {isLend ? 'Start Lending' : 'Start Swapping'}
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="border-edge hover:border-star/30 hover:bg-surface text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer"
+            onClick={() => { onSwitchTab(isLend ? 'swap' : 'lend'); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          >
+            {isLend ? 'Try Swapping' : 'Try Lending'}
+          </Button>
+          <Button asChild variant="outline" size="lg" className="border-edge hover:border-edge-bright hover:bg-surface text-dust hover:text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer">
+            <Link href="/markets">Browse Markets</Link>
+          </Button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 /* ── Page ─────────────────────────────────────────────────── */
 
 function TradeContent() {
@@ -589,28 +1149,34 @@ function TradeContent() {
   const [activeTab, setActiveTab] = useState<'swap' | 'lend'>(initialMode as 'swap' | 'lend')
 
   return (
-    <div className="animate-fade-up pb-24 max-w-lg mx-auto">
-      {/* Tab Bar */}
-      <div className="flex items-center mb-6">
-        <div className="flex">
-          {(['swap', 'lend'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2 text-sm font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
-                activeTab === tab
-                  ? 'text-star border-star'
-                  : 'text-dust hover:text-chalk border-transparent'
-              }`}
-            >
-              {tab === 'swap' ? 'Swap' : 'Lend'}
-            </button>
-          ))}
+    <div className="animate-fade-up pb-24">
+      {/* Trade Form — narrow centered */}
+      <div className="max-w-lg mx-auto">
+        {/* Tab Bar */}
+        <div className="flex items-center mb-6">
+          <div className="flex">
+            {(['swap', 'lend'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-2 text-sm font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
+                  activeTab === tab
+                    ? 'text-star border-star'
+                    : 'text-dust hover:text-chalk border-transparent'
+                }`}
+              >
+                {tab === 'swap' ? 'Swap' : 'Lend'}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <TradeForm key={activeTab} mode={activeTab} />
       </div>
 
-      <TradeForm key={activeTab} mode={activeTab} />
+      {/* Protocol info sections — full width */}
+      <InfoSections activeTab={activeTab} onSwitchTab={setActiveTab} />
     </div>
   )
 }
