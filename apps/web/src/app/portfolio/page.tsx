@@ -198,12 +198,12 @@ export default function PortfolioPage() {
   return (
     <div className="animate-fade-up pb-24">
       {/* Header */}
-      <div className="flex items-end justify-between mb-10 gap-4">
-        <div>
+      <div className="flex flex-col items-center mb-10 gap-4">
+        <div className="text-center">
           <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
             Portfolio
           </h1>
-          <p className="text-dust max-w-lg leading-relaxed">
+          <p className="text-dust max-w-lg mx-auto leading-relaxed">
             Your lending positions and borrowing history on StarkNet.
           </p>
         </div>
