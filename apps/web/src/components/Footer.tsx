@@ -26,8 +26,7 @@ export function Footer() {
             <h4 className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold mb-4">Protocol</h4>
             <nav className="flex flex-col">
               <Link href="/markets" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Markets</Link>
-              <Link href="/borrow" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Borrow</Link>
-              <Link href="/swap" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Swap</Link>
+              <Link href="/trade" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Trade</Link>
               <Link href="/portfolio" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Portfolio</Link>
               <Link href="/nft" className="text-sm text-dust hover:text-chalk transition-colors block py-1">NFT</Link>
               <Link href="/faucet" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Faucet</Link>
