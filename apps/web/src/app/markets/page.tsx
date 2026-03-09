@@ -307,7 +307,7 @@ function BrowseContent() {
           </button>
 
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="h-8 w-[160px] bg-surface/30 border-edge/40 text-xs text-dust hover:text-chalk rounded-lg" aria-label="Sort">
+            <SelectTrigger className="h-8 w-[130px] sm:w-[160px] bg-surface/30 border-edge/40 text-xs text-dust hover:text-chalk rounded-lg" aria-label="Sort">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent className="bg-void border-edge">
@@ -324,8 +324,8 @@ function BrowseContent() {
 
         {/* Advanced filter panel */}
         {showFilters && (
-          <div className="flex flex-wrap items-end gap-3 p-4 mt-3 rounded-xl bg-surface/20 border border-edge/30 animate-fade-up">
-            <div className="flex flex-col gap-1 min-w-[140px]">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3 p-3 sm:p-4 mt-3 rounded-xl bg-surface/20 border border-edge/30 animate-fade-up">
+            <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[140px]">
               <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
                 Debt Token
                 <InfoTooltip content="Filter by the token being borrowed." side="bottom" />
@@ -343,7 +343,7 @@ function BrowseContent() {
               </Select>
             </div>
 
-            <div className="flex flex-col gap-1 min-w-[120px]">
+            <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[120px]">
               <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
                 Debt Amount
                 <InfoTooltip content="Find exact or closest match to this amount." side="bottom" />
@@ -360,7 +360,7 @@ function BrowseContent() {
               />
             </div>
 
-            <div className="flex flex-col gap-1 min-w-[120px]">
+            <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[120px]">
               <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
                 Min Interest %
                 <InfoTooltip content="Only show inscriptions with yield at or above this percentage." side="bottom" />
@@ -377,7 +377,7 @@ function BrowseContent() {
               />
             </div>
 
-            <div className="flex flex-col gap-1 min-w-[140px]">
+            <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[140px]">
               <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
                 Collateral Token
                 <InfoTooltip content="Filter by the collateral token securing the loan." side="bottom" />

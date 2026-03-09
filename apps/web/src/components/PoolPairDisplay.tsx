@@ -46,29 +46,29 @@ export function PoolPairDisplay({ debtAssets, collateralAssets, interestAssets, 
   const extraDebt = debtAssets.length > 1 ? ` +${debtAssets.length - 1}` : ''
 
   return (
-    <div className="flex items-center gap-3 min-w-0">
+    <div className="flex items-center gap-2.5 min-w-0">
       {/* Overlapping token pair logos */}
-      <div className="relative shrink-0" style={{ width: 40, height: 24 }}>
+      <div className="relative shrink-0 w-[34px] h-[20px] md:w-[40px] md:h-[24px]">
         {debtToken ? (
           <div className="absolute left-0 top-0 z-[1]">
-            <TokenAvatar token={debtToken} size={24} />
+            <TokenAvatar token={debtToken} size={20} />
           </div>
         ) : (
           <div
             className="absolute left-0 top-0 z-[1] rounded-full flex items-center justify-center text-white font-semibold"
-            style={{ width: 24, height: 24, backgroundColor: stringToColor(debtSymbol), fontSize: 9 }}
+            style={{ width: 20, height: 20, backgroundColor: stringToColor(debtSymbol), fontSize: 8 }}
           >
             {debtSymbol.charAt(0)}
           </div>
         )}
         {collToken ? (
-          <div className="absolute left-[16px] top-0 ring-2 ring-void rounded-full">
-            <TokenAvatar token={collToken} size={24} />
+          <div className="absolute left-[14px] md:left-[16px] top-0 ring-2 ring-void rounded-full">
+            <TokenAvatar token={collToken} size={20} />
           </div>
         ) : coll0 ? (
           <div
-            className="absolute left-[16px] top-0 ring-2 ring-void rounded-full flex items-center justify-center text-white font-semibold"
-            style={{ width: 24, height: 24, backgroundColor: stringToColor(collSymbol), fontSize: 9 }}
+            className="absolute left-[14px] md:left-[16px] top-0 ring-2 ring-void rounded-full flex items-center justify-center text-white font-semibold"
+            style={{ width: 20, height: 20, backgroundColor: stringToColor(collSymbol), fontSize: 8 }}
           >
             {collSymbol.charAt(0)}
           </div>
@@ -78,14 +78,14 @@ export function PoolPairDisplay({ debtAssets, collateralAssets, interestAssets, 
       {/* Pool name + details */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-chalk truncate">
+          <span className="text-xs md:text-sm font-medium text-chalk truncate">
             {debtSymbol}{extraDebt} / {collSymbol}
           </span>
           {isOffchain && (
-            <span className="text-[7px] text-ash/50 uppercase tracking-wider shrink-0 border border-ash/20 px-1 rounded">off-chain</span>
+            <span className="text-[7px] text-ash/50 uppercase tracking-wider shrink-0 border border-ash/20 px-1 rounded">oc</span>
           )}
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-dust truncate">
+        <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-[11px] text-dust truncate">
           {debtAmount && (
             <span>{debtAmount} {debtSymbol}</span>
           )}

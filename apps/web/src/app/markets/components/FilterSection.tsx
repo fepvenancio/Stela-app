@@ -50,9 +50,9 @@ export function FilterSection({
       </div>
 
       {/* Search + filter tabs row */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="flex flex-col gap-3">
         {/* Search */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ash" aria-hidden="true" />
           <Input
             placeholder="Search tokens or addresses..."
@@ -63,36 +63,36 @@ export function FilterSection({
           />
         </div>
 
-        {/* Status tabs */}
-        <ToggleGroup
-          type="single"
-          value={statusFilter}
-          onValueChange={(v) => v && setStatusFilter(v)}
-          className="flex gap-1"
-          aria-label="Filter by status"
-        >
-          {STATUS_FILTERS.map(({ key, label }) => (
-            <ToggleGroupItem key={key} value={key} className={TAB_STYLE}>
-              {label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        {/* Tabs row */}
+        <div className="flex items-center gap-3 overflow-x-auto">
+          <ToggleGroup
+            type="single"
+            value={statusFilter}
+            onValueChange={(v) => v && setStatusFilter(v)}
+            className="flex gap-1 shrink-0"
+            aria-label="Filter by status"
+          >
+            {STATUS_FILTERS.map(({ key, label }) => (
+              <ToggleGroupItem key={key} value={key} className={TAB_STYLE}>
+                {label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
 
-        {/* Divider */}
-        <div className="hidden sm:block w-px h-5 bg-edge/30" />
+          <div className="w-px h-5 bg-edge/30 shrink-0" />
 
-        {/* Type tabs */}
-        <ToggleGroup
-          type="single"
-          value={typeFilter}
-          onValueChange={(v) => v && setTypeFilter(v as typeof typeFilter)}
-          className="flex gap-1"
-          aria-label="Filter by type"
-        >
-          <ToggleGroupItem value="all" className={TAB_STYLE}>All</ToggleGroupItem>
-          <ToggleGroupItem value="swap" className={TAB_STYLE}>Swap</ToggleGroupItem>
-          <ToggleGroupItem value="lend" className={TAB_STYLE}>Lend</ToggleGroupItem>
-        </ToggleGroup>
+          <ToggleGroup
+            type="single"
+            value={typeFilter}
+            onValueChange={(v) => v && setTypeFilter(v as typeof typeFilter)}
+            className="flex gap-1 shrink-0"
+            aria-label="Filter by type"
+          >
+            <ToggleGroupItem value="all" className={TAB_STYLE}>All</ToggleGroupItem>
+            <ToggleGroupItem value="swap" className={TAB_STYLE}>Swap</ToggleGroupItem>
+            <ToggleGroupItem value="lend" className={TAB_STYLE}>Lend</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
     </div>
   )

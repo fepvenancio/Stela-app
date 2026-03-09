@@ -53,16 +53,18 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
           : 'border-edge/15 hover:bg-surface/30'
       }`}
     >
-      {/* Checkbox */}
+      {/* Checkbox — outer div is larger touch target */}
       {selectable && (
-        <div className="shrink-0 w-4 h-4 flex items-center justify-center">
+        <div
+          className="shrink-0 w-8 h-8 md:w-5 md:h-5 flex items-center justify-center"
+          onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+        >
           <div
             role="checkbox"
             aria-checked={selected}
             aria-label={`Select order ${order.id.slice(0, 8)}`}
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect?.(); } }}
-            onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
             className={`w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-colors cursor-pointer ${
               selected ? 'bg-star border-star' : 'border-dust/30 bg-surface/40 hover:border-star/50'
             }`}
@@ -151,8 +153,8 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
       </div>
 
       {/* Mobile: compact card layout */}
-      <div className="flex md:hidden flex-col gap-2 flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-1.5">
           <PoolPairDisplay
             debtAssets={debtAssets}
             collateralAssets={collateralAssets}
@@ -165,21 +167,21 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
               type="button"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAction() }}
               disabled={actionPending}
-              className="h-7 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0"
+              className="h-8 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0"
             >
               {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
             </button>
           ) : null}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant={statusVariant} className="h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Badge variant={statusVariant} className="h-[18px] text-[9px] px-1.5 py-0 uppercase font-bold">
             {statusLabel}
           </Badge>
-          <Badge variant={isSwap ? 'pending' : 'default'} className="h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold">
+          <Badge variant={isSwap ? 'pending' : 'default'} className="h-[18px] text-[9px] px-1.5 py-0 uppercase font-bold">
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
           {!isSwap && yieldDisplay !== '—' && (
-            <span className="text-[10px] text-aurora font-medium">{yieldDisplay} APY</span>
+            <span className="text-[10px] text-aurora font-medium">{yieldDisplay}</span>
           )}
           <span className="text-[10px] text-dust">{isSwap ? 'Instant' : formatDuration(Number(duration))}</span>
         </div>
