@@ -3,73 +3,67 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="border-t border-edge/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-12 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-12 py-8">
+        {/* Top row: brand + nav links + socials */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2 mb-3 text-star">
-              <svg viewBox="0 0 512 512" className="w-6 h-6" fill="none" aria-hidden="true">
-                <rect x="96" y="440" width="320" height="32" rx="4" fill="currentColor" />
-                <path d="M128 440 V112 Q256 80 384 112 V440 H128Z" fill="currentColor" />
-                <rect x="128" y="144" width="256" height="8" fill="#0a0a0e" fillOpacity="0.2" />
-                <rect x="176" y="210" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2" />
-                <rect x="176" y="260" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2" />
-                <rect x="176" y="310" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2" />
+          <Link
+            href="/trade"
+            className="flex items-center gap-2 text-star hover:text-star-bright transition-colors shrink-0"
+          >
+            <svg viewBox="0 0 512 512" className="w-5 h-5" fill="none" aria-hidden="true">
+              <rect x="96" y="440" width="320" height="32" rx="4" fill="currentColor" />
+              <path d="M128 440 V112 Q256 80 384 112 V440 H128Z" fill="currentColor" />
+              <rect x="128" y="144" width="256" height="8" fill="#0a0a0e" fillOpacity="0.2" />
+              <rect x="176" y="210" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2" />
+              <rect x="176" y="260" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2" />
+              <rect x="176" y="310" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2" />
+            </svg>
+            <span className="font-display text-sm tracking-[0.3em]">STELA</span>
+          </Link>
+
+          {/* Nav links — single row */}
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <Link href="/trade" className="text-xs text-dust hover:text-chalk transition-colors">Trade</Link>
+            <Link href="/markets" className="text-xs text-dust hover:text-chalk transition-colors">Markets</Link>
+            <Link href="/portfolio" className="text-xs text-dust hover:text-chalk transition-colors">Portfolio</Link>
+            <Link href="/nft" className="text-xs text-dust hover:text-chalk transition-colors">NFT</Link>
+            <Link href="/faucet" className="text-xs text-dust hover:text-chalk transition-colors">Faucet</Link>
+            <span className="hidden sm:block w-px h-3 bg-edge/30" />
+            <Link href="/docs" className="text-xs text-dust hover:text-chalk transition-colors inline-flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50">
+                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              <span className="font-display text-lg tracking-[0.3em] text-star">STELA</span>
-            </div>
-            <p className="text-dust text-xs">P2P Lending on StarkNet</p>
-          </div>
+              Docs
+            </Link>
+            <Link href="/faq" className="text-xs text-dust hover:text-chalk transition-colors">FAQ</Link>
+            <Link href="/terms" className="text-xs text-dust hover:text-chalk transition-colors">Terms</Link>
+            <Link href="/privacy" className="text-xs text-dust hover:text-chalk transition-colors">Privacy</Link>
+          </nav>
 
-          {/* Protocol */}
-          <div>
-            <h4 className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold mb-4">Protocol</h4>
-            <nav className="flex flex-col">
-              <Link href="/trade" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Trade</Link>
-              <Link href="/markets" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Markets</Link>
-              <Link href="/portfolio" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Portfolio</Link>
-              <Link href="/nft" className="text-sm text-dust hover:text-chalk transition-colors block py-1">NFT</Link>
-              <Link href="/faucet" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Faucet</Link>
-            </nav>
-          </div>
-
-          {/* Resources */}
-          <div>
-            <h4 className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold mb-4">Resources</h4>
-            <nav className="flex flex-col">
-              <Link href="/docs" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Documentation</Link>
-              <Link href="/faq" className="text-sm text-dust hover:text-chalk transition-colors block py-1">FAQ</Link>
-              <Link href="/terms" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Terms of Service</Link>
-              <Link href="/privacy" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Privacy Policy</Link>
-            </nav>
-          </div>
-
-          {/* Community */}
-          <div>
-            <h4 className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold mb-4">Community</h4>
-            <nav className="flex flex-col">
-              <a href="https://x.com/stela_protocol" target="_blank" rel="noopener noreferrer" className="text-sm text-dust hover:text-chalk transition-colors block py-1">X (Twitter) &#x2197;</a>
-              <a href="https://discord.gg/stela" target="_blank" rel="noopener noreferrer" className="text-sm text-dust hover:text-chalk transition-colors block py-1">Discord &#x2197;</a>
-              <a href="https://github.com/fepvenancio/Stela" target="_blank" rel="noopener noreferrer" className="text-sm text-dust hover:text-chalk transition-colors block py-1">GitHub &#x2197;</a>
-            </nav>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="border-t border-edge/10 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-dust">&copy; 2026 Stela Protocol. All rights reserved.</p>
-          <div className="flex items-center gap-4">
+          {/* Social icons */}
+          <div className="flex items-center gap-3 shrink-0">
             <a href="https://x.com/stela_protocol" target="_blank" rel="noopener noreferrer" className="text-dust hover:text-chalk transition-colors" aria-label="X (Twitter)">
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             </a>
             <a href="https://discord.gg/stela" target="_blank" rel="noopener noreferrer" className="text-dust hover:text-chalk transition-colors" aria-label="Discord">
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
               </svg>
             </a>
+            <a href="https://github.com/fepvenancio/Stela" target="_blank" rel="noopener noreferrer" className="text-dust hover:text-chalk transition-colors" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+            </a>
           </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="mt-6 pt-4 border-t border-edge/5 text-center">
+          <p className="text-[10px] text-dust/60">&copy; 2026 Stela Protocol</p>
         </div>
       </div>
     </footer>
