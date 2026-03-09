@@ -83,7 +83,7 @@ export default function BorrowPage() {
       </div>
 
       {/* ── Inline Borrow Form ──────────────────────────── */}
-      <div className="mb-8">
+      <div className="mb-4">
         <InlineBorrowForm
           orderType="lending"
           debtAssets={form.debtAssets}
@@ -95,6 +95,54 @@ export default function BorrowPage() {
           balances={form.balances}
         />
       </div>
+
+      {/* ── Submit ────────────────────────────────────────── */}
+      <div className="max-w-xl mx-auto flex flex-col items-end gap-3 mb-8">
+        <Web3ActionWrapper message="Connect your wallet to create an inscription">
+          <Button
+            variant="gold"
+            size="xl"
+            className="px-10 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
+            onClick={form.handleSubmit}
+            disabled={form.isPending || form.isCreatingOnChain || form.isChecking}
+          >
+            {form.isPending || form.isCreatingOnChain ? (
+              <div className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Processing...
+              </div>
+            ) : form.isChecking ? 'Checking matches...' : form.submitButtonText}
+          </Button>
+        </Web3ActionWrapper>
+        <div className="flex items-center gap-3 text-[11px] text-ash">
+          <span className={form.mode === 'offchain' ? 'text-aurora' : 'text-star'}>
+            {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
+          </span>
+          <span className="text-edge">·</span>
+          <span>0.25% fee</span>
+          <span className="text-edge">·</span>
+          <span>{formatDurationHuman(Number(form.duration))}</span>
+          {form.roiInfo && (
+            <>
+              <span className="text-edge">·</span>
+              <span className="text-aurora font-medium">+{form.roiInfo.yieldPct}%</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Validation Errors ──────────────────────────────── */}
+      {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
+        <div className="mb-6 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5 max-w-xl mx-auto">
+          <p className="text-xs text-nova font-medium">
+            {!form.hasDebt && '• Add at least one borrow asset. '}
+            {!form.hasCollateral && '• Add at least one collateral asset.'}
+          </p>
+        </div>
+      )}
 
       {/* ── Terms & Duration ─────────────────────────────── */}
       <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8 max-w-xl mx-auto">
@@ -306,54 +354,6 @@ export default function BorrowPage() {
             </section>
           </div>
         )}
-      </div>
-
-      {/* ── Validation Errors ──────────────────────────────── */}
-      {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
-        <div className="mb-6 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5 max-w-xl mx-auto">
-          <p className="text-xs text-nova font-medium">
-            {!form.hasDebt && '• Add at least one borrow asset. '}
-            {!form.hasCollateral && '• Add at least one collateral asset.'}
-          </p>
-        </div>
-      )}
-
-      {/* ── Submit ────────────────────────────────────────── */}
-      <div className="max-w-xl mx-auto flex flex-col items-end gap-3">
-        <Web3ActionWrapper message="Connect your wallet to create an inscription">
-          <Button
-            variant="gold"
-            size="xl"
-            className="px-10 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
-            onClick={form.handleSubmit}
-            disabled={form.isPending || form.isCreatingOnChain || form.isChecking}
-          >
-            {form.isPending || form.isCreatingOnChain ? (
-              <div className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Processing...
-              </div>
-            ) : form.isChecking ? 'Checking matches...' : form.submitButtonText}
-          </Button>
-        </Web3ActionWrapper>
-        <div className="flex items-center gap-3 text-[11px] text-ash">
-          <span className={form.mode === 'offchain' ? 'text-aurora' : 'text-star'}>
-            {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
-          </span>
-          <span className="text-edge">·</span>
-          <span>0.25% fee</span>
-          <span className="text-edge">·</span>
-          <span>{formatDurationHuman(Number(form.duration))}</span>
-          {form.roiInfo && (
-            <>
-              <span className="text-edge">·</span>
-              <span className="text-aurora font-medium">+{form.roiInfo.yieldPct}%</span>
-            </>
-          )}
-        </div>
       </div>
 
       {/* ── Match Detection ──────────────────────────────── */}
