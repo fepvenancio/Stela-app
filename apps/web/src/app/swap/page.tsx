@@ -41,8 +41,8 @@ export default function SwapPage() {
     <div className="animate-fade-up pb-24 relative max-w-3xl mx-auto">
 
       {/* ── Ambient Background ───────────────────────────── */}
-      <div className="fixed top-1/4 -left-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-1/4 -right-20 w-64 h-64 bg-aurora/[0.04] rounded-full blur-[120px] pointer-events-none" />
+      <div className="hidden sm:fixed sm:block top-1/4 -left-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
+      <div className="hidden sm:fixed sm:block bottom-1/4 -right-20 w-64 h-64 bg-aurora/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       {/* ── Header ────────── */}
       <div className="mb-10 text-center">

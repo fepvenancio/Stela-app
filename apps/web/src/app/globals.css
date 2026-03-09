@@ -163,6 +163,19 @@ body {
   animation: drift 150s linear infinite;
 }
 
+/* Disable expensive animations on mobile / reduced-motion */
+@media (max-width: 640px) {
+  .starfield::after {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .starfield::after {
+    animation: none;
+  }
+}
+
 /* ── Stela Patterns ────────────────────────────────────── */
 
 .stela-pattern {
@@ -238,4 +251,13 @@ select option {
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   opacity: 0.3;
+}
+
+/* ── Mobile Text Readability ──────────────────────────── */
+
+@media (max-width: 640px) {
+  /* Prevent iOS zoom on input focus (requires 16px+) */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }

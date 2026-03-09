@@ -4,6 +4,34 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@stela/core'],
   async headers() {
     return [
+      // Fingerprinted static assets (immutable — Next.js adds content hash)
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // Public assets (icons, OG images, etc.)
+      {
+        source: '/(.+\\.(?:ico|svg|png|jpg|jpeg|webp|avif|woff2?)$)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      // HTML pages — short cache with revalidation
+      {
+        source: '/((?!api/).*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=300' },
+        ],
+      },
+      // API routes — no browser cache, CDN can cache briefly
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, max-age=0' },
+        ],
+      },
       {
         source: '/(.*)',
         headers: [

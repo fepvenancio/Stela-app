@@ -7,9 +7,9 @@ import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
-const ibmMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-ibm-mono' })
-const cinzel = Cinzel({ subsets: ['latin'], weight: ['400', '600', '700'], variable: '--font-cinzel' })
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' })
+const ibmMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-ibm-mono', display: 'swap' })
+const cinzel = Cinzel({ subsets: ['latin'], weight: ['400', '600', '700'], variable: '--font-cinzel', display: 'swap' })
 
 export const metadata: Metadata = {
   title: {
@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   },
   description: 'Peer-to-peer lending inscriptions on StarkNet. Gasless order signing, collateral locking, and multi-lender vaults.',
   metadataBase: new URL('https://stela-dapp.xyz'),
+  manifest: '/manifest.json',
+  alternates: { canonical: '/' },
+  robots: { index: true, follow: true },
   openGraph: {
     title: 'Stela Protocol',
     description: 'Peer-to-peer lending inscriptions on StarkNet. Gasless order signing, collateral locking, and multi-lender vaults.',

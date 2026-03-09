@@ -1,0 +1,12 @@
+{
+  "name": "Stela Protocol",
+  "short_name": "Stela",
+  "description": "Peer-to-peer lending inscriptions on StarkNet",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0e",
+  "theme_color": "#e8a825",
+  "icons": [
+    { "src": "/icon.svg", "type": "image/svg+xml", "sizes": "any" }
+  ]
+}

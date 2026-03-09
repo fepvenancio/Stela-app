@@ -40,7 +40,13 @@ export function getD1() {
 
 /** Return a JSON response with CORS headers */
 export function jsonResponse(data: unknown, request?: Request, status = 200): NextResponse {
-  return NextResponse.json(data, { status, headers: corsHeaders(request) })
+  return NextResponse.json(data, {
+    status,
+    headers: {
+      ...corsHeaders(request),
+      'Cache-Control': 'no-store, max-age=0',
+    },
+  })
 }
 
 /** Return a JSON error response with CORS headers.
