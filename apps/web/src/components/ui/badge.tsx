@@ -22,7 +22,8 @@ const badgeVariants = cva(
         filled: "bg-nebula/15 text-nebula border-nebula/20",
         repaid: "bg-aurora/15 text-aurora border-aurora/20",
         liquidated: "bg-nova/15 text-nova border-nova/20",
-        expired: "bg-ember/15 text-ember border-ember/20",
+        expired: "bg-ash/15 text-ash border-ash/20",
+        overdue: "bg-nova/15 text-nova border-nova/20",
         cancelled: "bg-ash/15 text-ash border-ash/20",
         // Off-chain order status variants
         pending: "bg-aurora/15 text-aurora border-aurora/20",

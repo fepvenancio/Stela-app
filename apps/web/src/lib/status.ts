@@ -6,16 +6,22 @@ export type { StatusInput }
 
 // ── Badge variant types ─────────────────────────────────────────────
 
-export type StatusBadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'cancelled' | 'pending' | 'matched' | 'settled'
+export type StatusBadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'overdue' | 'cancelled' | 'pending' | 'matched' | 'settled'
+
+// Extended labels for statuses not in the SDK
+const EXTENDED_LABELS: Record<string, string> = {
+  overdue: 'Overdue',
+}
 
 /** Map any status string to a valid badge variant, defaulting to 'open'. */
 export function getStatusBadgeVariant(status: string): StatusBadgeVariant {
+  if (status === 'overdue') return 'overdue'
   return (status in STATUS_LABELS ? status : 'open') as StatusBadgeVariant
 }
 
 /** Map any status string to its human-readable label. */
 export function getStatusLabel(status: string): string {
-  return (STATUS_LABELS as Record<string, string>)[status] ?? status
+  return EXTENDED_LABELS[status] ?? (STATUS_LABELS as Record<string, string>)[status] ?? status
 }
 
 // ── Off-chain order status helpers ──────────────────────────────────
@@ -45,20 +51,32 @@ export function getOrderStatusLabel(status: string): string {
   return ORDER_STATUS_LABELS[status] ?? status
 }
 
-// ── Map on-chain filter to off-chain filter ─────────────────────────
+// ── Filter group mappings ───────────────────────────────────────────
 
-/** Map an on-chain inscription status filter to the equivalent off-chain order status.
- *  Returns comma-separated values when multiple statuses apply (e.g. 'matched,settled').
- *  Returns 'none' when no off-chain orders should be shown for that filter. */
-export function mapInscriptionFilterToOrderFilter(filter: string): string {
-  const map: Record<string, string> = {
-    open: 'pending',
-    partial: 'none',
-    filled: 'matched,settled',
-    expired: 'expired',
-    all: 'all',
-  }
-  return map[filter] ?? 'all'
+/** Enriched inscription statuses that belong to each filter group. */
+export const INSCRIPTION_STATUS_GROUPS: Record<string, Set<string>> = {
+  open: new Set(['open', 'partial']),
+  active: new Set(['filled']),
+  closed: new Set(['repaid', 'liquidated', 'expired', 'overdue', 'cancelled']),
+}
+
+/** Off-chain order statuses that belong to each filter group. */
+export const ORDER_STATUS_GROUPS: Record<string, Set<string>> = {
+  open: new Set(['pending']),
+  active: new Set(['matched']),
+  closed: new Set(['settled', 'expired', 'cancelled']),
+}
+
+/** Check if an enriched inscription status belongs to a filter group. */
+export function inscriptionMatchesGroup(enrichedStatus: string, group: string): boolean {
+  if (group === 'all') return true
+  return INSCRIPTION_STATUS_GROUPS[group]?.has(enrichedStatus) ?? false
+}
+
+/** Check if an order status belongs to a filter group. */
+export function orderMatchesGroup(orderStatus: string, group: string): boolean {
+  if (group === 'all') return true
+  return ORDER_STATUS_GROUPS[group]?.has(orderStatus) ?? false
 }
 
 // ── Descriptions for tooltips ───────────────────────────────────────
@@ -69,7 +87,8 @@ export const STATUS_DESCRIPTIONS: Record<string, string> = {
   filled: 'Fully funded and active. The borrower received the debt tokens.',
   repaid: 'The borrower repaid the loan. Lenders can redeem their shares.',
   liquidated: 'Loan expired without repayment. Collateral distributed to lenders.',
-  expired: 'Expired before any lender signed. Collateral can be reclaimed.',
+  overdue: 'Loan duration elapsed without repayment. Anyone can liquidate.',
+  expired: 'Expired before being funded. No lender action was taken.',
   cancelled: 'Cancelled by the borrower before any lender signed.',
   pending: 'Gasless order waiting for a lender offer. No gas was spent.',
   matched: 'A lender offered. The settlement bot will execute it shortly.',
@@ -97,7 +116,8 @@ export function computeStatus(a: StatusInput): InscriptionStatus {
   return sdkComputeStatus(a)
 }
 
-/** Enrich an InscriptionRow with a client-side computed status */
+/** Enrich an InscriptionRow with a client-side computed status.
+ *  Distinguishes "overdue" (filled past duration) from "expired" (unfilled past deadline). */
 export function enrichStatus(row: {
   status: string
   signed_at: string | null
@@ -105,7 +125,7 @@ export function enrichStatus(row: {
   issued_debt_percentage: string
   deadline: string
 }): string {
-  return computeStatus({
+  const base = computeStatus({
     signed_at: BigInt(row.signed_at ?? '0'),
     duration: BigInt(row.duration),
     issued_debt_percentage: BigInt(row.issued_debt_percentage),
@@ -114,4 +134,9 @@ export function enrichStatus(row: {
     deadline: BigInt(row.deadline ?? '0'),
     status: row.status,
   })
+  // Distinguish overdue (filled loan past duration) from expired (unfilled past deadline)
+  if (base === 'expired' && row.signed_at && BigInt(row.signed_at) > 0n) {
+    return 'overdue'
+  }
+  return base
 }

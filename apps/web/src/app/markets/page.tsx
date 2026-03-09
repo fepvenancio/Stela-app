@@ -10,7 +10,7 @@ import { BrowseControls, type SortOption } from '@/components/BrowseControls'
 import { SelectionActionBar } from '@/components/SelectionActionBar'
 import { LendReviewModal } from '@/components/LendReviewModal'
 import { FilterSection } from './components/FilterSection'
-import { enrichStatus, mapInscriptionFilterToOrderFilter } from '@/lib/status'
+import { enrichStatus, inscriptionMatchesGroup, orderMatchesGroup } from '@/lib/status'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import type { AssetRow } from '@/types/api'
 import { addressesEqual } from '@/lib/address'
@@ -71,24 +71,13 @@ function BrowseContent() {
   const { batchSign, isPending: isBatchSignPending } = useBatchSign()
   const { settle: instantSettle, isPending: isInstantSettlePending } = useInstantSettle()
 
-  const { data: rawData, isLoading, error } = useInscriptions({ status: statusFilter })
-  const orderStatusFilter = useMemo(() => mapInscriptionFilterToOrderFilter(statusFilter), [statusFilter])
-  // When comma-separated, fetch all and filter client-side; 'none' still fetches but gets filtered to []
-  const orderApiFetchStatus = orderStatusFilter.includes(',') ? 'all' : orderStatusFilter === 'none' ? 'all' : orderStatusFilter
-  const { data: allOrders, isLoading: ordersLoading } = useOrders({ status: orderApiFetchStatus })
+  // Always fetch all — group filtering happens client-side after enrichment
+  const { data: rawData, isLoading, error } = useInscriptions({ status: 'all' })
+  const { data: allOrders } = useOrders({ status: 'all' })
 
-  // Client-side filter orders to match the active status filter
+  // Client-side filter orders by group
   const filteredOrders = useMemo(() => {
-    if (orderStatusFilter === 'none') return []
-    let result = allOrders
-    if (statusFilter !== 'all') {
-      if (orderStatusFilter.includes(',')) {
-        const allowed = new Set(orderStatusFilter.split(','))
-        result = result.filter((o) => allowed.has(o.status))
-      } else if (orderStatusFilter !== 'all') {
-        result = result.filter((o) => o.status === orderStatusFilter)
-      }
-    }
+    let result = allOrders.filter((o) => orderMatchesGroup(o.status, statusFilter))
 
     // Apply search to orders
     if (search.trim()) {
@@ -133,7 +122,7 @@ function BrowseContent() {
     }
 
     return result
-  }, [allOrders, statusFilter, orderStatusFilter, search, deferredFilters, typeFilter])
+  }, [allOrders, statusFilter, search, deferredFilters, typeFilter])
 
   // Enrich, Filter, and Sort inscriptions
   const data = useMemo(() => {
@@ -141,6 +130,9 @@ function BrowseContent() {
       ...row,
       status: enrichStatus(row),
     }))
+
+    // Group filter (open/active/closed)
+    results = results.filter((item) => inscriptionMatchesGroup(item.status, statusFilter))
 
     // Search filter
     if (search.trim()) {
