@@ -232,11 +232,17 @@ function BrowseContent() {
       toast.error('Connect your wallet to continue')
       return
     }
+    const debtAssets = assets
+      .filter((a) => a.asset_role === 'debt')
+      .map((a) => ({ address: a.asset_address, value: a.value ?? '0' }))
+    if (debtAssets.length === 0) {
+      toast.error('No debt asset data available', {
+        description: 'The inscription may still be indexing. Please wait a moment and refresh.',
+      })
+      return
+    }
     setActionPendingId(inscriptionId)
     try {
-      const debtAssets = assets
-        .filter((a) => a.asset_role === 'debt')
-        .map((a) => ({ address: a.asset_address, value: a.value ?? '0' }))
       await batchSign([{ inscriptionId, bps: 10000, debtAssets }])
     } catch {
       // Error already toasted in hook

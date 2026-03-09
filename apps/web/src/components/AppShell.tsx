@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }`}
       >
         <NetworkMismatchBanner />
-        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 sm:px-12">
+        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 sm:px-12 relative">
           {/* Logo */}
           <Link
             href="/trade"
@@ -112,8 +112,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          {/* Desktop nav links */}
-          <nav className="hidden lg:flex items-center gap-1" aria-label="Main navigation">
+          {/* Desktop nav links — absolute center */}
+          <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2" aria-label="Main navigation">
             {visibleLinks.map((link) => {
               const active = isActive(link.href)
               return (
