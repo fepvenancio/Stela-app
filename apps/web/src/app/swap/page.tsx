@@ -63,6 +63,48 @@ export default function SwapPage() {
         </button>
       </div>
 
+      {/* ── Settings ─────────────────────────────────────── */}
+      <div className="mb-8 max-w-xl mx-auto space-y-3">
+        {/* Expiry */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0">Expiry</span>
+          <div className="flex flex-wrap gap-1.5">
+            {DEADLINE_PRESETS.map((p) => (
+              <button
+                key={p.seconds}
+                type="button"
+                onClick={() => form.setDeadlinePreset(p.seconds.toString())}
+                className={`py-1 px-2.5 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                  form.deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                }`}
+              >{p.label}</button>
+            ))}
+          </div>
+          <span className="text-[10px] text-dust" suppressHydrationWarning>{formatTimestamp(BigInt(form.deadline))}</span>
+        </div>
+
+        {/* Mode */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0">Mode</span>
+          <div className="flex gap-1">
+            {(['offchain', 'onchain'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => form.setMode(m)}
+                className={`py-1 px-2.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                  form.mode === m
+                    ? 'bg-star/10 text-star border border-star/25'
+                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                }`}
+              >
+                {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── Inline Swap Form (2 sections: I give / I receive) */}
       <div className="mb-4">
         <InlineBorrowForm
@@ -75,6 +117,88 @@ export default function SwapPage() {
           onInterestChange={form.setInterestAssets}
           balances={form.balances}
         />
+      </div>
+
+      {/* ── Validation Errors ──────────────────────────────── */}
+      {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
+        <div className="mb-4 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5 max-w-xl mx-auto">
+          <p className="text-xs text-nova font-medium">
+            {!form.hasDebt && '• Add the token you want to receive. '}
+            {!form.hasCollateral && '• Add the token you want to give.'}
+          </p>
+        </div>
+      )}
+
+      {/* ── Advanced Options (collapsible) ─────────────────── */}
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-[11px] text-dust hover:text-chalk uppercase tracking-widest font-bold transition-colors cursor-pointer group"
+        >
+          <svg
+            className={`w-3 h-3 text-ash group-hover:text-chalk transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M4 2l4 4-4 4" />
+          </svg>
+          Advanced Options
+          {form.allAssets.length > 0 && <span className="text-star">({form.allAssets.length} assets)</span>}
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 animate-fade-up">
+            <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
+                <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
+                  Swap Assets
+                  {form.allAssets.length > 0 && <span className="ml-2 text-star">({form.allAssets.length})</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => form.setAddModalOpen(true)}
+                  className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
+                  Add Asset
+                </button>
+              </div>
+
+              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
+                <div className="flex-1">Asset</div>
+                <div className="w-32 text-center">Amount / ID</div>
+                <div className="w-32 text-center">Role</div>
+                <div className="w-10"></div>
+              </div>
+
+              {form.allAssets.length === 0 ? (
+                <div
+                  onClick={() => form.setAddModalOpen(true)}
+                  className="w-full min-h-[100px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-5"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
+                  </div>
+                  <p className="text-xs text-dust">Add extra assets for multi-asset swaps</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-edge/10">
+                  {form.allAssets.map((item) => (
+                    <AssetRow
+                      key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
+                      asset={item.asset}
+                      role={item.role}
+                      onRemove={() => form.handleRemoveAsset(item.role, item.index)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
       </div>
 
       {/* ── Submit ────────────────────────────────────────── */}
@@ -105,134 +229,6 @@ export default function SwapPage() {
           <span className="text-edge">·</span>
           <span>0.15% fee</span>
         </div>
-      </div>
-
-      {/* ── Validation Errors ──────────────────────────────── */}
-      {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
-        <div className="mb-6 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5 max-w-xl mx-auto">
-          <p className="text-xs text-nova font-medium">
-            {!form.hasDebt && '• Add the token you want to receive. '}
-            {!form.hasCollateral && '• Add the token you want to give.'}
-          </p>
-        </div>
-      )}
-
-      {/* ── Order Expiry ──────────────────────────────────── */}
-      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8 max-w-xl mx-auto">
-        <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
-          <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Order Expiry</span>
-        </div>
-        <div className="p-4 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {DEADLINE_PRESETS.map((p) => (
-              <button
-                key={p.seconds}
-                type="button"
-                onClick={() => form.setDeadlinePreset(p.seconds.toString())}
-                className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
-                  form.deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                }`}
-              >{p.label}</button>
-            ))}
-          </div>
-          <p className="text-[10px] text-dust" suppressHydrationWarning>
-            Expires {formatTimestamp(BigInt(form.deadline))}
-          </p>
-        </div>
-      </section>
-
-      {/* ── Advanced Options (collapsible) ─────────────────── */}
-      <div className="mb-8">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-[11px] text-dust hover:text-chalk uppercase tracking-widest font-bold transition-colors cursor-pointer group"
-        >
-          <svg
-            className={`w-3 h-3 text-ash group-hover:text-chalk transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M4 2l4 4-4 4" />
-          </svg>
-          Advanced Options
-          {form.allAssets.length > 0 && <span className="text-star">({form.allAssets.length} assets)</span>}
-        </button>
-
-        {showAdvanced && (
-          <div className="mt-4 space-y-4 animate-fade-up">
-            {/* Mode toggle */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
-              <div className="flex gap-1">
-                {(['offchain', 'onchain'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => form.setMode(m)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
-                      form.mode === m
-                        ? 'bg-star/10 text-star border border-star/25'
-                        : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
-                    }`}
-                  >
-                    {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Asset Table */}
-            <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
-                <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
-                  Swap Assets
-                  {form.allAssets.length > 0 && <span className="ml-2 text-star">({form.allAssets.length})</span>}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => form.setAddModalOpen(true)}
-                  className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
-                >
-                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
-                  Add Asset
-                </button>
-              </div>
-
-              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
-                <div className="flex-1">Asset</div>
-                <div className="w-32 text-center">Amount / ID</div>
-                <div className="w-32 text-center">Role</div>
-                <div className="w-10"></div>
-              </div>
-
-              {form.allAssets.length === 0 ? (
-                <div
-                  onClick={() => form.setAddModalOpen(true)}
-                  className="w-full min-h-[120px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-6"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
-                  </div>
-                  <p className="text-xs text-dust">Add extra assets via the modal for multi-asset swaps</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-edge/10">
-                  {form.allAssets.map((item) => (
-                    <AssetRow
-                      key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
-                      asset={item.asset}
-                      role={item.role}
-                      onRemove={() => form.handleRemoveAsset(item.role, item.index)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-        )}
       </div>
 
       {/* ── Match Detection ──────────────────────────────── */}

@@ -82,6 +82,121 @@ export default function BorrowPage() {
         </button>
       </div>
 
+      {/* ── Settings ─────────────────────────────────────── */}
+      <div className="mb-8 max-w-xl mx-auto space-y-3">
+        {/* Duration */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0">Duration</span>
+          {form.useCustomDuration ? (
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Input
+                type="number"
+                value={form.customDurationValue}
+                onChange={(e) => form.setCustomDurationValue(e.target.value)}
+                className="w-20 bg-surface/50 border-edge/50 font-mono h-7 text-xs"
+                placeholder="Amount"
+                min="1"
+              />
+              {CUSTOM_DURATION_UNITS.map((u) => (
+                <button
+                  key={u.multiplier}
+                  type="button"
+                  onClick={() => form.setCustomDurationUnit(u.multiplier)}
+                  className={`py-1 px-2.5 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                    form.customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
+                  }`}
+                >{u.label}</button>
+              ))}
+              <span className="text-[10px] text-dust italic">= {formatDurationHuman(Number(form.duration))}</span>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {DURATION_PRESETS.map((p) => (
+                <button
+                  key={p.seconds}
+                  type="button"
+                  onClick={() => form.setDurationPreset(p.seconds.toString())}
+                  className={`py-1 px-2.5 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                    form.durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >{p.label}</button>
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => form.setUseCustomDuration(!form.useCustomDuration)}
+            className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider shrink-0"
+          >
+            {form.useCustomDuration ? 'Presets' : 'Custom'}
+          </button>
+        </div>
+
+        {/* Expiry */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0">Expiry</span>
+          <div className="flex flex-wrap gap-1.5">
+            {DEADLINE_PRESETS.map((p) => (
+              <button
+                key={p.seconds}
+                type="button"
+                onClick={() => form.setDeadlinePreset(p.seconds.toString())}
+                className={`py-1 px-2.5 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                  form.deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                }`}
+              >{p.label}</button>
+            ))}
+          </div>
+          <span className="text-[10px] text-dust" suppressHydrationWarning>{formatTimestamp(BigInt(form.deadline))}</span>
+        </div>
+
+        {/* Mode + Funding */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Mode</span>
+            <div className="flex gap-1">
+              {(['offchain', 'onchain'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => form.setMode(m)}
+                  className={`py-1 px-2.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                    form.mode === m
+                      ? 'bg-star/10 text-star border border-star/25'
+                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  }`}
+                >
+                  {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="w-px h-4 bg-edge/30 hidden sm:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Funding</span>
+            <div className="flex gap-1">
+              {([
+                { value: 'single', label: 'Single' },
+                { value: 'multi', label: 'Multi' },
+              ] as const).map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => form.setMultiLender(f.value === 'multi')}
+                  className={`py-1 px-2.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                    (form.multiLender ? 'multi' : 'single') === f.value
+                      ? 'bg-star/10 text-star border border-star/25'
+                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Inline Borrow Form ──────────────────────────── */}
       <div className="mb-4">
         <InlineBorrowForm
@@ -94,6 +209,88 @@ export default function BorrowPage() {
           onInterestChange={form.setInterestAssets}
           balances={form.balances}
         />
+      </div>
+
+      {/* ── Validation Errors ──────────────────────────────── */}
+      {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
+        <div className="mb-4 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5 max-w-xl mx-auto">
+          <p className="text-xs text-nova font-medium">
+            {!form.hasDebt && '• Add at least one borrow asset. '}
+            {!form.hasCollateral && '• Add at least one collateral asset.'}
+          </p>
+        </div>
+      )}
+
+      {/* ── Advanced Options (collapsible) ─────────────────── */}
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-[11px] text-dust hover:text-chalk uppercase tracking-widest font-bold transition-colors cursor-pointer group"
+        >
+          <svg
+            className={`w-3 h-3 text-ash group-hover:text-chalk transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M4 2l4 4-4 4" />
+          </svg>
+          Advanced Options
+          {form.allAssets.length > 0 && <span className="text-star">({form.allAssets.length} assets)</span>}
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 animate-fade-up">
+            <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
+                <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
+                  Inscription Assets
+                  {form.allAssets.length > 0 && <span className="ml-2 text-star">({form.allAssets.length})</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => form.setAddModalOpen(true)}
+                  className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
+                  Add Asset
+                </button>
+              </div>
+
+              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
+                <div className="flex-1">Asset</div>
+                <div className="w-32 text-center">Amount / ID</div>
+                <div className="w-32 text-center">Role</div>
+                <div className="w-10"></div>
+              </div>
+
+              {form.allAssets.length === 0 ? (
+                <div
+                  onClick={() => form.setAddModalOpen(true)}
+                  className="w-full min-h-[100px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-5"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
+                  </div>
+                  <p className="text-xs text-dust">Add extra assets for multi-asset orders</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-edge/10">
+                  {form.allAssets.map((item) => (
+                    <AssetRow
+                      key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
+                      asset={item.asset}
+                      role={item.role}
+                      onRemove={() => form.handleRemoveAsset(item.role, item.index)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
       </div>
 
       {/* ── Submit ────────────────────────────────────────── */}
@@ -132,228 +329,6 @@ export default function BorrowPage() {
             </>
           )}
         </div>
-      </div>
-
-      {/* ── Validation Errors ──────────────────────────────── */}
-      {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
-        <div className="mb-6 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5 max-w-xl mx-auto">
-          <p className="text-xs text-nova font-medium">
-            {!form.hasDebt && '• Add at least one borrow asset. '}
-            {!form.hasCollateral && '• Add at least one collateral asset.'}
-          </p>
-        </div>
-      )}
-
-      {/* ── Terms & Duration ─────────────────────────────── */}
-      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8 max-w-xl mx-auto">
-        <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
-          <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
-        </div>
-
-        <div className="p-4 flex flex-col md:flex-row md:items-start gap-6">
-          {/* Duration */}
-          <div className="space-y-3 flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Loan Duration</span>
-              <button
-                type="button"
-                onClick={() => form.setUseCustomDuration(!form.useCustomDuration)}
-                className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider"
-              >
-                {form.useCustomDuration ? 'Use Presets' : 'Custom'}
-              </button>
-            </div>
-
-            {form.useCustomDuration ? (
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    value={form.customDurationValue}
-                    onChange={(e) => form.setCustomDurationValue(e.target.value)}
-                    className="flex-1 bg-surface/50 border-edge/50 font-mono h-9 text-sm"
-                    placeholder="Amount"
-                    min="1"
-                  />
-                  <div className="flex gap-1">
-                    {CUSTOM_DURATION_UNITS.map((u) => (
-                      <button
-                        key={u.multiplier}
-                        type="button"
-                        onClick={() => form.setCustomDurationUnit(u.multiplier)}
-                        className={`px-3 py-1 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
-                          form.customDurationUnit === u.multiplier ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk'
-                        }`}
-                      >{u.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[10px] text-dust italic">
-                  Result: {formatDurationHuman(Number(form.duration))}
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {DURATION_PRESETS.map((p) => (
-                  <button
-                    key={p.seconds}
-                    type="button"
-                    onClick={() => form.setDurationPreset(p.seconds.toString())}
-                    className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
-                      form.durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                    }`}
-                  >{p.label}</button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="hidden md:block w-px self-stretch bg-edge/30" />
-
-          {/* Deadline / Expiry */}
-          <div className="space-y-3 flex-1 min-w-0">
-            <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
-            <div className="flex flex-wrap gap-2">
-              {DEADLINE_PRESETS.map((p) => (
-                <button
-                  key={p.seconds}
-                  type="button"
-                  onClick={() => form.setDeadlinePreset(p.seconds.toString())}
-                  className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
-                    form.deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                  }`}
-                >{p.label}</button>
-              ))}
-            </div>
-            <p className="text-[10px] text-dust" suppressHydrationWarning>
-              Expires {formatTimestamp(BigInt(form.deadline))}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Advanced Options (collapsible) ─────────────────── */}
-      <div className="mb-8">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-[11px] text-dust hover:text-chalk uppercase tracking-widest font-bold transition-colors cursor-pointer group"
-        >
-          <svg
-            className={`w-3 h-3 text-ash group-hover:text-chalk transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M4 2l4 4-4 4" />
-          </svg>
-          Advanced Options
-          {form.allAssets.length > 0 && <span className="text-star">({form.allAssets.length} assets)</span>}
-        </button>
-
-        {showAdvanced && (
-          <div className="mt-4 space-y-4 animate-fade-up">
-            {/* Mode + Funding toggles */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-              {/* Mode */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
-                <div className="flex gap-1">
-                  {(['offchain', 'onchain'] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => form.setMode(m)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
-                        form.mode === m
-                          ? 'bg-star/10 text-star border border-star/25'
-                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
-                      }`}
-                    >
-                      {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="w-px h-5 bg-edge/40 hidden sm:block" />
-
-              {/* Funding */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
-                <div className="flex gap-1">
-                  {([
-                    { value: 'single', label: 'Single' },
-                    { value: 'multi', label: 'Multi' },
-                  ] as const).map((f) => (
-                    <button
-                      key={f.value}
-                      type="button"
-                      onClick={() => form.setMultiLender(f.value === 'multi')}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
-                        (form.multiLender ? 'multi' : 'single') === f.value
-                          ? 'bg-star/10 text-star border border-star/25'
-                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Asset Table */}
-            <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
-                <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
-                  Inscription Assets
-                  {form.allAssets.length > 0 && <span className="ml-2 text-star">({form.allAssets.length})</span>}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => form.setAddModalOpen(true)}
-                  className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
-                >
-                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v8M2 6h8" /></svg>
-                  Add Asset
-                </button>
-              </div>
-
-              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
-                <div className="flex-1">Asset</div>
-                <div className="w-32 text-center">Amount / ID</div>
-                <div className="w-32 text-center">Role</div>
-                <div className="w-10"></div>
-              </div>
-
-              {form.allAssets.length === 0 ? (
-                <div
-                  onClick={() => form.setAddModalOpen(true)}
-                  className="w-full min-h-[120px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-6"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash"><path d="M8 3v10M3 8h10" /></svg>
-                  </div>
-                  <p className="text-xs text-dust">Add extra assets via the modal for multi-asset orders</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-edge/10">
-                  {form.allAssets.map((item) => (
-                    <AssetRow
-                      key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
-                      asset={item.asset}
-                      role={item.role}
-                      onRemove={() => form.handleRemoveAsset(item.role, item.index)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-        )}
       </div>
 
       {/* ── Match Detection ──────────────────────────────── */}
