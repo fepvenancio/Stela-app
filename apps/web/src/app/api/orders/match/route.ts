@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
     return errorResponse('Missing required params: debtToken, collateralToken, borrower', 400, request)
   }
 
+  const hexPattern = /^0x[0-9a-fA-F]+$/
+  if (!hexPattern.test(debtToken) || !hexPattern.test(collateralToken) || !hexPattern.test(borrower)) {
+    return errorResponse('Invalid address format', 400, request)
+  }
+
   try {
     const db = getD1()
     const nowSeconds = Math.floor(Date.now() / 1000)

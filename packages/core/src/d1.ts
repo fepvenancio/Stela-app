@@ -49,6 +49,12 @@ function isValidStatus(s: string): s is InscriptionStatus {
   return (VALID_STATUSES as readonly string[]).includes(s)
 }
 
+/** Valid order status values — prevents arbitrary status strings in D1 */
+const VALID_ORDER_STATUSES = new Set(['pending', 'matched', 'settled', 'expired', 'cancelled'])
+
+/** Valid offer status values */
+const VALID_OFFER_STATUSES = new Set(['pending', 'settled', 'expired', 'cancelled'])
+
 // ---------------------------------------------------------------------------
 // Query helpers
 // ---------------------------------------------------------------------------
@@ -451,7 +457,9 @@ export function createD1Queries(db: D1Database) {
     // -----------------------------------------------------------------------
 
     async incrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
-      // Use BigInt in JS — CAST(AS INTEGER) overflows for u256-scale share values
+      // Read current balance, compute new value in JS (BigInt — CAST overflows for u256),
+      // then write back. Sequential processing by the indexer prevents races in practice.
+      // D1 Workers are single-threaded per isolate; the indexer handles events sequentially.
       const row = await db
         .prepare('SELECT balance FROM share_balances WHERE account = ? AND inscription_id = ?')
         .bind(account, inscriptionId)
@@ -470,7 +478,6 @@ export function createD1Queries(db: D1Database) {
     },
 
     async decrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
-      // Use BigInt in JS — CAST(AS INTEGER) overflows for u256-scale share values
       const row = await db
         .prepare('SELECT balance FROM share_balances WHERE account = ? AND inscription_id = ?')
         .bind(account, inscriptionId)
@@ -721,13 +728,35 @@ export function createD1Queries(db: D1Database) {
     },
 
     async updateOrderStatus(id: string, status: string) {
+      if (!VALID_ORDER_STATUSES.has(status)) {
+        throw new Error(`Invalid order status: ${status}`)
+      }
       await db
         .prepare('UPDATE orders SET status = ? WHERE id = ?')
         .bind(status, id)
         .run()
     },
 
+    /**
+     * Atomic conditional status update — only updates if current status matches `fromStatus`.
+     * Returns true if the row was updated, false if the status had already changed.
+     * Eliminates TOCTOU race on concurrent offer submissions.
+     */
+    async updateOrderStatusConditional(id: string, fromStatus: string, toStatus: string): Promise<boolean> {
+      if (!VALID_ORDER_STATUSES.has(toStatus)) {
+        throw new Error(`Invalid order status: ${toStatus}`)
+      }
+      const result = await db
+        .prepare('UPDATE orders SET status = ? WHERE id = ? AND status = ?')
+        .bind(toStatus, id, fromStatus)
+        .run()
+      return ((result.meta?.changes as number) ?? 0) > 0
+    },
+
     async updateOfferStatus(id: string, status: string) {
+      if (!VALID_OFFER_STATUSES.has(status)) {
+        throw new Error(`Invalid offer status: ${status}`)
+      }
       await db
         .prepare('UPDATE order_offers SET status = ? WHERE id = ?')
         .bind(status, id)
@@ -764,6 +793,61 @@ export function createD1Queries(db: D1Database) {
         )
         .run()
       return ((r1.meta?.changes as number) ?? 0) + ((r2.meta?.changes as number) ?? 0)
+    },
+
+    /**
+     * Atomically create an offer and update the order status in a single D1 batch.
+     * Returns true if the order was still pending and both operations succeeded.
+     * Returns false if the order was already matched/settled (no offer created).
+     */
+    async acceptOffer(params: {
+      offerId: string
+      orderId: string
+      lender: string
+      bps: number
+      lenderSignature: string
+      nonce: string
+      createdAt: number
+      orderStatus: string
+      offerStatus: string
+    }): Promise<boolean> {
+      if (!VALID_ORDER_STATUSES.has(params.orderStatus)) {
+        throw new Error(`Invalid order status: ${params.orderStatus}`)
+      }
+      if (!VALID_OFFER_STATUSES.has(params.offerStatus)) {
+        throw new Error(`Invalid offer status: ${params.offerStatus}`)
+      }
+
+      // Conditional update: only transitions if order is currently 'pending'
+      const updateStmt = db
+        .prepare('UPDATE orders SET status = ? WHERE id = ? AND status = ?')
+        .bind(params.orderStatus, params.orderId, 'pending')
+
+      const insertStmt = db
+        .prepare(
+          `INSERT INTO order_offers (id, order_id, lender, bps, lender_signature, nonce, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .bind(
+          params.offerId, params.orderId, params.lender, params.bps,
+          params.lenderSignature, params.nonce, params.offerStatus, params.createdAt,
+        )
+
+      // D1 batch runs in a single SQLite transaction — both succeed or both roll back.
+      const results = await db.batch([updateStmt, insertStmt])
+      const orderUpdated = ((results[0].meta?.changes as number) ?? 0) > 0
+
+      if (!orderUpdated) {
+        // Order was not pending — the insert may have succeeded but is harmless
+        // (orphan offer row for a non-pending order). Clean it up.
+        await db
+          .prepare('DELETE FROM order_offers WHERE id = ?')
+          .bind(params.offerId)
+          .run()
+        return false
+      }
+
+      return true
     },
 
     async createOrderOffer(offer: {

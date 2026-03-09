@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, findTokenByAddress } from '@fepvenancio/stela-sdk'
@@ -45,6 +45,7 @@ export function useMultiSettle() {
   const { address, account } = useAccount()
   const { signTypedData } = useWalletSign()
   const [state, setState] = useState<MultiSettleState>(INITIAL_STATE)
+  const pendingRef = useRef(false)
 
   const reset = useCallback(() => setState(INITIAL_STATE), [])
 
@@ -60,6 +61,9 @@ export function useMultiSettle() {
     ) => {
       if (!address || !account) throw new Error('Wallet not connected')
       if (selectedOrders.length === 0) throw new Error('No orders selected')
+      if (pendingRef.current) throw new Error('Settlement already in progress')
+
+      pendingRef.current = true
 
       const offchainOrders = selectedOrders.filter((s): s is SelectedOffchainOrder => s.type === 'offchain')
       const onchainOrders = selectedOrders.filter((s): s is SelectedOnchainOrder => s.type === 'onchain')
@@ -389,6 +393,8 @@ export function useMultiSettle() {
         setState((s) => ({ ...s, phase: 'error', error: msg }))
         toast.error('Multi-settle failed', { description: msg })
         throw err
+      } finally {
+        pendingRef.current = false
       }
     },
     [address, account, signTypedData],

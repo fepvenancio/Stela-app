@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient } from '@fepvenancio/stela-sdk'
@@ -20,11 +20,14 @@ export function useSignOrder(orderId: string) {
   const { address, account } = useAccount()
   const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
+  const pendingRef = useRef(false)
 
   const signOrder = useCallback(
     async (bps: number, progress?: TransactionProgress) => {
       if (!address || !account) throw new Error('Wallet not connected')
+      if (pendingRef.current) throw new Error('Settlement already in progress')
 
+      pendingRef.current = true
       setIsPending(true)
       progress?.start()
       try {
@@ -112,6 +115,7 @@ export function useSignOrder(orderId: string) {
         toast.error('Failed to settle', { description: msg })
         throw err
       } finally {
+        pendingRef.current = false
         setIsPending(false)
       }
     },

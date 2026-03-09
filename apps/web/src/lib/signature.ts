@@ -23,12 +23,21 @@ export function formatSig(signature: unknown): string[] {
 export function parseSigToArray(raw: string | string[]): string[] {
   if (Array.isArray(raw)) return raw.map(String)
   if (typeof raw === 'string') {
-    if (raw.startsWith('[')) return JSON.parse(raw) as string[]
+    if (raw.startsWith('[')) {
+      const parsed = JSON.parse(raw) as unknown
+      if (!Array.isArray(parsed) || parsed.length < 1 || !parsed.every((s: unknown) => typeof s === 'string' || typeof s === 'number'))
+        throw new Error('Invalid signature array format')
+      return parsed.map(String)
+    }
     if (raw.startsWith('{')) {
-      const obj = JSON.parse(raw) as { r: string; s: string }
+      const obj = JSON.parse(raw) as Record<string, unknown>
+      if (typeof obj.r !== 'string' || typeof obj.s !== 'string')
+        throw new Error('Invalid signature object format: missing r or s')
       return [obj.r, obj.s]
     }
-    return raw.split(',')
+    const parts = raw.split(',')
+    if (parts.length < 2) throw new Error('Invalid signature CSV: expected at least 2 elements')
+    return parts
   }
   throw new Error('Invalid signature format')
 }
