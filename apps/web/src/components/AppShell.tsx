@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { WalletButton } from './WalletButton'
@@ -23,6 +23,29 @@ const NAV_LINKS = [
   { href: '/portfolio', label: 'Portfolio', icon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-2a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z" />
+    </svg>
+  )},
+]
+
+const DROPDOWN_LINKS = [
+  { href: '/nft', label: 'Genesis NFT', icon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3h12l4 6-10 13L2 9z" /><path d="M11 3l1 10" /><path d="M2 9h20" />
+    </svg>
+  )},
+  { href: '/docs', label: 'Docs', icon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+  )},
+  { href: '/faucet', label: 'Faucet', icon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2v6m0 0a4 4 0 014 4v6a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6a4 4 0 014-4z" />
+    </svg>
+  )},
+  { href: 'https://github.com/fepvenancio/Stela', label: 'Protocol', external: true, icon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
     </svg>
   )},
 ]
@@ -61,6 +84,78 @@ function ScrollToTopButton() {
   )
 }
 
+function LogoDropdown() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center text-star-dim hover:text-star transition-colors cursor-pointer ml-1"
+        aria-label="More links"
+        aria-expanded={open}
+      >
+        <svg
+          className={`w-3 h-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={3}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-48 bg-abyss/95 border border-edge/30 rounded-lg shadow-xl backdrop-blur-sm overflow-hidden z-50">
+          {DROPDOWN_LINKS.map((link) => {
+            const Icon = link.icon
+            if (link.external) {
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-dust hover:text-chalk hover:bg-surface/50 transition-colors"
+                >
+                  <Icon className="w-4 h-4 text-dust/60" />
+                  {link.label}
+                  <svg className="w-3 h-3 ml-auto opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              )
+            }
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-dust hover:text-chalk hover:bg-surface/50 transition-colors"
+              >
+                <Icon className="w-4 h-4 text-dust/60" />
+                {link.label}
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -93,24 +188,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <NetworkMismatchBanner />
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 sm:px-12 relative">
-          {/* Logo */}
-          <Link
-            href="/trade"
-            className="flex items-center gap-2.5 font-display text-xl tracking-[0.3em] text-star hover:text-star-bright transition-all group shrink-0"
-          >
-            <svg viewBox="0 0 512 512" className="w-7 h-7" fill="none" aria-hidden="true">
-              <rect x="96" y="440" width="320" height="32" rx="4" fill="currentColor"/>
-              <path d="M128 440 V112 Q256 80 384 112 V440 H128Z" fill="currentColor"/>
-              <rect x="128" y="144" width="256" height="8" fill="#0a0a0e" fillOpacity="0.2"/>
-              <rect x="176" y="210" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2"/>
-              <rect x="176" y="260" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2"/>
-              <rect x="176" y="310" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2"/>
-            </svg>
-            <span className="relative">
-              STELA
-              <span className="absolute -bottom-1 left-0 w-0 h-px bg-star/50 transition-all group-hover:w-full" />
-            </span>
-          </Link>
+          {/* Logo + dropdown */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Link
+              href="/trade"
+              className="flex items-center gap-2.5 font-display text-xl tracking-[0.3em] text-star hover:text-star-bright transition-all group"
+            >
+              <svg viewBox="0 0 512 512" className="w-7 h-7" fill="none" aria-hidden="true">
+                <rect x="96" y="440" width="320" height="32" rx="4" fill="currentColor"/>
+                <path d="M128 440 V112 Q256 80 384 112 V440 H128Z" fill="currentColor"/>
+                <rect x="128" y="144" width="256" height="8" fill="#0a0a0e" fillOpacity="0.2"/>
+                <rect x="176" y="210" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2"/>
+                <rect x="176" y="260" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2"/>
+                <rect x="176" y="310" width="160" height="20" rx="4" fill="#0a0a0e" fillOpacity="0.2"/>
+              </svg>
+              <span className="relative">
+                STELA
+                <span className="absolute -bottom-1 left-0 w-0 h-px bg-star/50 transition-all group-hover:w-full" />
+              </span>
+            </Link>
+            <LogoDropdown />
+          </div>
 
           {/* Desktop nav links — absolute center */}
           <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2" aria-label="Main navigation">
@@ -135,8 +233,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Right side: wallet + hamburger */}
-          <div className="flex items-center gap-3">
+          {/* Right side: help + wallet + hamburger */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/docs"
+              className="hidden sm:flex w-8 h-8 items-center justify-center rounded-full border border-edge/30 text-dust hover:text-star hover:border-star/30 transition-colors"
+              aria-label="Help & Docs"
+            >
+              <span className="text-xs font-semibold">?</span>
+            </Link>
             <WalletButton />
             <Button
               variant="ghost"
@@ -181,22 +286,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               })}
             </nav>
 
-            {/* External links */}
+            {/* Extra links (NFT, Docs, Faucet, Protocol) */}
             <div className="px-3 border-t border-edge/30 pt-4 space-y-1">
-              {EXTERNAL_LINKS.map(({ href, label }) => (
-                <a
-                  key={href}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-ash hover:text-chalk transition-colors"
-                >
-                  <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                  {label}
-                </a>
-              ))}
+              {DROPDOWN_LINKS.map((link) => {
+                const Icon = link.icon
+                if (link.external) {
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-ash hover:text-chalk transition-colors"
+                    >
+                      <Icon className="w-4 h-4 opacity-50" />
+                      {link.label}
+                    </a>
+                  )
+                }
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-ash hover:text-chalk transition-colors"
+                  >
+                    <Icon className="w-4 h-4 opacity-50" />
+                    {link.label}
+                  </Link>
+                )
+              })}
             </div>
 
             {/* Wallet at bottom */}
