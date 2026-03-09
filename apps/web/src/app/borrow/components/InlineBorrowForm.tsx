@@ -255,7 +255,7 @@ export function InlineBorrowForm({
   )
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 max-w-xl mx-auto">
       {rows.map((row) => {
         const assets = getAssets(row.key)
         // Always show at least one empty row

@@ -57,18 +57,18 @@ export default function BorrowPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   return (
-    <div className="animate-fade-up pb-24 relative">
+    <div className="animate-fade-up pb-24 relative max-w-3xl mx-auto">
 
       {/* ── Ambient Background ───────────────────────────── */}
       <div className="fixed top-1/4 -left-20 w-64 h-64 bg-star/[0.04] rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-1/4 -right-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       {/* ── Header ────────── */}
-      <div className="mb-10">
+      <div className="mb-10 text-center">
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
           Borrow
         </h1>
-        <p className="text-dust max-w-lg leading-relaxed mb-6">
+        <p className="text-dust max-w-lg mx-auto leading-relaxed mb-6">
           Borrow any ERC20 — stables, vault shares, LP tokens — fully peer-to-peer. Every position becomes a tradeable share on a built-in secondary market.
         </p>
 
@@ -97,7 +97,7 @@ export default function BorrowPage() {
       </div>
 
       {/* ── Terms & Duration ─────────────────────────────── */}
-      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8">
+      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip mb-8 max-w-xl mx-auto">
         <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
           <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
         </div>
@@ -310,7 +310,7 @@ export default function BorrowPage() {
 
       {/* ── Validation Errors ──────────────────────────────── */}
       {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
-        <div className="mb-8 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5">
+        <div className="mb-8 px-4 py-3 rounded-xl border border-nova/20 bg-nova/5 max-w-xl mx-auto">
           <p className="text-xs text-nova font-medium">
             {!form.hasDebt && '• Add at least one borrow asset. '}
             {!form.hasCollateral && '• Add at least one collateral asset.'}
@@ -319,7 +319,7 @@ export default function BorrowPage() {
       )}
 
       {/* ── Agreement Summary + Submit ─────────────────────── */}
-      <section className="rounded-xl border border-star/30 bg-star/5 p-5 max-w-md">
+      <section className="rounded-xl border border-star/30 bg-star/5 p-5 max-w-xl mx-auto">
         <div className="space-y-3">
           <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
             Agreement Summary
