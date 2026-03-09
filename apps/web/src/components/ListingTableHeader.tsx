@@ -1,28 +1,63 @@
 'use client'
 
-import { InfoTooltip } from '@/components/InfoTooltip'
-import { CONCEPT_DESCRIPTIONS } from '@/lib/status'
+import type { SortOption } from '@/components/BrowseControls'
 
-export function ListingTableHeader() {
+interface ListingTableHeaderProps {
+  sortBy?: SortOption
+  onSortChange?: (s: SortOption) => void
+}
+
+function SortButton({
+  label,
+  sortKey,
+  currentSort,
+  onSort,
+  align = 'left',
+}: {
+  label: string
+  sortKey: SortOption
+  currentSort: SortOption
+  onSort: (s: SortOption) => void
+  align?: 'left' | 'right'
+}) {
+  const active = currentSort === sortKey
   return (
-    <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 sticky top-16 bg-void/95 z-10 mb-px">
-      <div className="grid grid-cols-12 gap-3 flex-1">
-        <div className="col-span-2">Status</div>
-        <div className="col-span-3 flex items-center gap-1">
-          Debt
-          <InfoTooltip content={CONCEPT_DESCRIPTIONS.debt} side="bottom" />
-        </div>
-        <div className="col-span-2 flex items-center gap-1">
-          Interest
-          <InfoTooltip content={CONCEPT_DESCRIPTIONS.interest} side="bottom" />
-        </div>
-        <div className="col-span-2 flex items-center gap-1">
-          Collateral
-          <InfoTooltip content={CONCEPT_DESCRIPTIONS.collateral} side="bottom" />
-        </div>
-        <div className="col-span-1 text-right">Yield</div>
-        <div className="col-span-2 text-right">Action</div>
-      </div>
+    <button
+      type="button"
+      onClick={() => onSort(sortKey)}
+      className={`flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold transition-colors cursor-pointer ${
+        align === 'right' ? 'justify-end' : ''
+      } ${active ? 'text-star' : 'text-dust hover:text-chalk'}`}
+    >
+      {label}
+      {active && (
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor" className="shrink-0">
+          <path d="M4 6L1 2h6L4 6z" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+export function ListingTableHeader({ sortBy, onSortChange }: ListingTableHeaderProps) {
+  const hasSort = sortBy !== undefined && onSortChange !== undefined
+
+  return (
+    <div className="hidden md:grid grid-cols-[1fr_80px_80px_80px_72px_90px] gap-4 px-4 py-2 text-dust border-b border-edge/30 bg-surface/20">
+      <span className="text-[10px] uppercase tracking-widest font-semibold">Pool</span>
+      <span className="text-[10px] uppercase tracking-widest font-semibold text-center">Type</span>
+      {hasSort ? (
+        <SortButton label="Yield" sortKey="apy" currentSort={sortBy} onSort={onSortChange} align="right" />
+      ) : (
+        <span className="text-[10px] uppercase tracking-widest font-semibold text-right">Yield</span>
+      )}
+      {hasSort ? (
+        <SortButton label="Duration" sortKey="duration" currentSort={sortBy} onSort={onSortChange} align="right" />
+      ) : (
+        <span className="text-[10px] uppercase tracking-widest font-semibold text-right">Duration</span>
+      )}
+      <span className="text-[10px] uppercase tracking-widest font-semibold text-center">Status</span>
+      <span className="text-[10px] uppercase tracking-widest font-semibold text-right">Action</span>
     </div>
   )
 }

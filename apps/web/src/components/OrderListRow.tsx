@@ -3,9 +3,8 @@
 import { useMemo, useState } from 'react'
 import { formatDuration } from '@/lib/format'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
-import { getOrderStatusBadgeVariant, getOrderStatusLabel, STATUS_DESCRIPTIONS } from '@/lib/status'
-import { InfoTooltip } from '@/components/InfoTooltip'
-import { CompactAssetSummary } from '@/components/CompactAssetSummary'
+import { getOrderStatusBadgeVariant, getOrderStatusLabel } from '@/lib/status'
+import { PoolPairDisplay } from '@/components/PoolPairDisplay'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
 import type { OrderRow } from '@/hooks/useOrders'
@@ -37,24 +36,24 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
   const [confirming, setConfirming] = useState(false)
 
   const yieldDisplay = useMemo(() => {
-    if (isSwap) return 'Swap'
+    if (isSwap) return '—'
     const pct = computeYieldPercent(debtAssets, interestAssets)
-    if (pct === null) return '\u2014'
+    if (pct === null) return '—'
     return `${pct.toFixed(1)}%`
   }, [debtAssets, interestAssets, isSwap])
 
   const inner = (
     <div
       onClick={selectable ? () => onSelect?.() : undefined}
-      className={`group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 ${
+      className={`group flex items-center gap-3 px-4 py-3 border-b transition-colors duration-100 ${
         selectable ? 'cursor-pointer' : ''
       } ${
         selected
           ? 'bg-star/5 border-star/20'
-          : 'border-edge/20 hover:bg-surface/30'
+          : 'border-edge/15 hover:bg-surface/30'
       }`}
     >
-      {/* Checkbox — only rendered when selectable */}
+      {/* Checkbox */}
       {selectable && (
         <div className="shrink-0 w-4 h-4 flex items-center justify-center">
           <div
@@ -77,137 +76,112 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
         </div>
       )}
 
-      {/* Desktop: single-line grid */}
-      <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
-        {/* Status + ID */}
-        <div className="col-span-2 flex items-center gap-1.5 min-w-0">
-          <Badge variant={statusVariant} className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
-            {statusLabel}
+      {/* Desktop: Uniswap-style grid */}
+      <div className="hidden md:grid grid-cols-[1fr_80px_80px_80px_72px_90px] gap-4 flex-1 items-center">
+        {/* Pool pair */}
+        <PoolPairDisplay
+          debtAssets={debtAssets}
+          collateralAssets={collateralAssets}
+          interestAssets={interestAssets}
+          id={order.id}
+          isOffchain
+        />
+
+        {/* Type */}
+        <div className="flex justify-center">
+          <Badge variant={isSwap ? 'pending' : 'default'} className="h-[20px] text-[9px] px-2 py-0 uppercase font-bold">
+            {isSwap ? 'Swap' : 'Loan'}
           </Badge>
-          <Link
-            href={`/stela/${order.id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="font-mono text-[10px] text-dust tracking-wider uppercase truncate hover:text-star transition-colors"
-          >
-            #{order.id.slice(0, 8)}
-          </Link>
-          <span className="text-[7px] text-ash/40 uppercase tracking-wider shrink-0">oc</span>
-          <InfoTooltip content={STATUS_DESCRIPTIONS[order.status] ?? 'Order status'} side="right" />
-        </div>
-
-        {/* Debt */}
-        <div className="col-span-3">
-          <CompactAssetSummary assets={debtAssets} />
-        </div>
-
-        {/* Interest */}
-        <div className="col-span-2">
-          <CompactAssetSummary assets={interestAssets} />
-        </div>
-
-        {/* Collateral */}
-        <div className="col-span-2">
-          <CompactAssetSummary assets={collateralAssets} />
         </div>
 
         {/* Yield */}
-        <div className="col-span-1 flex items-center justify-end">
-          <span className={`text-[11px] font-medium ${isSwap ? 'text-dust' : 'text-chalk'}`}>
+        <div className="text-right">
+          <span className={`text-sm tabular-nums font-medium ${!isSwap && yieldDisplay !== '—' ? 'text-aurora' : 'text-dust'}`}>
             {yieldDisplay}
           </span>
         </div>
 
+        {/* Duration */}
+        <div className="text-right">
+          <span className="text-sm text-chalk tabular-nums">
+            {isSwap ? 'Instant' : formatDuration(Number(duration))}
+          </span>
+        </div>
+
+        {/* Status */}
+        <div className="flex justify-center">
+          <Badge variant={statusVariant} className="h-[20px] text-[9px] px-2 py-0 uppercase font-bold">
+            {statusLabel}
+          </Badge>
+        </div>
+
         {/* Action */}
-        <div className="col-span-2 flex flex-col items-end gap-0.5">
+        <div className="flex justify-end">
           {onAction ? (
             confirming ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false); onAction() }}
                   disabled={actionPending}
-                  className="h-7 px-2.5 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="h-7 px-2 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer"
                 >
                   {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
                 </button>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false) }}
-                  className="h-7 px-2.5 bg-surface border border-edge/30 text-dust text-[10px] font-bold uppercase tracking-wider rounded-lg hover:text-chalk transition-colors cursor-pointer"
+                  className="h-7 px-2 bg-surface border border-edge/30 text-dust text-[10px] font-bold uppercase rounded-md hover:text-chalk cursor-pointer"
                 >
                   No
                 </button>
               </div>
             ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true) }}
-                  disabled={actionPending}
-                  className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
-                >
-                  {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
-                </button>
-                {!isSwap && (
-                  <span className="text-dust text-[9px]">{formatDuration(Number(duration))}</span>
-                )}
-              </>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true) }}
+                disabled={actionPending}
+                className="h-7 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40"
+              >
+                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+              </button>
             )
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[20px] text-[9px] px-1.5 py-0 uppercase font-bold">
-                {isSwap ? 'Swap' : 'Loan'}
-              </Badge>
-              {!isSwap && (
-                <span className="text-chalk text-[11px] font-medium">{formatDuration(Number(duration))}</span>
-              )}
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* Mobile: compact two-line layout */}
-      <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
+      {/* Mobile: compact card layout */}
+      <div className="flex md:hidden flex-col gap-2 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Badge variant={statusVariant} className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
-              {statusLabel}
-            </Badge>
-            <Badge variant={isSwap ? 'pending' : 'default'} className="w-fit h-[20px] text-[9px] px-1.5 py-0 uppercase font-bold shrink-0">
-              {isSwap ? 'Swap' : 'Loan'}
-            </Badge>
-            <span className="text-[7px] text-ash/40 uppercase tracking-wider">oc</span>
-            <Link
-              href={`/stela/${order.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="font-mono text-[10px] text-dust tracking-wider uppercase hover:text-star transition-colors"
-            >
-              #{order.id.slice(0, 8)}
-            </Link>
-          </div>
+          <PoolPairDisplay
+            debtAssets={debtAssets}
+            collateralAssets={collateralAssets}
+            interestAssets={interestAssets}
+            id={order.id}
+            isOffchain
+          />
           {onAction ? (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAction() }}
               disabled={actionPending}
-              className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="h-7 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0"
             >
               {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
             </button>
-          ) : (
-            <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(Number(duration))}</span>
-          )}
+          ) : null}
         </div>
-        <div className="flex items-center gap-3 overflow-x-auto">
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[8px] text-dust uppercase">D</span>
-            <CompactAssetSummary assets={debtAssets} />
-          </div>
-          <div className="text-edge/40">|</div>
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[8px] text-dust uppercase">C</span>
-            <CompactAssetSummary assets={collateralAssets} />
-          </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant={statusVariant} className="h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold">
+            {statusLabel}
+          </Badge>
+          <Badge variant={isSwap ? 'pending' : 'default'} className="h-[18px] text-[8px] px-1.5 py-0 uppercase font-bold">
+            {isSwap ? 'Swap' : 'Loan'}
+          </Badge>
+          {!isSwap && yieldDisplay !== '—' && (
+            <span className="text-[10px] text-aurora font-medium">{yieldDisplay} APY</span>
+          )}
+          <span className="text-[10px] text-dust">{isSwap ? 'Instant' : formatDuration(Number(duration))}</span>
         </div>
       </div>
     </div>
