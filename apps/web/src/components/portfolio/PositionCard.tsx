@@ -161,7 +161,7 @@ export function PositionCard({ inscription, role, shareBalance }: PositionCardPr
       href={`/stela/${inscription.id}`}
       className="group block transition-all duration-300 hover:-translate-y-1"
     >
-      <Card className={`granite-noise rounded-3xl border-edge bg-surface/40 backdrop-blur-sm p-6 transition-all duration-300 ${ROLE_HOVER[role]}`}>
+      <Card className={`granite-noise rounded-lg border-edge bg-surface/40 p-6 transition-all duration-300 ${ROLE_HOVER[role]}`}>
         <CardHeader className="p-0 pb-4 gap-0 border-b border-edge/10">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] text-dust tracking-[0.2em] uppercase">

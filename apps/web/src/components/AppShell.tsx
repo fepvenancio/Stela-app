@@ -77,7 +77,7 @@ function ScrollToTopButton() {
     <button
       onClick={scrollToTop}
       aria-label="Scroll to top"
-      className={`fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-surface/80 border border-edge/50 backdrop-blur-sm flex items-center justify-center text-dust hover:text-star hover:border-star/50 transition-all duration-300 ${
+      className={`fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-surface/80 border border-edge/50 flex items-center justify-center text-dust hover:text-star hover:border-star/50 transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
       }`}
     >
@@ -114,7 +114,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
           scrolled
-            ? 'bg-void/80 backdrop-blur-xl border-b border-edge/20 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]'
+            ? 'bg-void/80 border-b border-edge/20 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]'
             : 'bg-transparent'
         }`}
       >
@@ -182,7 +182,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile menu (Sheet from right) */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="w-72 bg-void/95 backdrop-blur-2xl border-edge/20 p-0 stela-pattern" showCloseButton={false}>
+        <SheetContent side="right" className="w-72 bg-void/95 border-edge/20 p-0 stela-pattern" showCloseButton={false}>
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <div className="flex flex-col h-full">
             {/* Mobile nav links */}
@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     onClick={() => setMobileOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
                       active
-                        ? 'bg-star/10 text-star shadow-[0_0_12px_rgba(232,168,37,0.1)]'
+                        ? 'bg-star/10 text-star'
                         : 'text-dust hover:text-chalk hover:bg-surface/50'
                     }`}
                   >

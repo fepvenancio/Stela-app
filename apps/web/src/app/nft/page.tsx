@@ -70,7 +70,7 @@ function MintSection({
 
   if (soldOut) {
     return (
-      <section className="bg-surface/10 border border-edge/20 rounded-2xl p-6">
+      <section className="bg-surface/10 border border-edge/20 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Mint</h3>
           <span className="text-[10px] text-star font-bold uppercase tracking-widest">Sold Out</span>
@@ -85,7 +85,7 @@ function MintSection({
 
   return (
     <>
-      <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden">
+      <section className="bg-star/[0.03] border border-star/20 rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-star/10">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Mint Genesis NFT</h3>
@@ -167,23 +167,23 @@ function MintSection({
 
 function FeeInfo() {
   return (
-    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+    <section className="bg-surface/10 border border-edge/20 rounded-lg overflow-hidden">
       <div className="px-6 py-3 border-b border-edge/15">
         <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">NFT Fee Discounts</h3>
       </div>
       <div className="p-6">
         <div className="grid sm:grid-cols-3 gap-3 mb-4">
-          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-md">
             <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">Base</span>
             <span className="text-base font-display text-star">15% off</span>
             <span className="text-[10px] text-dust block">Hold 1+ Genesis NFT</span>
           </div>
-          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-md">
             <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">Volume</span>
             <span className="text-base font-display text-star">+5% / tier</span>
             <span className="text-[10px] text-dust block">7 tiers ($10K to $1M+)</span>
           </div>
-          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+          <div className="p-3 bg-abyss/40 border border-edge/15 rounded-md">
             <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">Multi-NFT</span>
             <span className="text-base font-display text-star">+2% / NFT</span>
             <span className="text-[10px] text-dust block">Per additional NFT held</span>
@@ -203,7 +203,7 @@ function FeeInfo() {
 
 function TransparencyInfo() {
   return (
-    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+    <section className="bg-surface/10 border border-edge/20 rounded-lg overflow-hidden">
       <div className="px-6 py-3 border-b border-edge/15">
         <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Treasury & Transparency</h3>
       </div>
@@ -215,7 +215,7 @@ function TransparencyInfo() {
             { label: 'Per-Wallet Cap', value: '5 Max', desc: 'Prevents concentration of discount power.' },
             { label: 'Ownership', value: 'Renounced', desc: 'Fully immutable. No admin can change supply or price.' },
           ].map((item) => (
-            <div key={item.label} className="p-3 bg-abyss/40 border border-edge/15 rounded-xl">
+            <div key={item.label} className="p-3 bg-abyss/40 border border-edge/15 rounded-md">
               <span className="text-[9px] text-dust uppercase tracking-widest block mb-1">{item.label}</span>
               <span className="text-base font-display text-star">{item.value}</span>
               <span className="text-[10px] text-dust block mt-0.5">{item.desc}</span>
@@ -254,7 +254,7 @@ export default function GenesisPage() {
             <div className="space-y-8">
               {/* Your NFTs section — show discount tier if holder */}
               {isHolder && (
-                <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(232,168,37,0.05)]">
+                <section className="bg-star/[0.03] border border-star/20 rounded-lg overflow-hidden">
                   <div className="px-6 py-5 border-b border-star/10 bg-star/5">
                     <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Your Position</h2>
                     <p className="text-[10px] text-dust mt-1 uppercase tracking-wider font-bold">
@@ -293,12 +293,12 @@ export default function GenesisPage() {
         {/* Right Column: Stats & Transparency */}
         <div className="space-y-6">
           {/* Stats Card */}
-          <section className="bg-surface/5 border border-edge/30 rounded-2xl p-6 space-y-6">
+          <section className="bg-surface/5 border border-edge/30 rounded-lg p-6 space-y-6">
             <div className="space-y-4">
               <div className="flex justify-between items-end border-b border-edge/10 pb-4">
                 <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Total Minted</span>
                 {pos.isLoading ? (
-                  <Skeleton className="h-7 w-16 rounded-xl bg-surface/20" />
+                  <Skeleton className="h-7 w-16 rounded-md bg-surface/20" />
                 ) : (
                   <div className="text-right">
                     <span className="text-2xl font-display text-chalk leading-none">
@@ -332,7 +332,7 @@ export default function GenesisPage() {
           <TransparencyInfo />
 
           {/* Quick link to docs */}
-          <div className="p-4 rounded-xl border border-edge/20 bg-surface/5">
+          <div className="p-4 rounded-md border border-edge/20 bg-surface/5">
             <p className="text-[11px] text-dust leading-relaxed">
               Read the full specification of Genesis rewards in the 
               <a href="/docs" className="text-star hover:text-star-bright ml-1 font-medium underline underline-offset-4">

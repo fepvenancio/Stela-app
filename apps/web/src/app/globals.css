@@ -18,18 +18,18 @@
   --color-star-bright: #f0c35a;
   --color-star-dim: #a07518;
 
-  --color-nebula: #6366f1;
+  --color-nebula: #3b82f6;
   --color-aurora: #10b981;
   --color-nova: #ef4444;
   --color-ember: #c57b3f;
-  --color-cosmic: #8b5cf6;
+  --color-cosmic: #0ea5e9;
 
   --color-chalk: #d1d5db;
   --color-dust: #b5bcc5;
   --color-ash: #7d8590;
 
-  --animate-fade-up: fade-up 0.5s ease-out both;
-  --animate-fade-in: fade-in 0.4s ease-out both;
+  --animate-fade-up: fade-in 0.15s ease-out both;
+  --animate-fade-in: fade-in 0.15s ease-out both;
   --animate-slide-in: slide-in 0.2s ease-out both;
 }
 
@@ -87,7 +87,7 @@
     --border: var(--color-edge);
     --input: var(--color-edge);
     --ring: var(--color-star);
-    --radius: 0.75rem;
+    --radius: 0.375rem;
     --sidebar: var(--color-void);
     --sidebar-foreground: var(--color-chalk);
     --sidebar-primary: var(--color-star);
@@ -220,25 +220,19 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   border-color: var(--color-star);
-  box-shadow: 
-    0 0 0 1px var(--color-star),
-    0 0 12px rgba(232, 168, 37, 0.25),
-    inset 0 0 8px rgba(0, 0, 0, 0.5);
-  transition: all 0.2s ease-out;
+  box-shadow: 0 0 0 1px var(--color-star);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .stela-focus {
-  transition: all 0.2s ease-out;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .stela-focus:focus-within,
 .stela-focus[data-state="on"],
 .stela-focus.active {
-  border-color: var(--color-star-bright);
+  border-color: var(--color-star);
   background: var(--color-abyss);
-  box-shadow: 
-    0 0 20px rgba(232, 168, 37, 0.15),
-    inset 0 0 12px rgba(232, 168, 37, 0.05);
 }
 
 /* ── Form Elements ─────────────────────────────────────── */

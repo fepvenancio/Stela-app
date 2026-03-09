@@ -59,7 +59,7 @@ export function NetworkMismatchBanner() {
   return (
     <div
       role="alert"
-      className="sticky top-0 z-50 bg-nova/15 border-b border-nova/30 text-sm text-nova backdrop-blur-sm"
+      className="sticky top-0 z-50 bg-nova/15 border-b border-nova/30 text-sm text-nova"
     >
       <div className="flex items-center justify-center gap-3 px-4 py-2.5">
         <svg

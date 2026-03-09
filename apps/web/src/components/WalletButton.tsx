@@ -270,7 +270,7 @@ export function WalletButton() {
           <Button
             variant="outline"
             onClick={() => setAccountOpen(true)}
-            className="group gap-2.5 h-10 border-edge/50 hover:border-star/30 rounded-2xl bg-surface/20"
+            className="group gap-2.5 h-10 border-edge/50 hover:border-star/30 rounded-lg bg-surface/20"
             aria-label="Wallet account"
           >
             {wallet?.icon && (

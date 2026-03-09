@@ -161,7 +161,7 @@ export default function OrderPage({ params }: OrderPageProps) {
               { label: 'Status', value: order?.status ?? '--', mono: false },
               { label: 'Type', value: isMultiLender ? 'Multi-Lender' : 'Single-Lender', mono: false },
             ].map((field, i) => (
-              <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-5">
+              <div key={i} className="bg-abyss/40 border border-edge/20 rounded-lg p-5">
                 <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">{field.label}</span>
                 <span className={`text-sm text-chalk ${field.mono ? 'font-mono' : 'font-display'} capitalize`}>{field.value}</span>
               </div>
@@ -214,7 +214,7 @@ export default function OrderPage({ params }: OrderPageProps) {
               </div>
               <div className="p-6 space-y-3">
                 {order?.offers?.map((offer) => (
-                  <div key={offer.id} className="flex items-center justify-between p-4 bg-abyss/40 border border-edge/20 rounded-2xl">
+                  <div key={offer.id} className="flex items-center justify-between p-4 bg-abyss/40 border border-edge/20 rounded-lg">
                     <div>
                       <span className="text-[10px] text-dust uppercase tracking-widest block">Lender</span>
                       <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
@@ -289,20 +289,20 @@ export default function OrderPage({ params }: OrderPageProps) {
                               className="h-14 text-lg bg-void/50"
                             />
                           </div>
-                          <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={signPending || !lendAmount}>
+                          <Button type="submit" variant="gold" size="xl" className="w-full text-lg" disabled={signPending || !lendAmount}>
                             {signPending ? 'Settling...' : 'Sign & Settle'}
                           </Button>
                         </form>
                       ) : (
                         <div className="space-y-4">
-                          <div className="p-4 rounded-2xl bg-star/5 border border-star/10 text-center">
+                          <div className="p-4 rounded-lg bg-star/5 border border-star/10 text-center">
                             <span className="text-[10px] text-star uppercase tracking-widest font-bold">Rewards for Lender</span>
                             <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
                           </div>
                           <Button
                             variant="gold"
                             size="xl"
-                            className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]"
+                            className="w-full text-lg"
                             disabled={signPending}
                             onClick={async () => {
                               try {
@@ -354,7 +354,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                         </Button>
                       </div>
                     ) : (
-                      <div className="text-center py-4 bg-void/30 rounded-2xl border border-edge/20">
+                      <div className="text-center py-4 bg-void/30 rounded-lg border border-edge/20">
                         <p className="text-xs text-dust uppercase tracking-widest">Order {order?.status ?? 'Closed'}</p>
                         <p className="text-[10px] text-ash/60 mt-1">This order is no longer accepting offers.</p>
                       </div>

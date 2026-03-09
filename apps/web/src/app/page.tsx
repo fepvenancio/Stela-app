@@ -121,7 +121,7 @@ export default function LandingPage() {
               Every position is isolated. Multi-lender funding turns any loan into a permissionless vault with tradeable shares.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-2px_rgba(232,168,37,0.4)] cursor-pointer">
+              <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-8 h-13 rounded-full transition-all hover:scale-105 active:scale-95 cursor-pointer">
                 <Link href="/borrow">Borrow</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/40 hover:bg-surface text-chalk px-8 h-13 rounded-full transition-all cursor-pointer">
@@ -135,7 +135,7 @@ export default function LandingPage() {
 
           {/* Right: Mock inscription card */}
           <div className="hidden lg:block animate-fade-up" style={{ animationDelay: '0.15s' }}>
-            <div className="bg-abyss/80 border border-edge/40 rounded-3xl p-8 relative backdrop-blur-sm granite-noise overflow-hidden">
+            <div className="bg-abyss/80 border border-edge/40 rounded-lg p-8 relative granite-noise overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-star/[0.06] rounded-full blur-[60px] pointer-events-none" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
@@ -199,7 +199,7 @@ export default function LandingPage() {
             The mother of exotic lending
           </h2>
 
-          <div className="grid lg:grid-cols-3 gap-px bg-edge/20 rounded-3xl overflow-hidden">
+          <div className="grid lg:grid-cols-3 gap-px bg-edge/20 rounded-lg overflow-hidden">
             <div className="bg-abyss p-8 sm:p-10 group">
               <div className="w-10 h-10 rounded-xl bg-star/10 flex items-center justify-center text-star mb-6 group-hover:scale-110 transition-transform">
                 {icon.gem}
@@ -244,7 +244,7 @@ export default function LandingPage() {
             Pool-based vs peer-to-peer
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-px bg-edge/20 rounded-3xl overflow-hidden">
+          <div className="grid md:grid-cols-2 gap-px bg-edge/20 rounded-lg overflow-hidden">
             {/* Column Headers */}
             <div className="bg-abyss/60 p-6 sm:p-8 border-b border-edge/20">
               <h3 className="font-display text-sm text-dust uppercase tracking-widest">Pool-Based Lending</h3>
@@ -440,7 +440,7 @@ export default function LandingPage() {
 
           {/* Right: Fees — 2 cols */}
           <div className="lg:col-span-2">
-            <div className="bg-abyss/60 border border-edge/30 rounded-3xl p-6 sm:p-8 granite-noise relative overflow-hidden h-full">
+            <div className="bg-abyss/60 border border-edge/30 rounded-lg p-6 sm:p-8 granite-noise relative overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-b from-star/[0.02] to-transparent pointer-events-none" />
 
               <div className="relative z-10">
@@ -468,7 +468,7 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="bg-void/60 rounded-2xl p-5 border border-edge/15">
+                <div className="bg-void/60 rounded-lg p-5 border border-edge/15">
                   <div className="font-display text-2xl text-star mb-1">0.25%</div>
                   <p className="text-dust text-xs leading-relaxed">
                     Max lending fee. Swaps just 0.15%. No redeem or liquidation fees.
@@ -486,7 +486,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
           {/* Left: Genesis card */}
-          <div className="bg-star/[0.03] border border-star/15 rounded-3xl p-8 sm:p-10 relative overflow-hidden granite-noise">
+          <div className="bg-star/[0.03] border border-star/15 rounded-lg p-8 sm:p-10 relative overflow-hidden granite-noise">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-star/[0.06] rounded-full blur-[70px] pointer-events-none" />
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-8">
@@ -622,7 +622,7 @@ export default function LandingPage() {
           No listing required — just create an order.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
+          <Button asChild size="lg" className="bg-star hover:bg-star-bright text-void font-semibold px-12 h-14 rounded-full text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer">
             <Link href="/borrow">Borrow</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="border-edge hover:border-star/30 hover:bg-surface text-chalk px-12 h-14 rounded-full text-lg transition-all cursor-pointer">

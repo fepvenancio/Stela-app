@@ -56,7 +56,7 @@ function StepCard({ numeral, title, children }: { numeral: string; title: string
 
 function InfoCard({ label, children, mono }: { label: string; children: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="bg-abyss border border-edge/20 rounded-2xl p-6 group hover:border-star/20 transition-all">
+    <div className="bg-abyss border border-edge/20 rounded-lg p-6 group hover:border-star/20 transition-all">
       <span className="text-[10px] text-dust uppercase tracking-[0.2em] block mb-3 font-bold">{label}</span>
       <div className={`text-sm text-chalk leading-relaxed ${mono ? 'font-mono break-all' : ''}`}>{children}</div>
     </div>
@@ -74,7 +74,7 @@ function StatusNode({ label, description, color = 'star', icon }: { label: strin
 
   return (
     <div className="flex flex-col items-center gap-1.5 group">
-      <div className={`px-4 py-2 rounded-xl border bg-abyss transition-all duration-300 flex items-center gap-2 min-w-[100px] justify-center ${colorMap[color] || colorMap.star}`}>
+      <div className={`px-4 py-2 rounded-md border bg-abyss transition-all duration-300 flex items-center gap-2 min-w-[100px] justify-center ${colorMap[color] || colorMap.star}`}>
         {icon && <div className="opacity-70">{icon}</div>}
         <span className="font-display text-[10px] tracking-[0.15em] uppercase font-bold">{label}</span>
       </div>
@@ -89,12 +89,12 @@ function DocsRepoCard({ title, description, href, icon, files }: { title: string
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group bg-abyss border border-edge/20 hover:border-star/40 rounded-3xl p-8 transition-all relative overflow-hidden"
+      className="group bg-abyss border border-edge/20 hover:border-star/40 rounded-lg p-8 transition-all relative overflow-hidden"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-star/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-void border border-edge/50 flex items-center justify-center text-star group-hover:border-star/40 transition-all shadow-lg shadow-black/30">
+          <div className="w-12 h-12 rounded-lg bg-void border border-edge/50 flex items-center justify-center text-star group-hover:border-star/40 transition-all shadow-lg shadow-black/30">
             {icon}
           </div>
           <svg className="w-4 h-4 text-ash group-hover:text-star transition-colors mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -140,7 +140,6 @@ export default function DocsPage() {
     <div className="animate-fade-up pb-24">
       {/* Hero */}
       <div className="mb-16 relative py-12">
-        <div className="absolute inset-0 bg-star/2 blur-[120px] rounded-full -z-10" />
         <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-6">Protocol Documentation</p>
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
           The Stela Codex
@@ -224,7 +223,7 @@ export default function DocsPage() {
             </StepCard>
           </div>
 
-          <div className="bg-abyss border border-star/20 rounded-3xl p-8 mt-12">
+          <div className="bg-abyss border border-star/20 rounded-lg p-8 mt-12">
             <h4 className="font-display text-star text-lg mb-3">Atomic Swaps</h4>
             <p className="text-dust text-sm leading-relaxed">
               Use the <Link href="/swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page for atomic peer-to-peer trades. Assets exchange instantly in a single transaction with no repayment
@@ -237,25 +236,25 @@ export default function DocsPage() {
         <section>
           <SectionHeading>Core Terminology</SectionHeading>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Collateral</h4>
               <p className="text-dust text-sm leading-relaxed">
                 The <span className="text-chalk font-medium">Guarantee</span>. Assets provided by the borrower and locked in a secure per-inscription Locker contract. If the borrower defaults, these assets are forfeit to the lender.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Debt</h4>
               <p className="text-dust text-sm leading-relaxed">
                 The <span className="text-chalk font-medium">Principal</span>. The exact assets and amounts the borrower wishes to receive. Lenders provide these assets to "seal" the inscription.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Interest</h4>
               <p className="text-dust text-sm leading-relaxed">
                 The <span className="text-chalk font-medium">Reward</span>. The additional assets the borrower agrees to pay the lender on top of the debt principal upon repayment.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Deadline</h4>
               <p className="text-dust text-sm leading-relaxed">
                 The <span className="text-chalk font-medium">Discovery Period</span>. A unix timestamp defining when the inscription stops accepting lenders. If reached without a signature, the inscription expires and collateral can be reclaimed.
@@ -278,7 +277,7 @@ export default function DocsPage() {
                 dedicated <span className="text-star">Locker contract</span> and defines the terms:
                 debt requested, interest offered, collateral, and duration.
               </p>
-              <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
+              <div className="bg-surface/20 border border-edge/20 rounded-md p-4 mt-4">
                  <ul className="grid grid-cols-2 gap-4 text-xs font-display uppercase tracking-wider text-dust">
                     <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Collateral</li>
                     <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Debt</li>
@@ -325,7 +324,7 @@ export default function DocsPage() {
         <section>
           <SectionHeading>Other States</SectionHeading>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8 relative overflow-hidden">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8 relative overflow-hidden">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-full border border-nova/30 flex items-center justify-center text-nova font-display text-sm">!</div>
                 <span className="text-xs text-nova uppercase tracking-[0.2em] font-bold">Expired</span>
@@ -336,7 +335,7 @@ export default function DocsPage() {
                 The borrower can safely <span className="text-chalk">cancel and reclaim</span> their collateral.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8 relative overflow-hidden">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8 relative overflow-hidden">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-full border border-edge/30 flex items-center justify-center text-ash font-display text-sm">X</div>
                 <span className="text-xs text-dust uppercase tracking-[0.2em] font-bold">Cancelled</span>
@@ -453,7 +452,7 @@ export default function DocsPage() {
                   loans), split between the relayer (0.05%) and treasury (0.10%).
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-4">Swap Use Cases</h4>
                 <ul className="space-y-3 text-dust text-sm leading-relaxed">
                   <li className="flex items-start gap-3">
@@ -494,7 +493,7 @@ export default function DocsPage() {
                 This contains all loan terms — collateral, debt, interest, duration, deadline, and a nonce for replay protection.
                 No transaction is sent, so <span className="text-chalk font-semibold">no gas is paid</span>.
               </p>
-              <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
+              <div className="bg-surface/20 border border-edge/20 rounded-md p-4 mt-4">
                 <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-2">SNIP-12 Typed Data</span>
                 <p className="text-xs text-dust">
                   StarkNet&apos;s typed data standard (like EIP-712 on Ethereum). The wallet shows the user exactly what
@@ -520,7 +519,7 @@ export default function DocsPage() {
                 The contract verifies each signature on-chain via SNIP-12 typed data hashing, then
                 executes the loan — locking collateral, transferring debt, and minting shares.
               </p>
-              <div className="bg-surface/20 border border-edge/20 rounded-xl p-4 mt-4">
+              <div className="bg-surface/20 border border-edge/20 rounded-md p-4 mt-4">
                 <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
                     <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
@@ -558,14 +557,14 @@ export default function DocsPage() {
             </p>
 
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">Compete on Terms</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   Post multiple orders with different rates, collateral ratios, or durations.
                   Lenders pick the terms they prefer — the market decides which fills.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">First Fill Wins</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   All orders from the same borrower share a <span className="text-chalk font-mono text-xs">nonce</span>.
@@ -573,7 +572,7 @@ export default function DocsPage() {
                   automatically expired — like <span className="text-chalk font-medium">cancel-on-fill</span> limit orders.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">No Double Settlement</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   The on-chain <span className="text-chalk font-mono text-xs">NoncesComponent</span> enforces strict
@@ -610,7 +609,7 @@ export default function DocsPage() {
         {/* 7. Fee Structure */}
         <section className="relative">
           <SectionHeading>Fee Structure</SectionHeading>
-          <div className="bg-abyss border border-edge/20 rounded-3xl overflow-hidden">
+          <div className="bg-abyss border border-edge/20 rounded-lg overflow-hidden">
             <div className="grid grid-cols-4 gap-px bg-edge/10">
               <div className="bg-abyss/60 p-5">
                 <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Event</span>
@@ -696,14 +695,14 @@ export default function DocsPage() {
         <section>
           <SectionHeading>Genesis NFT Discounts</SectionHeading>
           <div className="space-y-6">
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">NFT Fee Discounts</h4>
               <p className="text-dust text-sm leading-relaxed">
                 Genesis NFT holders receive automatic protocol fee discounts. Holding 1+ NFT grants a <span className="text-chalk font-semibold">15% base discount</span>, plus <span className="text-chalk font-semibold">+5% per volume tier</span> (7 tiers from $10K to $1M+) and <span className="text-chalk font-semibold">+2% per additional NFT</span>, capped at <span className="text-chalk font-semibold">50% off</span>. Discounts apply to the treasury portion of fees only — the 0.05% relayer fee is never discounted. Applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">Discount Floors</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   Even at the maximum 50% discount, the treasury always receives a minimum fee.
@@ -712,7 +711,7 @@ export default function DocsPage() {
                   The relayer&apos;s 5 BPS is never discounted.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">Volume Tiers</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   Your cumulative settlement volume is tracked per-address on-chain (only whitelisted tokens count toward
@@ -729,46 +728,46 @@ export default function DocsPage() {
           <SectionHeading>Treasury & Governance</SectionHeading>
           <div className="space-y-6">
             <div className="grid sm:grid-cols-3 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">No Admin</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   Ownership has been <span className="text-chalk font-medium">permanently renounced</span> on all deployed contracts. There is no multisig, no governance, no backdoor.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">No Upgrades</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   Contracts are <span className="text-chalk font-medium">immutable</span>. No pause function, no proxy pattern, no parameter changes. The code is the protocol.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">Open Access</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   Every protocol function — <span className="text-chalk font-medium">settle, liquidate, redeem, repay, cancel</span> — is callable by anyone. No whitelists, no gatekeepers.
                 </p>
               </div>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Treasury Reserve</h4>
               <p className="text-dust text-sm leading-relaxed">
                 <span className="text-chalk font-semibold">50 of 300</span> Genesis NFTs are minted to the protocol treasury at deployment. This is hardcoded in the constructor — not an admin action. Treasury NFTs are held for protocol development: <span className="text-chalk font-medium">security audits, ecosystem growth, and operational costs</span>.
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">Per-Wallet Limit</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   Public minting is capped at <span className="text-chalk font-semibold">5 NFTs per wallet</span>, enforced on-chain via the <span className="text-chalk font-mono text-xs">MAX_PER_WALLET</span> constant. No single participant can accumulate an outsized fee discount.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
                 <h4 className="font-display text-star text-lg mb-3">Ownership Renounced</h4>
                 <p className="text-dust text-sm leading-relaxed">
                   After deployment, contract ownership is <span className="text-chalk font-semibold">permanently renounced</span> via OpenZeppelin&apos;s <span className="text-chalk font-mono text-xs">renounce_ownership()</span>. No admin functions can ever be called again — mint price, mint status, base URI, and admin minting are all permanently locked.
                 </p>
               </div>
             </div>
-            <div className="bg-abyss border border-star/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-star/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Immutable Parameters</h4>
               <p className="text-dust text-sm leading-relaxed mb-4">
                 After ownership is renounced, the following parameters are permanent and can never be modified by anyone:
@@ -781,7 +780,7 @@ export default function DocsPage() {
                   { label: 'Treasury', value: '50' },
                   { label: 'Per Wallet', value: '5' },
                 ].map((item) => (
-                  <div key={item.label} className="bg-surface/20 border border-edge/30 rounded-xl p-4 text-center min-w-[100px] flex-1 max-w-[160px]">
+                  <div key={item.label} className="bg-surface/20 border border-edge/30 rounded-md p-4 text-center min-w-[100px] flex-1 max-w-[160px]">
                     <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold block mb-1">{item.label}</span>
                     <span className="text-sm text-chalk font-semibold">{item.value}</span>
                   </div>
@@ -796,11 +795,11 @@ export default function DocsPage() {
                 href={GITHUB_LINKS.relayer}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block bg-abyss border border-star/20 hover:border-star/50 rounded-3xl p-10 transition-all relative overflow-hidden"
+                className="group block bg-abyss border border-star/20 hover:border-star/50 rounded-lg p-10 transition-all relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-star/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-8">
-                  <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-void border border-star/30 flex items-center justify-center group-hover:border-star/60 transition-all shadow-lg shadow-black/30">
+                  <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-void border border-star/30 flex items-center justify-center group-hover:border-star/60 transition-all shadow-lg shadow-black/30">
                     <svg className="w-7 h-7 text-star" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
                     </svg>
@@ -832,37 +831,37 @@ export default function DocsPage() {
             Stela has been audited, but all DeFi protocols carry inherent risks. Understand these before using the protocol.
           </p>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Smart Contract Risk</h4>
               <p className="text-dust text-sm leading-relaxed">
                 The Stela contracts have been audited, but no audit can guarantee the absence of bugs. Smart contracts are immutable once deployed — if a vulnerability is discovered, the affected contract cannot be patched.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Counterparty Risk</h4>
               <p className="text-dust text-sm leading-relaxed">
                 Stela uses time-based liquidation, not price-based. If collateral value drops below debt value during the loan period, the lender receives the depreciated collateral upon liquidation. There is no automatic margin call or early liquidation trigger.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">No Price-Based Liquidation</h4>
               <p className="text-dust text-sm leading-relaxed">
                 This is by design — Stela uses no oracles, which eliminates oracle manipulation risk. However, it means lenders must independently evaluate collateral quality and volatility. The protocol does not protect against collateral depreciation during the loan term.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Flash-Loan NFT Gaming</h4>
               <p className="text-dust text-sm leading-relaxed">
                 A user could theoretically flash-loan a Genesis NFT to receive a fee discount, then return it in the same transaction. This is an accepted low risk on StarkNet due to the transaction structure making such attacks impractical compared to other chains.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Fee-on-Transfer Tokens</h4>
               <p className="text-dust text-sm leading-relaxed">
                 Tokens that charge fees on transfer (deflationary tokens, tax tokens) may cause accounting discrepancies. The contract records the nominal transfer amount, but fewer tokens may actually arrive. Use standard ERC20 tokens for best results.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-3xl p-8">
+            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Rounding Dust</h4>
               <p className="text-dust text-sm leading-relaxed">
                 Very small amounts (less than 1 wei) may be lost to integer rounding in share calculations and proportional distributions. This is inherent to integer arithmetic on-chain and affects negligible amounts only.
@@ -881,7 +880,7 @@ export default function DocsPage() {
               { type: 'ERC1155', icon: 'S' },
               { type: 'ERC4626', icon: 'V' },
             ].map(({ type, icon }) => (
-              <div key={type} className="bg-abyss border border-edge/20 rounded-2xl p-6 text-center group hover:border-star/40 transition-all">
+              <div key={type} className="bg-abyss border border-edge/20 rounded-lg p-6 text-center group hover:border-star/40 transition-all">
                 <div className="w-10 h-10 rounded-full bg-void border border-edge/50 flex items-center justify-center text-star font-display text-sm mx-auto mb-4 group-hover:scale-110 transition-transform">{icon}</div>
                 <span className="font-display text-chalk text-xs tracking-widest uppercase">{type}</span>
               </div>
@@ -910,11 +909,11 @@ export default function DocsPage() {
               </InfoCard>
             </div>
             <div className="grid grid-cols-2 gap-4">
-               <div className="bg-void/50 border border-edge/20 rounded-2xl p-5">
+               <div className="bg-void/50 border border-edge/20 rounded-lg p-5">
                   <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">Network ID</span>
                   <span className="text-chalk font-mono text-sm">{NETWORK === 'mainnet' ? 'SN_MAIN' : 'SN_SEPOLIA'}</span>
                </div>
-               <div className="bg-void/50 border border-edge/20 rounded-2xl p-5">
+               <div className="bg-void/50 border border-edge/20 rounded-lg p-5">
                   <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">Status</span>
                   <span className="text-aurora font-mono text-sm uppercase">Active</span>
                </div>
@@ -948,7 +947,7 @@ export default function DocsPage() {
                 a: 'Yes. Every lending position is an ERC1155 token. You can transfer your shares to another address, and they will hold the right to claim the assets.',
               },
             ].map(({ q, a }) => (
-              <div key={q} className="bg-abyss border border-edge/20 rounded-3xl p-8 hover:border-star/20 transition-colors">
+              <div key={q} className="bg-abyss border border-edge/20 rounded-lg p-8 hover:border-star/20 transition-colors">
                 <h4 className="font-display text-chalk text-sm tracking-widest uppercase mb-4">{q}</h4>
                 <p className="text-dust text-sm leading-relaxed">{a}</p>
               </div>
@@ -1033,7 +1032,7 @@ export default function DocsPage() {
             everything needed to interact with the Stela protocol programmatically.
           </p>
 
-          <div className="bg-abyss/40 border border-edge/20 rounded-3xl p-6 space-y-4">
+          <div className="bg-abyss/40 border border-edge/20 rounded-lg p-6 space-y-4">
             <div className="font-mono text-sm">
               <span className="text-ash">$</span>{' '}
               <span className="text-chalk">npm install @fepvenancio/stela-sdk</span>
@@ -1063,7 +1062,7 @@ export default function DocsPage() {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-abyss border border-edge/20 hover:border-star/30 rounded-2xl p-5 transition-all"
+                className="group bg-abyss border border-edge/20 hover:border-star/30 rounded-lg p-5 transition-all"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <svg className="w-4 h-4 text-ash group-hover:text-star transition-colors" fill="currentColor" viewBox="0 0 24 24">
@@ -1084,7 +1083,7 @@ export default function DocsPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link
               href="/markets"
-              className="bg-star hover:bg-star-bright text-void font-bold px-12 py-4 rounded-full text-lg shadow-[0_0_20px_-2px_rgba(232,168,37,0.45)] transition-all hover:scale-105"
+              className="bg-star hover:bg-star-bright text-void font-bold px-12 py-4 rounded-full text-lg transition-all hover:scale-105"
             >
               Explore Markets
             </Link>

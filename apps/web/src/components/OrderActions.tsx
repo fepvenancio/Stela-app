@@ -111,20 +111,20 @@ export function OrderActions({
                     className="h-14 text-lg bg-void/50 font-mono"
                   />
                 </div>
-                <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={signPending || !lendAmount}>
+                <Button type="submit" variant="gold" size="xl" className="w-full text-lg" disabled={signPending || !lendAmount}>
                   {signPending ? 'Settling...' : 'Sign & Settle'}
                 </Button>
               </form>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-star/5 border border-star/10 text-center">
+                <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
                   <span className="text-[10px] text-star uppercase tracking-widest font-bold">Rewards for Lender</span>
                   <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
                 </div>
                 <Button
                   variant="gold"
                   size="xl"
-                  className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]"
+                  className="w-full text-lg"
                   disabled={signPending}
                   onClick={async () => {
                     try {
@@ -177,7 +177,7 @@ export function OrderActions({
           </div>
         ) : status === 'settled' ? (
           <div className="text-center py-4 space-y-3">
-            <div className="p-4 rounded-2xl bg-aurora/5 border border-aurora/10">
+            <div className="p-4 rounded-md bg-aurora/5 border border-aurora/10">
               <p className="text-[10px] text-aurora uppercase tracking-widest font-bold">Settled On-Chain</p>
               <p className="text-xs text-dust mt-1">This order was settled and is now an active inscription.</p>
             </div>
@@ -186,7 +186,7 @@ export function OrderActions({
             </Button>
           </div>
         ) : (
-          <div className="text-center py-4 bg-void/30 rounded-2xl border border-edge/20">
+          <div className="text-center py-4 bg-void/30 rounded-md border border-edge/20">
             <p className="text-xs text-dust uppercase tracking-widest">Order {status ?? 'Closed'}</p>
             <p className="text-[10px] text-ash/60 mt-1">This order is no longer accepting offers.</p>
           </div>

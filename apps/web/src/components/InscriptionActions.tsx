@@ -81,14 +81,14 @@ export function InscriptionActions({
       return (
         <>
           <div className="space-y-6">
-            <div className="p-4 rounded-2xl bg-star/5 border border-star/10 text-center">
+            <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
                <span className="text-[10px] text-star uppercase tracking-widest font-bold">Rewards for Lender</span>
                <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
             </div>
             <Button
               variant="gold"
               size="xl"
-              className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]"
+              className="w-full text-lg"
               disabled={isPending}
               onClick={async () => {
                 try {
@@ -121,7 +121,7 @@ export function InscriptionActions({
     return (
       <>
         <div className="space-y-6">
-          <div className="p-4 rounded-2xl bg-star/5 border border-star/10 text-center">
+          <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
              <span className="text-[10px] text-star uppercase tracking-widest font-bold">Multi-Lending Active</span>
              <p className="text-xs text-dust mt-1">Total Vault Debt: {totalDebtFormatted}</p>
           </div>
@@ -174,7 +174,7 @@ export function InscriptionActions({
                 className="h-14 text-lg bg-void/50 font-mono"
               />
             </div>
-            <Button type="submit" variant="gold" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(232,168,37,0.2)]" disabled={isPending || !lendAmount}>
+            <Button type="submit" variant="gold" size="xl" className="w-full text-lg" disabled={isPending || !lendAmount}>
               {signPending ? 'Signing...' : 'Sign & Lend'}
             </Button>
           </form>
@@ -195,11 +195,11 @@ export function InscriptionActions({
   if (status === 'filled' && isBorrower) {
     return (
       <div className="space-y-6">
-        <div className="p-4 rounded-2xl bg-aurora/5 border border-aurora/10 text-center">
+        <div className="p-4 rounded-md bg-aurora/5 border border-aurora/10 text-center">
            <span className="text-[10px] text-aurora uppercase tracking-widest font-bold">Repayment Required</span>
            <p className="text-xs text-dust mt-1 text-balance">To release your collateral, you must repay the total debt with interest.</p>
         </div>
-        <Button variant="aurora" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(16,185,129,0.15)]" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
+        <Button variant="aurora" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
           {repayPending ? 'Repaying...' : 'Repay Inscription'}
         </Button>
       </div>
@@ -220,13 +220,13 @@ export function InscriptionActions({
     // Expired after being signed — assets are locked, can be liquidated
     return (
       <div className="space-y-6">
-        <div className="p-4 rounded-2xl bg-nova/5 border border-nova/10 text-center">
+        <div className="p-4 rounded-md bg-nova/5 border border-nova/10 text-center">
            <span className="text-[10px] text-nova uppercase tracking-widest font-bold">Default Detected</span>
            <p className="text-xs text-dust mt-1">This vault has expired without repayment. Lenders can now claim the collateral.</p>
         </div>
         <ConfirmDialog
           trigger={
-            <Button variant="nova" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(239,68,68,0.2)]" disabled={isPending}>
+            <Button variant="nova" size="xl" className="w-full text-lg" disabled={isPending}>
               {liquidatePending ? 'Liquidating...' : 'Liquidate Vault'}
             </Button>
           }
@@ -244,13 +244,13 @@ export function InscriptionActions({
   if ((status === 'repaid' || status === 'liquidated') && shares > 0n) {
     return (
       <div className="space-y-6 text-center">
-        <div className="p-4 rounded-2xl bg-cosmic/5 border border-cosmic/10">
+        <div className="p-4 rounded-md bg-cosmic/5 border border-cosmic/10">
           <span className="text-[10px] text-cosmic uppercase tracking-widest font-bold">Assets Available</span>
           <p className="text-xs text-dust mt-1">
             {status === 'repaid' ? 'Debt was repaid. Claim your portion of the principal and interest.' : 'Vault was liquidated. Claim your portion of the collateral assets.'}
           </p>
         </div>
-        <Button variant="cosmic" size="xl" className="w-full text-lg shadow-[0_0_20px_rgba(139,92,246,0.15)]" onClick={() => redeem(shares)} disabled={isPending}>
+        <Button variant="cosmic" size="xl" className="w-full text-lg" onClick={() => redeem(shares)} disabled={isPending}>
           {redeemPending ? 'Redeeming...' : 'Claim Assets'}
         </Button>
       </div>
@@ -258,7 +258,7 @@ export function InscriptionActions({
   }
 
   return (
-    <div className="text-center py-4 bg-void/30 rounded-2xl border border-edge/20">
+    <div className="text-center py-4 bg-void/30 rounded-md border border-edge/20">
       <p className="text-xs text-dust uppercase tracking-widest">Vault Locked</p>
       <p className="text-[10px] text-ash/60 mt-1">Waiting for terms to change or lock period to end.</p>
     </div>

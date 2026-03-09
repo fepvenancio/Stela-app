@@ -90,7 +90,7 @@ function MintCard({
   }
 
   return (
-    <div className="bg-surface/5 border border-edge/30 rounded-2xl overflow-hidden hover:border-edge-bright transition-all group">
+    <div className="bg-surface/5 border border-edge/30 rounded-lg overflow-hidden hover:border-edge-bright transition-all group">
       <div className="px-5 py-4 border-b border-edge/20 bg-surface/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <TokenAvatarByAddress address={token.address} size={28} />
@@ -187,14 +187,14 @@ export default function FaucetPage() {
 
         {/* Right Column: Info & Resources */}
         <div className="space-y-6">
-          <section className="bg-surface/5 border border-edge/30 rounded-2xl p-6 space-y-6">
+          <section className="bg-surface/5 border border-edge/30 rounded-lg p-6 space-y-6">
             <div className="space-y-4">
               <h3 className="text-[11px] text-dust uppercase tracking-widest font-bold border-b border-edge/10 pb-3">
                 Gas & Support
               </h3>
               
               <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-star/5 border border-star/20 space-y-2">
+                <div className="p-4 rounded-md bg-star/5 border border-star/20 space-y-2">
                   <span className="text-[10px] text-star uppercase tracking-widest font-bold block">Sepolia ETH</span>
                   <p className="text-xs text-dust leading-relaxed">
                     You need Sepolia ETH to pay for gas on StarkNet Sepolia. 
@@ -212,7 +212,7 @@ export default function FaucetPage() {
                   </a>
                 </div>
 
-                <div className="p-4 rounded-xl bg-surface/10 border border-edge/20 space-y-2">
+                <div className="p-4 rounded-md bg-surface/10 border border-edge/20 space-y-2">
                   <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Documentation</span>
                   <p className="text-xs text-dust leading-relaxed">
                     Learn more about using mock assets for testing inscriptions and lending.
@@ -231,7 +231,7 @@ export default function FaucetPage() {
             </div>
           </section>
 
-          <div className="p-5 rounded-2xl border border-edge/20 bg-surface/5">
+          <div className="p-5 rounded-lg border border-edge/20 bg-surface/5">
             <h4 className="text-[10px] text-dust uppercase tracking-widest font-bold mb-2">Usage Notice</h4>
             <p className="text-[11px] text-dust leading-relaxed italic">
               Mock tokens have no real-world value and are intended for testing on StarkNet Sepolia only. 

@@ -40,10 +40,6 @@ export default function SwapPage() {
   return (
     <div className="animate-fade-up pb-24 relative max-w-3xl mx-auto">
 
-      {/* ── Ambient Background ───────────────────────────── */}
-      <div className="hidden sm:fixed sm:block top-1/4 -left-20 w-64 h-64 bg-nebula/[0.04] rounded-full blur-[120px] pointer-events-none" />
-      <div className="hidden sm:fixed sm:block bottom-1/4 -right-20 w-64 h-64 bg-aurora/[0.04] rounded-full blur-[120px] pointer-events-none" />
-
       {/* ── Header ────────── */}
       <div className="mb-10 text-center">
         <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
@@ -74,7 +70,7 @@ export default function SwapPage() {
                 key={p.seconds}
                 type="button"
                 onClick={() => form.setDeadlinePreset(p.seconds.toString())}
-                className={`py-1 px-2.5 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                className={`py-1 px-2.5 rounded-sm text-[10px] border transition-all cursor-pointer font-medium ${
                   form.deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
                 }`}
               >{p.label}</button>
@@ -92,7 +88,7 @@ export default function SwapPage() {
                 key={m}
                 type="button"
                 onClick={() => form.setMode(m)}
-                className={`py-1 px-2.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-all cursor-pointer ${
                   form.mode === m
                     ? 'bg-star/10 text-star border border-star/25'
                     : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
@@ -207,7 +203,7 @@ export default function SwapPage() {
           <Button
             variant="gold"
             size="xl"
-            className="px-10 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
+            className="px-10 uppercase tracking-[0.2em] text-sm transition-all"
             onClick={form.handleSubmit}
             disabled={form.isPending || form.isCreatingOnChain || form.isChecking}
           >
