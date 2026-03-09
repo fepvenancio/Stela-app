@@ -23,7 +23,7 @@ export function Footer() {
           </Link>
 
           {/* Nav links — single row */}
-          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <nav className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-5 gap-y-2">
             <Link href="/trade" className="text-xs text-dust hover:text-chalk transition-colors">Trade</Link>
             <Link href="/markets" className="text-xs text-dust hover:text-chalk transition-colors">Markets</Link>
             <Link href="/portfolio" className="text-xs text-dust hover:text-chalk transition-colors">Portfolio</Link>

@@ -706,7 +706,7 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' }) {
       </section>
 
       {/* Stats bar */}
-      <div className="flex flex-wrap justify-center gap-6 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
         <div className="text-center">
           <div className="font-display text-xl text-chalk">{isLend ? '0.25%' : '0.15%'}</div>
           <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">{isLend ? 'Lending Fee' : 'Swap Fee'}</div>
@@ -734,8 +734,6 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' }) {
 
       {/* Trust signals */}
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-dust/60 uppercase tracking-widest">
-        <span>Audited</span>
-        <span className="text-edge/40">|</span>
         <span>Open Source</span>
         <span className="text-edge/40">|</span>
         <span>Immutable</span>

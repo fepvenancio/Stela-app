@@ -101,12 +101,12 @@ function LogoDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center text-star-dim hover:text-star transition-colors cursor-pointer ml-1"
+        className="flex items-center justify-center w-7 h-7 text-star-dim hover:text-star transition-colors cursor-pointer"
         aria-label="More links"
         aria-expanded={open}
       >
         <svg
-          className={`w-3 h-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -117,7 +117,7 @@ function LogoDropdown() {
       </button>
 
       {open && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-48 bg-abyss/95 border border-edge/30 rounded-lg shadow-xl backdrop-blur-sm overflow-hidden z-50">
+        <div className="absolute top-full left-0 mt-3 w-48 bg-abyss/95 border border-edge/30 rounded-lg shadow-xl backdrop-blur-sm overflow-hidden z-50">
           {DROPDOWN_LINKS.map((link) => {
             const Icon = link.icon
             if (link.external) {
