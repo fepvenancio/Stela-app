@@ -130,7 +130,7 @@ export default function SwapPage() {
       )}
 
       {/* ── Advanced Options (collapsible) ─────────────────── */}
-      <div className="mb-4">
+      <div className="mb-4 max-w-xl mx-auto">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
