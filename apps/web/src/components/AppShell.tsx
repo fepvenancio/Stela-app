@@ -95,7 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 sm:px-12">
           {/* Logo */}
           <Link
-            href="/"
+            href="/trade"
             className="flex items-center gap-2.5 font-display text-xl tracking-[0.3em] text-star hover:text-star-bright transition-all group shrink-0"
           >
             <svg viewBox="0 0 512 512" className="w-7 h-7" fill="none" aria-hidden="true">
@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative px-3 py-2 text-sm transition-colors duration-200 ${
+                  className={`relative px-4 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors duration-200 ${
                     active
                       ? 'text-star'
                       : 'text-dust hover:text-chalk'
@@ -128,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   {link.label}
                   {active && (
-                    <span className="absolute bottom-0 left-3 right-3 h-px bg-star/60" />
+                    <span className="absolute bottom-0.5 left-4 right-4 h-px bg-star/60" />
                   )}
                 </Link>
               )
@@ -168,7 +168,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-display text-[13px] uppercase tracking-[0.15em] transition-all duration-200 ${
                       active
                         ? 'bg-star/10 text-star'
                         : 'text-dust hover:text-chalk hover:bg-surface/50'

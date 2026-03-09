@@ -1160,7 +1160,7 @@ function TradeContent() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2 text-sm font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
+                className={`px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
                   activeTab === tab
                     ? 'text-star border-star'
                     : 'text-dust hover:text-chalk border-transparent'
