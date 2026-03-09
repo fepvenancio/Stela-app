@@ -262,16 +262,6 @@ function BrowseContent() {
 
   return (
     <div className="animate-fade-up pb-24">
-      {/* Hero */}
-      <div className="mb-10 text-center">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
-          The Stela Library
-        </h1>
-        <p className="text-dust max-w-lg mx-auto leading-relaxed">
-          Explore active lending inscriptions on StarkNet. Sign as a lender to earn interest, or inscribe your own.
-        </p>
-      </div>
-
       {/* Filters & Controls */}
       <div className="space-y-6 mb-8">
         <FilterSection

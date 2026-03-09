@@ -59,16 +59,8 @@ export default function BorrowPage() {
   return (
     <div className="animate-fade-up pb-24 relative max-w-3xl mx-auto">
 
-      {/* ── Header ────────── */}
-      <div className="mb-10 text-center">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
-          Borrow
-        </h1>
-        <p className="text-dust max-w-lg mx-auto leading-relaxed mb-6">
-          Borrow any ERC20 — stables, vault shares, LP tokens — fully peer-to-peer. Every position becomes a tradeable share on a built-in secondary market.
-        </p>
-
-        {/* Reset button */}
+      {/* ── Reset ────────── */}
+      <div className="mb-6 flex justify-end max-w-xl mx-auto">
         <button
           type="button"
           onClick={form.resetForm}

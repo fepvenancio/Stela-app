@@ -236,17 +236,6 @@ export default function GenesisPage() {
 
   return (
     <div className="animate-fade-up pb-24">
-      {/* Hero */}
-      <div className="mb-10 text-center">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
-          Genesis Collection
-        </h1>
-        <p className="text-dust max-w-lg mx-auto leading-relaxed">
-          The Stela Genesis Collection consists of {MAX_SUPPLY} unique artifacts on StarkNet. 
-          Holders receive permanent protocol fee discounts up to 50% based on their position.
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Mint & Info */}
         <div className="lg:col-span-2 space-y-8">

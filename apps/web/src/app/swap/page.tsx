@@ -40,16 +40,8 @@ export default function SwapPage() {
   return (
     <div className="animate-fade-up pb-24 relative max-w-3xl mx-auto">
 
-      {/* ── Header ────────── */}
-      <div className="mb-10 text-center">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
-          Swap
-        </h1>
-        <p className="text-dust max-w-lg mx-auto leading-relaxed mb-6">
-          Swap any ERC20 peer-to-peer with no slippage, no liquidity pools, no impermanent loss. Set your price and wait for a match.
-        </p>
-
-        {/* Reset button */}
+      {/* ── Reset ────────── */}
+      <div className="mb-6 flex justify-end max-w-xl mx-auto">
         <button
           type="button"
           onClick={form.resetForm}

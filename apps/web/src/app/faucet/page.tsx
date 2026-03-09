@@ -162,17 +162,6 @@ function MintCard({
 export default function FaucetPage() {
   return (
     <div className="animate-fade-up pb-24">
-      {/* Hero */}
-      <div className="mb-10 text-center">
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
-          Sepolia Faucet
-        </h1>
-        <p className="text-dust max-w-lg mx-auto leading-relaxed">
-          The Stela testnet ecosystem requires mock assets for protocol interaction. 
-          Mint various ERC20 and ERC721 tokens to your wallet to begin testing.
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Token Grid */}
         <div className="lg:col-span-2">
