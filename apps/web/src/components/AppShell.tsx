@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, type RefObject } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { WalletButton } from './WalletButton'
@@ -31,11 +31,6 @@ const DROPDOWN_LINKS = [
   { href: '/nft', label: 'Genesis NFT', icon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 3h12l4 6-10 13L2 9z" /><path d="M11 3l1 10" /><path d="M2 9h20" />
-    </svg>
-  )},
-  { href: '/docs', label: 'Docs', icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
     </svg>
   )},
   { href: '/faucet', label: 'Faucet', icon: (props: React.SVGProps<SVGSVGElement>) => (
@@ -81,6 +76,33 @@ function ScrollToTopButton() {
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
       </svg>
     </button>
+  )
+}
+
+function HelpButton({ footerRef }: { footerRef: RefObject<HTMLDivElement | null> }) {
+  const [hidden, setHidden] = useState(false)
+
+  useEffect(() => {
+    const el = footerRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setHidden(entry.isIntersecting),
+      { threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [footerRef])
+
+  return (
+    <Link
+      href="/docs"
+      aria-label="Help & Docs"
+      className={`fixed bottom-6 left-6 z-50 w-10 h-10 rounded-full bg-surface/80 border border-edge/50 flex items-center justify-center text-dust hover:text-star hover:border-star/50 transition-all duration-300 ${
+        hidden ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'
+      }`}
+    >
+      <span className="text-sm font-semibold">?</span>
+    </Link>
   )
 }
 
@@ -160,6 +182,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
+  const footerRef = useRef<HTMLDivElement>(null)
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -233,15 +256,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Right side: help + wallet + hamburger */}
+          {/* Right side: wallet + hamburger */}
           <div className="flex items-center gap-2">
-            <Link
-              href="/docs"
-              className="hidden sm:flex w-8 h-8 items-center justify-center rounded-full border border-edge/30 text-dust hover:text-star hover:border-star/30 transition-colors"
-              aria-label="Help & Docs"
-            >
-              <span className="text-xs font-semibold">?</span>
-            </Link>
             <WalletButton />
             <Button
               variant="ghost"
@@ -332,8 +348,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <Footer />
+      <div ref={footerRef}>
+        <Footer />
+      </div>
 
+      <HelpButton footerRef={footerRef} />
       <ScrollToTopButton />
     </div>
   )
