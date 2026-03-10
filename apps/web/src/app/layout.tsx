@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, IBM_Plex_Mono, Cinzel } from 'next/font/google'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { Providers } from './providers'
 import { AppShell } from '@/components/AppShell'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -55,6 +56,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </TooltipProvider>
         </Providers>
       </body>
+      {process.env.NEXT_PUBLIC_GA_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      )}
     </html>
   )
 }
