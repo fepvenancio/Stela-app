@@ -590,11 +590,11 @@ const SWAP_FAQ = [
   },
   {
     q: 'How do swaps work?',
-    a: 'Sign an off-chain order. A counterparty matches it. A relayer settles both sides atomically on-chain. One transaction.',
+    a: 'Sign an off-chain order or inscribe directly on-chain. A counterparty matches it. A relayer settles both sides atomically. One transaction.',
   },
   {
     q: 'Does creating an order cost gas?',
-    a: 'Off-chain orders are gasless — just a wallet signature. You can also go on-chain directly, which costs gas but settles immediately.',
+    a: 'Off-chain orders are gasless — just a wallet signature. On-chain inscriptions cost gas. Both paths settle the same way.',
   },
   {
     q: 'What are the fees?',
@@ -625,7 +625,7 @@ const LEND_FAQ = [
   },
   {
     q: 'How does lending work?',
-    a: 'Borrower defines debt, interest, collateral, and duration. Lender funds it, receives ERC1155 shares. Collateral locks in a dedicated Locker contract.',
+    a: 'Borrower defines debt, interest, collateral, and duration — off-chain (gasless) or on-chain (inscribed). Lender funds it, receives ERC1155 shares. Collateral locks in a dedicated Locker contract.',
   },
   {
     q: 'What if the borrower defaults?',
