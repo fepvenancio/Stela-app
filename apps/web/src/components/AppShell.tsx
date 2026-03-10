@@ -180,10 +180,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       {/* Top navbar */}
       <header
-        className={`sticky top-0 z-40 transition-all duration-300 ${
+        className={`sticky top-0 z-40 bg-void/95 backdrop-blur-sm border-b transition-all duration-300 ${
           scrolled
-            ? 'bg-void/80 border-b border-edge/20 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]'
-            : 'bg-transparent'
+            ? 'border-edge/20 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]'
+            : 'border-transparent'
         }`}
       >
         <NetworkMismatchBanner />

@@ -594,7 +594,7 @@ const SWAP_FAQ = [
   },
   {
     q: 'Does creating an order cost gas?',
-    a: 'No. Orders are off-chain SNIP-12 signatures. Gas is only paid at settlement.',
+    a: 'Off-chain orders are gasless — just a wallet signature. You can also go on-chain directly, which costs gas but settles immediately.',
   },
   {
     q: 'What are the fees?',
@@ -610,7 +610,7 @@ const SWAP_FAQ = [
   },
   {
     q: 'Can I cancel an order?',
-    a: 'Yes. Sign a cancellation — also gasless. The order is cancelled and can no longer be settled.',
+    a: 'Yes. Off-chain orders are cancelled with a gasless signature. On-chain inscriptions are cancelled via a transaction.',
   },
   {
     q: 'What is the Genesis NFT?',
