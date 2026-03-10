@@ -11,7 +11,7 @@ import { ListingTableHeader } from '@/components/ListingTableHeader'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Search, Plus } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import type { EnrichedInscription } from '@/hooks/usePortfolio'
@@ -31,9 +31,9 @@ function EmptyTab({ message, cta }: { message: string; cta?: { label: string; hr
       {cta && (
         <Link
           href={cta.href}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
         >
-          <Plus className="w-3.5 h-3.5 text-star" />
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
           {cta.label}
         </Link>
       )}
@@ -201,9 +201,9 @@ export default function PortfolioPage() {
       <div className="flex justify-end mb-6">
         <Link
           href="/trade"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
         >
-          <Plus className="w-3.5 h-3.5 text-star" />
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
           Trade
         </Link>
       </div>
@@ -259,11 +259,11 @@ export default function PortfolioPage() {
                   </p>
                 </div>
                 <Link
-                  href="/trade?mode=lend"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+                  href="/trade"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5 text-star" />
-                  Create a Position
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
+                  Trade
                 </Link>
               </div>
             ) : (
