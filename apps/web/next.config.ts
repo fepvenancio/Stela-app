@@ -39,11 +39,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://api.cartridge.gg https://*.alchemy.com https://*.starknet.io wss://*.starknet.io https://sepolia.voyager.online https://voyager.online",
+              "connect-src 'self' https://api.cartridge.gg https://*.alchemy.com https://*.starknet.io wss://*.starknet.io https://sepolia.voyager.online https://voyager.online https://www.google-analytics.com https://www.googletagmanager.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
