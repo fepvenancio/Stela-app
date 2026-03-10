@@ -21,7 +21,7 @@
     "NEXT_PUBLIC_NETWORK": "sepolia",
     "NEXT_PUBLIC_STELA_ADDRESS": "0x038a0b195e011fbfd75e9bce9bbc4137ebc5296882e11c5769c333b90bda4f89",
     "NEXT_PUBLIC_RPC_URL": "https://api.cartridge.gg/x/starknet/sepolia",
-    "NEXT_PUBLIC_GA_ID": ""
+    "NEXT_PUBLIC_GA_ID": "G-L2HFJTLWB6"
   },
   "routes": [
     { "pattern": "stela-dapp.xyz", "custom_domain": true },
