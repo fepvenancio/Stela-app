@@ -748,7 +748,7 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' }) {
 
 function TradeContent() {
   const searchParams = useSearchParams()
-  const initialMode = searchParams.get('mode') === 'lend' ? 'lend' : 'swap'
+  const initialMode = searchParams.get('mode') === 'swap' ? 'swap' : 'lend'
   const [activeTab, setActiveTab] = useState<'swap' | 'lend'>(initialMode as 'swap' | 'lend')
 
   return (

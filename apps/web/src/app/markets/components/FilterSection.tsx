@@ -41,11 +41,11 @@ export function FilterSection({
           <span className="text-xs text-dust tabular-nums">{resultCount} results</span>
         </div>
         <Link
-          href="/trade?mode=lend"
+          href="/trade"
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
-          Create
+          Trade
         </Link>
       </div>
 
