@@ -455,7 +455,7 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
 
         {/* Submit button */}
         {hasTokens && (
-          <Web3ActionWrapper message="Connect your wallet to trade">
+          <Web3ActionWrapper message="Connect your wallet to trade" centered={false}>
             <Button
               variant="gold"
               className="w-full uppercase tracking-[0.15em] text-sm"
@@ -513,7 +513,7 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
 
         {/* Not ready — no tokens */}
         {!hasTokens && (
-          <Web3ActionWrapper message="Connect your wallet to trade">
+          <Web3ActionWrapper message="Connect your wallet to trade" centered={false}>
             <Button variant="gold" className="w-full uppercase tracking-wider" disabled>
               Select tokens
             </Button>
