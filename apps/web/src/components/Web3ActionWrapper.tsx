@@ -19,7 +19,7 @@ export function Web3ActionWrapper({ children, message }: Web3ActionWrapperProps)
 
   if (status !== 'connected') {
     return (
-      <div className="flex flex-col items-center gap-3 py-4">
+      <div className="flex flex-col items-center justify-center gap-3 min-h-[60vh]">
         <WalletButton />
         {message && <p className="text-xs text-dust">{message}</p>}
       </div>
