@@ -8,6 +8,7 @@ import { NetworkMismatchBanner } from './NetworkMismatchBanner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Footer } from '@/components/Footer'
+import { NETWORK } from '@/lib/config'
 
 const NAV_LINKS = [
   { href: '/trade', label: 'Trade', icon: (props: React.SVGProps<SVGSVGElement>) => (
@@ -25,31 +26,19 @@ const NAV_LINKS = [
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-2a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z" />
     </svg>
   )},
-]
-
-const DROPDOWN_LINKS = [
-  { href: '/nft', label: 'Genesis NFT', icon: (props: React.SVGProps<SVGSVGElement>) => (
+  { href: '/nft', label: 'NFT', icon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 3h12l4 6-10 13L2 9z" /><path d="M11 3l1 10" /><path d="M2 9h20" />
     </svg>
   )},
-  { href: '/faucet', label: 'Faucet', icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2v6m0 0a4 4 0 014 4v6a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6a4 4 0 014-4z" />
-    </svg>
-  )},
-  { href: 'https://github.com/fepvenancio/Stela', label: 'Protocol', external: true, icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-    </svg>
-  )},
+  ...(NETWORK === 'sepolia' ? [{
+    href: '/faucet', label: 'Faucet', icon: (props: React.SVGProps<SVGSVGElement>) => (
+      <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2v6m0 0a4 4 0 014 4v6a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6a4 4 0 014-4z" />
+      </svg>
+    ),
+  }] : []),
 ]
-
-const EXTERNAL_LINKS = [
-  { href: 'https://github.com/fepvenancio/Stela', label: 'Protocol' },
-]
-
-const visibleLinks = NAV_LINKS
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false)
@@ -81,6 +70,8 @@ function ScrollToTopButton() {
 
 function HelpButton({ footerRef }: { footerRef: RefObject<HTMLDivElement | null> }) {
   const [hidden, setHidden] = useState(false)
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const el = footerRef.current
@@ -93,23 +84,6 @@ function HelpButton({ footerRef }: { footerRef: RefObject<HTMLDivElement | null>
     return () => observer.disconnect()
   }, [footerRef])
 
-  return (
-    <Link
-      href="/docs"
-      aria-label="Help & Docs"
-      className={`fixed bottom-6 left-6 z-50 w-10 h-10 rounded-full bg-surface/80 border border-edge/50 flex items-center justify-center text-dust hover:text-star hover:border-star/50 transition-all duration-300 ${
-        hidden ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'
-      }`}
-    >
-      <span className="text-sm font-semibold">?</span>
-    </Link>
-  )
-}
-
-function LogoDropdown() {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     if (!open) return
     const handleClick = (e: MouseEvent) => {
@@ -120,63 +94,52 @@ function LogoDropdown() {
   }, [open])
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-center w-7 h-7 text-star-dim hover:text-star transition-colors cursor-pointer"
-        aria-label="More links"
-        aria-expanded={open}
-      >
-        <svg
-          className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={3}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
+    <div
+      ref={ref}
+      className={`fixed bottom-6 left-6 z-50 transition-all duration-300 ${
+        hidden ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'
+      }`}
+    >
       {open && (
-        <div className="absolute top-full left-0 mt-3 w-48 bg-abyss/95 border border-edge/30 rounded-lg shadow-xl backdrop-blur-sm overflow-hidden z-50">
-          {DROPDOWN_LINKS.map((link) => {
-            const Icon = link.icon
-            if (link.external) {
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-dust hover:text-chalk hover:bg-surface/50 transition-colors"
-                >
-                  <Icon className="w-4 h-4 text-dust/60" />
-                  {link.label}
-                  <svg className="w-3 h-3 ml-auto opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              )
-            }
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-dust hover:text-chalk hover:bg-surface/50 transition-colors"
-              >
-                <Icon className="w-4 h-4 text-dust/60" />
-                {link.label}
-              </Link>
-            )
-          })}
+        <div className="absolute bottom-full left-0 mb-2 w-44 bg-abyss/95 border border-edge/30 rounded-lg shadow-xl backdrop-blur-sm overflow-hidden">
+          <Link
+            href="/docs"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-dust hover:text-chalk hover:bg-surface/50 transition-colors"
+          >
+            <svg className="w-4 h-4 text-dust/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            Docs
+          </Link>
+          <a
+            href="https://github.com/fepvenancio/Stela"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-dust hover:text-chalk hover:bg-surface/50 transition-colors"
+          >
+            <svg className="w-4 h-4 text-dust/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+            </svg>
+            Protocol
+            <svg className="w-3 h-3 ml-auto opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
         </div>
       )}
+      <button
+        onClick={() => setOpen(!open)}
+        aria-label="Help & Docs"
+        className="w-10 h-10 rounded-full bg-surface/80 border border-edge/50 flex items-center justify-center text-dust hover:text-star hover:border-star/50 transition-all duration-300"
+      >
+        <span className="text-sm font-semibold">?</span>
+      </button>
     </div>
   )
 }
+
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -211,8 +174,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <NetworkMismatchBanner />
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 sm:px-12 relative">
-          {/* Logo + dropdown */}
-          <div className="flex items-center gap-0.5 shrink-0">
+          {/* Logo */}
+          <div className="flex items-center shrink-0">
             <Link
               href="/trade"
               className="flex items-center gap-2.5 font-display text-xl tracking-[0.3em] text-star hover:text-star-bright transition-all group"
@@ -230,12 +193,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="absolute -bottom-1 left-0 w-0 h-px bg-star/50 transition-all group-hover:w-full" />
               </span>
             </Link>
-            <LogoDropdown />
           </div>
 
           {/* Desktop nav links — absolute center */}
           <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2" aria-label="Main navigation">
-            {visibleLinks.map((link) => {
+            {NAV_LINKS.map((link) => {
               const active = isActive(link.href)
               return (
                 <Link
@@ -256,9 +218,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Right side: wallet + hamburger */}
+          {/* Right side: wallet (desktop only) + hamburger (mobile only) */}
           <div className="flex items-center gap-2">
-            <WalletButton />
+            <div className="hidden lg:block">
+              <WalletButton />
+            </div>
             <Button
               variant="ghost"
               size="icon"
@@ -281,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col h-full">
             {/* Mobile nav links */}
             <nav className="flex-1 px-3 pt-6 space-y-1" aria-label="Mobile navigation">
-              {visibleLinks.map((link) => {
+              {NAV_LINKS.map((link) => {
                 const active = isActive(link.href)
                 const Icon = link.icon
                 return (
@@ -301,39 +265,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )
               })}
             </nav>
-
-            {/* Extra links (NFT, Docs, Faucet, Protocol) */}
-            <div className="px-3 border-t border-edge/30 pt-4 space-y-1">
-              {DROPDOWN_LINKS.map((link) => {
-                const Icon = link.icon
-                if (link.external) {
-                  return (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-ash hover:text-chalk transition-colors"
-                    >
-                      <Icon className="w-4 h-4 opacity-50" />
-                      {link.label}
-                    </a>
-                  )
-                }
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-ash hover:text-chalk transition-colors"
-                  >
-                    <Icon className="w-4 h-4 opacity-50" />
-                    {link.label}
-                  </Link>
-                )
-              })}
-            </div>
 
             {/* Wallet at bottom */}
             <div className="px-4 pb-6 pt-4">
