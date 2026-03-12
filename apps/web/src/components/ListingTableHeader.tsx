@@ -1,6 +1,6 @@
 'use client'
 
-import type { SortOption } from '@/components/BrowseControls'
+export type SortOption = 'newest' | 'apy' | 'duration' | 'debt_asc' | 'debt_desc' | 'interest_desc' | 'collateral_desc'
 
 interface ListingTableHeaderProps {
   sortBy?: SortOption

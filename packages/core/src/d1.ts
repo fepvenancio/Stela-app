@@ -66,6 +66,15 @@ export interface GetInscriptionsParams {
   limit: number
 }
 
+export interface PairAggregate {
+  debt_token: string
+  collateral_token: string
+  open_count: number
+  total_count: number
+  total_volume: string
+  pending_order_count: number
+}
+
 export function createD1Queries(db: D1Database) {
   return {
     /** Expose the raw D1 database handle for batch operations */
@@ -961,6 +970,180 @@ export function createD1Queries(db: D1Database) {
         .prepare(`SELECT * FROM orders WHERE status = 'pending' ORDER BY created_at ASC LIMIT 50`)
         .all<Record<string, unknown>>()
       return result.results
+    },
+
+    // -----------------------------------------------------------------------
+    // Pair aggregation
+    // -----------------------------------------------------------------------
+
+    async getPairAggregates(): Promise<PairAggregate[]> {
+      // Query 1: all inscriptions grouped by (debt_token, collateral_token)
+      const allResult = await db
+        .prepare(
+          `SELECT
+            d.asset_address AS debt_token,
+            c.asset_address AS collateral_token,
+            COUNT(DISTINCT i.id) AS total_count,
+            SUM(CAST(d.value AS REAL)) AS total_volume
+           FROM inscriptions i
+           JOIN inscription_assets d
+             ON d.inscription_id = i.id AND d.asset_role = 'debt' AND d.asset_index = 0
+           JOIN inscription_assets c
+             ON c.inscription_id = i.id AND c.asset_role = 'collateral' AND c.asset_index = 0
+           GROUP BY d.asset_address, c.asset_address`
+        )
+        .all<{ debt_token: string; collateral_token: string; total_count: number; total_volume: number }>()
+
+      // Query 2: open inscriptions only
+      const openResult = await db
+        .prepare(
+          `SELECT
+            d.asset_address AS debt_token,
+            c.asset_address AS collateral_token,
+            COUNT(DISTINCT i.id) AS open_count
+           FROM inscriptions i
+           JOIN inscription_assets d
+             ON d.inscription_id = i.id AND d.asset_role = 'debt' AND d.asset_index = 0
+           JOIN inscription_assets c
+             ON c.inscription_id = i.id AND c.asset_role = 'collateral' AND c.asset_index = 0
+           WHERE i.status = 'open'
+           GROUP BY d.asset_address, c.asset_address`
+        )
+        .all<{ debt_token: string; collateral_token: string; open_count: number }>()
+
+      // Query 3: pending off-chain orders
+      const ordersResult = await db
+        .prepare(
+          `SELECT debt_token, collateral_token, COUNT(*) AS pending_count
+           FROM orders
+           WHERE status = 'pending'
+             AND debt_token IS NOT NULL
+             AND collateral_token IS NOT NULL
+           GROUP BY debt_token, collateral_token`
+        )
+        .all<{ debt_token: string; collateral_token: string; pending_count: number }>()
+
+      // Merge results into a single map keyed by "debt_token|collateral_token"
+      const pairKey = (d: string, c: string) => `${d.toLowerCase()}|${c.toLowerCase()}`
+      const map = new Map<string, PairAggregate>()
+
+      for (const row of allResult.results) {
+        const key = pairKey(row.debt_token, row.collateral_token)
+        map.set(key, {
+          debt_token: row.debt_token,
+          collateral_token: row.collateral_token,
+          open_count: 0,
+          total_count: row.total_count,
+          total_volume: String(row.total_volume ?? 0),
+          pending_order_count: 0,
+        })
+      }
+
+      for (const row of openResult.results) {
+        const key = pairKey(row.debt_token, row.collateral_token)
+        const existing = map.get(key)
+        if (existing) {
+          existing.open_count = row.open_count
+        } else {
+          map.set(key, {
+            debt_token: row.debt_token,
+            collateral_token: row.collateral_token,
+            open_count: row.open_count,
+            total_count: 0,
+            total_volume: '0',
+            pending_order_count: 0,
+          })
+        }
+      }
+
+      for (const row of ordersResult.results) {
+        const key = pairKey(row.debt_token, row.collateral_token)
+        const existing = map.get(key)
+        if (existing) {
+          existing.pending_order_count = row.pending_count
+        } else {
+          map.set(key, {
+            debt_token: row.debt_token,
+            collateral_token: row.collateral_token,
+            open_count: 0,
+            total_count: 0,
+            total_volume: '0',
+            pending_order_count: row.pending_count,
+          })
+        }
+      }
+
+      return [...map.values()]
+    },
+
+    async getListingsForPair(debtToken: string, collateralToken: string) {
+      const normalizedDebt = normalizeAddress(debtToken)
+      const normalizedCollateral = normalizeAddress(collateralToken)
+
+      // On-chain inscriptions for this pair (open + filled)
+      const inscriptionsResult = await db
+        .prepare(
+          `SELECT DISTINCT i.*
+           FROM inscriptions i
+           JOIN inscription_assets d
+             ON d.inscription_id = i.id AND d.asset_role = 'debt' AND d.asset_index = 0
+           JOIN inscription_assets c
+             ON c.inscription_id = i.id AND c.asset_role = 'collateral' AND c.asset_index = 0
+           WHERE LOWER(d.asset_address) = LOWER(?)
+             AND LOWER(c.asset_address) = LOWER(?)
+             AND i.status IN ('open', 'filled', 'partial')
+           ORDER BY i.created_at_ts DESC
+           LIMIT 100`
+        )
+        .bind(normalizedDebt, normalizedCollateral)
+        .all<Record<string, unknown>>()
+
+      // Fetch assets for those inscriptions
+      const ids = inscriptionsResult.results.map((i) => i.id as string)
+      let assets: Record<string, unknown>[] = []
+      if (ids.length > 0) {
+        const placeholders = ids.map(() => '?').join(', ')
+        const assetsResult = await db
+          .prepare(
+            `SELECT * FROM inscription_assets
+             WHERE inscription_id IN (${placeholders})
+             ORDER BY inscription_id, asset_role, asset_index`
+          )
+          .bind(...ids)
+          .all<Record<string, unknown>>()
+        assets = assetsResult.results
+      }
+
+      // Group assets by inscription_id
+      const assetMap = new Map<string, Record<string, unknown>[]>()
+      for (const asset of assets) {
+        const key = asset.inscription_id as string
+        if (!assetMap.has(key)) assetMap.set(key, [])
+        assetMap.get(key)!.push(asset)
+      }
+
+      const inscriptions = inscriptionsResult.results.map((i) => ({
+        ...i,
+        assets: assetMap.get(i.id as string) ?? [],
+      }))
+
+      // Off-chain pending orders for this pair
+      const ordersResult = await db
+        .prepare(
+          `SELECT * FROM orders
+           WHERE status = 'pending'
+             AND LOWER(debt_token) = LOWER(?)
+             AND LOWER(collateral_token) = LOWER(?)
+           ORDER BY created_at DESC
+           LIMIT 100`
+        )
+        .bind(normalizedDebt, normalizedCollateral)
+        .all<Record<string, unknown>>()
+
+      return {
+        inscriptions,
+        orders: ordersResult.results,
+      }
     },
   }
 }

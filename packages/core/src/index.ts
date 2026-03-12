@@ -58,6 +58,7 @@ export type {
   D1ExecResult,
   D1Queries,
   GetInscriptionsParams,
+  PairAggregate,
 } from './d1.js'
 
 export { createD1Queries } from './d1.js'
