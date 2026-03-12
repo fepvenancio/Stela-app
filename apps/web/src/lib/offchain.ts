@@ -23,10 +23,10 @@ import type { RpcProvider, TypedData } from 'starknet'
 /**
  * Read the on-chain nonce for an address from the Stela contract.
  *
- * Uses provider.callContract with explicit 'latest' block identifier
- * to avoid stale reads when the provider defaults to 'pending'.
- * The provider must default to 'pending' for waitForTransaction to work,
- * but nonce reads need 'latest' to match server-side verification.
+ * Uses 'latest' block — Cartridge RPC does not support 'pending'.
+ * All nonce reads (frontend, server verify, API route) MUST use the same
+ * block tag. The server-side processCreateOrder has a grace window to
+ * account for nonces consumed in recent blocks not yet in 'latest'.
  */
 export async function getNonce(
   provider: RpcProvider,

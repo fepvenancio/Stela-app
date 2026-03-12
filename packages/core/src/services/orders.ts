@@ -88,11 +88,15 @@ export async function processCreateOrder(
   if (!sigValid) throw new Error(`Invalid borrower signature for ${borrower}`)
 
   if (!nonceCheck.valid) {
-    // Allow if submitted nonce accounts for pending orders that haven't settled yet.
-    // E.g., on-chain=0, 1 pending order at nonce 0, submitted=1 is valid (next in queue).
+    // Allow if submitted nonce accounts for pending orders OR recent on-chain settles
+    // that haven't propagated to 'latest' block yet (Cartridge RPC has no 'pending').
+    // BLOCK_LAG_GRACE covers nonces consumed by on-chain settle/swap txs accepted on L2
+    // but not yet in the latest confirmed block (~30-60s on Sepolia).
+    const BLOCK_LAG_GRACE = 5n
     const pendingCount = BigInt((pendingOrders as unknown[]).length)
     const onChain = nonceCheck.onChain ?? 0n
-    if (submittedNonce > onChain + pendingCount || submittedNonce < onChain) {
+    const maxAllowed = onChain + pendingCount + BLOCK_LAG_GRACE
+    if (submittedNonce > maxAllowed || submittedNonce < onChain) {
       const detail = `submitted=${submittedNonce}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}, pending=${pendingCount}`
       console.error(`Nonce mismatch for ${borrower}: ${detail}`)
       throw new Error(`Nonce validation failed (${detail})`)
