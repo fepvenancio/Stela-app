@@ -2,7 +2,8 @@
  *  Output: thousands-separated whole part, up to 3 decimal places. */
 export function formatTokenValue(raw: string | null, decimals: number): string {
   if (!raw || raw === '0') return '0'
-  const n = BigInt(raw)
+  // BigInt cannot parse scientific notation (e.g. "1.05e+21") — convert via Number first
+  const n = raw.includes('e') || raw.includes('E') ? BigInt(Math.round(Number(raw))) : BigInt(raw)
   if (decimals === 0) return addThousandsSep(n.toString())
   const divisor = 10n ** BigInt(decimals)
   const whole = n / divisor
