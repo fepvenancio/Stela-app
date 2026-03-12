@@ -581,17 +581,6 @@
       },
       {
         "type": "function",
-        "name": "is_paused",
-        "inputs": [],
-        "outputs": [
-          {
-            "type": "core::bool"
-          }
-        ],
-        "state_mutability": "view"
-      },
-      {
-        "type": "function",
         "name": "is_order_registered",
         "inputs": [
           {
@@ -775,40 +764,35 @@
       },
       {
         "type": "function",
-        "name": "pause",
-        "inputs": [],
+        "name": "set_governance_target",
+        "inputs": [
+          {
+            "name": "target",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "whitelisted",
+            "type": "core::bool"
+          }
+        ],
         "outputs": [],
         "state_mutability": "external"
       },
       {
         "type": "function",
-        "name": "unpause",
-        "inputs": [],
-        "outputs": [],
-        "state_mutability": "external"
-      },
-      {
-        "type": "function",
-        "name": "get_pauser",
-        "inputs": [],
+        "name": "is_governance_target_whitelisted",
+        "inputs": [
+          {
+            "name": "target",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
         "outputs": [
           {
-            "type": "core::starknet::contract_address::ContractAddress"
+            "type": "core::bool"
           }
         ],
         "state_mutability": "view"
-      },
-      {
-        "type": "function",
-        "name": "set_pauser",
-        "inputs": [
-          {
-            "name": "new_pauser",
-            "type": "core::starknet::contract_address::ContractAddress"
-          }
-        ],
-        "outputs": [],
-        "state_mutability": "external"
       },
       {
         "type": "function",
@@ -817,6 +801,30 @@
           {
             "name": "locker",
             "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "target",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "selector",
+            "type": "core::felt252"
+          },
+          {
+            "name": "allowed",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_borrower_governance_selector",
+        "inputs": [
+          {
+            "name": "inscription_id",
+            "type": "core::integer::u256"
           },
           {
             "name": "target",
@@ -1270,10 +1278,6 @@
       {
         "name": "implementation_hash",
         "type": "core::felt252"
-      },
-      {
-        "name": "pauser",
-        "type": "core::starknet::contract_address::ContractAddress"
       }
     ]
   },
@@ -1469,47 +1473,6 @@
     "name": "openzeppelin_security::reentrancyguard::ReentrancyGuardComponent::Event",
     "kind": "enum",
     "variants": []
-  },
-  {
-    "type": "event",
-    "name": "openzeppelin_security::pausable::PausableComponent::Paused",
-    "kind": "struct",
-    "members": [
-      {
-        "name": "account",
-        "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "data"
-      }
-    ]
-  },
-  {
-    "type": "event",
-    "name": "openzeppelin_security::pausable::PausableComponent::Unpaused",
-    "kind": "struct",
-    "members": [
-      {
-        "name": "account",
-        "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "data"
-      }
-    ]
-  },
-  {
-    "type": "event",
-    "name": "openzeppelin_security::pausable::PausableComponent::Event",
-    "kind": "enum",
-    "variants": [
-      {
-        "name": "Paused",
-        "type": "openzeppelin_security::pausable::PausableComponent::Paused",
-        "kind": "nested"
-      },
-      {
-        "name": "Unpaused",
-        "type": "openzeppelin_security::pausable::PausableComponent::Unpaused",
-        "kind": "nested"
-      }
-    ]
   },
   {
     "type": "event",
@@ -1744,6 +1707,28 @@
   },
   {
     "type": "event",
+    "name": "stela::stela::StelaProtocol::CollateralReturned",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "inscription_id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "borrower",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "asset_count",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
     "name": "stela::stela::StelaProtocol::Event",
     "kind": "enum",
     "variants": [
@@ -1765,11 +1750,6 @@
       {
         "name": "ReentrancyGuardEvent",
         "type": "openzeppelin_security::reentrancyguard::ReentrancyGuardComponent::Event",
-        "kind": "flat"
-      },
-      {
-        "name": "PausableEvent",
-        "type": "openzeppelin_security::pausable::PausableComponent::Event",
         "kind": "flat"
       },
       {
@@ -1825,6 +1805,11 @@
       {
         "name": "OrdersBulkCancelled",
         "type": "stela::stela::StelaProtocol::OrdersBulkCancelled",
+        "kind": "nested"
+      },
+      {
+        "name": "CollateralReturned",
+        "type": "stela::stela::StelaProtocol::CollateralReturned",
         "kind": "nested"
       }
     ]

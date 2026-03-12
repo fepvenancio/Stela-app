@@ -2,6 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@stela/core'],
+  serverExternalPackages: ['ws'],
   async headers() {
     return [
       // Fingerprinted static assets (immutable — Next.js adds content hash)

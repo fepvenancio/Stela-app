@@ -109,6 +109,34 @@ export default function FAQ() {
       </section>
 
       <section className="space-y-4">
+        <SectionHeading>How does early repayment work?</SectionHeading>
+        <div className="text-dust text-sm leading-relaxed space-y-3">
+          <p>
+            Borrowers can repay a loan at any time before it expires. When a loan
+            is repaid early, interest is pro-rated by elapsed time — you only pay
+            for the time you actually held the debt.
+          </p>
+          <p>
+            The formula is:{' '}
+            <span className="text-chalk font-mono">
+              ceil(full_interest &times; elapsed / duration)
+            </span>
+            . Rounding uses ceiling (round up) to protect lenders, ensuring they
+            always receive at least 1 wei of each interest asset.
+          </p>
+          <p>
+            For example, if a loan specifies 100 DAI interest over 30 days and the
+            borrower repays at day 15, the interest owed is approximately 50 DAI.
+            The borrower saves the remaining 50 DAI by repaying early.
+          </p>
+          <p>
+            Swaps (loans with zero duration) always charge the full interest amount
+            since there is no time component to pro-rate against.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
         <SectionHeading>What networks does Stela support?</SectionHeading>
         <div className="text-dust text-sm leading-relaxed space-y-3">
           <p>

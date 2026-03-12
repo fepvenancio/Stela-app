@@ -67,7 +67,7 @@ Environment (in `wrangler.jsonc`):
 ```jsonc
 {
   "vars": {
-    "STELA_ADDRESS": "0x03e88d289b9ce13e5d6e6ca5159930f9227b08cfbd004231a09a1d6f48568973"
+    "STELA_ADDRESS": "0x0109c6caae0c5b4da6e063ed6c02ae784be05aa90806501a48dcfbb213bd7c03"
   }
 }
 ```

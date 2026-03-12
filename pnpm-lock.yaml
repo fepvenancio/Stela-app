@@ -83,6 +83,9 @@ importers:
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
+      ws:
+        specifier: ^8.19.0
+        version: 8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -17945,7 +17948,7 @@ snapshots:
       buffer: 6.0.3
       eventemitter3: 5.0.4
       uuid: 11.1.0
-      ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     optionalDependencies:
       bufferutil: 4.1.0
       utf-8-validate: 6.0.6
@@ -19178,7 +19181,6 @@ snapshots:
     optionalDependencies:
       bufferutil: 4.1.0
       utf-8-validate: 6.0.6
-    optional: true
 
   wsl-utils@0.1.0:
     dependencies:

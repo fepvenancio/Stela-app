@@ -251,7 +251,7 @@ export default function DocsPage() {
             <div className="bg-abyss border border-edge/20 rounded-lg p-8">
               <h4 className="font-display text-star text-lg mb-3">Interest</h4>
               <p className="text-dust text-sm leading-relaxed">
-                The <span className="text-chalk font-medium">Reward</span>. The additional assets the borrower agrees to pay the lender on top of the debt principal upon repayment.
+                The <span className="text-chalk font-medium">Reward</span>. The additional assets the borrower agrees to pay the lender on top of the debt principal upon repayment. Interest is pro-rated by elapsed time on early repayment — borrowers only pay for the time they held the debt.
               </p>
             </div>
             <div className="bg-abyss border border-edge/20 rounded-lg p-8">
@@ -298,8 +298,12 @@ export default function DocsPage() {
 
             <StepCard numeral="III" title="Repay (Repaid)">
               <p>
-                The <span className="text-chalk font-medium">borrower returns</span> the full debt plus interest before
+                The <span className="text-chalk font-medium">borrower returns</span> the debt plus interest before
                 the duration expires. Collateral is released. Shareholders can now redeem.
+                Interest is <span className="text-star font-medium">pro-rated</span> by elapsed time —
+                early repayment means lower interest cost. The formula
+                uses <span className="text-chalk font-mono">ceil(interest &times; elapsed / duration)</span>,
+                rounding up to protect lenders.
               </p>
             </StepCard>
 
@@ -932,7 +936,7 @@ export default function DocsPage() {
               },
               {
                 q: 'Can I cancel after a lender has signed?',
-                a: 'No. Signature creates an immutable on-chain debt obligation. You must repay the debt plus interest within the duration to release your collateral.',
+                a: 'No. Signature creates an immutable on-chain debt obligation. You must repay the debt plus pro-rated interest within the duration to release your collateral.',
               },
               {
                 q: 'Is there an oracle or price feed?',
@@ -945,6 +949,10 @@ export default function DocsPage() {
               {
                 q: 'Are shares transferable?',
                 a: 'Yes. Every lending position is an ERC1155 token. You can transfer your shares to another address, and they will hold the right to claim the assets.',
+              },
+              {
+                q: 'Do I pay full interest if I repay early?',
+                a: 'No. Interest is pro-rated by elapsed time using ceil(interest x elapsed / duration). Repaying a 30-day loan at day 15 costs roughly half the interest. Rounding is ceiling (up) so lenders always receive at least 1 wei. Swaps (duration = 0) always charge full interest.',
               },
             ].map(({ q, a }) => (
               <div key={q} className="bg-abyss border border-edge/20 rounded-lg p-8 hover:border-star/20 transition-colors">
