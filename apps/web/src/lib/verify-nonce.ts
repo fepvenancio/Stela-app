@@ -56,7 +56,7 @@ export async function verifyNonce(
         entry_point_selector: NONCES_SELECTOR,
         calldata: [toHexFelt(address)],
       },
-      block_id: 'latest',
+      block_id: 'pending',
     },
   }
 
