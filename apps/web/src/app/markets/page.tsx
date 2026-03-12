@@ -149,6 +149,112 @@ export default function MarketsPage() {
           </Link>
         </div>
       )}
+
+      {/* ── FAQ Section ──────────────────────────────────────── */}
+      <MarketsInfoSection />
+    </div>
+  )
+}
+
+/* ── FAQ Section ──────────────────────────────────────────── */
+
+const MARKETS_FAQ = [
+  {
+    q: 'What are markets?',
+    a: 'Trading pairs showing active lending and swap activity on Stela. Each pair tracks open orders, volume, and settlement history.',
+  },
+  {
+    q: 'What does volume mean?',
+    a: 'Total value of settled orders for this pair. Only completed settlements count toward volume.',
+  },
+  {
+    q: 'Can I create a new market?',
+    a: 'Markets are auto-created when the first order for a pair is placed. No listing, no governance, no approval.',
+  },
+  {
+    q: 'What pairs are available?',
+    a: 'Any ERC20 pair on StarkNet. Fully permissionless. Paste the contract address to trade any token.',
+  },
+]
+
+function MarketsFaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-edge/15">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-4 text-left cursor-pointer group"
+      >
+        <span className="text-sm text-chalk group-hover:text-star transition-colors pr-4">{q}</span>
+        <svg
+          className={`w-4 h-4 text-dust shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <p className="text-sm text-dust leading-relaxed pb-4 pr-8">{a}</p>
+      )}
+    </div>
+  )
+}
+
+function MarketsInfoSection() {
+  return (
+    <div className="mt-16 max-w-lg mx-auto">
+      {/* Hero statement */}
+      <section className="text-center mb-10">
+        <p className="text-star font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
+          Permissionless Markets
+        </p>
+        <h2 className="font-display text-2xl sm:text-3xl tracking-tight text-chalk leading-[1.15] mb-4">
+          Any pair, <span className="text-star">no listing required.</span>
+        </h2>
+        <p className="text-dust text-sm leading-relaxed max-w-md mx-auto">
+          Markets appear automatically when the first order is placed. Any ERC20 pair on StarkNet. No governance, no approval process.
+        </p>
+      </section>
+
+      {/* Stats bar */}
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">Any ERC20</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Token Support</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">Auto</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Market Creation</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">0</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Listing Fee</div>
+        </div>
+      </div>
+
+      {/* FAQ */}
+      <div>
+        <h2 className="font-display text-lg text-chalk uppercase tracking-wider mb-1">Questions?</h2>
+        <p className="text-dust text-sm mb-6">Answers.</p>
+        <div>
+          {MARKETS_FAQ.map((item) => (
+            <MarketsFaqItem key={item.q} q={item.q} a={item.a} />
+          ))}
+        </div>
+      </div>
+
+      {/* Trust signals */}
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-dust/60 uppercase tracking-widest">
+        <span>Open Source</span>
+        <span className="text-edge/40">|</span>
+        <span>Immutable</span>
+        <span className="text-edge/40">|</span>
+        <span>StarkNet</span>
+      </div>
     </div>
   )
 }

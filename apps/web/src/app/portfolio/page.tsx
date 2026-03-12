@@ -652,6 +652,112 @@ export default function PortfolioPage() {
           </>
         )}
       </Web3ActionWrapper>
+
+      {/* ── FAQ Section ──────────────────────────────────────── */}
+      <PortfolioInfoSection />
+    </div>
+  )
+}
+
+/* ── FAQ Section ──────────────────────────────────────────── */
+
+const PORTFOLIO_FAQ = [
+  {
+    q: 'What does this page show?',
+    a: 'All your positions: active loans, pending orders, shares, and collection/refinance/renegotiation offers.',
+  },
+  {
+    q: 'What are shares?',
+    a: 'ERC1155 tokens representing your lending position. Burn them after repayment for debt + interest, or after liquidation for collateral.',
+  },
+  {
+    q: 'What do the status badges mean?',
+    a: 'Open = waiting for a lender. Filled = active loan. Repaid = claim your assets. Liquidated = claim collateral.',
+  },
+  {
+    q: 'How do I claim my assets?',
+    a: 'Click into any repaid or liquidated position where you hold shares, then click "Redeem" to burn shares and receive your assets.',
+  },
+]
+
+function PortfolioFaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-edge/15">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-4 text-left cursor-pointer group"
+      >
+        <span className="text-sm text-chalk group-hover:text-star transition-colors pr-4">{q}</span>
+        <svg
+          className={`w-4 h-4 text-dust shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <p className="text-sm text-dust leading-relaxed pb-4 pr-8">{a}</p>
+      )}
+    </div>
+  )
+}
+
+function PortfolioInfoSection() {
+  return (
+    <div className="mt-16 max-w-lg mx-auto">
+      {/* Hero statement */}
+      <section className="text-center mb-10">
+        <p className="text-star font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
+          Your Positions on StarkNet
+        </p>
+        <h2 className="font-display text-2xl sm:text-3xl tracking-tight text-chalk leading-[1.15] mb-4">
+          Track everything, <span className="text-star">claim anytime.</span>
+        </h2>
+        <p className="text-dust text-sm leading-relaxed max-w-md mx-auto">
+          Active loans, pending orders, redeemable shares. Every position isolated with its own Locker contract.
+        </p>
+      </section>
+
+      {/* Stats bar */}
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">ERC1155</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Share Standard</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">0%</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Redeem Fee</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">Isolated</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Per Position</div>
+        </div>
+      </div>
+
+      {/* FAQ */}
+      <div>
+        <h2 className="font-display text-lg text-chalk uppercase tracking-wider mb-1">Questions?</h2>
+        <p className="text-dust text-sm mb-6">Answers.</p>
+        <div>
+          {PORTFOLIO_FAQ.map((item) => (
+            <PortfolioFaqItem key={item.q} q={item.q} a={item.a} />
+          ))}
+        </div>
+      </div>
+
+      {/* Trust signals */}
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-dust/60 uppercase tracking-widest">
+        <span>Open Source</span>
+        <span className="text-edge/40">|</span>
+        <span>Immutable</span>
+        <span className="text-edge/40">|</span>
+        <span>StarkNet</span>
+      </div>
     </div>
   )
 }

@@ -7,6 +7,8 @@ export interface TokenInfo {
   addresses: Partial<Record<Network, string>>
   /** Optional URL for the token logo image */
   logoUrl?: string
+  /** Asset type — defaults to ERC20 if omitted */
+  assetType?: 'ERC20' | 'ERC721' | 'ERC1155' | 'ERC4626'
 }
 
 /**
@@ -116,6 +118,25 @@ export const TOKENS: TokenInfo[] = [
       sepolia: '0x04f2345306bf8ef1c8c1445661354ef08421aa092459445a5d6b46641237e943',
     },
   },
+  // NFT Collections (ERC721)
+  {
+    symbol: 'GENESIS',
+    name: 'Stela Genesis',
+    decimals: 0,
+    assetType: 'ERC721',
+    addresses: {
+      sepolia: '0x0265ea52ffbf1b7e1a029b94fe1a2023899dd0bc02eb1f11c9b04ea90e957d28',
+    },
+  },
+  {
+    symbol: 'MockNFT',
+    name: 'Mock ERC721',
+    decimals: 0,
+    assetType: 'ERC721',
+    addresses: {
+      sepolia: '0x032bfd52134ad92beae1bc5018a3748e1d1240efd627220e314c07e4c63433d5',
+    },
+  },
 ]
 
 /** Get tokens available on a specific network */
@@ -126,6 +147,11 @@ export function getTokensForNetwork(network: Network): TokenInfo[] {
 /** Strip leading zeros after 0x for consistent comparison */
 function normalizeHex(addr: string): string {
   return '0x' + addr.replace(/^0x0*/i, '').toLowerCase()
+}
+
+/** Get NFT collections (ERC721) available on a specific network */
+export function getNFTCollections(network: Network): TokenInfo[] {
+  return TOKENS.filter((t) => t.assetType === 'ERC721' && t.addresses[network] !== undefined)
 }
 
 /** Find a token by its address (any network) */

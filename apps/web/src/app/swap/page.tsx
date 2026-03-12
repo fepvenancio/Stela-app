@@ -329,6 +329,116 @@ export default function SwapPage() {
         }
         return null
       })()}
+
+      {/* ── FAQ Section ──────────────────────────────────────── */}
+      <SwapInfoSection />
+    </div>
+  )
+}
+
+/* ── FAQ Section ──────────────────────────────────────────── */
+
+const SWAP_FAQ = [
+  {
+    q: 'How do swaps work?',
+    a: 'Sign a gasless off-chain order or inscribe on-chain. A counterparty matches it. A relayer settles both sides atomically in one transaction.',
+  },
+  {
+    q: 'What tokens can I swap?',
+    a: 'Any ERC20 on StarkNet. No listing required. Paste the address, set your price.',
+  },
+  {
+    q: 'What are the fees?',
+    a: '0.15% at settlement (0.05% relayer, 0.10% treasury). Gasless to create. Genesis NFT holders get up to 50% off.',
+  },
+  {
+    q: 'Is it safe?',
+    a: 'Every position is isolated. No shared pools, no oracle risk, no impermanent loss. You set exact amounts — it settles at those amounts or not at all.',
+  },
+  {
+    q: 'How fast is settlement?',
+    a: 'The bot checks for matches every 2 minutes. Once matched, settlement is atomic in 1 block.',
+  },
+]
+
+function SwapFaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-edge/15">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-4 text-left cursor-pointer group"
+      >
+        <span className="text-sm text-chalk group-hover:text-star transition-colors pr-4">{q}</span>
+        <svg
+          className={`w-4 h-4 text-dust shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <p className="text-sm text-dust leading-relaxed pb-4 pr-8">{a}</p>
+      )}
+    </div>
+  )
+}
+
+function SwapInfoSection() {
+  return (
+    <div className="mt-16 max-w-lg mx-auto">
+      {/* Hero statement */}
+      <section className="text-center mb-10">
+        <p className="text-star font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
+          P2P Swaps on StarkNet
+        </p>
+        <h2 className="font-display text-2xl sm:text-3xl tracking-tight text-chalk leading-[1.15] mb-4">
+          Swap anything, <span className="text-star">peer-to-peer.</span>
+        </h2>
+        <p className="text-dust text-sm leading-relaxed max-w-md mx-auto">
+          Any ERC20, any amount. No pools, no slippage, no oracles. Gasless to create, settled on-chain when matched.
+        </p>
+      </section>
+
+      {/* Stats bar */}
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">0.15%</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Swap Fee</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">0</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Slippage</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">~2 min</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Settlement</div>
+        </div>
+      </div>
+
+      {/* FAQ */}
+      <div>
+        <h2 className="font-display text-lg text-chalk uppercase tracking-wider mb-1">Questions?</h2>
+        <p className="text-dust text-sm mb-6">Answers.</p>
+        <div>
+          {SWAP_FAQ.map((item) => (
+            <SwapFaqItem key={item.q} q={item.q} a={item.a} />
+          ))}
+        </div>
+      </div>
+
+      {/* Trust signals */}
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-dust/60 uppercase tracking-widest">
+        <span>Open Source</span>
+        <span className="text-edge/40">|</span>
+        <span>Immutable</span>
+        <span className="text-edge/40">|</span>
+        <span>StarkNet</span>
+      </div>
     </div>
   )
 }

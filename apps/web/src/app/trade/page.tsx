@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useCallback, useMemo, Suspense } from 'react'
+import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { getNFTCollections } from '@stela/core'
 import { NETWORK, CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
 import { useOrderForm } from '@/hooks/useOrderForm'
 import { useCollectionOffer } from '@/hooks/useCollectionOffer'
+import { useAcceptCollectionOffer } from '@/hooks/useAcceptCollectionOffer'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import type { AssetInputValue } from '@/components/AssetInput'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
@@ -20,6 +22,7 @@ import { TokenAvatar } from '@/components/TokenAvatar'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
 import { formatTokenValue } from '@/lib/format'
+import { formatAddress } from '@/lib/address'
 import { useFeePreview } from '@/hooks/useFeePreview'
 
 /* ── Constants ──────────────────────────────────────────── */
@@ -684,6 +687,8 @@ function CollectionOfferForm() {
     setShowErrors(false)
   }, [isValid, address, deadlinePreset, durationPreset, provider, debtAsset, interestAsset, collectionAddress, createCollectionOffer])
 
+  const nftCollections = useMemo(() => getNFTCollections(NETWORK), [])
+
   return (
     <>
       {/* Collection Address */}
@@ -699,6 +704,29 @@ function CollectionOfferForm() {
             onChange={(e) => setCollectionAddress(e.target.value.trim())}
             className="w-full text-sm font-mono bg-transparent outline-none text-chalk placeholder:text-ash/40"
           />
+          {nftCollections.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {nftCollections.map((nft) => {
+                const addr = nft.addresses[NETWORK] ?? ''
+                const isSelected = collectionAddress.toLowerCase() === addr.toLowerCase()
+                return (
+                  <button
+                    key={addr}
+                    type="button"
+                    onClick={() => setCollectionAddress(addr)}
+                    className={`flex items-center gap-1.5 py-1 px-2.5 rounded-sm text-[10px] font-medium border transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'border-star/40 bg-star/10 text-star'
+                        : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                    }`}
+                  >
+                    <span>{nft.symbol}</span>
+                    <span className="text-ash font-mono">{addr.slice(0, 6)}...{addr.slice(-4)}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
           {showErrors && !isValidAddress && collectionAddress && (
             <p className="text-[10px] text-nova mt-1">Invalid StarkNet address</p>
           )}
@@ -830,6 +858,244 @@ function CollectionOfferForm() {
         balances={balances}
       />
     </>
+  )
+}
+
+/* ── Collection Offer Browser ─────────────────────────────── */
+
+interface CollectionOfferRow {
+  id: string
+  lender: string
+  collection_address: string
+  order_data: string
+  status: string
+  deadline: string
+  debt_token: string | null
+  created_at: string
+}
+
+interface ParsedOfferData {
+  debtAssets?: Array<{ asset_address: string; value: string }>
+  interestAssets?: Array<{ asset_address: string; value: string }>
+  duration?: string
+}
+
+function CollectionOfferBrowser() {
+  const { address } = useAccount()
+  const { acceptOffer, isPending: isAccepting } = useAcceptCollectionOffer()
+  const [offers, setOffers] = useState<CollectionOfferRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [tokenId, setTokenId] = useState('')
+  const [acceptingId, setAcceptingId] = useState<string | null>(null)
+
+  const provider = useMemo(() => new RpcProvider({ nodeUrl: RPC_URL }), [])
+
+  const fetchOffers = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/collection-offers?status=pending&limit=20')
+      if (res.ok) {
+        const json = (await res.json()) as { data?: CollectionOfferRow[] }
+        setOffers(json.data ?? [])
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Fetch on mount
+  useEffect(() => { fetchOffers() }, [fetchOffers])
+
+  // Listen for sync events to refresh
+  useEffect(() => {
+    const handler = () => fetchOffers()
+    window.addEventListener('stela:sync', handler)
+    return () => window.removeEventListener('stela:sync', handler)
+  }, [fetchOffers])
+
+  const handleAccept = useCallback(async (offer: CollectionOfferRow) => {
+    if (!address || !tokenId) return
+    setAcceptingId(offer.id)
+    try {
+      const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
+      await acceptOffer(offer.id, offer.id, tokenId, nonce)
+      setExpandedId(null)
+      setTokenId('')
+      fetchOffers()
+    } catch {
+      // error handled by hook toast
+    } finally {
+      setAcceptingId(null)
+    }
+  }, [address, tokenId, provider, acceptOffer, fetchOffers])
+
+  const parseOrderData = useCallback((raw: string): ParsedOfferData => {
+    try { return JSON.parse(raw) as ParsedOfferData } catch { return {} }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-8 text-dust text-xs">
+        <Spinner className="h-3.5 w-3.5" />
+        Loading collection offers...
+      </div>
+    )
+  }
+
+  if (offers.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-sm text-dust">No open collection offers</p>
+        <p className="text-[11px] text-ash mt-1">Collection offers from lenders will appear here.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {offers.map((offer) => {
+        const data = parseOrderData(offer.order_data)
+        const debtAddr = data.debtAssets?.[0]?.asset_address
+        const debtValue = data.debtAssets?.[0]?.value
+        const debtToken = debtAddr ? findTokenByAddress(debtAddr) : null
+        const intAddr = data.interestAssets?.[0]?.asset_address
+        const intValue = data.interestAssets?.[0]?.value
+        const intToken = intAddr ? findTokenByAddress(intAddr) : null
+        const collectionToken = findTokenByAddress(offer.collection_address)
+        const isExpanded = expandedId === offer.id
+        const deadlineDate = offer.deadline ? new Date(Number(offer.deadline) * 1000) : null
+        const isExpired = deadlineDate ? deadlineDate.getTime() < Date.now() : false
+        const durationSec = data.duration ? Number(data.duration) : 0
+
+        return (
+          <div
+            key={offer.id}
+            className={`rounded-lg border p-4 transition-colors ${
+              isExpanded ? 'border-star/30 bg-star/5' : 'border-edge/20 bg-surface/5 hover:border-edge/40'
+            }`}
+          >
+            {/* Summary row */}
+            <button
+              type="button"
+              onClick={() => { setExpandedId(isExpanded ? null : offer.id); setTokenId('') }}
+              className="w-full flex items-center justify-between text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  {collectionToken ? (
+                    <span className="text-xs text-star font-medium">{collectionToken.symbol}</span>
+                  ) : (
+                    <span className="text-xs text-dust font-mono">{formatAddress(offer.collection_address)}</span>
+                  )}
+                </div>
+                <span className="text-edge text-xs">|</span>
+                <div className="flex items-center gap-1">
+                  {debtToken && <TokenAvatar token={debtToken} size={14} />}
+                  <span className="text-xs text-chalk">
+                    {debtToken && debtValue ? formatTokenValue(debtValue, debtToken.decimals) : '?'}{' '}
+                    {debtToken?.symbol ?? ''}
+                  </span>
+                </div>
+                {intToken && intValue && (
+                  <>
+                    <span className="text-edge text-xs">+</span>
+                    <div className="flex items-center gap-1">
+                      <TokenAvatar token={intToken} size={14} />
+                      <span className="text-xs text-nebula">
+                        {formatTokenValue(intValue, intToken.decimals)} {intToken.symbol}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                {durationSec > 0 && (
+                  <span className="text-[10px] text-dust">{formatDurationHuman(durationSec)}</span>
+                )}
+                <svg
+                  className={`w-3.5 h-3.5 text-dust transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* Expanded detail + accept */}
+            {isExpanded && (
+              <div className="mt-3 pt-3 border-t border-edge/15 space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div>
+                    <span className="text-dust">Lender</span>
+                    <p className="text-chalk font-mono mt-0.5">{formatAddress(offer.lender)}</p>
+                  </div>
+                  <div>
+                    <span className="text-dust">Collection</span>
+                    <p className="text-chalk font-mono mt-0.5">
+                      {collectionToken?.name ?? formatAddress(offer.collection_address)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-dust">Duration</span>
+                    <p className="text-chalk mt-0.5">{durationSec > 0 ? formatDurationHuman(durationSec) : '--'}</p>
+                  </div>
+                  <div>
+                    <span className="text-dust">Expires</span>
+                    <p className={`mt-0.5 ${isExpired ? 'text-nova' : 'text-chalk'}`}>
+                      {deadlineDate ? deadlineDate.toLocaleDateString() : '--'}
+                      {isExpired && ' (expired)'}
+                    </p>
+                  </div>
+                </div>
+
+                {!isExpired && address && (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[10px] text-dust uppercase tracking-widest font-bold">
+                        Your Token ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Token ID (e.g. 1, 42)"
+                        value={tokenId}
+                        onChange={(e) => setTokenId(e.target.value.trim())}
+                        className="w-full mt-1 text-sm font-mono bg-abyss/50 border border-edge/30 rounded-md px-3 py-2 outline-none text-chalk placeholder:text-ash/40 focus:border-star/40"
+                      />
+                    </div>
+                    <Button
+                      variant="gold"
+                      className="w-full uppercase tracking-[0.15em] text-xs"
+                      onClick={() => handleAccept(offer)}
+                      disabled={isAccepting || !tokenId || acceptingId === offer.id}
+                    >
+                      {acceptingId === offer.id ? (
+                        <div className="flex items-center gap-2">
+                          <Spinner className="h-3 w-3" />
+                          Signing...
+                        </div>
+                      ) : (
+                        'Accept Offer'
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {!isExpired && !address && (
+                  <p className="text-[11px] text-dust text-center py-2">Connect wallet to accept this offer</p>
+                )}
+
+                {isExpired && (
+                  <p className="text-[11px] text-nova text-center py-2">This offer has expired</p>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -1003,6 +1269,7 @@ function TradeContent() {
   const initialMode = searchParams.get('mode') === 'swap' ? 'swap' : 'lend'
   const [activeTab, setActiveTab] = useState<'swap' | 'lend'>(initialMode as 'swap' | 'lend')
   const [offerMode, setOfferMode] = useState<'standard' | 'collection'>('standard')
+  const [collectionView, setCollectionView] = useState<'create' | 'browse'>('create')
 
   return (
     <div className="animate-fade-up pb-24">
@@ -1015,7 +1282,7 @@ function TradeContent() {
               <button
                 key={tab}
                 type="button"
-                onClick={() => { setActiveTab(tab); setOfferMode('standard') }}
+                onClick={() => { setActiveTab(tab); setOfferMode('standard'); setCollectionView('create') }}
                 className={`px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
                   activeTab === tab
                     ? 'text-star border-star'
@@ -1027,29 +1294,60 @@ function TradeContent() {
             ))}
           </div>
 
-          {/* Collection Offer toggle — lend mode only */}
+          {/* Lend mode toggle — Token vs Collection */}
           {activeTab === 'lend' && (
-            <div className="flex gap-1">
-              {(['standard', 'collection'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setOfferMode(m)}
-                  className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
-                    offerMode === m
-                      ? 'bg-star/10 text-star border border-star/25'
-                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
-                  }`}
-                >
-                  {m === 'standard' ? 'Standard' : 'Collection Offer'}
-                </button>
-              ))}
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex gap-1">
+                {(['standard', 'collection'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => { setOfferMode(m); setCollectionView('create') }}
+                    className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
+                      offerMode === m
+                        ? 'bg-star/10 text-star border border-star/25'
+                        : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                    }`}
+                  >
+                    {m === 'standard' ? 'Token' : 'Collection'}
+                  </button>
+                ))}
+              </div>
+              <span className="text-[10px] text-dust">
+                {offerMode === 'standard'
+                  ? 'Lend against a specific token'
+                  : 'Lend against any NFT in a collection'}
+              </span>
             </div>
           )}
         </div>
 
+        {/* Collection sub-tabs: Create / Browse */}
+        {activeTab === 'lend' && offerMode === 'collection' && (
+          <div className="flex gap-1 mb-4">
+            {(['create', 'browse'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setCollectionView(v)}
+                className={`py-1.5 px-3 rounded-sm text-[11px] font-medium transition-colors cursor-pointer ${
+                  collectionView === v
+                    ? 'bg-aurora/10 text-aurora border border-aurora/25'
+                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                }`}
+              >
+                {v === 'create' ? 'Create Offer' : 'Browse Offers'}
+              </button>
+            ))}
+          </div>
+        )}
+
         {activeTab === 'lend' && offerMode === 'collection' ? (
-          <CollectionOfferForm key="collection" />
+          collectionView === 'create' ? (
+            <CollectionOfferForm key="collection-create" />
+          ) : (
+            <CollectionOfferBrowser key="collection-browse" />
+          )
         ) : (
           <TradeForm key={`${activeTab}-${offerMode}`} mode={activeTab} />
         )}

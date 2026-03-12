@@ -46,6 +46,7 @@ export type { TokenInfo } from './tokens.js'
 export {
   TOKENS,
   getTokensForNetwork,
+  getNFTCollections,
   findTokenByAddress,
 } from './tokens.js'
 

@@ -24,6 +24,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CopyButton } from '@/components/CopyButton'
+import { RefinanceOfferForm } from '@/components/RefinanceOfferForm'
+import { useRefinance } from '@/hooks/useRefinance'
 
 // ── T1 Data Sections ─────────────────────────────────────────────
 
@@ -95,6 +97,106 @@ function T1Row({ label, detail, status }: { label: string; detail: string; statu
         {status}
       </Badge>
     </div>
+  )
+}
+
+// ── Refinance Offers Section ─────────────────────────────────────
+
+function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: string; isBorrower: boolean }) {
+  const { address } = useAccount()
+  const { items, loading } = useT1List(`/api/refinances?inscription_id=${inscriptionId}`)
+  const { approveOffer, isPending: approvePending } = useRefinance()
+  const [showForm, setShowForm] = useState(false)
+
+  const isConnected = Boolean(address)
+  const canCreateOffer = isConnected && !isBorrower
+
+  return (
+    <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
+      <div className="px-4 sm:px-6 py-4 border-b border-edge/20 bg-surface/30 flex items-center justify-between">
+        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Refinance Offers</h3>
+        {canCreateOffer && !showForm && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowForm(true)}
+            className="text-[10px] uppercase tracking-widest border-star/30 text-star hover:bg-star/10"
+          >
+            Make Offer
+          </Button>
+        )}
+      </div>
+      <div className="p-4 sm:p-6 space-y-4">
+        {/* Inline refinance offer form */}
+        {showForm && (
+          <div className="border border-star/20 rounded-2xl p-4 bg-star/[0.02]">
+            <RefinanceOfferForm
+              inscriptionId={inscriptionId}
+              onClose={() => setShowForm(false)}
+            />
+          </div>
+        )}
+
+        {/* Listed offers */}
+        {!loading && items.length > 0 && (
+          <div className="space-y-3">
+            {items.map((offer, i) => {
+              const offerId = String(offer.id ?? '')
+              const offerStatus = String(offer.status ?? 'pending')
+              const canApprove = isBorrower && offerStatus === 'pending'
+
+              return (
+                <div
+                  key={offerId || i}
+                  className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs text-chalk font-mono truncate block">
+                      {formatAddress(String(offer.new_lender ?? ''))}
+                    </span>
+                    <span className="text-[10px] text-dust block truncate">
+                      Nonce: {String(offer.nonce ?? '--')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {canApprove && (
+                      <Button
+                        variant="aurora"
+                        size="sm"
+                        disabled={approvePending}
+                        onClick={() => {
+                          const offerHash = String(offer.offer_hash ?? offer.id ?? '')
+                          void approveOffer(
+                            offerId,
+                            offerHash,
+                            BigInt(inscriptionId),
+                            BigInt(String(offer.nonce ?? '0')),
+                          )
+                        }}
+                        className="text-[10px] uppercase tracking-widest"
+                      >
+                        {approvePending ? 'Approving...' : 'Approve'}
+                      </Button>
+                    )}
+                    <Badge
+                      variant={offerStatus as 'pending'}
+                      className="rounded-full px-3 py-0.5 text-[10px] uppercase tracking-widest"
+                    >
+                      {offerStatus}
+                    </Badge>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && items.length === 0 && !showForm && (
+          <p className="text-xs text-dust italic text-center py-2">No refinance offers yet.</p>
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -365,18 +467,9 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
 
           {/* T1: Refinance Offers */}
           {enrichedStatusValue === 'filled' && (
-            <T1Section
+            <RefinanceOffersSection
               inscriptionId={id}
-              title="Refinance Offers"
-              endpoint="/api/refinances"
-              renderRow={(offer, i) => (
-                <T1Row
-                  key={String(offer.id ?? i)}
-                  label={formatAddress(String(offer.new_lender ?? ''))}
-                  detail={`Nonce: ${String(offer.nonce ?? '--')}`}
-                  status={String(offer.status ?? 'pending')}
-                />
-              )}
+              isBorrower={isBorrower}
             />
           )}
 

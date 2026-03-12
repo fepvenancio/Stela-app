@@ -452,6 +452,116 @@ export default function BorrowPage() {
         }
         return null
       })()}
+
+      {/* ── FAQ Section ──────────────────────────────────────── */}
+      <BorrowInfoSection />
+    </div>
+  )
+}
+
+/* ── FAQ Section ──────────────────────────────────────────── */
+
+const BORROW_FAQ = [
+  {
+    q: 'What is borrowing on Stela?',
+    a: 'Post collateral (NFTs, ERC20, vault shares), set your terms, and get funded peer-to-peer. No pools, no oracles.',
+  },
+  {
+    q: 'What collateral can I use?',
+    a: 'Any ERC20, ERC721, ERC1155, or ERC4626 vault shares. Debt and interest must be ERC20.',
+  },
+  {
+    q: "What happens if I don't repay?",
+    a: 'After the loan expires, anyone can call liquidate. Lenders redeem their ERC1155 shares for a proportional share of your locked collateral.',
+  },
+  {
+    q: 'Can I repay early?',
+    a: 'Yes. Pro-rata interest means you only pay for the time elapsed, rounded up to protect lenders.',
+  },
+  {
+    q: 'What are the fees?',
+    a: '0.25% at settlement (0.05% relayer, 0.20% treasury). 0% to redeem. 0% on liquidation. Genesis NFT holders get up to 50% off.',
+  },
+]
+
+function BorrowFaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-edge/15">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-4 text-left cursor-pointer group"
+      >
+        <span className="text-sm text-chalk group-hover:text-star transition-colors pr-4">{q}</span>
+        <svg
+          className={`w-4 h-4 text-dust shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <p className="text-sm text-dust leading-relaxed pb-4 pr-8">{a}</p>
+      )}
+    </div>
+  )
+}
+
+function BorrowInfoSection() {
+  return (
+    <div className="mt-16 max-w-lg mx-auto">
+      {/* Hero statement */}
+      <section className="text-center mb-10">
+        <p className="text-star font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
+          P2P Borrowing on StarkNet
+        </p>
+        <h2 className="font-display text-2xl sm:text-3xl tracking-tight text-chalk leading-[1.15] mb-4">
+          Post collateral, <span className="text-star">set your terms.</span>
+        </h2>
+        <p className="text-dust text-sm leading-relaxed max-w-md mx-auto">
+          Borrow any ERC20 against tokens, NFTs, or vault shares. Every position isolated in its own Locker. Pro-rata interest on early repayment.
+        </p>
+      </section>
+
+      {/* Stats bar */}
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">0.25%</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Lending Fee</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">0%</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Redeem Fee</div>
+        </div>
+        <div className="text-center">
+          <div className="font-display text-xl text-chalk">Pro-Rata</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Early Repay</div>
+        </div>
+      </div>
+
+      {/* FAQ */}
+      <div>
+        <h2 className="font-display text-lg text-chalk uppercase tracking-wider mb-1">Questions?</h2>
+        <p className="text-dust text-sm mb-6">Answers.</p>
+        <div>
+          {BORROW_FAQ.map((item) => (
+            <BorrowFaqItem key={item.q} q={item.q} a={item.a} />
+          ))}
+        </div>
+      </div>
+
+      {/* Trust signals */}
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-dust/60 uppercase tracking-widest">
+        <span>Open Source</span>
+        <span className="text-edge/40">|</span>
+        <span>Immutable</span>
+        <span className="text-edge/40">|</span>
+        <span>StarkNet</span>
+      </div>
     </div>
   )
 }
