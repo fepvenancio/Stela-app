@@ -11,6 +11,9 @@ import { InscriptionActions } from '@/components/InscriptionActions'
 import { AssetBadge } from '@/components/AssetBadge'
 import { InterestAccrualDisplay } from '@/components/InterestAccrualDisplay'
 import { TransferSharesModal } from '@/components/TransferSharesModal'
+import { SellPositionModal } from '@/components/SellPositionModal'
+import { ShareListingsSection } from '@/components/ShareListingsSection'
+import { PositionValueDisplay } from '@/components/PositionValueDisplay'
 import { computeStatus, enrichStatus } from '@/lib/status'
 import { AuctionTimer } from '@/components/AuctionTimer'
 import { AuctionPrice } from '@/components/AuctionPrice'
@@ -255,6 +258,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
   }, [a, status])
 
   const [transferModalOpen, setTransferModalOpen] = useState(false)
+  const [sellModalOpen, setSellModalOpen] = useState(false)
 
   const signedAtNum = Number(a?.signed_at ?? 0)
   const durationNum = Number(a?.duration ?? 0)
@@ -506,6 +510,9 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
               )}
             />
           )}
+
+          {/* Share Listings (Secondary Market) */}
+          <ShareListingsSection inscriptionId={id} />
         </div>
 
         {/* Sidebar Actions */}
@@ -582,15 +589,54 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                 <span className="text-3xl font-display text-chalk">{shares.toString()}</span>
                 <span className="text-xs text-dust">ERC1155</span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTransferModalOpen(true)}
-                className="w-full rounded-xl border-edge/50 text-dust hover:text-star hover:border-star/30 text-[10px] uppercase tracking-widest"
-              >
-                Transfer Shares
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTransferModalOpen(true)}
+                  className="flex-1 rounded-xl border-edge/50 text-dust hover:text-star hover:border-star/30 text-[10px] uppercase tracking-widest"
+                >
+                  Transfer
+                </Button>
+                <Button
+                  variant="gold"
+                  size="sm"
+                  onClick={() => setSellModalOpen(true)}
+                  className="flex-1 rounded-xl text-[10px] uppercase tracking-widest"
+                >
+                  Sell Position
+                </Button>
+              </div>
             </section>
+          )}
+
+          {/* Position Value (for filled inscriptions with shares) */}
+          {shares > 0n && isFilled && assets && (
+            <PositionValueDisplay
+              inscriptionId={id}
+              shares={shares}
+              totalSupply={BigInt(a?.issued_debt_percentage ? String(a.issued_debt_percentage) : '10000')}
+              debtAssets={assets.filter((r) => r.asset_role === 'debt').map((r) => ({
+                asset_address: r.asset_address,
+                asset_type: r.asset_type as 'ERC20' | 'ERC721' | 'ERC1155' | 'ERC4626',
+                value: BigInt(r.value ?? '0'),
+                token_id: BigInt(r.token_id ?? '0'),
+              }))}
+              interestAssets={assets.filter((r) => r.asset_role === 'interest').map((r) => ({
+                asset_address: r.asset_address,
+                asset_type: r.asset_type as 'ERC20' | 'ERC721' | 'ERC1155' | 'ERC4626',
+                value: BigInt(r.value ?? '0'),
+                token_id: BigInt(r.token_id ?? '0'),
+              }))}
+              collateralAssets={assets.filter((r) => r.asset_role === 'collateral').map((r) => ({
+                asset_address: r.asset_address,
+                asset_type: r.asset_type as 'ERC20' | 'ERC721' | 'ERC1155' | 'ERC4626',
+                value: BigInt(r.value ?? '0'),
+                token_id: BigInt(r.token_id ?? '0'),
+              }))}
+              signedAt={BigInt(a?.signed_at ? String(a.signed_at) : '0')}
+              duration={BigInt(a?.duration ? String(a.duration) : '0')}
+            />
           )}
         </aside>
 
@@ -601,6 +647,19 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
             onOpenChange={setTransferModalOpen}
             inscriptionId={id}
             maxShares={shares}
+          />
+        )}
+
+        {/* Sell Position Modal */}
+        {shares > 0n && (
+          <SellPositionModal
+            open={sellModalOpen}
+            onOpenChange={setSellModalOpen}
+            inscriptionId={id}
+            maxShares={shares}
+            debtAssets={assets
+              ?.filter((r) => r.asset_role === 'debt')
+              .map((r) => ({ address: r.asset_address, value: r.value ?? '0' })) ?? []}
           />
         )}
       </div>
