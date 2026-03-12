@@ -181,6 +181,12 @@ async function handleRedeemed(event: WebhookEvent, queries: D1Queries): Promise<
 async function handleTransferSingle(event: WebhookEvent, queries: D1Queries): Promise<void> {
   const d = transferSingleDataSchema.parse(event.data)
 
+  const fromIsZero = BigInt(d.from) === 0n
+  const toIsZero = BigInt(d.to) === 0n
+
+  // Classify: mint (from=0), burn (to=0), or secondary transfer (both non-zero)
+  const transferType = fromIsZero ? 'mint' : toIsZero ? 'burn' : 'transfer'
+
   // Insert dedup event first — if this tx was already processed, INSERT OR IGNORE
   // makes this a no-op and we skip the balance mutations to prevent double-counting
   const inserted = await queries.insertEventReturning({
@@ -189,15 +195,15 @@ async function handleTransferSingle(event: WebhookEvent, queries: D1Queries): Pr
     tx_hash: event.tx_hash,
     block_number: event.block_number,
     timestamp: event.timestamp,
-    data: { from: d.from, to: d.to, value: d.value },
+    data: { from: d.from, to: d.to, value: d.value, transfer_type: transferType },
   })
   if (!inserted) return // Already processed — skip balance mutations
 
-  if (BigInt(d.from) !== 0n) {
+  if (!fromIsZero) {
     await queries.decrementShareBalance(d.from, d.inscription_id, BigInt(d.value))
   }
 
-  if (BigInt(d.to) !== 0n) {
+  if (!toIsZero) {
     await queries.incrementShareBalance(d.to, d.inscription_id, BigInt(d.value))
   }
 }

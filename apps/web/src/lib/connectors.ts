@@ -26,6 +26,8 @@ const policies: SessionPolicies = {
         { name: 'Start Auction', entrypoint: 'start_auction' },
         { name: 'Bid', entrypoint: 'bid' },
         { name: 'Claim Collateral', entrypoint: 'claim_collateral' },
+        { name: 'Transfer Shares', entrypoint: 'safe_transfer_from' },
+        { name: 'Approve Shares', entrypoint: 'set_approval_for_all' },
       ],
     },
     [STRK_ADDRESS]: {

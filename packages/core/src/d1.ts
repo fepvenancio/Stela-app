@@ -1575,6 +1575,111 @@ export function createD1Queries(db: D1Database) {
         .bind(auctionStarted ? 1 : 0, auctionStartTime, Math.floor(Date.now() / 1000), id)
         .run()
     },
+
+    // -----------------------------------------------------------------------
+    // Share Listings (Secondary Market)
+    // -----------------------------------------------------------------------
+
+    async createShareListing(listing: {
+      id: string
+      inscription_id: string
+      seller: string
+      shares: string
+      payment_token: string
+      price: string
+      deadline: number
+    }) {
+      await db
+        .prepare(
+          `INSERT INTO share_listings (id, inscription_id, seller, shares, payment_token, price, status, deadline, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)`
+        )
+        .bind(
+          listing.id, listing.inscription_id, normalizeAddress(listing.seller),
+          listing.shares, normalizeAddress(listing.payment_token),
+          listing.price, listing.deadline, Math.floor(Date.now() / 1000),
+        )
+        .run()
+    },
+
+    async getShareListings(params: {
+      inscription_id?: string
+      seller?: string
+      status?: string
+      page?: number
+      limit?: number
+    }) {
+      const conditions: string[] = []
+      const binds: unknown[] = []
+      const limit = Math.min(params.limit ?? 20, 50)
+      const offset = ((params.page ?? 1) - 1) * limit
+
+      if (params.inscription_id) {
+        conditions.push('inscription_id = ?')
+        binds.push(params.inscription_id)
+      }
+      if (params.seller) {
+        conditions.push('LOWER(seller) = LOWER(?)')
+        binds.push(params.seller)
+      }
+      if (params.status) {
+        const validStatuses = new Set(['active', 'filled', 'cancelled', 'expired'])
+        if (!validStatuses.has(params.status)) throw new Error(`Invalid listing status: ${params.status}`)
+        conditions.push('status = ?')
+        binds.push(params.status)
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      binds.push(limit, offset)
+
+      const result = await db
+        .prepare(
+          `SELECT id, inscription_id, seller, shares, payment_token, price, status, deadline, created_at, filled_by, filled_at, tx_hash
+           FROM share_listings ${where}
+           ORDER BY created_at DESC
+           LIMIT ? OFFSET ?`
+        )
+        .bind(...binds)
+        .all<{
+          id: string; inscription_id: string; seller: string; shares: string
+          payment_token: string; price: string; status: string; deadline: number
+          created_at: number; filled_by: string | null; filled_at: number | null; tx_hash: string | null
+        }>()
+      return result.results
+    },
+
+    async getShareListing(id: string) {
+      return db
+        .prepare('SELECT * FROM share_listings WHERE id = ?')
+        .bind(id)
+        .first<{
+          id: string; inscription_id: string; seller: string; shares: string
+          payment_token: string; price: string; status: string; deadline: number
+          created_at: number; filled_by: string | null; filled_at: number | null; tx_hash: string | null
+        }>()
+    },
+
+    async updateShareListingStatus(id: string, status: string) {
+      const validStatuses = new Set(['active', 'filled', 'cancelled', 'expired'])
+      if (!validStatuses.has(status)) throw new Error(`Invalid listing status: ${status}`)
+      await db.prepare('UPDATE share_listings SET status = ? WHERE id = ?').bind(status, id).run()
+    },
+
+    async fillShareListing(id: string, buyer: string, txHash: string) {
+      await db
+        .prepare(
+          'UPDATE share_listings SET status = ?, filled_by = ?, filled_at = ?, tx_hash = ? WHERE id = ?'
+        )
+        .bind('filled', normalizeAddress(buyer), Math.floor(Date.now() / 1000), txHash, id)
+        .run()
+    },
+
+    async expireShareListings(nowSeconds: number) {
+      await db
+        .prepare("UPDATE share_listings SET status = 'expired' WHERE status = 'active' AND deadline < ?")
+        .bind(nowSeconds)
+        .run()
+    },
   }
 }
 

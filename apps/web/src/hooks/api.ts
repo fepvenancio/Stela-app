@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-interface FetchState<T> {
+export interface FetchState<T> {
   data: T | undefined
   isLoading: boolean
   error: Error | null

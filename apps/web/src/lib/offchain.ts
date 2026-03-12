@@ -27,9 +27,18 @@ export {
   AUCTION_DURATION,
   AUCTION_PENALTY_BPS,
   AUCTION_RESERVE_BPS,
+  // Position valuation (secondary market)
+  proRataInterest,
+  divCeil,
+  computePositionValue,
+  computeSafePositionFloor,
+  accruedInterestWithBuffer,
+  shareProportionBps,
+  proportionalAssetValue,
+  DEFAULT_DUST_BUFFER_SECONDS,
 } from '@fepvenancio/stela-sdk'
 
-export type { StoredSignature, BatchEntry } from '@fepvenancio/stela-sdk'
+export type { StoredSignature, BatchEntry, PositionValue, AssetValue, AccruedInterestEntry } from '@fepvenancio/stela-sdk'
 
 import type { RpcProvider, TypedData } from 'starknet'
 
