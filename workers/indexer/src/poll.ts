@@ -169,12 +169,14 @@ async function rpcEventToWebhookEvent(event: RpcEvent, stelaAddress: string): Pr
           }),
         })
         const rpcJson = (await rpcRes.json()) as { result?: string[] }
-        if (rpcJson.result && rpcJson.result.length >= 6) {
+        if (rpcJson.result && rpcJson.result.length >= 10) {
           const r = rpcJson.result
-          // get_inscription returns: multi_lender, duration, deadline, debt_count, interest_count, collateral_count, ...
-          multiLender = BigInt(r[0]) !== 0n
-          duration = Number(BigInt(r[1]))
-          deadline = Number(BigInt(r[2]))
+          // get_inscription returns: borrower, lender, duration, deadline, signed_at,
+          // issued_debt_pct(u256: low,high), is_repaid, liquidated, multi_lender,
+          // debt_count, interest_count, collateral_count
+          duration = Number(BigInt(r[2]))
+          deadline = Number(BigInt(r[3]))
+          multiLender = BigInt(r[9]) !== 0n
           break // success
         }
       } catch (err) {

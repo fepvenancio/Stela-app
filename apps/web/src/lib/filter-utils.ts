@@ -97,6 +97,14 @@ export function computeYieldPercent(
   debtAssets: FilterableAsset[],
   interestAssets: FilterableAsset[],
 ): number | null {
+  // Only compute yield when all interest tokens match a debt token —
+  // cross-token yield (e.g. mUSDC interest on mWETH debt) is meaningless
+  // without a price oracle.
+  const debtAddrs = new Set(debtAssets.map((a) => a.asset_address.toLowerCase()))
+  const allMatch = interestAssets.length > 0 &&
+    interestAssets.every((a) => debtAddrs.has(a.asset_address.toLowerCase()))
+  if (!allMatch) return null
+
   let debtTotal = 0
   for (const a of debtAssets) {
     const token = findTokenByAddress(a.asset_address)
