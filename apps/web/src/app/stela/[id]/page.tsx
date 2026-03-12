@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useMemo, useRef } from 'react'
+import { use, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, STATUS_LABELS } from '@fepvenancio/stela-sdk'
@@ -9,14 +9,17 @@ import { useOrder } from '@/hooks/useOrders'
 import { useInscription } from '@/hooks/useInscription'
 import { useInscriptionAssets } from '@/hooks/useInscriptionAssets'
 import { useShares } from '@/hooks/useShares'
-import { computeStatus } from '@/lib/status'
+import { computeStatus, enrichStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import { InscriptionActions } from '@/components/InscriptionActions'
 import { OrderActions } from '@/components/OrderActions'
+import { RefinanceOfferForm } from '@/components/RefinanceOfferForm'
+import { useRefinance } from '@/hooks/useRefinance'
 import { TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CopyButton } from '@/components/CopyButton'
 
@@ -210,6 +213,138 @@ function OrderView({ id }: { id: string }) {
   )
 }
 
+/* ── T1 Helpers ─────────────────────────────────────────── */
+
+function useT1List(endpoint: string) {
+  const [items, setItems] = useState<Array<Record<string, unknown>>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    function fetchData() {
+      fetch(endpoint)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+          const arr = Array.isArray(data) ? data : (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) ? data.data : []
+          setItems(arr as Array<Record<string, unknown>>)
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    }
+    fetchData()
+    const onSync = () => fetchData()
+    window.addEventListener('stela:sync', onSync)
+    return () => window.removeEventListener('stela:sync', onSync)
+  }, [endpoint])
+
+  return { items, loading }
+}
+
+function T1Row({ label, detail, status }: { label: string; detail: string; status: string }) {
+  return (
+    <div className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
+      <div className="space-y-1 min-w-0">
+        <span className="text-xs text-chalk font-mono truncate block">{label}</span>
+        <span className="text-[10px] text-dust block truncate">{detail}</span>
+      </div>
+      <Badge variant={status as 'pending'} className="rounded-full px-3 py-0.5 text-[10px] uppercase tracking-widest shrink-0">
+        {status}
+      </Badge>
+    </div>
+  )
+}
+
+function T1Section({ inscriptionId, title, endpoint, renderRow }: {
+  inscriptionId: string; title: string; endpoint: string
+  renderRow: (item: Record<string, unknown>, index: number) => React.ReactNode
+}) {
+  const { items, loading } = useT1List(`${endpoint}?inscription_id=${inscriptionId}`)
+  if (loading || items.length === 0) return null
+  return (
+    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-edge/20 bg-surface/25">
+        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">{title}</h3>
+      </div>
+      <div className="p-5 space-y-3">
+        {items.map((item, i) => renderRow(item, i))}
+      </div>
+    </section>
+  )
+}
+
+function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: string; isBorrower: boolean }) {
+  const { address } = useAccount()
+  const { items, loading } = useT1List(`/api/refinances?inscription_id=${inscriptionId}`)
+  const { approveOffer, isPending: approvePending } = useRefinance()
+  const [showForm, setShowForm] = useState(false)
+
+  const isConnected = Boolean(address)
+  const canCreateOffer = isConnected && !isBorrower
+
+  return (
+    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-edge/20 bg-surface/25 flex items-center justify-between">
+        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Refinance Offers</h3>
+        {canCreateOffer && !showForm && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowForm(true)}
+            className="text-[10px] uppercase tracking-widest border-star/30 text-star hover:bg-star/10"
+          >
+            Make Offer
+          </Button>
+        )}
+      </div>
+      <div className="p-5 space-y-4">
+        {showForm && (
+          <div className="border border-star/20 rounded-xl p-4 bg-star/[0.02]">
+            <RefinanceOfferForm inscriptionId={inscriptionId} onClose={() => setShowForm(false)} />
+          </div>
+        )}
+        {!loading && items.length > 0 && (
+          <div className="space-y-3">
+            {items.map((offer, i) => {
+              const offerId = String(offer.id ?? '')
+              const offerStatus = String(offer.status ?? 'pending')
+              const canApprove = isBorrower && offerStatus === 'pending'
+              return (
+                <div key={offerId || i} className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs text-chalk font-mono truncate block">{formatAddress(String(offer.new_lender ?? ''))}</span>
+                    <span className="text-[10px] text-dust block truncate">Nonce: {String(offer.nonce ?? '--')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {canApprove && (
+                      <Button
+                        variant="aurora"
+                        size="sm"
+                        disabled={approvePending}
+                        onClick={() => {
+                          const offerHash = String(offer.offer_hash ?? offer.id ?? '')
+                          void approveOffer(offerId, offerHash, BigInt(inscriptionId), BigInt(String(offer.nonce ?? '0')))
+                        }}
+                        className="text-[10px] uppercase tracking-widest"
+                      >
+                        {approvePending ? 'Approving...' : 'Approve'}
+                      </Button>
+                    )}
+                    <Badge variant={offerStatus as 'pending'} className="rounded-full px-3 py-0.5 text-[10px] uppercase tracking-widest">
+                      {offerStatus}
+                    </Badge>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {!loading && items.length === 0 && !showForm && (
+          <p className="text-xs text-dust italic text-center py-2">No refinance offers yet.</p>
+        )}
+      </div>
+    </section>
+  )
+}
+
 /* ── Inscription view ────────────────────────────────────── */
 
 function InscriptionView({ id }: { id: string }) {
@@ -244,6 +379,18 @@ function InscriptionView({ id }: { id: string }) {
     if (!sharesRaw) return 0n
     return BigInt(sharesRaw as string | bigint)
   }, [sharesRaw])
+
+  const enrichedStatusValue = useMemo(() => {
+    if (!a) return status
+    return enrichStatus({
+      status: String(a.status ?? status),
+      signed_at: a.signed_at ? String(a.signed_at) : null,
+      duration: String(a.duration ?? '0'),
+      issued_debt_percentage: String(a.issued_debt_percentage ?? '0'),
+      deadline: String(a.deadline ?? '0'),
+      auction_started: a.auction_started ? 1 : 0,
+    })
+  }, [a, status])
 
   const roiInfo = useMemo(() => {
     if (!assets) return null
@@ -310,13 +457,50 @@ function InscriptionView({ id }: { id: string }) {
           <AssetSection role="interest" assets={toDisplayAssets(interestAssets)} isLoading={assetsLoading} />
         </>
       }
-      extraContent={null}
+      extraContent={
+        <>
+          {enrichedStatusValue === 'filled' && (
+            <RefinanceOffersSection inscriptionId={id} isBorrower={isBorrower} />
+          )}
+          {enrichedStatusValue === 'filled' && (
+            <T1Section
+              inscriptionId={id}
+              title="Renegotiations"
+              endpoint="/api/renegotiations"
+              renderRow={(p, i) => (
+                <T1Row
+                  key={String(p.id ?? i)}
+                  label={formatAddress(String(p.proposer ?? ''))}
+                  detail={p.new_duration ? `New duration: ${p.new_duration}s` : 'New interest terms'}
+                  status={String(p.status ?? 'pending')}
+                />
+              )}
+            />
+          )}
+          {(enrichedStatusValue === 'filled' || enrichedStatusValue === 'grace_period') && (
+            <T1Section
+              inscriptionId={id}
+              title="Collateral Sales"
+              endpoint="/api/collateral-sales"
+              renderRow={(sale, i) => (
+                <T1Row
+                  key={String(sale.id ?? i)}
+                  label={formatAddress(String(sale.buyer ?? ''))}
+                  detail={`Min price: ${String(sale.min_price ?? '--')}`}
+                  status={String(sale.status ?? 'pending')}
+                />
+              )}
+            />
+          )}
+        </>
+      }
       sidebarTitle="Vault Actions"
       sidebarActions={
         isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
           <InscriptionActions
             inscriptionId={id}
             status={status}
+            enrichedStatus={enrichedStatusValue}
             isOwner={isOwner}
             isBorrower={isBorrower}
             shares={shares}
@@ -328,6 +512,7 @@ function InscriptionView({ id }: { id: string }) {
               return token?.decimals ?? 18
             })()}
             wasSigned={Number(a?.signed_at ?? 0) > 0}
+            auctionStarted={Boolean(a?.auction_started)}
           />
         )
       }

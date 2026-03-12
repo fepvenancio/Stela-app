@@ -934,19 +934,20 @@ function CollectionNFTCard({ nft }: { nft: NFTItem }) {
       {nft.image && !imgError ? (
         <img
           src={nft.image}
-          alt={nft.name || `#${nft.tokenId}`}
+          alt={nft.name || 'NFT'}
           className="aspect-square w-full object-cover bg-abyss"
           onError={() => setImgError(true)}
         />
       ) : (
         <div className="aspect-square w-full bg-abyss flex items-center justify-center">
-          <span className="text-dust font-mono text-xs">#{nft.tokenId}</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+            <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
+          </svg>
         </div>
       )}
       <div className="px-1.5 py-1">
-        <p className="text-[10px] text-chalk font-mono truncate">#{nft.tokenId}</p>
         {nft.name && (
-          <p className="text-[9px] text-dust truncate">{nft.name}</p>
+          <p className="text-[10px] text-chalk truncate">{nft.name}</p>
         )}
       </div>
     </div>
