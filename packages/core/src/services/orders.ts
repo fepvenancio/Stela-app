@@ -85,7 +85,7 @@ export async function processCreateOrder(
     throw new Error('Maximum 50 pending orders per borrower')
   }
 
-  if (!sigValid) throw new Error('Invalid borrower signature')
+  if (!sigValid) throw new Error(`Invalid borrower signature for ${borrower}`)
 
   if (!nonceCheck.valid) {
     // Allow if submitted nonce accounts for pending orders that haven't settled yet.
@@ -93,8 +93,9 @@ export async function processCreateOrder(
     const pendingCount = BigInt((pendingOrders as unknown[]).length)
     const onChain = nonceCheck.onChain ?? 0n
     if (submittedNonce > onChain + pendingCount || submittedNonce < onChain) {
-      console.error(`Nonce mismatch for ${borrower}: submitted=${nonceCheck.submitted}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}, pending=${pendingCount}`)
-      throw new Error('Nonce validation failed')
+      const detail = `submitted=${submittedNonce}, on-chain=${nonceCheck.onChain ?? 'RPC_FAILED'}, pending=${pendingCount}`
+      console.error(`Nonce mismatch for ${borrower}: ${detail}`)
+      throw new Error(`Nonce validation failed (${detail})`)
     }
   }
 
