@@ -22,3 +22,8 @@ export const CHAIN_ID = CHAIN_IDS[NETWORK]
 export const VOYAGER_TX_URL = NETWORK === 'mainnet'
   ? 'https://voyager.online/tx'
   : 'https://sepolia.voyager.online/tx'
+
+/** Alchemy NFT API base URL (per network) */
+export const ALCHEMY_NFT_BASE = NETWORK === 'mainnet'
+  ? 'https://starknet-mainnet.g.alchemy.com/nft/v3'
+  : 'https://starknet-sepolia.g.alchemy.com/nft/v3'

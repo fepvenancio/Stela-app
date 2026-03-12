@@ -6,7 +6,6 @@ import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
-import { getNFTCollections } from '@stela/core'
 import { NETWORK, CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
@@ -18,12 +17,15 @@ import type { AssetInputValue } from '@/components/AssetInput'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
+import { NFTCollectionSelector } from '@/components/NFTCollectionSelector'
+import type { NFTCollectionInfo } from '@/components/NFTCollectionSelector'
 import { TokenAvatar } from '@/components/TokenAvatar'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
 import { formatTokenValue } from '@/lib/format'
 import { formatAddress } from '@/lib/address'
 import { useFeePreview } from '@/hooks/useFeePreview'
+import { NFTTokenPicker } from '@/components/NFTTokenPicker'
 
 /* ── Constants ──────────────────────────────────────────── */
 
@@ -603,6 +605,8 @@ function CollectionOfferForm() {
   const { balances } = useTokenBalances()
 
   const [collectionAddress, setCollectionAddress] = useState('')
+  const [selectedCollection, setSelectedCollection] = useState<NFTCollectionInfo | null>(null)
+  const [collectionSelectorOpen, setCollectionSelectorOpen] = useState(false)
   const [debtAsset, setDebtAsset] = useState<AssetInputValue>(emptyAsset())
   const [interestAsset, setInterestAsset] = useState<AssetInputValue>(emptyAsset())
   const [openSelector, setOpenSelector] = useState<'debt' | 'interest' | null>(null)
@@ -682,12 +686,11 @@ function CollectionOfferForm() {
 
     // Reset form on success
     setCollectionAddress('')
+    setSelectedCollection(null)
     setDebtAsset(emptyAsset())
     setInterestAsset(emptyAsset())
     setShowErrors(false)
   }, [isValid, address, deadlinePreset, durationPreset, provider, debtAsset, interestAsset, collectionAddress, createCollectionOffer])
-
-  const nftCollections = useMemo(() => getNFTCollections(NETWORK), [])
 
   return (
     <>
@@ -697,36 +700,48 @@ function CollectionOfferForm() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] uppercase tracking-widest font-bold text-star">Collection</span>
           </div>
-          <input
-            type="text"
-            placeholder="0x... collection address"
-            value={collectionAddress}
-            onChange={(e) => setCollectionAddress(e.target.value.trim())}
-            className="w-full text-sm font-mono bg-transparent outline-none text-chalk placeholder:text-ash/40"
-          />
-          {nftCollections.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {nftCollections.map((nft) => {
-                const addr = nft.addresses[NETWORK] ?? ''
-                const isSelected = collectionAddress.toLowerCase() === addr.toLowerCase()
-                return (
-                  <button
-                    key={addr}
-                    type="button"
-                    onClick={() => setCollectionAddress(addr)}
-                    className={`flex items-center gap-1.5 py-1 px-2.5 rounded-sm text-[10px] font-medium border transition-colors cursor-pointer ${
-                      isSelected
-                        ? 'border-star/40 bg-star/10 text-star'
-                        : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
-                    }`}
-                  >
-                    <span>{nft.symbol}</span>
-                    <span className="text-ash font-mono">{addr.slice(0, 6)}...{addr.slice(-4)}</span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => setCollectionSelectorOpen(true)}
+            className="w-full flex items-center gap-3 py-2 px-1 rounded-lg transition-colors text-left hover:bg-star/5"
+          >
+            {selectedCollection ? (
+              <>
+                <div className="relative shrink-0 rounded-lg overflow-hidden bg-edge/20" style={{ width: 40, height: 40 }}>
+                  {selectedCollection.image ? (
+                    <img
+                      src={selectedCollection.image}
+                      alt={selectedCollection.name}
+                      width={40}
+                      height={40}
+                      className="rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-dust text-sm font-semibold">
+                      {selectedCollection.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-chalk truncate">{selectedCollection.name}</div>
+                  <div className="text-[10px] text-dust font-mono truncate">{formatAddress(selectedCollection.address)}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="shrink-0 w-10 h-10 rounded-lg border border-dashed border-edge flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+                    <rect x="2" y="2" width="12" height="12" rx="2" />
+                    <path d="M6 6h4M6 10h4" />
+                  </svg>
+                </div>
+                <span className="text-sm text-ash/60">Select Collection</span>
+              </>
+            )}
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-dust ml-auto">
+              <path d="M3 5l3 3 3-3" />
+            </svg>
+          </button>
           {showErrors && !isValidAddress && collectionAddress && (
             <p className="text-[10px] text-nova mt-1">Invalid StarkNet address</p>
           )}
@@ -856,6 +871,14 @@ function CollectionOfferForm() {
         selectedAddress={interestAsset.asset}
         showCustomOption={false}
         balances={balances}
+      />
+      <NFTCollectionSelector
+        open={collectionSelectorOpen}
+        onClose={() => setCollectionSelectorOpen(false)}
+        onSelect={(collection) => {
+          setCollectionAddress(collection.address)
+          setSelectedCollection(collection)
+        }}
       />
     </>
   )
@@ -1052,10 +1075,24 @@ function CollectionOfferBrowser() {
                 </div>
 
                 {!isExpired && address && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    {/* NFT Picker grid */}
+                    <div>
+                      <label className="text-[10px] text-dust uppercase tracking-widest font-bold mb-2 block">
+                        Select Your NFT
+                      </label>
+                      <NFTTokenPicker
+                        owner={address}
+                        collectionAddress={offer.collection_address}
+                        onSelect={(id) => setTokenId(id)}
+                        selectedTokenId={tokenId}
+                      />
+                    </div>
+
+                    {/* Manual fallback input */}
                     <div>
                       <label className="text-[10px] text-dust uppercase tracking-widest font-bold">
-                        Your Token ID
+                        Or enter Token ID manually
                       </label>
                       <input
                         type="text"
@@ -1065,6 +1102,7 @@ function CollectionOfferBrowser() {
                         className="w-full mt-1 text-sm font-mono bg-abyss/50 border border-edge/30 rounded-md px-3 py-2 outline-none text-chalk placeholder:text-ash/40 focus:border-star/40"
                       />
                     </div>
+
                     <Button
                       variant="gold"
                       className="w-full uppercase tracking-[0.15em] text-xs"
