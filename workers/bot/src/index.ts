@@ -18,6 +18,8 @@ interface Env {
 }
 
 const TX_TIMEOUT_MS = 120_000
+const MAX_LIQUIDATIONS_PER_RUN = 10
+const MAX_SETTLEMENTS_PER_RUN = 10
 
 // ---------------------------------------------------------------------------
 // Asset serialization types (matching stored order_data JSON)
@@ -320,7 +322,13 @@ async function settleOrders(
       console.log('Falling back to individual settlements...')
 
       // Individual fallback — one bad order won't block the rest
-      for (let i = 0; i < calls.length; i++) {
+      const fallbackLimit = Math.min(calls.length, MAX_SETTLEMENTS_PER_RUN)
+      if (fallbackLimit < calls.length) {
+        console.log(
+          `Capping individual fallback to ${fallbackLimit} of ${calls.length} settlements`,
+        )
+      }
+      for (let i = 0; i < fallbackLimit; i++) {
         await executeSettlement(account, provider, queries, calls[i], settledPairs[i])
       }
     }
@@ -474,8 +482,11 @@ export default {
         if (candidates.length === 0) {
           console.log('No liquidatable inscriptions found')
         } else {
-          console.log(`Found ${candidates.length} candidate(s)`)
-          for (const inscription of candidates) {
+          const capped = candidates.slice(0, MAX_LIQUIDATIONS_PER_RUN)
+          console.log(
+            `Found ${candidates.length} candidate(s), processing ${capped.length} this run`,
+          )
+          for (const inscription of capped) {
             try {
               const txHash = await liquidate(account, provider, env.STELA_ADDRESS, inscription.id)
               console.log(`Liquidated ${inscription.id}: ${txHash}`)

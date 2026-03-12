@@ -285,6 +285,26 @@ export function createD1Queries(db: D1Database) {
         .run()
     },
 
+    async insertAssetsBatch(assets: Array<{
+      inscription_id: string
+      asset_role: string
+      asset_index: number
+      asset_address: string
+      asset_type: string
+      value: string
+      token_id: string
+    }>): Promise<void> {
+      if (assets.length === 0) return
+      const statements = assets.map(a =>
+        db.prepare(
+          `INSERT OR IGNORE INTO inscription_assets
+           (inscription_id, asset_role, asset_index, asset_address, asset_type, value, token_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).bind(a.inscription_id, a.asset_role, a.asset_index, a.asset_address, a.asset_type, a.value, a.token_id)
+      )
+      await db.batch(statements)
+    },
+
     // -----------------------------------------------------------------------
     // Meta (indexer block cursor)
     // -----------------------------------------------------------------------
@@ -457,38 +477,27 @@ export function createD1Queries(db: D1Database) {
     // -----------------------------------------------------------------------
 
     async incrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
-      // Read current balance, compute new value in JS (BigInt — CAST overflows for u256),
-      // then write back. Sequential processing by the indexer prevents races in practice.
-      // D1 Workers are single-threaded per isolate; the indexer handles events sequentially.
-      const row = await db
-        .prepare('SELECT balance FROM share_balances WHERE account = ? AND inscription_id = ?')
-        .bind(account, inscriptionId)
-        .first<{ balance: string }>()
-      let current = 0n
-      if (row) {
-        try { current = BigInt(row.balance) } catch { current = 0n }
-      }
-      const newBalance = (current + amount).toString()
+      const amountStr = amount.toString()
       await db
         .prepare(
-          `INSERT OR REPLACE INTO share_balances (account, inscription_id, balance) VALUES (?, ?, ?)`
+          `INSERT INTO share_balances (account, inscription_id, balance)
+           VALUES (?, ?, ?)
+           ON CONFLICT(account, inscription_id)
+           DO UPDATE SET balance = CAST(CAST(share_balances.balance AS INTEGER) + CAST(excluded.balance AS INTEGER) AS TEXT)`
         )
-        .bind(account, inscriptionId, newBalance)
+        .bind(account, inscriptionId, amountStr)
         .run()
     },
 
     async decrementShareBalance(account: string, inscriptionId: string, amount: bigint): Promise<void> {
-      const row = await db
-        .prepare('SELECT balance FROM share_balances WHERE account = ? AND inscription_id = ?')
-        .bind(account, inscriptionId)
-        .first<{ balance: string }>()
-      if (!row) return
-      let current = 0n
-      try { current = BigInt(row.balance) } catch { current = 0n }
-      const newBalance = (current > amount ? current - amount : 0n).toString()
+      const amountStr = amount.toString()
       await db
-        .prepare('UPDATE share_balances SET balance = ? WHERE account = ? AND inscription_id = ?')
-        .bind(newBalance, account, inscriptionId)
+        .prepare(
+          `UPDATE share_balances
+           SET balance = CAST(MAX(0, CAST(balance AS INTEGER) - CAST(? AS INTEGER)) AS TEXT)
+           WHERE account = ? AND inscription_id = ?`
+        )
+        .bind(amountStr, account, inscriptionId)
         .run()
     },
 

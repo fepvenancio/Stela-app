@@ -53,10 +53,19 @@ async function handleCreated(event: WebhookEvent, queries: D1Queries): Promise<v
   })
 
   const roles = ['debt', 'interest', 'collateral'] as const
+  const allAssets: Array<{
+    inscription_id: string
+    asset_role: string
+    asset_index: number
+    asset_address: string
+    asset_type: string
+    value: string
+    token_id: string
+  }> = []
   for (const role of roles) {
     const assets = d.assets[role]
     for (let i = 0; i < assets.length; i++) {
-      await queries.insertAsset({
+      allAssets.push({
         inscription_id: d.inscription_id,
         asset_role: role,
         asset_index: i,
@@ -66,6 +75,9 @@ async function handleCreated(event: WebhookEvent, queries: D1Queries): Promise<v
         token_id: assets[i].token_id,
       })
     }
+  }
+  if (allAssets.length > 0) {
+    await queries.insertAssetsBatch(allAssets)
   }
 
   await queries.insertEvent({
