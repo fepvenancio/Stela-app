@@ -30,6 +30,10 @@ const WALLET_META: Record<string, { name: string; icon: string }> = {
     name: 'Braavos',
     icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjRURCOTJCIi8+PHBhdGggZD0iTTE2IDcuNWwtNy41IDkgMyA0LjUgNC41LTYgNC41IDYgMy00LjUtNy41LTlaIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==',
   },
+  controller: {
+    name: 'Cartridge',
+    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjRkJDQjRBIi8+PHBhdGggZD0iTTggMTBoMTZ2MTJIOHoiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4xNSIgcng9IjIiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjE2IiByPSIyIiBmaWxsPSJ3aGl0ZSIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTYiIHI9IjIiIGZpbGw9IndoaXRlIi8+PHJlY3QgeD0iMTAiIHk9IjgiIHdpZHRoPSIxMiIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==',
+  },
 }
 
 function getWalletMeta(connector: Connector) {
@@ -106,7 +110,9 @@ function ConnectWalletModal({
 
   const handleConnect = (connector: Connector) => {
     const isAvailable = availability[connector.id]
-    if (!isAvailable) {
+    // Cartridge Controller is always available (iframe-based, no extension)
+    const isAlwaysAvailable = connector.id === 'controller'
+    if (!isAvailable && !isAlwaysAvailable) {
       const downloadUrl = WALLET_DOWNLOAD_URLS[connector.id]
       if (downloadUrl) {
         window.open(downloadUrl, '_blank', 'noopener,noreferrer')
@@ -156,7 +162,7 @@ function ConnectWalletModal({
                   <span className="text-chalk text-sm font-medium group-hover:text-star transition-colors">
                     {name}
                   </span>
-                  {!isChecking && !isAvailable && (
+                  {!isChecking && !isAvailable && connector.id !== 'controller' && (
                     <span className="block text-[10px] text-star/60 mt-0.5">Install →</span>
                   )}
                 </div>
