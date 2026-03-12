@@ -26,7 +26,6 @@ export function Footer() {
           <nav className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-5 gap-y-2">
             <Link href="/trade" className="text-xs text-dust hover:text-chalk transition-colors">Trade</Link>
             <Link href="/markets" className="text-xs text-dust hover:text-chalk transition-colors">Markets</Link>
-            <Link href="/portfolio" className="text-xs text-dust hover:text-chalk transition-colors">Portfolio</Link>
             <span className="hidden sm:block w-px h-3 bg-edge/30" />
             <Link href="/faq" className="text-xs text-dust hover:text-chalk transition-colors">FAQ</Link>
             <Link href="/terms" className="text-xs text-dust hover:text-chalk transition-colors">Terms</Link>

@@ -62,10 +62,29 @@ export async function GET(
     const json = (await res.json()) as Record<string, unknown>
 
     const openSeaMetadata = json.openSeaMetadata as Record<string, unknown> | undefined
+    let image: string | null =
+      (openSeaMetadata?.imageUrl as string) ?? (json.image as string) ?? null
+
+    // If no collection image, fetch the first NFT's image as fallback
+    if (!image) {
+      try {
+        const nftsUrl = `${ALCHEMY_NFT_BASE}/${apiKey}/getNFTsForContract?contractAddress=${address}&withMetadata=true&limit=1`
+        const nftsRes = await fetch(nftsUrl)
+        if (nftsRes.ok) {
+          const nftsJson = (await nftsRes.json()) as Record<string, unknown>
+          const nfts = (nftsJson.nfts ?? []) as Array<Record<string, unknown>>
+          if (nfts.length > 0) {
+            const nftImage = nfts[0].image as Record<string, unknown> | undefined
+            image = (nftImage?.cachedUrl as string) ?? (nftImage?.originalUrl as string) ?? null
+          }
+        }
+      } catch { /* ignore fallback failure */ }
+    }
+
     const data: CollectionMetadata = {
       name: (json.name as string) ?? '',
       symbol: (json.symbol as string) ?? '',
-      image: (openSeaMetadata?.imageUrl as string) ?? (json.image as string) ?? null,
+      image,
       totalSupply: json.totalSupply != null ? String(json.totalSupply) : null,
       tokenType: (json.tokenType as string) ?? null,
     }

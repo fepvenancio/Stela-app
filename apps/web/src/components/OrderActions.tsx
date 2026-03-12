@@ -182,7 +182,7 @@ export function OrderActions({
               <p className="text-xs text-dust mt-1">This order was settled and is now an active inscription.</p>
             </div>
             <Button asChild variant="aurora" size="xl" className="w-full text-lg">
-              <Link href="/portfolio">View in Portfolio to Repay</Link>
+              <Link href="/markets">View in Markets to Repay</Link>
             </Button>
           </div>
         ) : (
