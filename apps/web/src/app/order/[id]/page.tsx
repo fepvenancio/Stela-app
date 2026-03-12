@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useMemo, useState } from 'react'
+import { useCountdown } from '@/hooks/useCountdown'
 import Link from 'next/link'
 import { useAccount } from '@starknet-react/core'
 import { useWalletSign } from '@/hooks/useWalletSign'
@@ -59,6 +60,12 @@ export default function OrderPage({ params }: OrderPageProps) {
   }, [address, order?.borrower])
 
   const { debtAssets, interestAssets, collateralAssets, duration, multiLender: isMultiLender } = orderData
+
+  const deadlineTimestamp = useMemo(() => {
+    if (!order?.deadline || Number(order.deadline) <= 0) return null
+    return Number(order.deadline)
+  }, [order?.deadline])
+  const countdown = useCountdown(deadlineTimestamp)
 
   // ROI Math
   const roiInfo = useMemo(() => {
@@ -381,6 +388,17 @@ export default function OrderPage({ params }: OrderPageProps) {
                   {order?.deadline ? formatTimestamp(BigInt(order.deadline)) : '--'}
                 </span>
               </div>
+              {deadlineTimestamp && (
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-dust uppercase">Time Remaining</span>
+                  <span
+                    suppressHydrationWarning
+                    className={`text-xs font-mono ${countdown.isExpired ? 'text-nova' : countdown.isUrgent ? 'text-nova' : countdown.isAtRisk ? 'text-star' : 'text-aurora'}`}
+                  >
+                    {countdown.formatted}
+                  </span>
+                </div>
+              )}
             </div>
           </section>
         </aside>

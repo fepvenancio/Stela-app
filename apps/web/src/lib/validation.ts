@@ -135,6 +135,175 @@ export const cancelOrderSchema = z.object({
   signature: signatureInput,
 })
 
+// ─── T1 Validation Schemas ──────────────────────────────────────────────
+
+/** Collection offer order data — describes the loan terms for any token in a collection */
+const collectionOfferDataSchema = z.object({
+  lender: starknetAddress,
+  collectionAddress: starknetAddress,
+  debtAssets: z.array(serializedAsset).min(1, 'At least one debt asset is required'),
+  interestAssets: z.array(serializedAsset).default([]),
+  duration: z.string(),
+  deadline: z.string(),
+  multiLender: z.boolean().default(false),
+  nonce: z.string(),
+})
+
+/** POST /api/collection-offers — create a collection offer */
+export const createCollectionOfferSchema = z.object({
+  id: z.string().min(1, 'Offer ID is required'),
+  lender: starknetAddress,
+  collection_address: starknetAddress,
+  order_data: z.union([collectionOfferDataSchema, z.string().transform((val, ctx) => {
+    try {
+      const parsed = JSON.parse(val)
+      const result = collectionOfferDataSchema.safeParse(parsed)
+      if (!result.success) {
+        const messages = result.error.issues.map((i) => i.message).join('; ')
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Invalid order_data: ${messages}` })
+        return z.NEVER
+      }
+      return result.data
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid order_data JSON' })
+      return z.NEVER
+    }
+  })]),
+  lender_signature: signatureInput,
+  nonce: z.string().min(1, 'Nonce is required'),
+  deadline: z.coerce.number().int().positive('Deadline must be a positive integer'),
+  debt_token: starknetAddress.optional(),
+  collateral_token: starknetAddress.optional(),
+})
+
+/** POST /api/collection-offers/:id/accept — borrower accepts with specific token */
+export const acceptCollectionOfferSchema = z.object({
+  borrower: starknetAddress,
+  token_id: z.string().min(1, 'Token ID is required'),
+  borrower_signature: signatureInput,
+  nonce: z.string().min(1, 'Nonce is required'),
+})
+
+/** Refinance offer data — new lender's terms for refinancing */
+const refinanceOfferDataSchema = z.object({
+  newLender: starknetAddress,
+  inscriptionId: z.string(),
+  debtAssets: z.array(serializedAsset).min(1),
+  interestAssets: z.array(serializedAsset).default([]),
+  nonce: z.string(),
+})
+
+/** POST /api/refinances — create a refinance offer */
+export const createRefinanceOfferSchema = z.object({
+  id: z.string().min(1, 'Offer ID is required'),
+  inscription_id: z.string().min(1, 'Inscription ID is required'),
+  new_lender: starknetAddress,
+  order_data: z.union([refinanceOfferDataSchema, z.string().transform((val, ctx) => {
+    try {
+      const parsed = JSON.parse(val)
+      const result = refinanceOfferDataSchema.safeParse(parsed)
+      if (!result.success) {
+        const messages = result.error.issues.map((i) => i.message).join('; ')
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Invalid order_data: ${messages}` })
+        return z.NEVER
+      }
+      return result.data
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid order_data JSON' })
+      return z.NEVER
+    }
+  })]),
+  lender_signature: signatureInput,
+  nonce: z.string().min(1, 'Nonce is required'),
+  deadline: z.coerce.number().int().positive('Deadline must be a positive integer'),
+})
+
+/** POST /api/refinances/:id/approve — borrower approves refinance */
+export const approveRefinanceSchema = z.object({
+  borrower: starknetAddress,
+  borrower_signature: signatureInput,
+  nonce: z.string().min(1, 'Nonce is required'),
+})
+
+/** Renegotiation proposal data */
+const renegotiationProposalDataSchema = z.object({
+  inscriptionId: z.string(),
+  proposer: starknetAddress,
+  newDuration: z.string().optional(),
+  newInterestAssets: z.array(serializedAsset).optional(),
+  nonce: z.string(),
+})
+
+/** POST /api/renegotiations — create a renegotiation proposal */
+export const createRenegotiationSchema = z.object({
+  id: z.string().min(1, 'Proposal ID is required'),
+  inscription_id: z.string().min(1, 'Inscription ID is required'),
+  proposer: starknetAddress,
+  proposal_data: z.union([renegotiationProposalDataSchema, z.string().transform((val, ctx) => {
+    try {
+      const parsed = JSON.parse(val)
+      const result = renegotiationProposalDataSchema.safeParse(parsed)
+      if (!result.success) {
+        const messages = result.error.issues.map((i) => i.message).join('; ')
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Invalid proposal_data: ${messages}` })
+        return z.NEVER
+      }
+      return result.data
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid proposal_data JSON' })
+      return z.NEVER
+    }
+  })]),
+  proposer_signature: signatureInput,
+  nonce: z.string().min(1, 'Nonce is required'),
+  deadline: z.coerce.number().int().positive('Deadline must be a positive integer'),
+})
+
+/** Collateral sale offer data */
+const collateralSaleOfferDataSchema = z.object({
+  inscriptionId: z.string(),
+  buyer: starknetAddress,
+  price: z.string(),
+  nonce: z.string().optional(),
+})
+
+/** POST /api/collateral-sales — create a collateral sale offer */
+export const createCollateralSaleSchema = z.object({
+  id: z.string().min(1, 'Sale ID is required'),
+  inscription_id: z.string().min(1, 'Inscription ID is required'),
+  buyer: starknetAddress,
+  offer_data: z.union([collateralSaleOfferDataSchema, z.string().transform((val, ctx) => {
+    try {
+      const parsed = JSON.parse(val)
+      const result = collateralSaleOfferDataSchema.safeParse(parsed)
+      if (!result.success) {
+        const messages = result.error.issues.map((i) => i.message).join('; ')
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Invalid offer_data: ${messages}` })
+        return z.NEVER
+      }
+      return result.data
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid offer_data JSON' })
+      return z.NEVER
+    }
+  })]),
+  borrower_signature: signatureInput,
+  min_price: z.string().min(1, 'Minimum price is required'),
+  deadline: z.coerce.number().int().positive('Deadline must be a positive integer'),
+})
+
+/** DELETE /api/collection-offers/:id or /api/refinances/:id etc. — cancel by owner (address-only auth) */
+export const cancelByOwnerSchema = z.object({
+  address: starknetAddress,
+})
+
 export type CreateOrderInput = z.infer<typeof createOrderSchema>
 export type CreateOfferInput = z.infer<typeof createOfferSchema>
 export type CancelOrderInput = z.infer<typeof cancelOrderSchema>
+export type CreateCollectionOfferInput = z.infer<typeof createCollectionOfferSchema>
+export type AcceptCollectionOfferInput = z.infer<typeof acceptCollectionOfferSchema>
+export type CreateRefinanceOfferInput = z.infer<typeof createRefinanceOfferSchema>
+export type ApproveRefinanceInput = z.infer<typeof approveRefinanceSchema>
+export type CreateRenegotiationInput = z.infer<typeof createRenegotiationSchema>
+export type CreateCollateralSaleInput = z.infer<typeof createCollateralSaleSchema>
+export type CancelByOwnerInput = z.infer<typeof cancelByOwnerSchema>

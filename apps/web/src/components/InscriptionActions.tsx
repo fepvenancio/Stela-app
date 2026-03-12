@@ -10,6 +10,8 @@ import {
   useLiquidateInscription,
   useRedeemShares,
 } from '@/hooks/transactions'
+import { useStartAuction } from '@/hooks/useStartAuction'
+import { useBid } from '@/hooks/useBid'
 import type { DebtAssetInfo } from '@/hooks/transactions'
 import { useTransactionProgress } from '@/hooks/useTransactionProgress'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
@@ -24,6 +26,8 @@ import { parseAmount } from '@/lib/amount'
 interface InscriptionActionsProps {
   inscriptionId: string
   status: InscriptionStatus
+  /** Enriched status that distinguishes grace_period, overdue, auctioned */
+  enrichedStatus?: string
   isOwner: boolean
   isBorrower: boolean
   shares: bigint
@@ -32,11 +36,14 @@ interface InscriptionActionsProps {
   interestAssets?: DebtAssetInfo[]
   debtDecimals?: number
   wasSigned: boolean
+  /** Whether an auction has been started on this inscription */
+  auctionStarted?: boolean
 }
 
 export function InscriptionActions({
-  inscriptionId, status, isOwner, isBorrower, shares,
+  inscriptionId, status, enrichedStatus, isOwner, isBorrower, shares,
   multiLender, debtAssets, interestAssets, debtDecimals = 18, wasSigned,
+  auctionStarted,
 }: InscriptionActionsProps) {
   const { address } = useAccount()
   const [lendAmount, setLendAmount] = useState('')
@@ -46,6 +53,8 @@ export function InscriptionActions({
   const { cancel, isPending: cancelPending } = useCancelInscription(inscriptionId)
   const { liquidate, isPending: liquidatePending } = useLiquidateInscription(inscriptionId)
   const { redeem, isPending: redeemPending } = useRedeemShares(inscriptionId)
+  const { startAuction, isPending: auctionPending } = useStartAuction()
+  const { bid, isPending: bidPending } = useBid()
 
   const signSteps = useMemo(() => [
     { label: 'Approve & Sign', description: 'Confirm the transaction in your wallet' },
@@ -53,7 +62,13 @@ export function InscriptionActions({
   ], [])
   const signProgress = useTransactionProgress(signSteps)
 
-  const isPending = signPending || repayPending || cancelPending || liquidatePending || redeemPending
+  const isPending = signPending || repayPending || cancelPending || liquidatePending || redeemPending || auctionPending || bidPending
+
+  // Use enrichedStatus for T1 states, fall back to base status
+  const effectiveStatus = enrichedStatus ?? status
+
+  // Resolve the primary debt token address for auction bidding
+  const debtTokenAddress = debtAssets[0]?.address ?? ''
 
   if (!address) {
     return <p className="text-sm text-dust">Connect your wallet to interact with this inscription.</p>
@@ -252,6 +267,71 @@ export function InscriptionActions({
         </div>
         <Button variant="cosmic" size="xl" className="w-full text-lg" onClick={() => redeem(shares)} disabled={isPending}>
           {redeemPending ? 'Redeeming...' : 'Claim Assets'}
+        </Button>
+      </div>
+    )
+  }
+
+  // ── T1: Grace Period ──────────────────────────────────────────────
+  if (effectiveStatus === 'grace_period') {
+    if (isBorrower) {
+      // Borrower can still repay during grace period — same repay flow
+      return (
+        <div className="space-y-6">
+          <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
+            <span className="text-[10px] text-star uppercase tracking-widest font-bold">Grace Period Active</span>
+            <p className="text-xs text-dust mt-1 text-balance">Your loan has expired, but you can still repay during the grace period to reclaim your collateral.</p>
+          </div>
+          <Button variant="aurora" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
+            {repayPending ? 'Repaying...' : 'Repay Now'}
+          </Button>
+        </div>
+      )
+    }
+    return (
+      <div className="rounded-lg border border-star/20 bg-star/5 p-4">
+        <p className="text-sm text-star">Grace period active -- the borrower can still repay.</p>
+      </div>
+    )
+  }
+
+  // ── T1: Overdue (past grace period, auction not started) ──────────
+  if (effectiveStatus === 'overdue' && !auctionStarted) {
+    return (
+      <div className="space-y-6">
+        <div className="p-4 rounded-md bg-nova/5 border border-nova/10 text-center">
+          <span className="text-[10px] text-nova uppercase tracking-widest font-bold">Grace Period Expired</span>
+          <p className="text-xs text-dust mt-1">Anyone can start a Dutch auction on this collateral.</p>
+        </div>
+        <Button
+          variant="nova"
+          size="xl"
+          className="w-full text-lg"
+          onClick={() => startAuction(BigInt(inscriptionId))}
+          disabled={isPending}
+        >
+          {auctionPending ? 'Starting...' : 'Start Auction'}
+        </Button>
+      </div>
+    )
+  }
+
+  // ── T1: Auction Active ────────────────────────────────────────────
+  if (effectiveStatus === 'auctioned') {
+    return (
+      <div className="space-y-6">
+        <div className="p-4 rounded-md bg-nebula/5 border border-nebula/10 text-center">
+          <span className="text-[10px] text-nebula uppercase tracking-widest font-bold">Auction Active</span>
+          <p className="text-xs text-dust mt-1">A Dutch auction is in progress. The price declines over time.</p>
+        </div>
+        <Button
+          variant="aurora"
+          size="xl"
+          className="w-full text-lg"
+          onClick={() => bid(BigInt(inscriptionId), debtTokenAddress)}
+          disabled={isPending}
+        >
+          {bidPending ? 'Bidding...' : 'Bid at Auction Price'}
         </Button>
       </div>
     )

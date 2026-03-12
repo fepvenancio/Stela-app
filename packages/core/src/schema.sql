@@ -17,7 +17,11 @@ CREATE TABLE IF NOT EXISTS inscriptions (
   collateral_asset_count  INTEGER,
   created_at_block        INTEGER,
   created_at_ts           INTEGER,
-  updated_at_ts           INTEGER
+  updated_at_ts           INTEGER,
+  auction_started         INTEGER DEFAULT 0,
+  auction_start_time      TEXT DEFAULT '0',
+  renegotiation_hash      TEXT,
+  renegotiation_committed_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS inscription_assets (
@@ -75,3 +79,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_events_dedup ON inscription_events(inscrip
 CREATE INDEX IF NOT EXISTS idx_inscriptions_liquidatable ON inscriptions(status, signed_at, duration);
 CREATE INDEX IF NOT EXISTS idx_assets_role ON inscription_assets(asset_role);
 CREATE INDEX IF NOT EXISTS idx_assets_address ON inscription_assets(asset_address);
+
+CREATE INDEX IF NOT EXISTS idx_inscriptions_auction ON inscriptions(auction_started, status);

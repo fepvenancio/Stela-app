@@ -27,8 +27,8 @@ importers:
         specifier: 0.5.2
         version: 0.5.2
       '@fepvenancio/stela-sdk':
-        specifier: 0.7.0
-        version: 0.7.0(starknet@6.24.1)
+        specifier: ^0.8.1
+        version: 0.8.1(starknet@6.24.1)
       '@next/third-parties':
         specifier: ^16.1.6
         version: 16.1.6(next@15.5.12(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -1478,8 +1478,8 @@ packages:
     resolution: {integrity: sha512-zQ0IqbdX8FZ9aw11vP+dZkKDkS+kgIvQPHnSAXzP9pLu+Rfu3D3XEeLbicvoXJTYnhZiPmsZUxgdzXwNKxRPbA==}
     engines: {node: '>=14'}
 
-  '@fepvenancio/stela-sdk@0.7.0':
-    resolution: {integrity: sha512-eTcdJplqoGmRoSvQ8gK8PDELksTxtZcXD3LGJ2YTU4snzlOH+H3C0AAFGwYXMmoN6OQ4Z2w+gKKwmYKT7hoKZg==}
+  '@fepvenancio/stela-sdk@0.8.1':
+    resolution: {integrity: sha512-Ni3ctc24q7x2Ck4U+9o7sXMtnEWHD68JPe2Sz+PJO0QEuVuBa2kp9OyQW9b9HP0k25wLkOe2C0bqqkEVoTIfOA==}
     peerDependencies:
       starknet: ^6.0.0
 
@@ -10165,7 +10165,7 @@ snapshots:
       ethereum-cryptography: 2.2.1
       micro-ftch: 0.3.1
 
-  '@fepvenancio/stela-sdk@0.7.0(starknet@6.24.1)':
+  '@fepvenancio/stela-sdk@0.8.1(starknet@6.24.1)':
     dependencies:
       starknet: 6.24.1
 

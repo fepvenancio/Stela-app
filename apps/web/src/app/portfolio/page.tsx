@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useAccount } from '@starknet-react/core'
 import { normalizeAddress } from '@/lib/address'
 import { usePortfolio } from '@/hooks/usePortfolio'
@@ -14,9 +14,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Search } from 'lucide-react'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
+import { formatAddress } from '@/lib/address'
+import { getOrderStatusBadgeVariant, getOrderStatusLabel } from '@/lib/status'
+import { Badge } from '@/components/ui/badge'
 import type { EnrichedInscription } from '@/hooks/usePortfolio'
 import type { OrderRow } from '@/hooks/useOrders'
+import type { CollectionOfferRow, RefinanceRow, RenegotiationRow } from '@/types/api'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 function EmptyTab({ message, cta }: { message: string; cta?: { label: string; href: string } }) {
   return (
@@ -54,6 +59,7 @@ function InscriptionList({ items }: { items: EnrichedInscription[] }) {
           duration={ins.duration}
           assets={ins.assets ?? []}
           pendingShares={ins.pendingShares}
+          signedAt={ins.signed_at ?? undefined}
         />
       ))}
     </div>
@@ -71,6 +77,12 @@ function matchesSearch(q: string, ins: EnrichedInscription): boolean {
       a.asset_address.toLowerCase().includes(q)
     )
   })
+}
+
+function matchesT1Search(q: string, item: { id: string; status: string; deadline: string }): boolean {
+  if (item.id.toLowerCase().includes(q)) return true
+  if (item.status.toLowerCase().includes(q)) return true
+  return false
 }
 
 function matchesOrderSearch(q: string, order: OrderRow): boolean {
@@ -100,6 +112,133 @@ function SectionHeading({ label }: { label: string }) {
   )
 }
 
+/** Compact row for T1 entities (collection offers, refinances, renegotiations) */
+function T1Row({ label, id, counterparty, status, deadline, createdAt }: {
+  label: string
+  id: string
+  counterparty?: string
+  status: string
+  deadline: string
+  createdAt: string
+}) {
+  const variant = getOrderStatusBadgeVariant(status)
+  const statusLabel = getOrderStatusLabel(status)
+  const isExpired = Number(deadline) > 0 && Number(deadline) < Math.floor(Date.now() / 1000)
+  const displayStatus = isExpired && status === 'pending' ? 'expired' : status
+
+  return (
+    <div className="group flex items-center gap-3 px-4 py-3 border-b border-edge/15 hover:bg-surface/30 transition-colors duration-100">
+      {/* Desktop */}
+      <div className="hidden md:grid grid-cols-[1fr_100px_120px_80px] gap-4 flex-1 items-center">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-dust bg-surface/40 px-1.5 py-0.5 rounded shrink-0">
+            {label}
+          </span>
+          <span className="text-sm text-chalk font-mono truncate">{id.slice(0, 10)}...{id.slice(-6)}</span>
+          {counterparty && (
+            <span className="text-[11px] text-dust truncate">{formatAddress(counterparty)}</span>
+          )}
+        </div>
+        <div className="text-right">
+          <span className="text-xs text-dust tabular-nums">
+            {new Date(createdAt).toLocaleDateString()}
+          </span>
+        </div>
+        <div className="text-right">
+          <span className={`text-xs tabular-nums ${isExpired ? 'text-nova' : 'text-dust'}`}>
+            {Number(deadline) > 0
+              ? new Date(Number(deadline) * 1000).toLocaleDateString()
+              : '—'}
+          </span>
+        </div>
+        <div className="flex justify-center">
+          <Badge
+            variant={isExpired && status === 'pending' ? 'expired' : variant}
+            className="h-[20px] text-[9px] px-2 py-0 uppercase font-bold"
+          >
+            {isExpired && status === 'pending' ? 'Expired' : statusLabel}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Mobile */}
+      <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-dust bg-surface/40 px-1.5 py-0.5 rounded shrink-0">
+            {label}
+          </span>
+          <span className="text-sm text-chalk font-mono truncate">{id.slice(0, 10)}...</span>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Badge
+            variant={isExpired && status === 'pending' ? 'expired' : variant}
+            className="h-[18px] text-[9px] px-1.5 py-0 uppercase font-bold"
+          >
+            {isExpired && displayStatus === 'expired' ? 'Expired' : statusLabel}
+          </Badge>
+          <span className="text-[10px] text-dust">
+            {new Date(createdAt).toLocaleDateString()}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CollectionOfferRows({ items }: { items: CollectionOfferRow[] }) {
+  return (
+    <div className="flex flex-col">
+      {items.map((offer) => (
+        <T1Row
+          key={offer.id}
+          label="Collection"
+          id={offer.id}
+          counterparty={offer.collection_address}
+          status={offer.status}
+          deadline={offer.deadline}
+          createdAt={offer.created_at}
+        />
+      ))}
+    </div>
+  )
+}
+
+function RefinanceRows({ items }: { items: RefinanceRow[] }) {
+  return (
+    <div className="flex flex-col">
+      {items.map((offer) => (
+        <T1Row
+          key={offer.id}
+          label="Refinance"
+          id={offer.id}
+          counterparty={offer.inscription_id}
+          status={offer.status}
+          deadline={offer.deadline}
+          createdAt={offer.created_at}
+        />
+      ))}
+    </div>
+  )
+}
+
+function RenegotiationRows({ items }: { items: RenegotiationRow[] }) {
+  return (
+    <div className="flex flex-col">
+      {items.map((proposal) => (
+        <T1Row
+          key={proposal.id}
+          label="Renegotiation"
+          id={proposal.id}
+          counterparty={proposal.inscription_id}
+          status={proposal.status}
+          deadline={proposal.deadline}
+          createdAt={proposal.created_at}
+        />
+      ))}
+    </div>
+  )
+}
+
 /* Tab config — full static class strings so Tailwind doesn't purge them */
 const TAB_CONFIG = [
   { value: 'active', label: 'Active', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
@@ -113,7 +252,7 @@ const HISTORY_ORDER_STATUSES = new Set(['expired', 'cancelled', 'settled'])
 export default function PortfolioPage() {
   const { address } = useAccount()
   const normalized = address ? normalizeAddress(address) : undefined
-  const { lending, borrowing, repaid, redeemable, orders, borrowingOrders, lendingOrders, swapOrders, isLoading, error } = usePortfolio(normalized)
+  const { lending, borrowing, repaid, redeemable, orders, borrowingOrders, lendingOrders, swapOrders, collectionOffers, refinanceOffers, renegotiations, isLoading, error } = usePortfolio(normalized)
   const [search, setSearch] = useState('')
 
   const q = search.trim().toLowerCase()
@@ -137,8 +276,23 @@ export default function PortfolioPage() {
     () => q ? borrowingOrders.filter((o) => matchesOrderSearch(q, o)) : borrowingOrders,
     [borrowingOrders, q],
   )
+  // Active T1: matched collection offers, refinances, renegotiations
+  const activeCollectionOffers = useMemo(() => {
+    const filtered = collectionOffers.filter((o) => o.status === 'matched')
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [collectionOffers, q])
+  const activeRefinances = useMemo(() => {
+    const filtered = refinanceOffers.filter((o) => o.status === 'matched')
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [refinanceOffers, q])
+  const activeRenegotiations = useMemo(() => {
+    const filtered = renegotiations.filter((o) => o.status === 'matched')
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [renegotiations, q])
+
   const activeCount = activeLendingInscriptions.length + activeBorrowingInscriptions.length +
-    activeLendingOrders.length + activeBorrowingOrders.length
+    activeLendingOrders.length + activeBorrowingOrders.length +
+    activeCollectionOffers.length + activeRefinances.length + activeRenegotiations.length
 
   // Pending: pending orders + pending swap orders
   const pendingOrders = useMemo(() => {
@@ -149,7 +303,23 @@ export default function PortfolioPage() {
     const filtered = swapOrders.filter((o) => PENDING_ORDER_STATUSES.has(o.status))
     return q ? filtered.filter((o) => matchesOrderSearch(q, o)) : filtered
   }, [swapOrders, q])
-  const pendingCount = pendingOrders.length + pendingSwaps.length
+
+  // Pending T1: pending collection offers, refinances, renegotiations
+  const pendingCollectionOffers = useMemo(() => {
+    const filtered = collectionOffers.filter((o) => o.status === 'pending')
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [collectionOffers, q])
+  const pendingRefinances = useMemo(() => {
+    const filtered = refinanceOffers.filter((o) => o.status === 'pending')
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [refinanceOffers, q])
+  const pendingRenegotiations = useMemo(() => {
+    const filtered = renegotiations.filter((o) => o.status === 'pending')
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [renegotiations, q])
+
+  const pendingCount = pendingOrders.length + pendingSwaps.length +
+    pendingCollectionOffers.length + pendingRefinances.length + pendingRenegotiations.length
 
   // History: repaid + redeemable + expired/cancelled orders + settled swaps
   const filteredRepaid = useMemo(
@@ -168,21 +338,43 @@ export default function PortfolioPage() {
     const filtered = swapOrders.filter((o) => HISTORY_ORDER_STATUSES.has(o.status))
     return q ? filtered.filter((o) => matchesOrderSearch(q, o)) : filtered
   }, [swapOrders, q])
+
+  // History T1: expired/cancelled/settled collection offers, refinances, renegotiations
+  const historyCollectionOffers = useMemo(() => {
+    const filtered = collectionOffers.filter((o) => HISTORY_ORDER_STATUSES.has(o.status))
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [collectionOffers, q])
+  const historyRefinances = useMemo(() => {
+    const filtered = refinanceOffers.filter((o) => HISTORY_ORDER_STATUSES.has(o.status))
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [refinanceOffers, q])
+  const historyRenegotiations = useMemo(() => {
+    const filtered = renegotiations.filter((o) => HISTORY_ORDER_STATUSES.has(o.status))
+    return q ? filtered.filter((o) => matchesT1Search(q, o)) : filtered
+  }, [renegotiations, q])
+
   const historyCount = filteredRepaid.length + filteredRedeemable.length +
-    historyOrders.length + historySwaps.length
+    historyOrders.length + historySwaps.length +
+    historyCollectionOffers.length + historyRefinances.length + historyRenegotiations.length
 
   /* Smart default tab */
   const defaultTab = useMemo(() => {
     const hasActive = lending.length > 0 || borrowing.length > 0 ||
-      lendingOrders.length > 0 || borrowingOrders.length > 0
+      lendingOrders.length > 0 || borrowingOrders.length > 0 ||
+      collectionOffers.some((o) => o.status === 'matched') ||
+      refinanceOffers.some((o) => o.status === 'matched') ||
+      renegotiations.some((o) => o.status === 'matched')
     if (hasActive) return 'active'
 
     const hasPending = orders.some((o) => PENDING_ORDER_STATUSES.has(o.status)) ||
-      swapOrders.some((o) => PENDING_ORDER_STATUSES.has(o.status))
+      swapOrders.some((o) => PENDING_ORDER_STATUSES.has(o.status)) ||
+      collectionOffers.some((o) => o.status === 'pending') ||
+      refinanceOffers.some((o) => o.status === 'pending') ||
+      renegotiations.some((o) => o.status === 'pending')
     if (hasPending) return 'pending'
 
     return 'history'
-  }, [lending, borrowing, orders, lendingOrders, borrowingOrders, swapOrders])
+  }, [lending, borrowing, orders, lendingOrders, borrowingOrders, swapOrders, collectionOffers, refinanceOffers, renegotiations])
 
   /* Tab counts */
   const tabCounts: Record<string, number> = {
@@ -191,9 +383,33 @@ export default function PortfolioPage() {
     history: historyCount,
   }
 
-  const totalPositions = lending.length + borrowing.length + repaid.length + redeemable.length + orders.length + swapOrders.length
+  const totalPositions = lending.length + borrowing.length + repaid.length + redeemable.length + orders.length + swapOrders.length +
+    collectionOffers.length + refinanceOffers.length + renegotiations.length
 
   const hasRedeemable = redeemable.length > 0
+
+  const warnedIdsRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (isLoading || borrowing.length === 0) return
+    const now = Math.floor(Date.now() / 1000)
+    for (const ins of borrowing) {
+      if (ins.computedStatus !== 'filled') continue
+      if (!ins.signed_at || Number(ins.signed_at) <= 0) continue
+      if (warnedIdsRef.current.has(ins.id)) continue
+      const maturity = Number(ins.signed_at) + Number(ins.duration)
+      const remaining = maturity - now
+      if (remaining > 0 && remaining < 86400) {
+        warnedIdsRef.current.add(ins.id)
+        const hours = Math.floor(remaining / 3600)
+        const minutes = Math.floor((remaining % 3600) / 60)
+        const timeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+        toast.warning(`Loan ${ins.id.slice(0, 10)}... matures in ${timeStr}`, {
+          description: 'Repay before maturity to avoid liquidation.',
+          duration: 8000,
+        })
+      }
+    }
+  }, [borrowing, isLoading])
 
   return (
     <div className="animate-fade-up pb-24">
@@ -330,6 +546,16 @@ export default function PortfolioPage() {
                           <InscriptionList items={activeBorrowingInscriptions} />
                         </>
                       )}
+
+                      {/* Active T1 entities (matched) */}
+                      {(activeCollectionOffers.length > 0 || activeRefinances.length > 0 || activeRenegotiations.length > 0) && (
+                        <>
+                          <SectionHeading label="Offers & Proposals" />
+                          {activeCollectionOffers.length > 0 && <CollectionOfferRows items={activeCollectionOffers} />}
+                          {activeRefinances.length > 0 && <RefinanceRows items={activeRefinances} />}
+                          {activeRenegotiations.length > 0 && <RenegotiationRows items={activeRenegotiations} />}
+                        </>
+                      )}
                     </div>
                   )}
                 </TabsContent>
@@ -343,15 +569,29 @@ export default function PortfolioPage() {
                     />
                   ) : (
                     <div className="rounded-xl border border-edge/30 overflow-clip">
-                      <ListingTableHeader />
-                      <div className="flex flex-col">
-                        {pendingOrders.map((order) => (
-                          <OrderListRow key={order.id} order={order} />
-                        ))}
-                        {pendingSwaps.map((order) => (
-                          <OrderListRow key={order.id} order={order} />
-                        ))}
-                      </div>
+                      {(pendingOrders.length > 0 || pendingSwaps.length > 0) && (
+                        <>
+                          <ListingTableHeader />
+                          <div className="flex flex-col">
+                            {pendingOrders.map((order) => (
+                              <OrderListRow key={order.id} order={order} />
+                            ))}
+                            {pendingSwaps.map((order) => (
+                              <OrderListRow key={order.id} order={order} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Pending T1 entities */}
+                      {(pendingCollectionOffers.length > 0 || pendingRefinances.length > 0 || pendingRenegotiations.length > 0) && (
+                        <>
+                          <SectionHeading label="Offers & Proposals" />
+                          {pendingCollectionOffers.length > 0 && <CollectionOfferRows items={pendingCollectionOffers} />}
+                          {pendingRefinances.length > 0 && <RefinanceRows items={pendingRefinances} />}
+                          {pendingRenegotiations.length > 0 && <RenegotiationRows items={pendingRenegotiations} />}
+                        </>
+                      )}
                     </div>
                   )}
                 </TabsContent>
@@ -392,6 +632,16 @@ export default function PortfolioPage() {
                               <OrderListRow key={order.id} order={order} />
                             ))}
                           </div>
+                        </>
+                      )}
+
+                      {/* History T1 entities */}
+                      {(historyCollectionOffers.length > 0 || historyRefinances.length > 0 || historyRenegotiations.length > 0) && (
+                        <>
+                          <SectionHeading label="Past Offers & Proposals" />
+                          {historyCollectionOffers.length > 0 && <CollectionOfferRows items={historyCollectionOffers} />}
+                          {historyRefinances.length > 0 && <RefinanceRows items={historyRefinances} />}
+                          {historyRenegotiations.length > 0 && <RenegotiationRows items={historyRenegotiations} />}
                         </>
                       )}
                     </div>

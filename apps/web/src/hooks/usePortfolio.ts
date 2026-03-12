@@ -5,7 +5,7 @@ import { useFetchApi, buildApiUrl } from './api'
 import { normalizeAddress } from '@/lib/address'
 import { enrichStatus } from '@/lib/status'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
-import type { InscriptionRow, ApiListResponse } from '@/types/api'
+import type { InscriptionRow, ApiListResponse, CollectionOfferRow, RefinanceRow, RenegotiationRow } from '@/types/api'
 import type { OrderRow } from './useOrders'
 
 // API response types
@@ -39,6 +39,12 @@ export interface PortfolioData {
   lendingOrders: OrderRow[]
   /** All swap orders (duration=0) */
   swapOrders: OrderRow[]
+  /** T1: user's collection offers */
+  collectionOffers: CollectionOfferRow[]
+  /** T1: user's refinance offers */
+  refinanceOffers: RefinanceRow[]
+  /** T1: user's renegotiation proposals */
+  renegotiations: RenegotiationRow[]
   isLoading: boolean
   error: Error | null
 }
@@ -52,6 +58,15 @@ export function usePortfolio(address: string | undefined): PortfolioData {
   const sharesUrl = address ? `/api/shares/${address}` : null
   const ordersUrl = address
     ? buildApiUrl('/api/orders', { address, status: 'all', limit: 50 })
+    : null
+  const collectionOffersUrl = address
+    ? buildApiUrl('/api/collection-offers', { address, limit: 50 })
+    : null
+  const refinancesUrl = address
+    ? buildApiUrl('/api/refinances', { address, limit: 50 })
+    : null
+  const renegotiationsUrl = address
+    ? buildApiUrl('/api/renegotiations', { address, limit: 50 })
     : null
 
   const {
@@ -72,8 +87,26 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     error: ordersError,
   } = useFetchApi<ApiOrderListResponse>(ordersUrl, undefined, 10_000)
 
-  const isLoading = insLoading || sharesLoading || ordersLoading
-  const error = insError ?? sharesError ?? ordersError
+  const {
+    data: collectionOffersRaw,
+    isLoading: coLoading,
+    error: coError,
+  } = useFetchApi<ApiListResponse<CollectionOfferRow>>(collectionOffersUrl, undefined, 10_000)
+
+  const {
+    data: refinancesRaw,
+    isLoading: refiLoading,
+    error: refiError,
+  } = useFetchApi<ApiListResponse<RefinanceRow>>(refinancesUrl, undefined, 10_000)
+
+  const {
+    data: renegotiationsRaw,
+    isLoading: renegLoading,
+    error: renegError,
+  } = useFetchApi<ApiListResponse<RenegotiationRow>>(renegotiationsUrl, undefined, 10_000)
+
+  const isLoading = insLoading || sharesLoading || ordersLoading || coLoading || refiLoading || renegLoading
+  const error = insError ?? sharesError ?? ordersError ?? coError ?? refiError ?? renegError
 
   return useMemo(() => {
     const allInscriptions = inscriptionsRaw?.data ?? []
@@ -173,6 +206,10 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       }
     }
 
+    const collectionOffers = collectionOffersRaw?.data ?? []
+    const refinanceOffers = refinancesRaw?.data ?? []
+    const renegotiationsList = renegotiationsRaw?.data ?? []
+
     return {
       lending,
       borrowing,
@@ -182,8 +219,11 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       borrowingOrders,
       lendingOrders,
       swapOrders,
+      collectionOffers,
+      refinanceOffers,
+      renegotiations: renegotiationsList,
       isLoading,
       error,
     }
-  }, [inscriptionsRaw, sharesRaw, ordersRaw, address, isLoading, error])
+  }, [inscriptionsRaw, sharesRaw, ordersRaw, collectionOffersRaw, refinancesRaw, renegotiationsRaw, address, isLoading, error])
 }

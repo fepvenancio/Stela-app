@@ -11,6 +11,7 @@ import { formatTimestamp } from '@/lib/format'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
 import { InlineMatchList } from '@/components/InlineMatchList'
+import { FeeBreakdown } from '@/components/FeeBreakdown'
 import { AssetRow } from './components/AssetRow'
 import { AddAssetModal } from './components/AddAssetModal'
 import { InlineBorrowForm } from './components/InlineBorrowForm'
@@ -361,6 +362,10 @@ export default function BorrowPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="mt-4">
+          <FeeBreakdown type="lending" />
         </div>
 
         <div className="mt-5">

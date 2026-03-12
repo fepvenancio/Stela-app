@@ -10,6 +10,7 @@ import { formatTimestamp } from '@/lib/format'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
 import { InlineMatchList } from '@/components/InlineMatchList'
+import { FeeBreakdown } from '@/components/FeeBreakdown'
 import { AssetRow } from '@/app/borrow/components/AssetRow'
 import { AddAssetModal } from '@/app/borrow/components/AddAssetModal'
 import { InlineBorrowForm } from '@/app/borrow/components/InlineBorrowForm'
@@ -222,10 +223,6 @@ export default function SwapPage() {
               <span className="text-dust">Expiry</span>
               <span className="text-chalk font-medium" suppressHydrationWarning>{formatTimestamp(BigInt(form.deadline))}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-dust">Protocol Fee</span>
-              <span className="text-chalk font-medium">0.15%</span>
-            </div>
             {form.matchesVisible && form.hasMatches && (
               <div className="flex justify-between items-center text-sm pt-1 border-t border-star/10">
                 <span className="text-dust">Broadcast</span>
@@ -238,6 +235,10 @@ export default function SwapPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="mt-4">
+          <FeeBreakdown type="swap" />
         </div>
 
         <div className="mt-5">

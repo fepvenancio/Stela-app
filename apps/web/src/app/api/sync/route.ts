@@ -133,6 +133,10 @@ async function processEvent(
       return handleRedeemed(event, db, now, blockNumber, txHash)
     case 'TransferSingle':
       return handleTransferSingle(event, db, now, blockNumber, txHash)
+    case 'AuctionStarted':
+      return handleAuctionStarted(event, db, now, blockNumber, txHash)
+    case 'AuctionBid':
+      return handleAuctionBid(event, db, now, blockNumber, txHash)
   }
 }
 
@@ -348,4 +352,43 @@ async function handleTransferSingle(
   if (BigInt(toNorm) !== 0n) {
     await db.incrementShareBalance(toNorm, idHex, event.value)
   }
+}
+
+async function handleAuctionStarted(
+  event: Extract<StelaEvent, { type: 'AuctionStarted' }>,
+  db: D1Queries,
+  now: number,
+  blockNumber: number,
+  txHash: string,
+) {
+  const idHex = toIdHex(event.inscription_id)
+  await db.updateInscriptionAuction(idHex, true, String(now))
+  await db.insertEvent({
+    inscription_id: idHex,
+    event_type: 'auction_started',
+    tx_hash: standardizeHex(txHash),
+    block_number: blockNumber,
+    timestamp: now,
+    data: { starter: normalizeAddress(event.starter) },
+  })
+}
+
+async function handleAuctionBid(
+  event: Extract<StelaEvent, { type: 'AuctionBid' }>,
+  db: D1Queries,
+  now: number,
+  blockNumber: number,
+  txHash: string,
+) {
+  const idHex = toIdHex(event.inscription_id)
+  // Auction bid means liquidation completed — collateral transferred to bidder
+  await db.updateInscriptionStatus(idHex, 'liquidated', now)
+  await db.insertEvent({
+    inscription_id: idHex,
+    event_type: 'auction_bid',
+    tx_hash: standardizeHex(txHash),
+    block_number: blockNumber,
+    timestamp: now,
+    data: { bidder: normalizeAddress(event.bidder), price: event.price.toString() },
+  })
 }

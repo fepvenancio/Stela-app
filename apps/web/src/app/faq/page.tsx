@@ -137,6 +137,67 @@ export default function FAQ() {
       </section>
 
       <section className="space-y-4">
+        <SectionHeading>What is refinancing?</SectionHeading>
+        <div className="text-dust text-sm leading-relaxed space-y-3">
+          <p>
+            Refinancing lets a new lender offer better terms on an existing loan.
+            When the borrower approves the refinance, the old lender is
+            automatically repaid (with pro-rated interest) and the new
+            lender&apos;s terms take effect — no manual repayment or new
+            inscription needed.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading>What happens when a loan expires?</SectionHeading>
+        <div className="text-dust text-sm leading-relaxed space-y-3">
+          <p>
+            When a loan expires, a 24-hour grace period begins during which the
+            borrower can still repay. After the grace period, a Dutch auction
+            starts — the collateral price declines over time until someone bids.
+            This ensures lenders recover value even if the borrower defaults.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading>Can loan terms be changed?</SectionHeading>
+        <div className="text-dust text-sm leading-relaxed space-y-3">
+          <p>
+            Yes, through renegotiation. Either the borrower or lender can propose
+            new terms (duration, interest, or both). The counterparty reviews the
+            proposal, commits to it, and then the proposer executes the change
+            on-chain. Both parties must agree before any terms are modified.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading>Can I sell my locked collateral?</SectionHeading>
+        <div className="text-dust text-sm leading-relaxed space-y-3">
+          <p>
+            Yes. A borrower can create a sale offer for collateral that is
+            currently locked in a loan. A buyer purchases the collateral at the
+            agreed price, which is used to repay the outstanding debt. Any
+            remaining proceeds go to the borrower.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading>What are collection offers?</SectionHeading>
+        <div className="text-dust text-sm leading-relaxed space-y-3">
+          <p>
+            Collection offers let a lender make a lending offer against any NFT
+            in a collection, rather than a specific token ID. Any borrower
+            holding an NFT from that collection can accept the offer, making it
+            easier for lenders to deploy capital across an entire collection.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
         <SectionHeading>What networks does Stela support?</SectionHeading>
         <div className="text-dust text-sm leading-relaxed space-y-3">
           <p>

@@ -10,10 +10,23 @@ export {
   getInscriptionOrderTypedData,
   getLendOfferTypedData,
   getBatchLendOfferTypedData,
+  getCollectionLendOfferTypedData,
+  getCollectionBorrowAcceptanceTypedData,
+  getRefinanceOfferTypedData,
+  getRefinanceApprovalTypedData,
+  getRenegotiationProposalTypedData,
+  getCollateralSaleOfferTypedData,
   hashAssets,
   hashBatchEntries,
   serializeSignature,
   deserializeSignature,
+} from '@fepvenancio/stela-sdk'
+
+export {
+  GRACE_PERIOD,
+  AUCTION_DURATION,
+  AUCTION_PENALTY_BPS,
+  AUCTION_RESERVE_BPS,
 } from '@fepvenancio/stela-sdk'
 
 export type { StoredSignature, BatchEntry } from '@fepvenancio/stela-sdk'

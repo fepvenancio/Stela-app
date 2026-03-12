@@ -16,6 +16,8 @@ export interface InscriptionRow {
   interest_asset_count: number
   collateral_asset_count: number
   created_at_ts: string
+  auction_started: number   // 0 or 1
+  auction_start_time: string
   assets: AssetRow[]
 }
 
@@ -33,6 +35,71 @@ export interface AssetRow {
 /** Response shape for GET /api/inscriptions/[id] */
 export interface InscriptionDetailResponse extends InscriptionRow {
   assets: AssetRow[]
+}
+
+/** Collection offer row from D1 */
+export interface CollectionOfferRow {
+  id: string
+  lender: string
+  collection_address: string
+  order_data: Record<string, unknown>
+  lender_signature: string
+  nonce: string
+  status: string
+  deadline: string
+  created_at: string
+  debt_token: string | null
+  collateral_token: string | null
+  acceptance?: {
+    borrower: string
+    token_id: string
+    borrower_signature: string
+    nonce: string
+  }
+}
+
+/** Refinance offer row from D1 */
+export interface RefinanceRow {
+  id: string
+  inscription_id: string
+  new_lender: string
+  order_data: Record<string, unknown>
+  lender_signature: string
+  nonce: string
+  status: string
+  deadline: string
+  created_at: string
+  approval?: {
+    borrower: string
+    borrower_signature: string
+    nonce: string
+  }
+}
+
+/** Renegotiation proposal row from D1 */
+export interface RenegotiationRow {
+  id: string
+  inscription_id: string
+  proposer: string
+  proposal_data: Record<string, unknown>
+  proposer_signature: string
+  nonce: string
+  status: string
+  deadline: string
+  created_at: string
+}
+
+/** Collateral sale row from D1 */
+export interface CollateralSaleRow {
+  id: string
+  inscription_id: string
+  buyer: string
+  offer_data: Record<string, unknown>
+  borrower_signature: string
+  min_price: string
+  status: string
+  deadline: string
+  created_at: string
 }
 
 /** Params for the inscriptions list hook */

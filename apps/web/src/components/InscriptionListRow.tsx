@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react'
 import type { AssetRow } from '@/types/api'
 import Link from 'next/link'
 import { computeYieldPercent } from '@/lib/filter-utils'
+import { useCountdown } from '@/hooks/useCountdown'
 
 interface InscriptionListRowProps {
   id: string
@@ -18,6 +19,7 @@ interface InscriptionListRowProps {
   duration: string
   assets: AssetRow[]
   pendingShares?: string
+  signedAt?: string
   selectable?: boolean
   selected?: boolean
   onSelect?: () => void
@@ -30,6 +32,7 @@ export function InscriptionListRow({
   status,
   duration,
   assets,
+  signedAt,
   selectable,
   selected,
   onSelect,
@@ -40,6 +43,12 @@ export function InscriptionListRow({
   const label = getStatusLabel(status)
   const isSwap = Number(duration) === 0
   const [confirming, setConfirming] = useState(false)
+
+  const maturityTimestamp = useMemo(() => {
+    if (status !== 'filled' || !signedAt || Number(signedAt) <= 0) return null
+    return Number(signedAt) + Number(duration)
+  }, [status, signedAt, duration])
+  const countdown = useCountdown(maturityTimestamp)
 
   const debtAssets = useMemo(() => assets.filter((a) => a.asset_role === 'debt'), [assets])
   const interestAssets = useMemo(() => assets.filter((a) => a.asset_role === 'interest'), [assets])
@@ -117,13 +126,26 @@ export function InscriptionListRow({
           <span className="text-sm text-chalk tabular-nums">
             {isSwap ? 'Instant' : formatDuration(Number(duration))}
           </span>
+          {maturityTimestamp && !countdown.isExpired && (
+            <span
+              suppressHydrationWarning
+              className={`block text-[10px] tabular-nums ${countdown.isUrgent ? 'text-nova' : countdown.isAtRisk ? 'text-star' : 'text-aurora'}`}
+            >
+              {countdown.formatted}
+            </span>
+          )}
         </div>
 
         {/* Status */}
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center gap-1">
           <Badge variant={statusKey} className="h-[20px] text-[9px] px-2 py-0 uppercase font-bold">
             {label}
           </Badge>
+          {maturityTimestamp && countdown.isAtRisk && !countdown.isExpired && (
+            <Badge variant="atrisk" className={`h-[20px] text-[9px] px-2 py-0 uppercase font-bold ${countdown.isUrgent ? 'animate-pulse' : ''}`}>
+              At Risk
+            </Badge>
+          )}
         </div>
 
         {/* Action */}
@@ -185,6 +207,11 @@ export function InscriptionListRow({
           <Badge variant={statusKey} className="h-[18px] text-[9px] px-1.5 py-0 uppercase font-bold">
             {label}
           </Badge>
+          {maturityTimestamp && countdown.isAtRisk && !countdown.isExpired && (
+            <Badge variant="atrisk" className={`h-[18px] text-[9px] px-1.5 py-0 uppercase font-bold ${countdown.isUrgent ? 'animate-pulse' : ''}`}>
+              At Risk
+            </Badge>
+          )}
           <Badge variant={isSwap ? 'pending' : 'default'} className="h-[18px] text-[9px] px-1.5 py-0 uppercase font-bold">
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
@@ -192,6 +219,14 @@ export function InscriptionListRow({
             <span className="text-[10px] text-aurora font-medium">{yieldDisplay}</span>
           )}
           <span className="text-[10px] text-dust">{isSwap ? 'Instant' : formatDuration(Number(duration))}</span>
+          {maturityTimestamp && !countdown.isExpired && (
+            <span
+              suppressHydrationWarning
+              className={`text-[10px] tabular-nums ${countdown.isUrgent ? 'text-nova' : countdown.isAtRisk ? 'text-star' : 'text-aurora'}`}
+            >
+              {countdown.formatted}
+            </span>
+          )}
         </div>
       </div>
     </div>

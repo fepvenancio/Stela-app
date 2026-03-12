@@ -1,11 +1,17 @@
 'use client'
 
-import { useState, useCallback, Suspense } from 'react'
+import { useState, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useAccount } from '@starknet-react/core'
+import { RpcProvider } from 'starknet'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
-import { NETWORK } from '@/lib/config'
+import { NETWORK, CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
+import { getNonce } from '@/lib/offchain'
+import { parseAmount } from '@/lib/amount'
 import { useOrderForm } from '@/hooks/useOrderForm'
+import { useCollectionOffer } from '@/hooks/useCollectionOffer'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
 import type { AssetInputValue } from '@/components/AssetInput'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
@@ -14,6 +20,7 @@ import { TokenAvatar } from '@/components/TokenAvatar'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
 import { formatTokenValue } from '@/lib/format'
+import { useFeePreview } from '@/hooks/useFeePreview'
 
 /* ── Constants ──────────────────────────────────────────── */
 
@@ -271,6 +278,7 @@ function OrderSettings({
 function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
   const isLend = mode === 'lend'
   const form = useOrderForm(isLend ? 'lending' : 'swap')
+  const feePreview = useFeePreview(isLend ? 'lending' : 'swap')
   const [openSelector, setOpenSelector] = useState<'give' | 'receive' | 'interest' | null>(null)
 
   const giveAsset = form.collateralAssets[0] ?? emptyAsset()
@@ -347,7 +355,7 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
   const isProcessing = form.isPending || form.isCreatingOnChain || form.isSettling || form.isSettlingOnChain || form.multiSettleState.phase !== 'idle'
 
   const deadlinePresets = isLend ? LEND_DEADLINE_PRESETS : SWAP_DEADLINE_PRESETS
-  const feeText = isLend ? '0.25%' : '0.15%'
+  const feeText = (feePreview.effectiveTotalBps / 100).toFixed(2) + '%'
 
   return (
     <>
@@ -495,7 +503,10 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
                 <span className="text-edge">·</span>
               </>
             )}
-            <span>{feeText} fee</span>
+            <span className={feePreview.savingsBps > 0 ? 'text-aurora' : ''}>
+              {feeText} fee
+              {feePreview.savingsBps > 0 && <span className="text-ash ml-0.5">(-{feePreview.discountPercent}%)</span>}
+            </span>
             {isLend && !hasFullMatch && (
               <>
                 <span className="text-edge">·</span>
@@ -577,6 +588,247 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
         }
         return null
       })()}
+    </>
+  )
+}
+
+/* ── Collection Offer Form ────────────────────────────────── */
+
+function CollectionOfferForm() {
+  const { address } = useAccount()
+  const { createCollectionOffer, isPending } = useCollectionOffer()
+  const { balances } = useTokenBalances()
+
+  const [collectionAddress, setCollectionAddress] = useState('')
+  const [debtAsset, setDebtAsset] = useState<AssetInputValue>(emptyAsset())
+  const [interestAsset, setInterestAsset] = useState<AssetInputValue>(emptyAsset())
+  const [openSelector, setOpenSelector] = useState<'debt' | 'interest' | null>(null)
+  const [durationPreset, setDurationPreset] = useState('86400')
+  const [deadlinePreset, setDeadlinePreset] = useState('604800')
+  const [showErrors, setShowErrors] = useState(false)
+
+  const provider = useMemo(() => new RpcProvider({ nodeUrl: RPC_URL }), [])
+
+  const debtToken = debtAsset.asset ? findTokenByAddress(debtAsset.asset) : null
+  const interestToken = interestAsset.asset ? findTokenByAddress(interestAsset.asset) : null
+
+  const debtBalance = debtAsset.asset ? balances.get(debtAsset.asset.toLowerCase()) : undefined
+  const interestBalance = interestAsset.asset ? balances.get(interestAsset.asset.toLowerCase()) : undefined
+
+  const isValidAddress = /^0x[0-9a-fA-F]{1,64}$/.test(collectionAddress)
+  const hasDebt = Boolean(debtAsset.asset && debtAsset.value)
+  const isValid = isValidAddress && hasDebt
+
+  const feePreview = useFeePreview('lending')
+  const feeText = (feePreview.effectiveTotalBps / 100).toFixed(2) + '%'
+
+  const handleTokenSelect = useCallback((slot: 'debt' | 'interest', token: TokenInfo) => {
+    const addr = token.addresses[NETWORK] ?? ''
+    const newAsset: AssetInputValue = {
+      asset: addr,
+      asset_type: 'ERC20',
+      value: '',
+      token_id: '0',
+      decimals: token.decimals,
+    }
+    if (slot === 'debt') setDebtAsset(newAsset)
+    else setInterestAsset(newAsset)
+    setOpenSelector(null)
+  }, [])
+
+  const handleMaxClick = useCallback((slot: 'debt' | 'interest') => {
+    if (slot === 'debt' && debtToken && debtBalance) {
+      setDebtAsset(prev => ({ ...prev, value: formatTokenValue(debtBalance.toString(), debtToken.decimals) }))
+    } else if (slot === 'interest' && interestToken && interestBalance) {
+      setInterestAsset(prev => ({ ...prev, value: formatTokenValue(interestBalance.toString(), interestToken.decimals) }))
+    }
+  }, [debtToken, debtBalance, interestToken, interestBalance])
+
+  const handleSubmit = useCallback(async () => {
+    setShowErrors(true)
+    if (!isValid || !address) return
+
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + Number(deadlinePreset))
+    const duration = BigInt(durationPreset)
+    const nonce = await getNonce(provider, CONTRACT_ADDRESS, address)
+
+    const debtAssets = [{
+      asset_address: debtAsset.asset,
+      asset_type: debtAsset.asset_type,
+      value: parseAmount(debtAsset.value || '0', debtAsset.decimals).toString(),
+      token_id: '0',
+    }]
+
+    const interestAssets = interestAsset.asset && interestAsset.value ? [{
+      asset_address: interestAsset.asset,
+      asset_type: interestAsset.asset_type,
+      value: parseAmount(interestAsset.value || '0', interestAsset.decimals).toString(),
+      token_id: '0',
+    }] : []
+
+    await createCollectionOffer({
+      collectionAddress,
+      debtAssets,
+      interestAssets,
+      debtCount: debtAssets.length,
+      interestCount: interestAssets.length,
+      duration,
+      deadline,
+      nonce,
+    })
+
+    // Reset form on success
+    setCollectionAddress('')
+    setDebtAsset(emptyAsset())
+    setInterestAsset(emptyAsset())
+    setShowErrors(false)
+  }, [isValid, address, deadlinePreset, durationPreset, provider, debtAsset, interestAsset, collectionAddress, createCollectionOffer])
+
+  return (
+    <>
+      {/* Collection Address */}
+      <div className="space-y-1">
+        <div className="bg-star/5 border border-star/20 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-star">Collection</span>
+          </div>
+          <input
+            type="text"
+            placeholder="0x... collection address"
+            value={collectionAddress}
+            onChange={(e) => setCollectionAddress(e.target.value.trim())}
+            className="w-full text-sm font-mono bg-transparent outline-none text-chalk placeholder:text-ash/40"
+          />
+          {showErrors && !isValidAddress && collectionAddress && (
+            <p className="text-[10px] text-nova mt-1">Invalid StarkNet address</p>
+          )}
+        </div>
+
+        {/* Debt (what lender offers) */}
+        <TokenBox
+          label="I'll lend"
+          accentClass="text-aurora"
+          borderClass="border-aurora/20"
+          bgClass="bg-aurora/5"
+          asset={debtAsset}
+          balance={debtBalance}
+          onTokenClick={() => setOpenSelector('debt')}
+          onAmountChange={(val) => setDebtAsset(prev => ({ ...prev, value: val }))}
+          onMaxClick={() => handleMaxClick('debt')}
+        />
+
+        {/* Interest */}
+        <div className="pt-1">
+          <TokenBox
+            label="Interest"
+            accentClass="text-nebula"
+            borderClass="border-nebula/20"
+            bgClass="bg-nebula/5"
+            asset={interestAsset}
+            balance={interestBalance}
+            onTokenClick={() => setOpenSelector('interest')}
+            onAmountChange={(val) => setInterestAsset(prev => ({ ...prev, value: val }))}
+            onMaxClick={() => handleMaxClick('interest')}
+          />
+        </div>
+      </div>
+
+      {/* Validation */}
+      {showErrors && !isValid && (
+        <div className="mt-3 px-4 py-3 rounded-lg border border-nova/20 bg-nova/5">
+          <p className="text-xs text-nova font-medium">
+            {!isValidAddress && '• Enter a valid collection address. '}
+            {!hasDebt && '• Select a token and amount to lend.'}
+          </p>
+        </div>
+      )}
+
+      {/* Settings */}
+      <div className="mt-4 space-y-3">
+        <div className="rounded-lg border border-edge/30 bg-surface/5 p-4 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Duration</span>
+            <div className="flex flex-wrap gap-1">
+              {DURATION_PRESETS.map((p) => (
+                <button
+                  key={p.seconds}
+                  type="button"
+                  onClick={() => setDurationPreset(p.seconds.toString())}
+                  className={`py-1 px-2 rounded-sm text-[10px] border transition-colors cursor-pointer font-medium ${
+                    durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >{p.label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Expiry</span>
+            <div className="flex flex-wrap gap-1">
+              {LEND_DEADLINE_PRESETS.map((p) => (
+                <button
+                  key={p.seconds}
+                  type="button"
+                  onClick={() => setDeadlinePreset(p.seconds.toString())}
+                  className={`py-1 px-2 rounded-sm text-[10px] border transition-colors cursor-pointer font-medium ${
+                    deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >{p.label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Submit */}
+        <Web3ActionWrapper message="Connect your wallet to create a collection offer" centered={false}>
+          <Button
+            variant="gold"
+            className="w-full uppercase tracking-[0.15em] text-sm"
+            onClick={handleSubmit}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <div className="flex items-center gap-2">
+                <Spinner />
+                Processing...
+              </div>
+            ) : (
+              'Sign & Create Collection Offer'
+            )}
+          </Button>
+        </Web3ActionWrapper>
+
+        {/* Info strip */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-ash">
+          <span className="text-aurora">Gasless</span>
+          <span className="text-edge">·</span>
+          <span className={feePreview.savingsBps > 0 ? 'text-aurora' : ''}>
+            {feeText} fee
+            {feePreview.savingsBps > 0 && <span className="text-ash ml-0.5">(-{feePreview.discountPercent}%)</span>}
+          </span>
+          <span className="text-edge">·</span>
+          <span>{formatDurationHuman(Number(durationPreset))}</span>
+          <span className="text-edge">·</span>
+          <span className="text-dust">Any NFT in collection</span>
+        </div>
+      </div>
+
+      {/* Token Selector Modals */}
+      <TokenSelectorModal
+        open={openSelector === 'debt'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('debt', token)}
+        selectedAddress={debtAsset.asset}
+        showCustomOption={false}
+        balances={balances}
+      />
+      <TokenSelectorModal
+        open={openSelector === 'interest'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('interest', token)}
+        selectedAddress={interestAsset.asset}
+        showCustomOption={false}
+        balances={balances}
+      />
     </>
   )
 }
@@ -750,19 +1002,20 @@ function TradeContent() {
   const searchParams = useSearchParams()
   const initialMode = searchParams.get('mode') === 'swap' ? 'swap' : 'lend'
   const [activeTab, setActiveTab] = useState<'swap' | 'lend'>(initialMode as 'swap' | 'lend')
+  const [offerMode, setOfferMode] = useState<'standard' | 'collection'>('standard')
 
   return (
     <div className="animate-fade-up pb-24">
       {/* Trade Form — narrow centered */}
       <div className="max-w-lg mx-auto">
         {/* Tab Bar */}
-        <div className="flex items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex">
             {(['swap', 'lend'] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
-                onClick={() => setActiveTab(tab)}
+                onClick={() => { setActiveTab(tab); setOfferMode('standard') }}
                 className={`px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
                   activeTab === tab
                     ? 'text-star border-star'
@@ -773,9 +1026,33 @@ function TradeContent() {
               </button>
             ))}
           </div>
+
+          {/* Collection Offer toggle — lend mode only */}
+          {activeTab === 'lend' && (
+            <div className="flex gap-1">
+              {(['standard', 'collection'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setOfferMode(m)}
+                  className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
+                    offerMode === m
+                      ? 'bg-star/10 text-star border border-star/25'
+                      : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  }`}
+                >
+                  {m === 'standard' ? 'Standard' : 'Collection Offer'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <TradeForm key={activeTab} mode={activeTab} />
+        {activeTab === 'lend' && offerMode === 'collection' ? (
+          <CollectionOfferForm key="collection" />
+        ) : (
+          <TradeForm key={`${activeTab}-${offerMode}`} mode={activeTab} />
+        )}
       </div>
 
       {/* Protocol info sections — full width */}

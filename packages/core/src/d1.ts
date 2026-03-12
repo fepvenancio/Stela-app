@@ -43,6 +43,7 @@ const INSCRIPTION_COLUMNS = new Set([
   'issued_debt_percentage', 'multi_lender', 'duration', 'deadline',
   'signed_at', 'debt_asset_count', 'interest_asset_count',
   'collateral_asset_count', 'created_at_block', 'created_at_ts', 'updated_at_ts',
+  'auction_started', 'auction_start_time', 'renegotiation_hash', 'renegotiation_committed_at',
 ])
 
 function isValidStatus(s: string): s is InscriptionStatus {
@@ -1144,6 +1145,435 @@ export function createD1Queries(db: D1Database) {
         inscriptions,
         orders: ordersResult.results,
       }
+    },
+
+    // -----------------------------------------------------------------------
+    // T1: Collection Offers
+    // -----------------------------------------------------------------------
+
+    async getCollectionOffers(params: {
+      status?: string
+      collection?: string
+      lender?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const conditions: string[] = []
+      const bindParams: unknown[] = []
+
+      if (params.status && params.status !== 'all') {
+        conditions.push('co.status = ?')
+        bindParams.push(params.status)
+      }
+      if (params.collection) {
+        conditions.push('LOWER(co.collection_address) = LOWER(?)')
+        bindParams.push(normalizeAddress(params.collection))
+      }
+      if (params.lender) {
+        conditions.push('LOWER(co.lender) = LOWER(?)')
+        bindParams.push(normalizeAddress(params.lender))
+      }
+      if (params.address) {
+        const addr = normalizeAddress(params.address)
+        conditions.push('(LOWER(co.lender) = LOWER(?) OR co.id IN (SELECT offer_id FROM collection_offer_acceptances WHERE LOWER(borrower) = LOWER(?)))')
+        bindParams.push(addr, addr)
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      const offset = (params.page - 1) * limit
+
+      const result = await db
+        .prepare(`SELECT co.* FROM collection_offers co ${where} ORDER BY co.created_at DESC LIMIT ? OFFSET ?`)
+        .bind(...bindParams, limit, offset)
+        .all()
+
+      return result.results
+    },
+
+    async getCollectionOffer(id: string) {
+      const offer = await db
+        .prepare('SELECT * FROM collection_offers WHERE id = ?')
+        .bind(id)
+        .first()
+      if (!offer) return null
+
+      const acceptance = await db
+        .prepare('SELECT * FROM collection_offer_acceptances WHERE offer_id = ? ORDER BY created_at DESC LIMIT 1')
+        .bind(id)
+        .first()
+
+      return { ...(offer as Record<string, unknown>), acceptance: acceptance ?? undefined }
+    },
+
+    async createCollectionOffer(offer: {
+      id: string
+      lender: string
+      collection_address: string
+      order_data: string
+      lender_signature: string
+      nonce: string
+      deadline: string
+      debt_token?: string | null
+      collateral_token?: string | null
+    }) {
+      await db
+        .prepare(
+          `INSERT INTO collection_offers (id, lender, collection_address, order_data, lender_signature, nonce, status, deadline, debt_token, collateral_token)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
+        )
+        .bind(
+          offer.id, normalizeAddress(offer.lender), normalizeAddress(offer.collection_address),
+          offer.order_data, offer.lender_signature, offer.nonce, offer.deadline,
+          offer.debt_token ? normalizeAddress(offer.debt_token) : null,
+          offer.collateral_token ? normalizeAddress(offer.collateral_token) : null,
+        )
+        .run()
+    },
+
+    async acceptCollectionOffer(params: {
+      acceptanceId: string
+      offerId: string
+      borrower: string
+      tokenId: string
+      borrowerSignature: string
+      nonce: string
+    }): Promise<boolean> {
+      const updateStmt = db
+        .prepare('UPDATE collection_offers SET status = ? WHERE id = ? AND status = ?')
+        .bind('matched', params.offerId, 'pending')
+
+      const insertStmt = db
+        .prepare(
+          `INSERT INTO collection_offer_acceptances (id, offer_id, borrower, token_id, borrower_signature, nonce, status)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending')`
+        )
+        .bind(
+          params.acceptanceId, params.offerId, normalizeAddress(params.borrower),
+          params.tokenId, params.borrowerSignature, params.nonce,
+        )
+
+      const results = await db.batch([updateStmt, insertStmt])
+      const updated = ((results[0].meta?.changes as number) ?? 0) > 0
+
+      if (!updated) {
+        await db.prepare('DELETE FROM collection_offer_acceptances WHERE id = ?').bind(params.acceptanceId).run()
+        return false
+      }
+      return true
+    },
+
+    async updateCollectionOfferStatus(id: string, status: string) {
+      if (!VALID_ORDER_STATUSES.has(status)) {
+        throw new Error(`Invalid collection offer status: ${status}`)
+      }
+      await db.prepare('UPDATE collection_offers SET status = ? WHERE id = ?').bind(status, id).run()
+    },
+
+    async getMatchedCollectionOffers(): Promise<Record<string, unknown>[]> {
+      const result = await db
+        .prepare(
+          `SELECT co.*, coa.id as acceptance_id, coa.borrower, coa.token_id,
+                  coa.borrower_signature, coa.nonce as acceptance_nonce
+           FROM collection_offers co
+           JOIN collection_offer_acceptances coa ON coa.offer_id = co.id
+           WHERE co.status = 'matched' AND coa.status = 'pending'
+           ORDER BY co.created_at ASC LIMIT 50`
+        )
+        .all<Record<string, unknown>>()
+      return result.results
+    },
+
+    async expireCollectionOffers(nowSeconds: number): Promise<number> {
+      const result = await db
+        .prepare(
+          `UPDATE collection_offers SET status = 'expired'
+           WHERE status = 'pending' AND CAST(deadline AS INTEGER) > 0 AND CAST(deadline AS INTEGER) < ?`
+        )
+        .bind(nowSeconds)
+        .run()
+      return (result.meta?.changes as number) ?? 0
+    },
+
+    // -----------------------------------------------------------------------
+    // T1: Refinance Offers
+    // -----------------------------------------------------------------------
+
+    async getRefinanceOffers(params: {
+      status?: string
+      inscriptionId?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const conditions: string[] = []
+      const bindParams: unknown[] = []
+
+      if (params.status && params.status !== 'all') {
+        conditions.push('ro.status = ?')
+        bindParams.push(params.status)
+      }
+      if (params.inscriptionId) {
+        conditions.push('ro.inscription_id = ?')
+        bindParams.push(params.inscriptionId)
+      }
+      if (params.address) {
+        const addr = normalizeAddress(params.address)
+        conditions.push('(LOWER(ro.new_lender) = LOWER(?) OR ro.id IN (SELECT offer_id FROM refinance_approvals WHERE LOWER(borrower) = LOWER(?)))')
+        bindParams.push(addr, addr)
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      const offset = (params.page - 1) * limit
+
+      const result = await db
+        .prepare(`SELECT ro.* FROM refinance_offers ro ${where} ORDER BY ro.created_at DESC LIMIT ? OFFSET ?`)
+        .bind(...bindParams, limit, offset)
+        .all()
+
+      return result.results
+    },
+
+    async getRefinanceOffer(id: string) {
+      const offer = await db
+        .prepare('SELECT * FROM refinance_offers WHERE id = ?')
+        .bind(id)
+        .first()
+      if (!offer) return null
+
+      const approval = await db
+        .prepare('SELECT * FROM refinance_approvals WHERE offer_id = ? ORDER BY created_at DESC LIMIT 1')
+        .bind(id)
+        .first()
+
+      return { ...(offer as Record<string, unknown>), approval: approval ?? undefined }
+    },
+
+    async createRefinanceOffer(offer: {
+      id: string
+      inscription_id: string
+      new_lender: string
+      order_data: string
+      lender_signature: string
+      nonce: string
+      deadline: string
+    }) {
+      await db
+        .prepare(
+          `INSERT INTO refinance_offers (id, inscription_id, new_lender, order_data, lender_signature, nonce, status, deadline)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`
+        )
+        .bind(
+          offer.id, offer.inscription_id, normalizeAddress(offer.new_lender),
+          offer.order_data, offer.lender_signature, offer.nonce, offer.deadline,
+        )
+        .run()
+    },
+
+    async approveRefinance(params: {
+      approvalId: string
+      offerId: string
+      borrower: string
+      borrowerSignature: string
+      nonce: string
+    }): Promise<boolean> {
+      const updateStmt = db
+        .prepare('UPDATE refinance_offers SET status = ? WHERE id = ? AND status = ?')
+        .bind('matched', params.offerId, 'pending')
+
+      const insertStmt = db
+        .prepare(
+          `INSERT INTO refinance_approvals (id, offer_id, borrower, borrower_signature, nonce, status)
+           VALUES (?, ?, ?, ?, ?, 'pending')`
+        )
+        .bind(params.approvalId, params.offerId, normalizeAddress(params.borrower), params.borrowerSignature, params.nonce)
+
+      const results = await db.batch([updateStmt, insertStmt])
+      const updated = ((results[0].meta?.changes as number) ?? 0) > 0
+
+      if (!updated) {
+        await db.prepare('DELETE FROM refinance_approvals WHERE id = ?').bind(params.approvalId).run()
+        return false
+      }
+      return true
+    },
+
+    async updateRefinanceStatus(id: string, status: string) {
+      if (!VALID_ORDER_STATUSES.has(status)) {
+        throw new Error(`Invalid refinance offer status: ${status}`)
+      }
+      await db.prepare('UPDATE refinance_offers SET status = ? WHERE id = ?').bind(status, id).run()
+    },
+
+    async getMatchedRefinances(): Promise<Record<string, unknown>[]> {
+      const result = await db
+        .prepare(
+          `SELECT ro.*, ra.id as approval_id, ra.borrower, ra.borrower_signature, ra.nonce as approval_nonce
+           FROM refinance_offers ro
+           JOIN refinance_approvals ra ON ra.offer_id = ro.id
+           WHERE ro.status = 'matched' AND ra.status = 'pending'
+           ORDER BY ro.created_at ASC LIMIT 50`
+        )
+        .all<Record<string, unknown>>()
+      return result.results
+    },
+
+    async expireRefinanceOffers(nowSeconds: number): Promise<number> {
+      const result = await db
+        .prepare(
+          `UPDATE refinance_offers SET status = 'expired'
+           WHERE status = 'pending' AND CAST(deadline AS INTEGER) > 0 AND CAST(deadline AS INTEGER) < ?`
+        )
+        .bind(nowSeconds)
+        .run()
+      return (result.meta?.changes as number) ?? 0
+    },
+
+    // -----------------------------------------------------------------------
+    // T1: Renegotiations
+    // -----------------------------------------------------------------------
+
+    async getRenegotiations(params: {
+      inscriptionId?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const conditions: string[] = []
+      const bindParams: unknown[] = []
+
+      if (params.inscriptionId) {
+        conditions.push('inscription_id = ?')
+        bindParams.push(params.inscriptionId)
+      }
+      if (params.address) {
+        conditions.push('LOWER(proposer) = LOWER(?)')
+        bindParams.push(normalizeAddress(params.address))
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      const offset = (params.page - 1) * limit
+
+      const result = await db
+        .prepare(`SELECT * FROM renegotiations ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+        .bind(...bindParams, limit, offset)
+        .all()
+
+      return result.results
+    },
+
+    async getRenegotiation(id: string) {
+      return db.prepare('SELECT * FROM renegotiations WHERE id = ?').bind(id).first()
+    },
+
+    async createRenegotiation(proposal: {
+      id: string
+      inscription_id: string
+      proposer: string
+      proposal_data: string
+      proposer_signature: string
+      nonce: string
+      deadline: string
+    }) {
+      await db
+        .prepare(
+          `INSERT INTO renegotiations (id, inscription_id, proposer, proposal_data, proposer_signature, nonce, status, deadline)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`
+        )
+        .bind(
+          proposal.id, proposal.inscription_id, normalizeAddress(proposal.proposer),
+          proposal.proposal_data, proposal.proposer_signature, proposal.nonce, proposal.deadline,
+        )
+        .run()
+    },
+
+    async updateRenegotiationStatus(id: string, status: string) {
+      const validStatuses = new Set(['pending', 'committed', 'executed', 'expired', 'cancelled'])
+      if (!validStatuses.has(status)) {
+        throw new Error(`Invalid renegotiation status: ${status}`)
+      }
+      await db.prepare('UPDATE renegotiations SET status = ? WHERE id = ?').bind(status, id).run()
+    },
+
+    // -----------------------------------------------------------------------
+    // T1: Collateral Sales
+    // -----------------------------------------------------------------------
+
+    async getCollateralSales(params: {
+      inscriptionId?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const conditions: string[] = []
+      const bindParams: unknown[] = []
+
+      if (params.inscriptionId) {
+        conditions.push('inscription_id = ?')
+        bindParams.push(params.inscriptionId)
+      }
+      if (params.address) {
+        conditions.push('LOWER(buyer) = LOWER(?)')
+        bindParams.push(normalizeAddress(params.address))
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      const offset = (params.page - 1) * limit
+
+      const result = await db
+        .prepare(`SELECT * FROM collateral_sales ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+        .bind(...bindParams, limit, offset)
+        .all()
+
+      return result.results
+    },
+
+    async getCollateralSale(id: string) {
+      return db.prepare('SELECT * FROM collateral_sales WHERE id = ?').bind(id).first()
+    },
+
+    async createCollateralSale(sale: {
+      id: string
+      inscription_id: string
+      buyer: string
+      offer_data: string
+      borrower_signature: string
+      min_price: string
+      deadline: string
+    }) {
+      await db
+        .prepare(
+          `INSERT INTO collateral_sales (id, inscription_id, buyer, offer_data, borrower_signature, min_price, status, deadline)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`
+        )
+        .bind(
+          sale.id, sale.inscription_id, normalizeAddress(sale.buyer),
+          sale.offer_data, sale.borrower_signature, sale.min_price, sale.deadline,
+        )
+        .run()
+    },
+
+    async updateCollateralSaleStatus(id: string, status: string) {
+      const validStatuses = new Set(['pending', 'executed', 'expired', 'cancelled'])
+      if (!validStatuses.has(status)) {
+        throw new Error(`Invalid collateral sale status: ${status}`)
+      }
+      await db.prepare('UPDATE collateral_sales SET status = ? WHERE id = ?').bind(status, id).run()
+    },
+
+    // -----------------------------------------------------------------------
+    // T1: Inscription Auction Updates
+    // -----------------------------------------------------------------------
+
+    async updateInscriptionAuction(id: string, auctionStarted: boolean, auctionStartTime: string) {
+      await db
+        .prepare('UPDATE inscriptions SET auction_started = ?, auction_start_time = ?, updated_at_ts = ? WHERE id = ?')
+        .bind(auctionStarted ? 1 : 0, auctionStartTime, Math.floor(Date.now() / 1000), id)
+        .run()
     },
   }
 }

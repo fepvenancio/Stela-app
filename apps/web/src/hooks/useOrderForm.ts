@@ -459,6 +459,8 @@ export function useOrderForm(orderType: 'lending' | 'swap') {
         interest_asset_count: sdkInterestAssets.length,
         collateral_asset_count: sdkCollateralAssets.length,
         created_at_ts: String(Math.floor(Date.now() / 1000)),
+        auction_started: 0,
+        auction_start_time: '0',
         assets: [
           ...sdkDebtAssets.map((a, i) => ({ inscription_id: tempId, asset_role: 'debt' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
           ...sdkInterestAssets.map((a, i) => ({ inscription_id: tempId, asset_role: 'interest' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
@@ -635,6 +637,8 @@ export function useOrderForm(orderType: 'lending' | 'swap') {
         interest_asset_count: sdkInterestAssets.length,
         collateral_asset_count: sdkCollateralAssets.length,
         created_at_ts: String(Math.floor(Date.now() / 1000)),
+        auction_started: 0,
+        auction_start_time: '0',
         assets: [
           ...sdkDebtAssets.map((a, i) => ({ inscription_id: orderId, asset_role: 'debt' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),
           ...sdkInterestAssets.map((a, i) => ({ inscription_id: orderId, asset_role: 'interest' as const, asset_index: i, asset_address: a.asset_address, asset_type: a.asset_type, value: a.value.toString(), token_id: a.token_id.toString() })),

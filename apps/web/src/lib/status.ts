@@ -1,4 +1,4 @@
-import { computeStatus as sdkComputeStatus, STATUS_LABELS } from '@fepvenancio/stela-sdk'
+import { computeStatus as sdkComputeStatus, STATUS_LABELS, GRACE_PERIOD } from '@fepvenancio/stela-sdk'
 import type { StatusInput } from '@fepvenancio/stela-sdk'
 import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 
@@ -6,16 +6,20 @@ export type { StatusInput }
 
 // ── Badge variant types ─────────────────────────────────────────────
 
-export type StatusBadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'overdue' | 'cancelled' | 'pending' | 'matched' | 'settled'
+export type StatusBadgeVariant = 'open' | 'partial' | 'filled' | 'repaid' | 'liquidated' | 'expired' | 'overdue' | 'cancelled' | 'pending' | 'matched' | 'settled' | 'auctioned' | 'grace_period'
 
 // Extended labels for statuses not in the SDK
 const EXTENDED_LABELS: Record<string, string> = {
   overdue: 'Overdue',
+  auctioned: 'Auctioned',
+  grace_period: 'Grace Period',
 }
 
 /** Map any status string to a valid badge variant, defaulting to 'open'. */
 export function getStatusBadgeVariant(status: string): StatusBadgeVariant {
   if (status === 'overdue') return 'overdue'
+  if (status === 'auctioned') return 'auctioned'
+  if (status === 'grace_period') return 'grace_period'
   return (status in STATUS_LABELS ? status : 'open') as StatusBadgeVariant
 }
 
@@ -56,7 +60,7 @@ export function getOrderStatusLabel(status: string): string {
 /** Enriched inscription statuses that belong to each filter group. */
 export const INSCRIPTION_STATUS_GROUPS: Record<string, Set<string>> = {
   open: new Set(['open', 'partial']),
-  active: new Set(['filled']),
+  active: new Set(['filled', 'auctioned', 'grace_period']),
   closed: new Set(['repaid', 'liquidated', 'expired', 'overdue', 'cancelled']),
 }
 
@@ -88,6 +92,8 @@ export const STATUS_DESCRIPTIONS: Record<string, string> = {
   repaid: 'The borrower repaid the loan. Lenders can redeem their shares.',
   liquidated: 'Loan expired without repayment. Collateral distributed to lenders.',
   overdue: 'Loan duration elapsed without repayment. Anyone can liquidate.',
+  auctioned: 'Auction started. The collateral is being sold to the highest bidder.',
+  grace_period: 'Loan expired but within the 24-hour grace period. The borrower can still repay.',
   expired: 'Expired before being funded. No lender action was taken.',
   cancelled: 'Cancelled by the borrower before any lender signed.',
   pending: 'Gasless order waiting for a lender offer. No gas was spent.',
@@ -124,6 +130,7 @@ export function enrichStatus(row: {
   duration: string
   issued_debt_percentage: string
   deadline: string
+  auction_started?: number
 }): string {
   const base = computeStatus({
     signed_at: BigInt(row.signed_at ?? '0'),
@@ -134,9 +141,24 @@ export function enrichStatus(row: {
     deadline: BigInt(row.deadline ?? '0'),
     status: row.status,
   })
-  // Distinguish overdue (filled loan past duration) from expired (unfilled past deadline)
+  // Auction started — collateral is being auctioned off
+  if (row.auction_started) {
+    return 'auctioned'
+  }
+
+  // Distinguish overdue/grace_period (filled loan past duration) from expired (unfilled past deadline)
   if (base === 'expired' && row.signed_at && BigInt(row.signed_at) > 0n) {
+    const signedAt = BigInt(row.signed_at)
+    const duration = BigInt(row.duration)
+    const nowSeconds = BigInt(Math.floor(Date.now() / 1000))
+    const expiryTime = signedAt + duration
+    // Grace period — loan expired but borrower can still repay within GRACE_PERIOD
+    if (nowSeconds <= expiryTime + GRACE_PERIOD) {
+      return 'grace_period'
+    }
+    // Past grace period — overdue, anyone can liquidate
     return 'overdue'
   }
+
   return base
 }
