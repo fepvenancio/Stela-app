@@ -12,11 +12,13 @@ import { Button } from '@/components/ui/button'
 import { VOYAGER_TX_URL } from '@/lib/config'
 import type { StepState } from '@/hooks/useTransactionProgress'
 
-interface TransactionProgressModalProps {
+export interface TransactionProgressModalProps {
   open: boolean
   steps: StepState[]
   txHash: string | null
   onClose: () => void
+  /** Override the default title (defaults to Processing / Complete / Failed) */
+  title?: { processing: string; complete: string; failed: string }
 }
 
 function StepIcon({ status }: { status: StepState['status'] }) {
@@ -32,17 +34,22 @@ function StepIcon({ status }: { status: StepState['status'] }) {
   }
 }
 
-export function TransactionProgressModal({ open, steps, txHash, onClose }: TransactionProgressModalProps) {
+export function TransactionProgressModal({ open, steps, txHash, onClose, title }: TransactionProgressModalProps) {
   const isComplete = steps.every((s) => s.status === 'success')
   const hasError = steps.some((s) => s.status === 'error')
-  const canClose = isComplete || hasError
+
+  const labels = title ?? {
+    processing: 'Processing Transaction',
+    complete: 'Transaction Complete',
+    failed: 'Transaction Failed',
+  }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v && canClose) onClose() }}>
-      <DialogContent className="bg-void border-edge/50 sm:max-w-md" showCloseButton={false}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="bg-void border-edge/50 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
-            {isComplete ? 'Transaction Complete' : hasError ? 'Transaction Failed' : 'Processing Transaction'}
+            {isComplete ? labels.complete : hasError ? labels.failed : labels.processing}
           </DialogTitle>
         </DialogHeader>
 
@@ -100,10 +107,9 @@ export function TransactionProgressModal({ open, steps, txHash, onClose }: Trans
             variant={isComplete ? 'gold' : hasError ? 'outline' : 'ghost'}
             size="lg"
             onClick={onClose}
-            disabled={!canClose}
             className="w-full"
           >
-            {isComplete ? 'Done' : hasError ? 'Close' : 'Processing...'}
+            {isComplete ? 'Done' : hasError ? 'Close' : 'Close'}
           </Button>
         </DialogFooter>
       </DialogContent>
