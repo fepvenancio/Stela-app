@@ -55,7 +55,7 @@ export function useOrders(params?: OrderListParams) {
     [params?.status, params?.address, params?.page, params?.limit],
   )
 
-  const { data: raw, isLoading, error, refetch } = useFetchApi<ApiOrderListResponse>(url, undefined, 10_000)
+  const { data: raw, isLoading, error, refetch } = useFetchApi<ApiOrderListResponse>(url, undefined, 30_000)
   const data = raw?.data ?? []
 
   return { data, isLoading, error, refetch }

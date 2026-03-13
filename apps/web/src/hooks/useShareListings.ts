@@ -33,7 +33,7 @@ export function useShareListings(params?: {
     limit: params?.limit,
   })
 
-  return useFetchApi<{ data: ShareListing[] }>(url, undefined, 10_000)
+  return useFetchApi<{ data: ShareListing[] }>(url, undefined, 30_000)
 }
 
 /** Fetch a single share listing by ID */

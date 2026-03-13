@@ -178,7 +178,7 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     if (!address) return
     const id = setInterval(() => {
       fetchOrdersPage(1, true, address)
-    }, 10_000)
+    }, 30_000)
     return () => clearInterval(id)
   }, [address, fetchOrdersPage])
 
@@ -216,19 +216,19 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     data: collectionOffersRaw,
     isLoading: coLoading,
     error: coError,
-  } = useFetchApi<ApiListResponse<CollectionOfferRow>>(collectionOffersUrl, undefined, 10_000)
+  } = useFetchApi<ApiListResponse<CollectionOfferRow>>(collectionOffersUrl, undefined, 30_000)
 
   const {
     data: refinancesRaw,
     isLoading: refiLoading,
     error: refiError,
-  } = useFetchApi<ApiListResponse<RefinanceRow>>(refinancesUrl, undefined, 10_000)
+  } = useFetchApi<ApiListResponse<RefinanceRow>>(refinancesUrl, undefined, 30_000)
 
   const {
     data: renegotiationsRaw,
     isLoading: renegLoading,
     error: renegError,
-  } = useFetchApi<ApiListResponse<RenegotiationRow>>(renegotiationsUrl, undefined, 10_000)
+  } = useFetchApi<ApiListResponse<RenegotiationRow>>(renegotiationsUrl, undefined, 30_000)
 
   const isLoading = insInitialLoading || sharesLoading || ordersInitialLoading || coLoading || refiLoading || renegLoading
   const error = insError ?? sharesError ?? ordersError ?? coError ?? refiError ?? renegError
