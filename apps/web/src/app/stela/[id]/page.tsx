@@ -280,7 +280,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
   const canCreateOffer = isConnected && !isBorrower
 
   return (
-    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+    <section id="refinance" className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
       <div className="px-5 py-3 border-b border-edge/20 bg-surface/25 flex items-center justify-between">
         <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Refinance Offers</h3>
         {canCreateOffer && !showForm && (
@@ -344,6 +344,36 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
   )
 }
 
+function RenegotiationSection({ inscriptionId, isBorrower, isLender }: { inscriptionId: string; isBorrower: boolean; isLender: boolean }) {
+  const { items, loading } = useT1List(`/api/renegotiations?inscription_id=${inscriptionId}`)
+  const isParty = isBorrower || isLender
+
+  return (
+    <section id="renegotiation" className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-edge/20 bg-surface/25 flex items-center justify-between">
+        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Renegotiation</h3>
+      </div>
+      <div className="p-5 space-y-3">
+        {!loading && items.length > 0 && items.map((p, i) => (
+          <T1Row
+            key={String(p.id ?? i)}
+            label={formatAddress(String(p.proposer ?? ''))}
+            detail={p.new_duration ? `New duration: ${p.new_duration}s` : 'Proposed new terms'}
+            status={String(p.status ?? 'pending')}
+          />
+        ))}
+        {!loading && items.length === 0 && (
+          <p className="text-xs text-dust italic text-center py-2">
+            {isParty
+              ? 'No renegotiation proposals. Either party can propose new terms.'
+              : 'No renegotiation proposals yet.'}
+          </p>
+        )}
+      </div>
+    </section>
+  )
+}
+
 /* ── Inscription view ────────────────────────────────────── */
 
 function InscriptionView({ id }: { id: string }) {
@@ -372,6 +402,11 @@ function InscriptionView({ id }: { id: string }) {
   const isBorrower = useMemo(() => {
     if (!address || !detail?.borrower) return false
     return addressesEqual(address, detail.borrower)
+  }, [address, detail])
+
+  const isLender = useMemo(() => {
+    if (!address || !detail?.lender) return false
+    return addressesEqual(address, detail.lender)
   }, [address, detail])
 
   const shares = useMemo(() => {
@@ -458,23 +493,11 @@ function InscriptionView({ id }: { id: string }) {
       }
       extraContent={
         <>
-          {enrichedStatusValue === 'filled' && (
+          {(enrichedStatusValue === 'filled' || enrichedStatusValue === 'grace_period') && (
             <RefinanceOffersSection inscriptionId={id} isBorrower={isBorrower} />
           )}
-          {enrichedStatusValue === 'filled' && (
-            <T1Section
-              inscriptionId={id}
-              title="Renegotiations"
-              endpoint="/api/renegotiations"
-              renderRow={(p, i) => (
-                <T1Row
-                  key={String(p.id ?? i)}
-                  label={formatAddress(String(p.proposer ?? ''))}
-                  detail={p.new_duration ? `New duration: ${p.new_duration}s` : 'New interest terms'}
-                  status={String(p.status ?? 'pending')}
-                />
-              )}
-            />
+          {(enrichedStatusValue === 'filled' || enrichedStatusValue === 'grace_period') && (
+            <RenegotiationSection inscriptionId={id} isBorrower={isBorrower} isLender={isLender} />
           )}
           {(enrichedStatusValue === 'filled' || enrichedStatusValue === 'grace_period') && (
             <T1Section
@@ -496,23 +519,49 @@ function InscriptionView({ id }: { id: string }) {
       sidebarTitle="Vault Actions"
       sidebarActions={
         isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
-          <InscriptionActions
-            inscriptionId={id}
-            status={status}
-            enrichedStatus={enrichedStatusValue}
-            isOwner={isOwner}
-            isBorrower={isBorrower}
-            shares={shares}
-            multiLender={Boolean(detail?.multi_lender)}
-            debtAssets={debtAssets.map(r => ({ address: r.asset_address, value: r.value ?? '0' }))}
-            interestAssets={interestAssets.map(r => ({ address: r.asset_address, value: r.value ?? '0' }))}
-            debtDecimals={(() => {
-              const token = debtAssets[0] ? findTokenByAddress(debtAssets[0].asset_address) : undefined
-              return token?.decimals ?? 18
-            })()}
-            wasSigned={Number(detail?.signed_at ?? 0) > 0}
-            auctionStarted={Boolean(detail?.auction_started)}
-          />
+          <>
+            <InscriptionActions
+              inscriptionId={id}
+              status={status}
+              enrichedStatus={enrichedStatusValue}
+              isOwner={isOwner}
+              isBorrower={isBorrower}
+              shares={shares}
+              multiLender={Boolean(detail?.multi_lender)}
+              debtAssets={debtAssets.map(r => ({ address: r.asset_address, value: r.value ?? '0' }))}
+              interestAssets={interestAssets.map(r => ({ address: r.asset_address, value: r.value ?? '0' }))}
+              debtDecimals={(() => {
+                const token = debtAssets[0] ? findTokenByAddress(debtAssets[0].asset_address) : undefined
+                return token?.decimals ?? 18
+              })()}
+              wasSigned={Number(detail?.signed_at ?? 0) > 0}
+              auctionStarted={Boolean(detail?.auction_started)}
+            />
+            {(enrichedStatusValue === 'filled' || enrichedStatusValue === 'grace_period') && (
+              <div className="mt-5 pt-5 border-t border-edge/15 space-y-2">
+                <span className="text-[9px] text-dust uppercase tracking-widest font-bold block mb-3">Advanced</span>
+                <a href="#refinance" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface/20 border border-edge/20 hover:bg-surface/40 hover:border-edge/40 transition-all group">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star shrink-0">
+                    <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 014-4h14" />
+                    <path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 01-4 4H3" />
+                  </svg>
+                  <div>
+                    <span className="text-xs text-chalk font-medium group-hover:text-star transition-colors">Refinance</span>
+                    <span className="text-[10px] text-dust block">Replace the current lender</span>
+                  </div>
+                </a>
+                <a href="#renegotiation" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface/20 border border-edge/20 hover:bg-surface/40 hover:border-edge/40 transition-all group">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star shrink-0">
+                    <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  <div>
+                    <span className="text-xs text-chalk font-medium group-hover:text-star transition-colors">Renegotiate</span>
+                    <span className="text-[10px] text-dust block">Propose new loan terms</span>
+                  </div>
+                </a>
+              </div>
+            )}
+          </>
         )
       }
     />
