@@ -1,9 +1,10 @@
 'use client'
 
 import { use, useState, useMemo, useCallback } from 'react'
-import { useAccount } from '@starknet-react/core'
+import { useAccount, useSendTransaction } from '@starknet-react/core'
 import Link from 'next/link'
-import { findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress, InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import { RpcProvider } from 'starknet'
 import { usePairListings } from '@/hooks/usePairListings'
 import { useOrderBook } from '@/hooks/useOrderBook'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
@@ -27,6 +28,8 @@ import { useBatchSign } from '@/hooks/useBatchSign'
 import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
+import { useSync } from '@/hooks/useSync'
 import type { AssetRow } from '@/types/api'
 import type { TokenDisplay, DurationFilter as DurationFilterType } from '@/types/orderbook'
 
@@ -78,14 +81,17 @@ const DURATION_RANGE_MAP: Record<DurationFilterType, [number, number] | null> = 
 }
 
 function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; collateralToken: string }) {
-  const { address } = useAccount()
+  const { address, status: walletStatus } = useAccount()
   const { inscriptions, orders, isLoading, error, hasMore, isLoadingMore, loadMore, total, loaded } = usePairListings(debtToken, collateralToken)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [actionPendingId, setActionPendingId] = useState<string | null>(null)
   const { toggle, isSelected, count, selected } = useBatchSelection()
   const { batchSign, isPending: isBatchSignPending } = useBatchSign()
   const { settle: instantSettle, isPending: isInstantSettlePending } = useInstantSettle()
-  const isActionPending = isBatchSignPending || isInstantSettlePending
+  const { sendAsync } = useSendTransaction({})
+  const { sync } = useSync()
+  const [quickLendPending, setQuickLendPending] = useState(false)
+  const isActionPending = isBatchSignPending || isInstantSettlePending || quickLendPending
 
   // Mode & filter state
   const [mode, setMode] = useState<'lending' | 'swap'>('lending')
@@ -243,6 +249,22 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
     return availableDurations[mid] ?? null
   }, [mode, availableDurations])
 
+  // Best order for ActionWidget quick-lend button
+  const bestOrder = useMemo(() => {
+    if (!orderBookData?.lending?.asks?.length) return null
+    // First ask level has the best (highest) APR for lenders
+    const bestLevel = orderBookData.lending.asks[0]
+    if (!bestLevel?.orders?.length) return null
+    const o = bestLevel.orders[0]
+    return {
+      id: o.id,
+      source: o.source,
+      apr: bestLevel.apr,
+      amount: o.amount,
+      duration: o.duration,
+    }
+  }, [orderBookData])
+
   /* -- Action Handlers ------------------------------------ */
 
   const handleOnchainAction = useCallback(async (inscriptionId: string, assets: { asset_address: string; value: string | null; asset_role: string }[]) => {
@@ -283,6 +305,66 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
       setActionPendingId(null)
     }
   }, [address, instantSettle])
+
+  // Quick lend: sign an on-chain inscription at 100% directly from the widget
+  const handleQuickLend = useCallback(async (orderId: string, source: 'offchain' | 'onchain') => {
+    if (!address) {
+      toast.error('Connect your wallet to continue')
+      return
+    }
+    if (source === 'offchain') {
+      // For off-chain orders, navigate to the order page
+      window.location.href = `/order/${orderId}`
+      return
+    }
+    setQuickLendPending(true)
+    try {
+      // Fetch inscription assets to build approval calls
+      const res = await fetch(`/api/inscriptions/${orderId}`)
+      const json = (await res.json()) as { data?: { assets?: Record<string, unknown>[] } }
+      const assets = json.data?.assets ?? []
+      const debtAssets = assets.filter((a: Record<string, unknown>) => a.asset_role === 'debt')
+
+      // Build ERC20 approvals for debt tokens
+      const U128_MAX = (1n << 128n) - 1n
+      const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
+      const approved = new Set<string>()
+      for (const asset of debtAssets) {
+        const addr = (asset.asset_address as string).toLowerCase()
+        if (approved.has(addr)) continue
+        approved.add(addr)
+        approvals.push({
+          contractAddress: asset.asset_address as string,
+          entrypoint: 'approve',
+          calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
+        })
+      }
+
+      // Build sign_inscription call (100% = 10000 BPS)
+      const client = new InscriptionClient({
+        stelaAddress: CONTRACT_ADDRESS,
+        provider: new RpcProvider({ nodeUrl: RPC_URL }),
+      })
+      const signCall = client.buildSignInscription(BigInt(orderId), 10000n)
+      const result = await sendAsync([...approvals, signCall])
+
+      toast.success('Lend transaction submitted!')
+
+      // Wait for confirmation
+      const provider = new RpcProvider({ nodeUrl: RPC_URL })
+      await provider.waitForTransaction(result.transaction_hash)
+      toast.success('Lending confirmed!')
+
+      sync(result.transaction_hash).catch(() => {})
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (!msg.includes('User abort')) {
+        toast.error(`Lend failed: ${msg.slice(0, 100)}`)
+      }
+    } finally {
+      setQuickLendPending(false)
+    }
+  }, [address, sendAsync, sync])
 
   /* -- Render --------------------------------------------- */
 
@@ -603,6 +685,9 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
               bestSwapRate={null}
               mode={mode}
               selectedDuration={selectedDuration}
+              bestOrder={bestOrder}
+              onLend={handleQuickLend}
+              isLending={quickLendPending}
             />
           </div>
         </div>

@@ -1,15 +1,27 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useAccount } from '@starknet-react/core'
+import { useState, useMemo, useCallback } from 'react'
+import { useAccount, useSendTransaction } from '@starknet-react/core'
 import Link from 'next/link'
-import { findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress, InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
+import { RpcProvider } from 'starknet'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { TokenAvatar, stringToColor } from '@/components/TokenAvatar'
+import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
+import { useSync } from '@/hooks/useSync'
+import { toast } from 'sonner'
 import type { TokenDisplay } from '@/types/orderbook'
 
 type ActionTab = 'lend' | 'borrow' | 'swap'
+
+interface BestOrder {
+  id: string
+  source: 'offchain' | 'onchain'
+  apr: number
+  amount: string
+  duration: number
+}
 
 interface ActionWidgetProps {
   pair: { base: TokenDisplay; quote: TokenDisplay }
@@ -17,6 +29,9 @@ interface ActionWidgetProps {
   bestSwapRate: number | null
   mode: 'lending' | 'swap'
   selectedDuration: number | null
+  bestOrder?: BestOrder | null
+  onLend?: (orderId: string, source: 'offchain' | 'onchain') => Promise<void>
+  isLending?: boolean
 }
 
 function TokenIcon({ token, size = 24 }: { token: TokenDisplay; size?: number }) {
@@ -90,12 +105,18 @@ function LendTab({
   selectedDuration,
   connected,
   pairParam,
+  bestOrder,
+  onLend,
+  isLending: isLendingPending,
 }: {
   pair: { base: TokenDisplay; quote: TokenDisplay }
   bestApr: number | null
   selectedDuration: number | null
   connected: boolean
   pairParam: string
+  bestOrder?: BestOrder | null
+  onLend?: (orderId: string, source: 'offchain' | 'onchain') => Promise<void>
+  isLending?: boolean
 }) {
   const [amount, setAmount] = useState('')
 
@@ -155,7 +176,17 @@ function LendTab({
 
       {/* Action */}
       {connected ? (
-        bestApr !== null ? (
+        bestOrder && onLend ? (
+          <Button
+            variant="gold"
+            size="lg"
+            className="w-full"
+            disabled={isLendingPending}
+            onClick={() => onLend(bestOrder.id, bestOrder.source)}
+          >
+            {isLendingPending ? 'Signing...' : `Lend at ${bestApr?.toFixed(1)}% APR`}
+          </Button>
+        ) : bestApr !== null ? (
           <Button variant="gold" size="lg" className="w-full" asChild>
             <Link href={`/trade?pair=${pairParam}&action=lend`}>
               Lend at Best Rate
@@ -165,10 +196,10 @@ function LendTab({
           <div className="text-center py-3">
             <p className="text-xs text-dust mb-2">No orders available</p>
             <Link
-              href={`/trade?pair=${pairParam}&action=lend`}
+              href={`/trade?pair=${pairParam}&action=borrow`}
               className="text-xs text-star hover:text-star-bright transition-colors"
             >
-              Create one on the Trade page
+              Be the first — create a borrow order
             </Link>
           </div>
         )
@@ -178,6 +209,14 @@ function LendTab({
         </Button>
       )}
 
+      {bestOrder && (
+        <Link
+          href={bestOrder.source === 'onchain' ? `/stela/${bestOrder.id}` : `/order/${bestOrder.id}`}
+          className="text-[11px] text-center text-dust hover:text-chalk transition-colors block"
+        >
+          View order details
+        </Link>
+      )}
       <Link
         href={`/trade?pair=${pairParam}&action=lend`}
         className="text-[11px] text-center text-dust hover:text-chalk transition-colors"
@@ -403,7 +442,7 @@ function SwapTab({
   )
 }
 
-export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selectedDuration }: ActionWidgetProps) {
+export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selectedDuration, bestOrder, onLend, isLending: isLendingProp }: ActionWidgetProps) {
   const { address } = useAccount()
   const connected = !!address
   const [activeTab, setActiveTab] = useState<ActionTab>(mode === 'swap' ? 'swap' : 'lend')
@@ -459,6 +498,9 @@ export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selecte
             selectedDuration={selectedDuration}
             connected={connected}
             pairParam={pairParam}
+            bestOrder={bestOrder}
+            onLend={onLend}
+            isLending={isLendingProp}
           />
         )}
         {activeTab === 'borrow' && (
