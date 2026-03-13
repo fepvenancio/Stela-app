@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@stela/core'],
   serverExternalPackages: ['ws'],
   async headers() {

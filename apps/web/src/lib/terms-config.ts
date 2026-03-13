@@ -1,5 +1,3 @@
-import { hash } from 'starknet'
-
 /**
  * Terms of Use configuration.
  * Bump TERMS_VERSION when terms change — users must re-sign.
@@ -28,8 +26,9 @@ By signing this message, I confirm that:
 
 7. All interactions are peer-to-peer, final, and irreversible once settled on-chain.`
 
-/** Poseidon hash of the terms text, used in SNIP-12 typed data */
-export const TERMS_HASH = hash.computePoseidonHash(
-  hash.computePoseidonHash('0x0', TERMS_VERSION),
-  TERMS_TEXT.length.toString(),
-)
+/**
+ * Pre-computed Poseidon hash of the terms text.
+ * Regenerate with: poseidon(starknetKeccak(TERMS_TEXT), TERMS_TEXT.length)
+ * Must be updated whenever TERMS_TEXT changes.
+ */
+export const TERMS_HASH = '0x3a8176a56d78c4025484a9eb7a2d32ffd5007f0edb9ef33f7c2cd63273b57b2'

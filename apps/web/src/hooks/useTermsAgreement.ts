@@ -56,7 +56,7 @@ export function useTermsAgreement() {
       try {
         const res = await fetch(`/api/terms?address=${encodeURIComponent(address)}`)
         if (res.ok) {
-          const data = await res.json()
+          const data = (await res.json()) as { agreed?: boolean }
           if (data.agreed) {
             setLocalAgreement(address, TERMS_VERSION)
             setState({ agreed: true, loading: false, signing: false, error: null })
