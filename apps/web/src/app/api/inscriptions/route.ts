@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getD1()
-    const inscriptions = await db.getInscriptions({ status, address, page, limit }) as Record<string, unknown>[]
+    const [inscriptions, total] = await Promise.all([
+      db.getInscriptions({ status, address, page, limit }) as Promise<Record<string, unknown>[]>,
+      db.countInscriptions({ status, address }),
+    ])
 
     // Batch-fetch assets for all returned inscriptions
     const ids = inscriptions.map((i) => i.id as string)
@@ -43,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return jsonResponse({
       data,
-      meta: { page, limit, total: data.length },
+      meta: { page, limit, total },
     }, request)
   } catch (err) {
     logError('inscriptions', err)

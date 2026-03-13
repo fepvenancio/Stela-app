@@ -84,8 +84,11 @@ export function createD1Queries(db: D1Database) {
     // Reads
     // -----------------------------------------------------------------------
 
-    async getInscriptions({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
-      const limit = Math.min(rawLimit, 50)
+    /**
+     * Build the WHERE clause + params for inscription queries.
+     * Shared between getInscriptions and countInscriptions.
+     */
+    _buildInscriptionWhere(status?: string, address?: string): { where: string; params: unknown[] } {
       const conditions: string[] = []
       const params: unknown[] = []
 
@@ -101,24 +104,25 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        // Compare all possible address forms to handle old/unnormalized data in D1:
-        // 1. Padded (66 chars with zeros)
-        // 2. Stripped (no leading zeros)
-        // 3. Original lowercased
         const padded = normalizeAddress(address)
         const stripped = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
         const variants = [...new Set([padded, stripped, address.toLowerCase()])]
-        
-        // Build the OR checks for each variant across all three roles
+
         const creatorChecks = variants.map(() => 'creator = ?').join(' OR ')
         const borrowerChecks = variants.map(() => 'borrower = ?').join(' OR ')
         const lenderChecks = variants.map(() => 'lender = ?').join(' OR ')
-        
+
         conditions.push(`(${creatorChecks} OR ${borrowerChecks} OR ${lenderChecks})`)
         params.push(...variants, ...variants, ...variants)
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      return { where, params }
+    },
+
+    async getInscriptions({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
+      const limit = Math.min(rawLimit, 50)
+      const { where, params } = this._buildInscriptionWhere(status, address)
       const offset = (page - 1) * limit
 
       const result = await db
@@ -129,6 +133,15 @@ export function createD1Queries(db: D1Database) {
         .all()
 
       return result.results
+    },
+
+    async countInscriptions({ status, address }: { status?: string; address?: string }): Promise<number> {
+      const { where, params } = this._buildInscriptionWhere(status, address)
+      const row = await db
+        .prepare(`SELECT COUNT(*) as total FROM inscriptions ${where}`)
+        .bind(...params)
+        .first<{ total: number }>()
+      return row?.total ?? 0
     },
 
     async getInscription(id: string) {
@@ -511,16 +524,29 @@ export function createD1Queries(db: D1Database) {
         .run()
     },
 
-    async getShareBalances(account: string): Promise<{ inscription_id: string; balance: string }[]> {
+    async getShareBalances(account: string, page = 1, limit = 100): Promise<{ results: { inscription_id: string; balance: string }[]; total: number }> {
+      const clampedLimit = Math.min(Math.max(1, limit), 100)
+      const offset = (Math.max(1, page) - 1) * clampedLimit
+
+      const countRow = await db
+        .prepare(
+          `SELECT COUNT(*) as total FROM share_balances
+           WHERE account = ? AND balance != '0' AND length(balance) > 0`
+        )
+        .bind(account)
+        .first<{ total: number }>()
+
       const result = await db
         .prepare(
           `SELECT inscription_id, balance FROM share_balances
            WHERE account = ? AND balance != '0' AND length(balance) > 0
-           ORDER BY inscription_id`
+           ORDER BY inscription_id
+           LIMIT ? OFFSET ?`
         )
-        .bind(account)
+        .bind(account, clampedLimit, offset)
         .all<{ inscription_id: string; balance: string }>()
-      return result.results
+
+      return { results: result.results, total: countRow?.total ?? 0 }
     },
 
     async getShareBalance(account: string, inscriptionId: string): Promise<string> {
@@ -710,8 +736,11 @@ export function createD1Queries(db: D1Database) {
       return result.results
     },
 
-    async getOrders({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
-      const limit = Math.min(rawLimit, 50)
+    /**
+     * Build the WHERE clause + params for order queries.
+     * Shared between getOrders and countOrders.
+     */
+    _buildOrderWhere(status?: string, address?: string): { where: string; params: unknown[] } {
       const conditions: string[] = []
       const params: unknown[] = []
 
@@ -721,14 +750,13 @@ export function createD1Queries(db: D1Database) {
       }
 
       if (address) {
-        // Compare all possible address forms to handle old/unnormalized data in D1
         const padded = normalizeAddress(address)
         const stripped = '0x' + address.replace(/^0x0*/i, '').toLowerCase()
         const variants = [...new Set([padded, stripped, address.toLowerCase()])]
-        
+
         const borrowerChecks = variants.map(() => 'borrower = ?').join(' OR ')
         const lenderChecks = variants.map(() => 'lender = ?').join(' OR ')
-        
+
         conditions.push(
           `(${borrowerChecks} OR id IN (SELECT order_id FROM order_offers WHERE ${lenderChecks}))`
         )
@@ -736,6 +764,12 @@ export function createD1Queries(db: D1Database) {
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      return { where, params }
+    },
+
+    async getOrders({ status, address, page, limit: rawLimit }: GetInscriptionsParams) {
+      const limit = Math.min(rawLimit, 50)
+      const { where, params } = this._buildOrderWhere(status, address)
       const offset = (page - 1) * limit
 
       const result = await db
@@ -744,6 +778,15 @@ export function createD1Queries(db: D1Database) {
         .all()
 
       return result.results
+    },
+
+    async countOrders({ status, address }: { status?: string; address?: string }): Promise<number> {
+      const { where, params } = this._buildOrderWhere(status, address)
+      const row = await db
+        .prepare(`SELECT COUNT(*) as total FROM orders ${where}`)
+        .bind(...params)
+        .first<{ total: number }>()
+      return row?.total ?? 0
     },
 
     async updateOrderStatus(id: string, status: string) {
@@ -1077,9 +1120,40 @@ export function createD1Queries(db: D1Database) {
       return [...map.values()]
     },
 
-    async getListingsForPair(debtToken: string, collateralToken: string) {
+    async getListingsForPair(debtToken: string, collateralToken: string, page = 1, limit = 50) {
       const normalizedDebt = normalizeAddress(debtToken)
       const normalizedCollateral = normalizeAddress(collateralToken)
+      const clampedLimit = Math.min(Math.max(1, limit), 100)
+      const offset = (Math.max(1, page) - 1) * clampedLimit
+
+      // Count inscriptions for this pair
+      const inscriptionsCountRow = await db
+        .prepare(
+          `SELECT COUNT(DISTINCT i.id) as total
+           FROM inscriptions i
+           JOIN inscription_assets d
+             ON d.inscription_id = i.id AND d.asset_role = 'debt' AND d.asset_index = 0
+           JOIN inscription_assets c
+             ON c.inscription_id = i.id AND c.asset_role = 'collateral' AND c.asset_index = 0
+           WHERE LOWER(d.asset_address) = LOWER(?)
+             AND LOWER(c.asset_address) = LOWER(?)
+             AND i.status IN ('open', 'filled', 'partial')`
+        )
+        .bind(normalizedDebt, normalizedCollateral)
+        .first<{ total: number }>()
+      const inscriptionsTotal = inscriptionsCountRow?.total ?? 0
+
+      // Count orders for this pair
+      const ordersCountRow = await db
+        .prepare(
+          `SELECT COUNT(*) as total FROM orders
+           WHERE status = 'pending'
+             AND LOWER(debt_token) = LOWER(?)
+             AND LOWER(collateral_token) = LOWER(?)`
+        )
+        .bind(normalizedDebt, normalizedCollateral)
+        .first<{ total: number }>()
+      const ordersTotal = ordersCountRow?.total ?? 0
 
       // On-chain inscriptions for this pair (open + filled)
       const inscriptionsResult = await db
@@ -1094,9 +1168,9 @@ export function createD1Queries(db: D1Database) {
              AND LOWER(c.asset_address) = LOWER(?)
              AND i.status IN ('open', 'filled', 'partial')
            ORDER BY i.created_at_ts DESC
-           LIMIT 100`
+           LIMIT ? OFFSET ?`
         )
-        .bind(normalizedDebt, normalizedCollateral)
+        .bind(normalizedDebt, normalizedCollateral, clampedLimit, offset)
         .all<Record<string, unknown>>()
 
       // Fetch assets for those inscriptions
@@ -1136,14 +1210,20 @@ export function createD1Queries(db: D1Database) {
              AND LOWER(debt_token) = LOWER(?)
              AND LOWER(collateral_token) = LOWER(?)
            ORDER BY created_at DESC
-           LIMIT 100`
+           LIMIT ? OFFSET ?`
         )
-        .bind(normalizedDebt, normalizedCollateral)
+        .bind(normalizedDebt, normalizedCollateral, clampedLimit, offset)
         .all<Record<string, unknown>>()
 
       return {
         inscriptions,
         orders: ordersResult.results,
+        meta: {
+          inscriptions_total: inscriptionsTotal,
+          orders_total: ordersTotal,
+          page: Math.max(1, page),
+          limit: clampedLimit,
+        },
       }
     },
 
@@ -1151,15 +1231,16 @@ export function createD1Queries(db: D1Database) {
     // T1: Collection Offers
     // -----------------------------------------------------------------------
 
-    async getCollectionOffers(params: {
+    /**
+     * Build the WHERE clause + params for collection offer queries.
+     * Shared between getCollectionOffers and countCollectionOffers.
+     */
+    _buildCollectionOfferWhere(params: {
       status?: string
       collection?: string
       lender?: string
       address?: string
-      page: number
-      limit: number
-    }) {
-      const limit = Math.min(params.limit, 50)
+    }): { where: string; params: unknown[] } {
       const conditions: string[] = []
       const bindParams: unknown[] = []
 
@@ -1182,6 +1263,19 @@ export function createD1Queries(db: D1Database) {
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      return { where, params: bindParams }
+    },
+
+    async getCollectionOffers(params: {
+      status?: string
+      collection?: string
+      lender?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const { where, params: bindParams } = this._buildCollectionOfferWhere(params)
       const offset = (params.page - 1) * limit
 
       const result = await db
@@ -1190,6 +1284,20 @@ export function createD1Queries(db: D1Database) {
         .all()
 
       return result.results
+    },
+
+    async countCollectionOffers(params: {
+      status?: string
+      collection?: string
+      lender?: string
+      address?: string
+    }): Promise<number> {
+      const { where, params: bindParams } = this._buildCollectionOfferWhere(params)
+      const row = await db
+        .prepare(`SELECT COUNT(*) as total FROM collection_offers co ${where}`)
+        .bind(...bindParams)
+        .first<{ total: number }>()
+      return row?.total ?? 0
     },
 
     async getCollectionOffer(id: string) {
@@ -1300,14 +1408,15 @@ export function createD1Queries(db: D1Database) {
     // T1: Refinance Offers
     // -----------------------------------------------------------------------
 
-    async getRefinanceOffers(params: {
+    /**
+     * Build the WHERE clause + params for refinance offer queries.
+     * Shared between getRefinanceOffers and countRefinanceOffers.
+     */
+    _buildRefinanceOfferWhere(params: {
       status?: string
       inscriptionId?: string
       address?: string
-      page: number
-      limit: number
-    }) {
-      const limit = Math.min(params.limit, 50)
+    }): { where: string; params: unknown[] } {
       const conditions: string[] = []
       const bindParams: unknown[] = []
 
@@ -1326,6 +1435,18 @@ export function createD1Queries(db: D1Database) {
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      return { where, params: bindParams }
+    },
+
+    async getRefinanceOffers(params: {
+      status?: string
+      inscriptionId?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const { where, params: bindParams } = this._buildRefinanceOfferWhere(params)
       const offset = (params.page - 1) * limit
 
       const result = await db
@@ -1334,6 +1455,19 @@ export function createD1Queries(db: D1Database) {
         .all()
 
       return result.results
+    },
+
+    async countRefinanceOffers(params: {
+      status?: string
+      inscriptionId?: string
+      address?: string
+    }): Promise<number> {
+      const { where, params: bindParams } = this._buildRefinanceOfferWhere(params)
+      const row = await db
+        .prepare(`SELECT COUNT(*) as total FROM refinance_offers ro ${where}`)
+        .bind(...bindParams)
+        .first<{ total: number }>()
+      return row?.total ?? 0
     },
 
     async getRefinanceOffer(id: string) {
@@ -1435,13 +1569,10 @@ export function createD1Queries(db: D1Database) {
     // T1: Renegotiations
     // -----------------------------------------------------------------------
 
-    async getRenegotiations(params: {
+    _buildRenegotiationWhere(params: {
       inscriptionId?: string
       address?: string
-      page: number
-      limit: number
-    }) {
-      const limit = Math.min(params.limit, 50)
+    }): { where: string; params: unknown[] } {
       const conditions: string[] = []
       const bindParams: unknown[] = []
 
@@ -1455,6 +1586,17 @@ export function createD1Queries(db: D1Database) {
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      return { where, params: bindParams }
+    },
+
+    async getRenegotiations(params: {
+      inscriptionId?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const { where, params: bindParams } = this._buildRenegotiationWhere(params)
       const offset = (params.page - 1) * limit
 
       const result = await db
@@ -1463,6 +1605,18 @@ export function createD1Queries(db: D1Database) {
         .all()
 
       return result.results
+    },
+
+    async countRenegotiations(params: {
+      inscriptionId?: string
+      address?: string
+    }): Promise<number> {
+      const { where, params: bindParams } = this._buildRenegotiationWhere(params)
+      const row = await db
+        .prepare(`SELECT COUNT(*) as total FROM renegotiations ${where}`)
+        .bind(...bindParams)
+        .first<{ total: number }>()
+      return row?.total ?? 0
     },
 
     async getRenegotiation(id: string) {
@@ -1502,13 +1656,10 @@ export function createD1Queries(db: D1Database) {
     // T1: Collateral Sales
     // -----------------------------------------------------------------------
 
-    async getCollateralSales(params: {
+    _buildCollateralSaleWhere(params: {
       inscriptionId?: string
       address?: string
-      page: number
-      limit: number
-    }) {
-      const limit = Math.min(params.limit, 50)
+    }): { where: string; params: unknown[] } {
       const conditions: string[] = []
       const bindParams: unknown[] = []
 
@@ -1522,6 +1673,17 @@ export function createD1Queries(db: D1Database) {
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      return { where, params: bindParams }
+    },
+
+    async getCollateralSales(params: {
+      inscriptionId?: string
+      address?: string
+      page: number
+      limit: number
+    }) {
+      const limit = Math.min(params.limit, 50)
+      const { where, params: bindParams } = this._buildCollateralSaleWhere(params)
       const offset = (params.page - 1) * limit
 
       const result = await db
@@ -1530,6 +1692,18 @@ export function createD1Queries(db: D1Database) {
         .all()
 
       return result.results
+    },
+
+    async countCollateralSales(params: {
+      inscriptionId?: string
+      address?: string
+    }): Promise<number> {
+      const { where, params: bindParams } = this._buildCollateralSaleWhere(params)
+      const row = await db
+        .prepare(`SELECT COUNT(*) as total FROM collateral_sales ${where}`)
+        .bind(...bindParams)
+        .first<{ total: number }>()
+      return row?.total ?? 0
     },
 
     async getCollateralSale(id: string) {

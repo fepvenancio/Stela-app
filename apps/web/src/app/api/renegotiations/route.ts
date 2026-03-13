@@ -18,8 +18,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getD1()
-    const proposals = await db.getRenegotiations({ inscriptionId, address, page, limit })
-    return jsonResponse({ data: proposals, meta: { page, limit, total: (proposals as unknown[]).length } }, request)
+    const [proposals, total] = await Promise.all([
+      db.getRenegotiations({ inscriptionId, address, page, limit }),
+      db.countRenegotiations({ inscriptionId, address }),
+    ])
+    return jsonResponse({ data: proposals, meta: { page, limit, total } }, request)
   } catch (err) {
     logError('renegotiations', err)
     return errorResponse('service unavailable', 502, request)

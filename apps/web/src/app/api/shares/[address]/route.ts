@@ -21,13 +21,17 @@ export async function GET(
   }
 
   const { address } = parsed.data
+  const { searchParams } = request.nextUrl
+  const page = Math.max(1, Math.min(1000, Number(searchParams.get('page') ?? '1')))
+  const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '100')))
 
   try {
     const db = getD1()
-    const balances = await db.getShareBalances(address)
+    const { results: balances, total } = await db.getShareBalances(address, page, limit)
 
     return jsonResponse({
       data: { address, balances },
+      meta: { page, limit, total },
     }, request)
   } catch (err) {
     logError('shares/[address]', err)

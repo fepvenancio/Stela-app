@@ -8,6 +8,7 @@ import { PairCard } from '@/components/PairCard'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
 import { OrderListRow } from '@/components/OrderListRow'
 import { ListingTableHeader } from '@/components/ListingTableHeader'
+import { LoadMore } from '@/components/LoadMore'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -292,6 +293,15 @@ function TokenPairsSection({ ownerFilter }: { ownerFilter: OwnerFilter }) {
           {allPositions.map((ins) => (
             <PositionRow key={ins.id} ins={ins} userAddress={normalized!} />
           ))}
+          {portfolio.hasMoreInscriptions && (
+            <LoadMore
+              hasMore={portfolio.hasMoreInscriptions}
+              isLoading={portfolio.isLoadingMoreInscriptions}
+              onLoadMore={portfolio.loadMoreInscriptions}
+              total={allPositions.length + (portfolio.hasMoreInscriptions ? 1 : 0)}
+              loaded={allPositions.length}
+            />
+          )}
         </div>
       )}
 

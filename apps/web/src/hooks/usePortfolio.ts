@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { useFetchApi, buildApiUrl } from './api'
 import { normalizeAddress } from '@/lib/address'
 import { enrichStatus } from '@/lib/status'
@@ -47,45 +47,170 @@ export interface PortfolioData {
   renegotiations: RenegotiationRow[]
   isLoading: boolean
   error: Error | null
+  /** Whether more inscriptions exist beyond what's loaded */
+  hasMoreInscriptions: boolean
+  /** Whether more orders exist beyond what's loaded */
+  hasMoreOrders: boolean
+  /** Load next page of inscriptions */
+  loadMoreInscriptions: () => void
+  /** Load next page of orders */
+  loadMoreOrders: () => void
+  /** True while loading more inscriptions */
+  isLoadingMoreInscriptions: boolean
+  /** True while loading more orders */
+  isLoadingMoreOrders: boolean
 }
 
 const ACTIVE_STATUSES = new Set(['open', 'partial', 'filled'])
+const INSCRIPTIONS_LIMIT = 200
+const ORDERS_LIMIT = 200
+const T1_LIMIT = 100
 
 export function usePortfolio(address: string | undefined): PortfolioData {
-  const inscriptionsUrl = address
-    ? buildApiUrl('/api/inscriptions', { address, limit: 50 })
-    : null
+  // ── Inscriptions pagination ──
+  const [allInscriptions, setAllInscriptions] = useState<InscriptionRow[]>([])
+  const [inscriptionsTotal, setInscriptionsTotal] = useState(0)
+  const [inscriptionsPage, setInscriptionsPage] = useState(1)
+  const [insInitialLoading, setInsInitialLoading] = useState(Boolean(address))
+  const [insLoadingMore, setInsLoadingMore] = useState(false)
+  const [insError, setInsError] = useState<Error | null>(null)
+  const insAddressRef = useRef(address)
+
+  // ── Orders pagination ──
+  const [allOrders, setAllOrders] = useState<OrderRow[]>([])
+  const [ordersTotal, setOrdersTotal] = useState(0)
+  const [ordersPage, setOrdersPage] = useState(1)
+  const [ordersInitialLoading, setOrdersInitialLoading] = useState(Boolean(address))
+  const [ordersLoadingMore, setOrdersLoadingMore] = useState(false)
+  const [ordersError, setOrdersError] = useState<Error | null>(null)
+  const ordersAddressRef = useRef(address)
+
+  // ── Fetch inscriptions page ──
+  const fetchInscriptionsPage = useCallback(async (page: number, reset: boolean, addr: string) => {
+    if (reset) setInsInitialLoading(true)
+    else setInsLoadingMore(true)
+    setInsError(null)
+
+    try {
+      const url = buildApiUrl('/api/inscriptions', { address: addr, limit: INSCRIPTIONS_LIMIT, page })
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = (await res.json()) as ApiListResponse<InscriptionRow>
+      if (insAddressRef.current !== addr) return
+      if (reset) {
+        setAllInscriptions(json.data)
+      } else {
+        setAllInscriptions((prev) => [...prev, ...json.data])
+      }
+      setInscriptionsTotal(json.meta.total)
+      setInscriptionsPage(page)
+    } catch (err) {
+      if (insAddressRef.current !== addr) return
+      setInsError(err instanceof Error ? err : new Error(String(err)))
+      if (reset) { setAllInscriptions([]); setInscriptionsTotal(0) }
+    } finally {
+      setInsInitialLoading(false)
+      setInsLoadingMore(false)
+    }
+  }, [])
+
+  // ── Fetch orders page ──
+  const fetchOrdersPage = useCallback(async (page: number, reset: boolean, addr: string) => {
+    if (reset) setOrdersInitialLoading(true)
+    else setOrdersLoadingMore(true)
+    setOrdersError(null)
+
+    try {
+      const url = buildApiUrl('/api/orders', { address: addr, status: 'all', limit: ORDERS_LIMIT, page })
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = (await res.json()) as ApiOrderListResponse
+      if (ordersAddressRef.current !== addr) return
+      if (reset) {
+        setAllOrders(json.data)
+      } else {
+        setAllOrders((prev) => [...prev, ...json.data])
+      }
+      setOrdersTotal(json.meta.total)
+      setOrdersPage(page)
+    } catch (err) {
+      if (ordersAddressRef.current !== addr) return
+      setOrdersError(err instanceof Error ? err : new Error(String(err)))
+      if (reset) { setAllOrders([]); setOrdersTotal(0) }
+    } finally {
+      setOrdersInitialLoading(false)
+      setOrdersLoadingMore(false)
+    }
+  }, [])
+
+  // ── Initial fetch + address change ──
+  useEffect(() => {
+    insAddressRef.current = address
+    ordersAddressRef.current = address
+    if (!address) {
+      setAllInscriptions([])
+      setInscriptionsTotal(0)
+      setInscriptionsPage(1)
+      setInsInitialLoading(false)
+      setAllOrders([])
+      setOrdersTotal(0)
+      setOrdersPage(1)
+      setOrdersInitialLoading(false)
+      return
+    }
+    fetchInscriptionsPage(1, true, address)
+    fetchOrdersPage(1, true, address)
+  }, [address, fetchInscriptionsPage, fetchOrdersPage])
+
+  // ── stela:sync listener ──
+  useEffect(() => {
+    const onSync = () => {
+      if (!address) return
+      fetchInscriptionsPage(1, true, address)
+      fetchOrdersPage(1, true, address)
+    }
+    window.addEventListener('stela:sync', onSync)
+    return () => window.removeEventListener('stela:sync', onSync)
+  }, [address, fetchInscriptionsPage, fetchOrdersPage])
+
+  // ── Orders refresh interval (10s) ──
+  useEffect(() => {
+    if (!address) return
+    const id = setInterval(() => {
+      fetchOrdersPage(1, true, address)
+    }, 10_000)
+    return () => clearInterval(id)
+  }, [address, fetchOrdersPage])
+
+  // ── Load more callbacks ──
+  const loadMoreInscriptions = useCallback(() => {
+    if (insLoadingMore || insInitialLoading || !address) return
+    fetchInscriptionsPage(inscriptionsPage + 1, false, address)
+  }, [insLoadingMore, insInitialLoading, address, inscriptionsPage, fetchInscriptionsPage])
+
+  const loadMoreOrders = useCallback(() => {
+    if (ordersLoadingMore || ordersInitialLoading || !address) return
+    fetchOrdersPage(ordersPage + 1, false, address)
+  }, [ordersLoadingMore, ordersInitialLoading, address, ordersPage, fetchOrdersPage])
+
+  // ── Shares (no pagination needed) ──
   const sharesUrl = address ? `/api/shares/${address}` : null
-  const ordersUrl = address
-    ? buildApiUrl('/api/orders', { address, status: 'all', limit: 50 })
-    : null
-  const collectionOffersUrl = address
-    ? buildApiUrl('/api/collection-offers', { address, limit: 50 })
-    : null
-  const refinancesUrl = address
-    ? buildApiUrl('/api/refinances', { address, limit: 50 })
-    : null
-  const renegotiationsUrl = address
-    ? buildApiUrl('/api/renegotiations', { address, limit: 50 })
-    : null
-
-  const {
-    data: inscriptionsRaw,
-    isLoading: insLoading,
-    error: insError,
-  } = useFetchApi<ApiListResponse<InscriptionRow>>(inscriptionsUrl)
-
   const {
     data: sharesRaw,
     isLoading: sharesLoading,
     error: sharesError,
   } = useFetchApi<SharesResponse>(sharesUrl)
 
-  const {
-    data: ordersRaw,
-    isLoading: ordersLoading,
-    error: ordersError,
-  } = useFetchApi<ApiOrderListResponse>(ordersUrl, undefined, 10_000)
+  // ── T1 entities ──
+  const collectionOffersUrl = address
+    ? buildApiUrl('/api/collection-offers', { address, limit: T1_LIMIT })
+    : null
+  const refinancesUrl = address
+    ? buildApiUrl('/api/refinances', { address, limit: T1_LIMIT })
+    : null
+  const renegotiationsUrl = address
+    ? buildApiUrl('/api/renegotiations', { address, limit: T1_LIMIT })
+    : null
 
   const {
     data: collectionOffersRaw,
@@ -105,13 +230,14 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     error: renegError,
   } = useFetchApi<ApiListResponse<RenegotiationRow>>(renegotiationsUrl, undefined, 10_000)
 
-  const isLoading = insLoading || sharesLoading || ordersLoading || coLoading || refiLoading || renegLoading
+  const isLoading = insInitialLoading || sharesLoading || ordersInitialLoading || coLoading || refiLoading || renegLoading
   const error = insError ?? sharesError ?? ordersError ?? coError ?? refiError ?? renegError
 
+  const hasMoreInscriptions = allInscriptions.length < inscriptionsTotal
+  const hasMoreOrders = allOrders.length < ordersTotal
+
   return useMemo(() => {
-    const allInscriptions = inscriptionsRaw?.data ?? []
     const shareBalances = sharesRaw?.data?.balances ?? []
-    const allOrders = ordersRaw?.data ?? []
 
     // Build share balance lookup
     const shareMap = new Map<string, string>()
@@ -224,6 +350,16 @@ export function usePortfolio(address: string | undefined): PortfolioData {
       renegotiations: renegotiationsList,
       isLoading,
       error,
+      hasMoreInscriptions,
+      hasMoreOrders,
+      loadMoreInscriptions,
+      loadMoreOrders,
+      isLoadingMoreInscriptions: insLoadingMore,
+      isLoadingMoreOrders: ordersLoadingMore,
     }
-  }, [inscriptionsRaw, sharesRaw, ordersRaw, collectionOffersRaw, refinancesRaw, renegotiationsRaw, address, isLoading, error])
+  }, [
+    allInscriptions, sharesRaw, allOrders, collectionOffersRaw, refinancesRaw, renegotiationsRaw,
+    address, isLoading, error, hasMoreInscriptions, hasMoreOrders,
+    loadMoreInscriptions, loadMoreOrders, insLoadingMore, ordersLoadingMore,
+  ])
 }

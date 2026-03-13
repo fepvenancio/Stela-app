@@ -20,8 +20,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getD1()
-    const offers = await db.getCollectionOffers({ status, collection, lender, address, page, limit })
-    return jsonResponse({ data: offers, meta: { page, limit, total: (offers as unknown[]).length } }, request)
+    const [offers, total] = await Promise.all([
+      db.getCollectionOffers({ status, collection, lender, address, page, limit }),
+      db.countCollectionOffers({ status, collection, lender, address }),
+    ])
+    return jsonResponse({ data: offers, meta: { page, limit, total } }, request)
   } catch (err) {
     logError('collection-offers', err)
     return errorResponse('service unavailable', 502, request)

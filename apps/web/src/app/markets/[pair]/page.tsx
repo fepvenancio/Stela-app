@@ -8,6 +8,7 @@ import { usePairListings } from '@/hooks/usePairListings'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
 import { OrderListRow } from '@/components/OrderListRow'
 import { ListingTableHeader } from '@/components/ListingTableHeader'
+import { LoadMore } from '@/components/LoadMore'
 import { SelectionActionBar } from '@/components/SelectionActionBar'
 import { LendReviewModal } from '@/components/LendReviewModal'
 import { TokenAvatar, stringToColor } from '@/components/TokenAvatar'
@@ -62,7 +63,7 @@ function orderDataToAssetRows(orderId: string, raw: RawOrderData): AssetRow[] {
 
 function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; collateralToken: string }) {
   const { address } = useAccount()
-  const { inscriptions, orders, isLoading, error } = usePairListings(debtToken, collateralToken)
+  const { inscriptions, orders, isLoading, error, hasMore, isLoadingMore, loadMore, total, loaded } = usePairListings(debtToken, collateralToken)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [actionPendingId, setActionPendingId] = useState<string | null>(null)
   const { toggle, isSelected, count, selected } = useBatchSelection()
@@ -372,6 +373,19 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Load More */}
+          {hasMore && (
+            <div className="mb-6">
+              <LoadMore
+                hasMore={hasMore}
+                isLoading={isLoadingMore}
+                onLoadMore={loadMore}
+                total={total}
+                loaded={loaded}
+              />
             </div>
           )}
 

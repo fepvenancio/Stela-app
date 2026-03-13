@@ -18,8 +18,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getD1()
-    const sales = await db.getCollateralSales({ inscriptionId, address, page, limit })
-    return jsonResponse({ data: sales, meta: { page, limit, total: (sales as unknown[]).length } }, request)
+    const [sales, total] = await Promise.all([
+      db.getCollateralSales({ inscriptionId, address, page, limit }),
+      db.countCollateralSales({ inscriptionId, address }),
+    ])
+    return jsonResponse({ data: sales, meta: { page, limit, total } }, request)
   } catch (err) {
     logError('collateral-sales', err)
     return errorResponse('service unavailable', 502, request)

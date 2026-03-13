@@ -36,9 +36,13 @@ export async function GET(
     return errorResponse('invalid token address in pair', 400, request)
   }
 
+  const { searchParams } = request.nextUrl
+  const page = Math.max(1, Math.min(1000, Number(searchParams.get('page') ?? '1')))
+  const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '50')))
+
   try {
     const db = getD1()
-    const { inscriptions, orders } = await db.getListingsForPair(debtToken, collateralToken)
+    const { inscriptions, orders, meta } = await db.getListingsForPair(debtToken, collateralToken, page, limit)
 
     return jsonResponse({
       data: {
@@ -47,6 +51,7 @@ export async function GET(
         inscriptions,
         orders,
       },
+      meta,
     }, request)
   } catch (err) {
     logError('pairs/[pair]', err)

@@ -22,9 +22,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getD1()
-    const orders = await db.getOrders({ status, address, page, limit })
+    const [orders, total] = await Promise.all([
+      db.getOrders({ status, address, page, limit }),
+      db.countOrders({ status, address }),
+    ])
     const parsed = (orders as Record<string, unknown>[]).map(parseOrderRow)
-    return jsonResponse({ data: parsed, meta: { page, limit, total: parsed.length } }, request)
+    return jsonResponse({ data: parsed, meta: { page, limit, total } }, request)
   } catch (err) {
     logError('orders', err)
     return errorResponse('service unavailable', 502, request)

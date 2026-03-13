@@ -19,8 +19,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getD1()
-    const offers = await db.getRefinanceOffers({ status, inscriptionId, address, page, limit })
-    return jsonResponse({ data: offers, meta: { page, limit, total: (offers as unknown[]).length } }, request)
+    const [offers, total] = await Promise.all([
+      db.getRefinanceOffers({ status, inscriptionId, address, page, limit }),
+      db.countRefinanceOffers({ status, inscriptionId, address }),
+    ])
+    return jsonResponse({ data: offers, meta: { page, limit, total } }, request)
   } catch (err) {
     logError('refinances', err)
     return errorResponse('service unavailable', 502, request)
