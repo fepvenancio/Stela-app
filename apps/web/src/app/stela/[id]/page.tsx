@@ -1,13 +1,12 @@
 'use client'
 
-import { use, useEffect, useMemo, useRef, useState } from 'react'
+import { use, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, STATUS_LABELS } from '@fepvenancio/stela-sdk'
 import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 import { useOrder } from '@/hooks/useOrders'
-import { useInscription } from '@/hooks/useInscription'
-import { useInscriptionAssets } from '@/hooks/useInscriptionAssets'
+import { useInscriptionDetail } from '@/hooks/useInscriptionDetail'
 import { useShares } from '@/hooks/useShares'
 import { computeStatus, enrichStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
@@ -349,31 +348,31 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
 
 function InscriptionView({ id }: { id: string }) {
   const { address } = useAccount()
-  const { data: inscription, isLoading, error } = useInscription(id)
-  const { data: assets, isLoading: assetsLoading } = useInscriptionAssets(id)
+  const { data: detail, assets, isLoading, error } = useInscriptionDetail(id)
   const { data: sharesRaw } = useShares(id)
 
-  const statusRef = useRef<InscriptionStatus>('open')
   const status = useMemo<InscriptionStatus>(() => {
-    if (!inscription) return statusRef.current
-    const s = computeStatus(inscription as Parameters<typeof computeStatus>[0])
-    statusRef.current = s
-    return s
-  }, [inscription])
-
-  const a = inscription as Record<string, unknown> | undefined
+    if (!detail) return 'open'
+    return computeStatus({
+      signed_at: BigInt(detail.signed_at ?? '0'),
+      duration: BigInt(detail.duration),
+      issued_debt_percentage: BigInt(detail.issued_debt_percentage),
+      is_repaid: detail.status === 'repaid',
+      liquidated: detail.status === 'liquidated',
+      deadline: BigInt(detail.deadline ?? '0'),
+      status: detail.status,
+    })
+  }, [detail])
 
   const isOwner = useMemo(() => {
-    if (!address || !a) return false
-    const creator = a.creator as string | undefined
-    return creator ? addressesEqual(address, creator) : false
-  }, [address, a])
+    if (!address || !detail) return false
+    return addressesEqual(address, detail.creator)
+  }, [address, detail])
 
   const isBorrower = useMemo(() => {
-    if (!address || !a) return false
-    const borrower = a.borrower as string | undefined
-    return borrower ? addressesEqual(address, borrower) : false
-  }, [address, a])
+    if (!address || !detail?.borrower) return false
+    return addressesEqual(address, detail.borrower)
+  }, [address, detail])
 
   const shares = useMemo(() => {
     if (!sharesRaw) return 0n
@@ -381,19 +380,19 @@ function InscriptionView({ id }: { id: string }) {
   }, [sharesRaw])
 
   const enrichedStatusValue = useMemo(() => {
-    if (!a) return status
+    if (!detail) return status
     return enrichStatus({
-      status: String(a.status ?? status),
-      signed_at: a.signed_at ? String(a.signed_at) : null,
-      duration: String(a.duration ?? '0'),
-      issued_debt_percentage: String(a.issued_debt_percentage ?? '0'),
-      deadline: String(a.deadline ?? '0'),
-      auction_started: a.auction_started ? 1 : 0,
+      status: detail.status,
+      signed_at: detail.signed_at,
+      duration: detail.duration,
+      issued_debt_percentage: detail.issued_debt_percentage,
+      deadline: detail.deadline,
+      auction_started: detail.auction_started,
     })
-  }, [a, status])
+  }, [detail, status])
 
   const roiInfo = useMemo(() => {
-    if (!assets) return null
+    if (!assets.length) return null
     const debt = assets.filter(x => x.asset_role === 'debt')
     const interest = assets.filter(x => x.asset_role === 'interest')
     if (debt.length === 1 && interest.length === 1 && debt[0].asset_type === 'ERC20' && interest[0].asset_type === 'ERC20') {
@@ -413,20 +412,20 @@ function InscriptionView({ id }: { id: string }) {
 
   if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
 
-  const debtAssets = assets?.filter(r => r.asset_role === 'debt') ?? []
-  const interestAssets = assets?.filter(r => r.asset_role === 'interest') ?? []
-  const collateralAssets = assets?.filter(r => r.asset_role === 'collateral') ?? []
+  const debtAssets = assets.filter(r => r.asset_role === 'debt')
+  const interestAssets = assets.filter(r => r.asset_role === 'interest')
+  const collateralAssets = assets.filter(r => r.asset_role === 'collateral')
 
   const toDisplayAssets = (arr: typeof debtAssets): DisplayAsset[] => arr.map(r => ({
     address: r.asset_address, type: r.asset_type, value: r.value ?? '0', tokenId: r.token_id ?? undefined,
   }))
 
   const lenderDisplay = (() => {
-    const lender = a?.lender as string | undefined
+    const lender = detail?.lender
     const isFilled = status === 'filled' || status === 'repaid' || status === 'liquidated'
     if (lender && lender !== '0x0') return { value: formatAddress(lender), mono: true }
     if (isFilled) return { value: 'Private Lender', mono: false, isPrivate: true }
-    return { value: a?.multi_lender ? 'Multi-Lender' : 'Waiting...', mono: false }
+    return { value: detail?.multi_lender ? 'Multi-Lender' : 'Waiting...', mono: false }
   })()
 
   return (
@@ -441,20 +440,20 @@ function InscriptionView({ id }: { id: string }) {
         </Badge>
       }
       roiInfo={roiInfo}
-      duration={isLoading ? null : (a?.duration ? formatDuration(BigInt(a.duration as string)) : '--')}
+      duration={isLoading ? null : (detail?.duration ? formatDuration(BigInt(detail.duration)) : '--')}
       durationLabel="From signing"
-      multiLender={Boolean(a?.multi_lender)}
+      multiLender={Boolean(detail?.multi_lender)}
       specs={[
-        { label: 'Borrower', value: a?.borrower ? formatAddress(a.borrower as string) : '--', mono: true },
+        { label: 'Borrower', value: detail?.borrower ? formatAddress(detail.borrower) : '--', mono: true },
         { label: 'Lender', value: lenderDisplay.value, mono: lenderDisplay.mono, isPrivate: 'isPrivate' in lenderDisplay },
-        { label: 'Issued Debt', value: a?.issued_debt_percentage ? `${Number(BigInt(a.issued_debt_percentage as string)) / 100}%` : '0%', mono: false },
-        { label: 'Signed At', value: a?.signed_at && a.signed_at !== '0' ? formatTimestamp(BigInt(a.signed_at as string)) : 'Unsigned', mono: false },
+        { label: 'Issued Debt', value: detail?.issued_debt_percentage ? `${Number(BigInt(detail.issued_debt_percentage)) / 100}%` : '0%', mono: false },
+        { label: 'Signed At', value: detail?.signed_at && detail.signed_at !== '0' ? formatTimestamp(BigInt(detail.signed_at)) : 'Unsigned', mono: false },
       ]}
       assets={
         <>
-          <AssetSection role="debt" assets={toDisplayAssets(debtAssets)} isLoading={assetsLoading} />
-          <AssetSection role="collateral" assets={toDisplayAssets(collateralAssets)} isLoading={assetsLoading} />
-          <AssetSection role="interest" assets={toDisplayAssets(interestAssets)} isLoading={assetsLoading} />
+          <AssetSection role="debt" assets={toDisplayAssets(debtAssets)} isLoading={isLoading} />
+          <AssetSection role="collateral" assets={toDisplayAssets(collateralAssets)} isLoading={isLoading} />
+          <AssetSection role="interest" assets={toDisplayAssets(interestAssets)} isLoading={isLoading} />
         </>
       }
       extraContent={
@@ -504,15 +503,15 @@ function InscriptionView({ id }: { id: string }) {
             isOwner={isOwner}
             isBorrower={isBorrower}
             shares={shares}
-            multiLender={Boolean(a?.multi_lender)}
+            multiLender={Boolean(detail?.multi_lender)}
             debtAssets={debtAssets.map(r => ({ address: r.asset_address, value: r.value ?? '0' }))}
             interestAssets={interestAssets.map(r => ({ address: r.asset_address, value: r.value ?? '0' }))}
             debtDecimals={(() => {
               const token = debtAssets[0] ? findTokenByAddress(debtAssets[0].asset_address) : undefined
               return token?.decimals ?? 18
             })()}
-            wasSigned={Number(a?.signed_at ?? 0) > 0}
-            auctionStarted={Boolean(a?.auction_started)}
+            wasSigned={Number(detail?.signed_at ?? 0) > 0}
+            auctionStarted={Boolean(detail?.auction_started)}
           />
         )
       }
