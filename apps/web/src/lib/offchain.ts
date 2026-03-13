@@ -16,6 +16,7 @@ export {
   getRefinanceApprovalTypedData,
   getRenegotiationProposalTypedData,
   getCollateralSaleOfferTypedData,
+  getTermsAcknowledgmentTypedData,
   hashAssets,
   hashBatchEntries,
   serializeSignature,

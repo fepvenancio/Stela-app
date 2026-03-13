@@ -67,12 +67,16 @@ export function useBatchSign() {
         client.buildSignInscription(BigInt(item.inscriptionId), BigInt(item.bps)),
       )
 
-      await sendTxWithToast(
+      const txHash = await sendTxWithToast(
         sendAsync,
         [...approvals, ...signCalls],
         `${items.length} inscription${items.length > 1 ? 's' : ''} signed`,
         (txHash) => sync(txHash),
       )
+
+      if (!txHash) {
+        throw new Error('Transaction was not submitted')
+      }
     },
     [address, status, sendAsync, client, sync],
   )

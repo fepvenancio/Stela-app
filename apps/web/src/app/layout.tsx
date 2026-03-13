@@ -3,6 +3,7 @@ import { Inter, IBM_Plex_Mono, Cinzel } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { Providers } from './providers'
 import { AppShell } from '@/components/AppShell'
+import { TermsGate } from '@/components/TermsGate'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AppShell>
               <ErrorBoundary>{children}</ErrorBoundary>
             </AppShell>
+            <TermsGate />
             <Toaster richColors />
           </TooltipProvider>
         </Providers>

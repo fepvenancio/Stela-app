@@ -1854,6 +1854,47 @@ export function createD1Queries(db: D1Database) {
         .bind(nowSeconds)
         .run()
     },
+
+    // ── Terms Agreements ─────────────────────────────────────────────────
+
+    async getTermsAgreement(walletAddress: string, termsVersion: string): Promise<Record<string, unknown> | null> {
+      return db
+        .prepare('SELECT * FROM terms_agreements WHERE wallet_address = ? AND terms_version = ? LIMIT 1')
+        .bind(normalizeAddress(walletAddress), termsVersion)
+        .first()
+    },
+
+    async recordTermsAgreement(agreement: {
+      id: string
+      walletAddress: string
+      signatureR: string
+      signatureS: string
+      messageHash: string
+      termsVersion: string
+      termsHash: string
+      agreedAt: number
+      chainId: string
+    }) {
+      await db
+        .prepare(
+          `INSERT OR IGNORE INTO terms_agreements
+           (id, wallet_address, signature_r, signature_s, message_hash, terms_version, terms_hash, agreed_at, chain_id, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .bind(
+          agreement.id,
+          normalizeAddress(agreement.walletAddress),
+          agreement.signatureR,
+          agreement.signatureS,
+          agreement.messageHash,
+          agreement.termsVersion,
+          agreement.termsHash,
+          agreement.agreedAt,
+          agreement.chainId,
+          Math.floor(Date.now() / 1000),
+        )
+        .run()
+    },
   }
 }
 

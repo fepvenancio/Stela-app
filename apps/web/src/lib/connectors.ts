@@ -1,9 +1,32 @@
 import { argent, braavos } from '@starknet-react/core'
 import { ControllerConnector } from '@cartridge/connector'
 import type { SessionPolicies } from '@cartridge/presets'
-import { CONTRACT_ADDRESS, GENESIS_ADDRESS, STRK_ADDRESS } from '@/lib/config'
+import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
+import { CONTRACT_ADDRESS, GENESIS_ADDRESS, STRK_ADDRESS, NETWORK } from '@/lib/config'
 
 const ETH_ADDRESS = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+
+/**
+ * Build approve policies for all known ERC20/ERC4626 tokens on the current network.
+ * This ensures Cartridge Controller session keys can handle approve calls
+ * for any token used in inscriptions (not just STRK/ETH).
+ */
+function buildTokenApprovalPolicies(): SessionPolicies['contracts'] {
+  const contracts: SessionPolicies['contracts'] = {}
+  const tokens = getTokensForNetwork(NETWORK)
+  for (const token of tokens) {
+    const addr = token.addresses[NETWORK as keyof typeof token.addresses]
+    if (!addr) continue
+    // Skip NFTs — they use set_approval_for_all, not approve
+    if (token.assetType === 'ERC721') continue
+    contracts[addr] = {
+      methods: [
+        { name: `Approve ${token.symbol}`, entrypoint: 'approve' },
+      ],
+    }
+  }
+  return contracts
+}
 
 /** Session policies — pre-approved contract calls that skip pop-ups. */
 const policies: SessionPolicies = {
@@ -30,6 +53,9 @@ const policies: SessionPolicies = {
         { name: 'Approve Shares', entrypoint: 'set_approval_for_all' },
       ],
     },
+    // Dynamically include all known ERC20/ERC4626 tokens for approve
+    ...buildTokenApprovalPolicies(),
+    // Explicit fallbacks for STRK/ETH (in case they're not in the SDK registry)
     [STRK_ADDRESS]: {
       methods: [
         { name: 'Approve STRK', entrypoint: 'approve' },
