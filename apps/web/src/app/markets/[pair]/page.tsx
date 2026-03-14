@@ -17,7 +17,7 @@ import { TokenAvatar, stringToColor } from '@/components/TokenAvatar'
 import { Badge } from '@/components/ui/badge'
 import { ModeToggle } from '@/components/orderbook/ModeToggle'
 import { DurationFilter } from '@/components/orderbook/DurationFilter'
-import { SplitBook } from '@/components/orderbook/SplitBook'
+import { SplitBook, type RowClickInfo } from '@/components/orderbook/SplitBook'
 import { ActionWidget } from '@/components/orderbook/ActionWidget'
 import { enrichStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
@@ -92,6 +92,11 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
   const { sync } = useSync()
   const [quickLendPending, setQuickLendPending] = useState(false)
   const isActionPending = isBatchSignPending || isInstantSettlePending || quickLendPending
+
+  // Track which side of the order book is active for the widget
+  const [activeLendSide, setActiveLendSide] = useState<'left' | 'right'>('left')
+  const [selectedBookOrder, setSelectedBookOrder] = useState<RowClickInfo | null>(null)
+  const [activeWidgetTab, setActiveWidgetTab] = useState<'lend' | 'borrow' | 'swap'>('lend')
 
   // Mode & filter state
   const [mode, setMode] = useState<'lending' | 'swap'>('lending')
@@ -264,6 +269,60 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
       duration: o.duration,
     }
   }, [orderBookData])
+
+  // Best order from the reverse book (right side)
+  const reverseBestOrder = useMemo(() => {
+    if (!reverseBookData?.lending?.asks?.length) return null
+    const bestLevel = reverseBookData.lending.asks[0]
+    if (!bestLevel?.orders?.length) return null
+    const o = bestLevel.orders[0]
+    return {
+      id: o.id,
+      source: o.source,
+      apr: bestLevel.apr,
+      amount: o.amount,
+      duration: o.duration,
+    }
+  }, [reverseBookData])
+
+  // Dynamic pair & bestOrder based on which side is active
+  const activePairDisplay = useMemo(() => {
+    if (activeLendSide === 'right') {
+      // Swap base/quote so widget shows quote token as the lend target
+      return { base: pairDisplay.quote, quote: pairDisplay.base }
+    }
+    return pairDisplay
+  }, [activeLendSide, pairDisplay])
+
+  const activeBestOrder = useMemo(() => {
+    // If user clicked a specific order, use it
+    if (selectedBookOrder) {
+      return {
+        id: selectedBookOrder.id,
+        source: selectedBookOrder.source,
+        apr: selectedBookOrder.apr ?? 0,
+        amount: selectedBookOrder.amount,
+        duration: selectedBookOrder.duration ?? 0,
+      }
+    }
+    // Otherwise use the best order from the active side
+    return activeLendSide === 'right' ? reverseBestOrder : bestOrder
+  }, [selectedBookOrder, activeLendSide, bestOrder, reverseBestOrder])
+
+  const activeBestApr = useMemo(() => {
+    if (selectedBookOrder?.apr != null) return selectedBookOrder.apr
+    if (activeLendSide === 'right' && reverseBookData?.lending?.asks?.[0]) {
+      return reverseBookData.lending.asks[0].apr
+    }
+    return stats.bestYield
+  }, [selectedBookOrder, activeLendSide, reverseBookData, stats.bestYield])
+
+  // Handle order book row click — switch widget to matching token
+  const handleRowClick = useCallback((info: RowClickInfo) => {
+    setActiveLendSide(info.side)
+    setSelectedBookOrder(info)
+    setActiveWidgetTab('lend')
+  }, [])
 
   /* -- Action Handlers ------------------------------------ */
 
@@ -458,6 +517,8 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
             reversePairData={reverseBookData}
             isLoading={(obLoading || obReverseLoading) && isLoading}
             mode={mode}
+            onRowClick={handleRowClick}
+            selectedId={selectedBookOrder?.id}
           />
 
           {/* Individual Stelas toggle */}
@@ -680,14 +741,16 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
         <div className="w-full lg:w-[40%] lg:max-w-[400px] shrink-0">
           <div className="lg:sticky lg:top-4">
             <ActionWidget
-              pair={pairDisplay}
-              bestLendingApr={stats.bestYield}
+              pair={activePairDisplay}
+              bestLendingApr={activeBestApr}
               bestSwapRate={null}
               mode={mode}
               selectedDuration={selectedDuration}
-              bestOrder={bestOrder}
+              bestOrder={activeBestOrder}
               onLend={handleQuickLend}
               isLending={quickLendPending}
+              activeTab={activeWidgetTab}
+              onTabChange={setActiveWidgetTab}
             />
           </div>
         </div>

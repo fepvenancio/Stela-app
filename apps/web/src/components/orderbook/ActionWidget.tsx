@@ -32,6 +32,9 @@ interface ActionWidgetProps {
   bestOrder?: BestOrder | null
   onLend?: (orderId: string, source: 'offchain' | 'onchain') => Promise<void>
   isLending?: boolean
+  /** Externally controlled active tab (for auto-switching from order book clicks) */
+  activeTab?: ActionTab
+  onTabChange?: (tab: ActionTab) => void
 }
 
 function TokenIcon({ token, size = 24 }: { token: TokenDisplay; size?: number }) {
@@ -442,10 +445,12 @@ function SwapTab({
   )
 }
 
-export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selectedDuration, bestOrder, onLend, isLending: isLendingProp }: ActionWidgetProps) {
+export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selectedDuration, bestOrder, onLend, isLending: isLendingProp, activeTab: controlledTab, onTabChange }: ActionWidgetProps) {
   const { address } = useAccount()
   const connected = !!address
-  const [activeTab, setActiveTab] = useState<ActionTab>(mode === 'swap' ? 'swap' : 'lend')
+  const [internalTab, setInternalTab] = useState<ActionTab>(mode === 'swap' ? 'swap' : 'lend')
+  const activeTab = controlledTab ?? internalTab
+  const setActiveTab = onTabChange ?? setInternalTab
 
   // Build pair param for navigation links
   const pairParam = `${pair.base.address}-${pair.quote.address}`

@@ -1,19 +1,31 @@
 'use client'
 
 import { useMemo } from 'react'
-import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { formatTokenValue } from '@/lib/format'
 import { SpreadRow } from './SpreadRow'
 import { BookSkeleton } from './BookSkeleton'
 import type { OrderBookResponse, LendingLevel, SwapLevel } from '@/types/orderbook'
 
+/** Info passed when an order book row is clicked */
+export interface RowClickInfo {
+  id: string
+  source: 'offchain' | 'onchain'
+  side: 'left' | 'right'
+  apr?: number
+  amount: string
+  duration?: number
+}
+
 interface SplitBookProps {
   pairData: OrderBookResponse | null
   reversePairData: OrderBookResponse | null
   isLoading: boolean
   mode: 'lending' | 'swap'
+  onRowClick?: (info: RowClickInfo) => void
+  selectedId?: string | null
 }
+
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -48,6 +60,8 @@ function StelaRow({
   interestAmount,
   interestSymbol,
   interestDecimals,
+  onClick,
+  selected,
 }: {
   id: string
   price: string
@@ -61,6 +75,8 @@ function StelaRow({
   interestAmount?: string
   interestSymbol?: string
   interestDecimals?: number
+  onClick?: () => void
+  selected?: boolean
 }) {
   const isBid = side === 'bid'
   const depthColor = isBid ? 'bg-emerald-500/10' : 'bg-rose-500/10'
@@ -68,10 +84,18 @@ function StelaRow({
   const amountStr = formatTokenValue(amount, decimals)
   const expires = expiresIn(deadline)
   const isExpired = expires === 'exp'
-  const href = source === 'onchain' ? `/stela/${id}` : `/order/${id}`
 
   return (
-    <Link href={href} className="relative flex items-center h-[28px] px-2 transition-colors duration-75 cursor-pointer hover:bg-surface/40">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
+      className={cn(
+        'relative flex items-center h-[28px] px-2 transition-colors duration-75 cursor-pointer hover:bg-surface/40',
+        selected && 'bg-star/10 ring-1 ring-inset ring-star/30',
+      )}
+    >
       {/* Depth bar */}
       <div
         className={cn('absolute inset-y-0 h-full pointer-events-none', depthColor)}
@@ -118,7 +142,7 @@ function StelaRow({
           title={source === 'onchain' ? 'On-chain' : 'Off-chain'}
         />
       </div>
-    </Link>
+    </div>
   )
 }
 
@@ -151,6 +175,8 @@ interface FlatRow {
   deadline: number
   source: 'offchain' | 'onchain'
   depthPct: number
+  apr?: number
+  duration?: number
   interestAmount?: string
   interestSymbol?: string
   interestDecimals?: number
@@ -171,6 +197,8 @@ function flattenLendingLevels(levels: LendingLevel[]): FlatRow[] {
         deadline: o.deadline,
         source: o.source,
         depthPct: maxCum > 0n ? Number((running * 100n) / maxCum) : 0,
+        apr: level.apr,
+        duration: o.duration,
         interestAmount: o.interestAmount,
         interestSymbol: o.interestSymbol,
         interestDecimals: o.interestDecimals,
@@ -216,6 +244,9 @@ function BookPanel({
   totalVolume,
   maxRows,
   isLending,
+  bookSide,
+  onRowClick,
+  selectedId,
 }: {
   title: string
   subtitle?: string
@@ -227,6 +258,9 @@ function BookPanel({
   totalVolume: string
   maxRows: number
   isLending?: boolean
+  bookSide?: 'left' | 'right'
+  onRowClick?: (info: RowClickInfo) => void
+  selectedId?: string | null
 }) {
   const visible = rows.slice(0, maxRows)
   const sideColor = side === 'bid' ? 'text-emerald-500/80' : 'text-rose-500/80'
@@ -268,6 +302,15 @@ function BookPanel({
               interestAmount={row.interestAmount}
               interestSymbol={row.interestSymbol}
               interestDecimals={row.interestDecimals}
+              selected={selectedId === row.key}
+              onClick={onRowClick ? () => onRowClick({
+                id: row.key,
+                source: row.source,
+                side: bookSide ?? 'left',
+                apr: row.apr,
+                amount: row.amount,
+                duration: row.duration,
+              }) : undefined}
             />
           ))
         )}
@@ -294,9 +337,13 @@ function BookPanel({
 function LendingSplit({
   pairData,
   reversePairData,
+  onRowClick,
+  selectedId,
 }: {
   pairData: OrderBookResponse
   reversePairData: OrderBookResponse | null
+  onRowClick?: (info: RowClickInfo) => void
+  selectedId?: string | null
 }) {
   const MAX_ROWS = 15
 
@@ -337,6 +384,9 @@ function LendingSplit({
           totalVolume={pairData.lending.totalAskVolume}
           maxRows={MAX_ROWS}
           isLending
+          bookSide="left"
+          onRowClick={onRowClick}
+          selectedId={selectedId}
         />
         <div className="w-px bg-edge/15 shrink-0" />
         <BookPanel
@@ -350,6 +400,9 @@ function LendingSplit({
           totalVolume={reversePairData?.lending.totalAskVolume ?? '0'}
           maxRows={MAX_ROWS}
           isLending
+          bookSide="right"
+          onRowClick={onRowClick}
+          selectedId={selectedId}
         />
       </div>
 
@@ -366,6 +419,9 @@ function LendingSplit({
           totalVolume={pairData.lending.totalAskVolume}
           maxRows={10}
           isLending
+          bookSide="left"
+          onRowClick={onRowClick}
+          selectedId={selectedId}
         />
         <div className="h-px bg-edge/15" />
         <BookPanel
@@ -379,6 +435,9 @@ function LendingSplit({
           totalVolume={reversePairData?.lending.totalAskVolume ?? '0'}
           maxRows={10}
           isLending
+          bookSide="right"
+          onRowClick={onRowClick}
+          selectedId={selectedId}
         />
       </div>
     </>
@@ -481,7 +540,7 @@ function SwapSplit({ pairData }: { pairData: OrderBookResponse }) {
 /*  Main SplitBook                                                     */
 /* ------------------------------------------------------------------ */
 
-export function SplitBook({ pairData, reversePairData, isLoading, mode }: SplitBookProps) {
+export function SplitBook({ pairData, reversePairData, isLoading, mode, onRowClick, selectedId }: SplitBookProps) {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-edge/30 bg-abyss overflow-hidden">
@@ -517,7 +576,7 @@ export function SplitBook({ pairData, reversePairData, isLoading, mode }: SplitB
       </div>
 
       {mode === 'lending' ? (
-        <LendingSplit pairData={pairData} reversePairData={reversePairData} />
+        <LendingSplit pairData={pairData} reversePairData={reversePairData} onRowClick={onRowClick} selectedId={selectedId} />
       ) : (
         <SwapSplit pairData={pairData} />
       )}
