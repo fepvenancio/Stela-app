@@ -380,9 +380,22 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
     try {
       // Fetch inscription assets to build approval calls
       const res = await fetch(`/api/inscriptions/${orderId}`)
+      if (!res.ok) {
+        toast.error('Failed to fetch inscription data')
+        setQuickLendPending(false)
+        return
+      }
       const json = (await res.json()) as { data?: { assets?: Record<string, unknown>[] } }
       const assets = json.data?.assets ?? []
       const debtAssets = assets.filter((a: Record<string, unknown>) => a.asset_role === 'debt')
+
+      if (debtAssets.length === 0) {
+        toast.error('No debt asset data available', {
+          description: 'The inscription may still be indexing. Please wait a moment and refresh.',
+        })
+        setQuickLendPending(false)
+        return
+      }
 
       // Build ERC20 approvals for debt tokens
       const U128_MAX = (1n << 128n) - 1n
