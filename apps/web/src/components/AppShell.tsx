@@ -21,6 +21,11 @@ const NAV_LINKS = [
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
   )},
+  { href: '/portfolio', label: 'Portfolio', icon: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+    </svg>
+  )},
   { href: '/nft', label: 'NFT', icon: (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 3h12l4 6-10 13L2 9z" /><path d="M11 3l1 10" /><path d="M2 9h20" />
