@@ -13,9 +13,9 @@
 
 ### Data Fetching
 
-- [ ] **DATA-01**: All API data fetching uses TanStack Query instead of custom useFetchApi/useInfiniteApi hooks
-- [ ] **DATA-02**: Data polling updates in background without UI flicker (stale-while-revalidate)
-- [ ] **DATA-03**: Data auto-refreshes at appropriate intervals without manual page reload
+- [x] **DATA-01**: All API data fetching uses TanStack Query instead of custom useFetchApi/useInfiniteApi hooks
+- [x] **DATA-02**: Data polling updates in background without UI flicker (stale-while-revalidate)
+- [x] **DATA-03**: Data auto-refreshes at appropriate intervals without manual page reload
 
 ### Trade Flow
 
@@ -69,9 +69,9 @@
 | NAV-01 | Phase 2 | Pending |
 | NAV-02 | Phase 2 | Pending |
 | NAV-03 | Phase 2 | Pending |
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
 | TRADE-01 | Phase 2 | Pending |
 | TRADE-02 | Phase 2 | Pending |
 | TRADE-03 | Phase 2 | Pending |
