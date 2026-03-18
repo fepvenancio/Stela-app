@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
@@ -9,65 +9,50 @@ import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { NETWORK, CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
 import { getNonce } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
-import { useOrderForm } from '@/hooks/useOrderForm'
+import { useOrderForm, ROLES } from '@/hooks/useOrderForm'
+import type { AssetRole } from '@/hooks/useOrderForm'
 import { useCollectionOffer } from '@/hooks/useCollectionOffer'
 import { useAcceptCollectionOffer } from '@/hooks/useAcceptCollectionOffer'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 import type { AssetInputValue } from '@/components/AssetInput'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 import { NFTCollectionSelector } from '@/components/NFTCollectionSelector'
 import type { NFTCollectionInfo } from '@/components/NFTCollectionSelector'
 import { TokenAvatar } from '@/components/TokenAvatar'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
-import { formatTokenValue } from '@/lib/format'
+import { InlineMatchList } from '@/components/InlineMatchList'
+import { FeeBreakdown } from '@/components/FeeBreakdown'
+import { formatTokenValue, formatTimestamp } from '@/lib/format'
+import { BestTradesPanel } from '@/components/trade/BestTradesPanel'
+import { SettlementDrawer, type SettlementSummary } from '@/components/trade/SettlementDrawer'
+import {
+  SWAP_DEADLINE_PRESETS,
+  LEND_DEADLINE_PRESETS,
+  DURATION_PRESETS,
+  formatDurationHuman,
+  emptyAsset,
+} from '@/lib/trade-constants'
+import type { MatchedOrder } from '@/hooks/useInstantSettle'
+import type { OnChainMatch } from '@/hooks/useMatchDetection'
 import { formatAddress } from '@/lib/address'
 import { useFeePreview } from '@/hooks/useFeePreview'
 import { NFTTokenPicker } from '@/components/NFTTokenPicker'
+import { InlineBorrowForm } from '@/app/borrow/components/InlineBorrowForm'
+import { AddAssetModal } from '@/app/borrow/components/AddAssetModal'
+import { AssetRow } from '@/app/borrow/components/AssetRow'
 
 /* ── Constants ──────────────────────────────────────────── */
 
-const SWAP_DEADLINE_PRESETS = [
-  { label: '5m', seconds: 300 },
-  { label: '15m', seconds: 900 },
-  { label: '30m', seconds: 1800 },
-  { label: '1h', seconds: 3600 },
-  { label: '12h', seconds: 43200 },
-  { label: '1d', seconds: 86400 },
-  { label: '7d', seconds: 604800 },
-  { label: '30d', seconds: 2592000 },
+const CUSTOM_DURATION_UNITS = [
+  { label: 'Days', multiplier: 86400 },
+  { label: 'Weeks', multiplier: 604800 },
+  { label: 'Months', multiplier: 2592000 },
 ]
-
-const LEND_DEADLINE_PRESETS = [
-  { label: '7d', seconds: 604800 },
-  { label: '14d', seconds: 1209600 },
-  { label: '30d', seconds: 2592000 },
-  { label: '60d', seconds: 5184000 },
-  { label: '90d', seconds: 7776000 },
-]
-
-const DURATION_PRESETS = [
-  { label: '1d', seconds: 86400 },
-  { label: '7d', seconds: 604800 },
-  { label: '14d', seconds: 1209600 },
-  { label: '30d', seconds: 2592000 },
-  { label: '90d', seconds: 7776000 },
-  { label: '180d', seconds: 15552000 },
-  { label: '1y', seconds: 31536000 },
-]
-
-function formatDurationHuman(seconds: number): string {
-  if (seconds < 3600) return `${Math.round(seconds / 60)} min`
-  if (seconds < 86400) return `${Math.round(seconds / 3600)} hours`
-  const days = Math.round(seconds / 86400)
-  return `${days} day${days !== 1 ? 's' : ''}`
-}
-
-function emptyAsset(): AssetInputValue {
-  return { asset: '', asset_type: 'ERC20', value: '', token_id: '0', decimals: 18 }
-}
 
 /* ── Spinner ─────────────────────────────────────────────── */
 
@@ -278,13 +263,25 @@ function OrderSettings({
   )
 }
 
-/* ── Trade Form ──────────────────────────────────────────── */
+/* ── Trade Form (Swap / Lend modes) ──────────────────────── */
 
-function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
+function TradeForm({
+  mode,
+  initialDebtToken,
+  initialCollateralToken,
+}: {
+  mode: 'swap' | 'lend'
+  initialDebtToken?: string
+  initialCollateralToken?: string
+}) {
   const isLend = mode === 'lend'
   const form = useOrderForm(isLend ? 'lending' : 'swap')
   const feePreview = useFeePreview(isLend ? 'lending' : 'swap')
   const [openSelector, setOpenSelector] = useState<'give' | 'receive' | 'interest' | null>(null)
+  const hasPreFilled = useRef(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerOrder, setDrawerOrder] = useState<MatchedOrder | OnChainMatch | null>(null)
+  const [drawerSource, setDrawerSource] = useState<'offchain' | 'onchain'>('offchain')
 
   const giveAsset = form.collateralAssets[0] ?? emptyAsset()
   const receiveAsset = form.debtAssets[0] ?? emptyAsset()
@@ -295,6 +292,35 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
   const giveBalance = giveAsset.asset ? form.balances.get(giveAsset.asset.toLowerCase()) : undefined
   const receiveBalance = receiveAsset.asset ? form.balances.get(receiveAsset.asset.toLowerCase()) : undefined
   const interestBalance = interestAsset.asset ? form.balances.get(interestAsset.asset.toLowerCase()) : undefined
+
+  /* ── Prop-driven pre-fill (runs once on mount) ── */
+  useEffect(() => {
+    if (hasPreFilled.current) return
+    if (!initialCollateralToken && !initialDebtToken) return
+    hasPreFilled.current = true
+
+    if (initialCollateralToken) {
+      const token = findTokenByAddress(initialCollateralToken)
+      form.setCollateralAssets([{
+        asset: token ? (token.addresses[NETWORK] ?? initialCollateralToken) : initialCollateralToken,
+        asset_type: 'ERC20',
+        value: '',
+        token_id: '0',
+        decimals: token?.decimals ?? 18,
+      }])
+    }
+    if (initialDebtToken) {
+      const token = findTokenByAddress(initialDebtToken)
+      form.setDebtAssets([{
+        asset: token ? (token.addresses[NETWORK] ?? initialDebtToken) : initialDebtToken,
+        asset_type: 'ERC20',
+        value: '',
+        token_id: '0',
+        decimals: token?.decimals ?? 18,
+      }])
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally run once on mount to pre-fill from props
 
   /* ── Token selection handlers ──── */
 
@@ -361,6 +387,12 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
 
   const deadlinePresets = isLend ? LEND_DEADLINE_PRESETS : SWAP_DEADLINE_PRESETS
   const feeText = (feePreview.effectiveTotalBps / 100).toFixed(2) + '%'
+
+  const handleFill = useCallback((order: MatchedOrder | OnChainMatch, source: 'offchain' | 'onchain') => {
+    setDrawerOrder(order)
+    setDrawerSource(source)
+    setDrawerOpen(true)
+  }, [])
 
   return (
     <>
@@ -497,6 +529,18 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
           </Web3ActionWrapper>
         )}
 
+        {/* Best Trades Panel */}
+        {hasTokens && (
+          <BestTradesPanel
+            offchainMatches={form.offchainMatches}
+            onchainMatches={form.onchainMatches}
+            isChecking={form.isChecking}
+            mode={isLend ? 'lending' : 'swap'}
+            onFill={handleFill}
+            isSettling={isProcessing}
+          />
+        )}
+
         {/* Info strip */}
         {hasTokens && !form.isChecking && (
           <div className="flex items-center justify-center gap-3 text-[11px] text-ash">
@@ -593,7 +637,449 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
         }
         return null
       })()}
+
+      {/* ── Settlement Drawer ──────────────────────────────── */}
+      {drawerOpen && drawerOrder && (
+        <SettlementDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          feeType={drawerSource === 'offchain' && !isLend ? 'swap' : isLend ? 'lending' : 'swap'}
+          mode="single"
+          order={drawerOrder as MatchedOrder}
+        />
+      )}
     </>
+  )
+}
+
+/* ── Advanced Form (multi-asset borrow) ──────────────────── */
+
+function AdvancedForm() {
+  const searchParams = useSearchParams()
+  const form = useOrderForm('lending')
+  const [showMultiAsset, setShowMultiAsset] = useState(false)
+  const hasPreFilled = useRef(false)
+
+  /* ── URL param pre-fill (runs once on mount) ── */
+  useEffect(() => {
+    if (hasPreFilled.current) return
+    const debtParam = searchParams.get('debtToken')
+    const collateralParam = searchParams.get('collateralToken')
+    if (!debtParam && !collateralParam) return
+    hasPreFilled.current = true
+
+    if (debtParam) {
+      const token = findTokenByAddress(debtParam)
+      form.setDebtAssets([{
+        asset: token ? (token.addresses[NETWORK] ?? debtParam) : debtParam,
+        asset_type: 'ERC20',
+        value: '',
+        token_id: '0',
+        decimals: token?.decimals ?? 18,
+      }])
+    }
+    if (collateralParam) {
+      const token = findTokenByAddress(collateralParam)
+      form.setCollateralAssets([{
+        asset: token ? (token.addresses[NETWORK] ?? collateralParam) : collateralParam,
+        asset_type: 'ERC20',
+        value: '',
+        token_id: '0',
+        decimals: token?.decimals ?? 18,
+      }])
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally run once on mount to pre-fill from URL params
+
+  return (
+    <div className="space-y-6">
+
+      {/* Reset */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={form.resetForm}
+          className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
+        >
+          Reset
+        </button>
+      </div>
+
+      {/* ── Token Selection ─────────────────────────────── */}
+      <InlineBorrowForm
+        orderType="lending"
+        debtAssets={form.debtAssets}
+        collateralAssets={form.collateralAssets}
+        interestAssets={form.interestAssets}
+        onDebtChange={form.setDebtAssets}
+        onCollateralChange={form.setCollateralAssets}
+        onInterestChange={form.setInterestAssets}
+        balances={form.balances}
+      />
+
+      {/* ── Terms & Duration ─────────────────────────────── */}
+      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip">
+        <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
+          <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
+        </div>
+
+        <div className="p-4 flex flex-col md:flex-row md:items-start gap-6">
+          {/* Duration */}
+          <div className="space-y-3 flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Loan Duration</span>
+              <button
+                type="button"
+                onClick={() => form.setUseCustomDuration(!form.useCustomDuration)}
+                className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider"
+              >
+                {form.useCustomDuration ? 'Use Presets' : 'Custom'}
+              </button>
+            </div>
+
+            {form.useCustomDuration ? (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={form.customDurationValue}
+                    onChange={(e) => form.setCustomDurationValue(e.target.value)}
+                    className="flex-1 bg-surface/50 border-edge/50 font-mono h-9 text-sm"
+                    placeholder="Amount"
+                    min="1"
+                  />
+                  <div className="flex gap-1">
+                    {CUSTOM_DURATION_UNITS.map((u) => (
+                      <button
+                        key={u.multiplier}
+                        type="button"
+                        onClick={() => form.setCustomDurationUnit(u.multiplier)}
+                        className={`px-3 py-1 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
+                          form.customDurationUnit === u.multiplier
+                            ? 'border-star/40 bg-star/10 text-star'
+                            : 'border-edge/50 text-dust hover:text-chalk'
+                        }`}
+                      >{u.label}</button>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[10px] text-dust italic">
+                  Result: {formatDurationHuman(Number(form.duration))}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {DURATION_PRESETS.map((p) => (
+                  <button
+                    key={p.seconds}
+                    type="button"
+                    onClick={() => form.setDurationPreset(p.seconds.toString())}
+                    className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                      form.durationPreset === p.seconds.toString()
+                        ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]'
+                        : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                    }`}
+                  >{p.label}</button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="hidden md:block w-px self-stretch bg-edge/30" />
+
+          {/* Deadline / Expiry */}
+          <div className="space-y-3 flex-1 min-w-0">
+            <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
+            <div className="flex flex-wrap gap-2">
+              {LEND_DEADLINE_PRESETS.map((p) => (
+                <button
+                  key={p.seconds}
+                  type="button"
+                  onClick={() => form.setDeadlinePreset(p.seconds.toString())}
+                  className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                    form.deadlinePreset === p.seconds.toString()
+                      ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]'
+                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  }`}
+                >{p.label}</button>
+              ))}
+            </div>
+            <p className="text-[10px] text-dust" suppressHydrationWarning>
+              Expires {formatTimestamp(BigInt(form.deadline))}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Multi-Asset Options (collapsible) ─────────────── */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowMultiAsset(!showMultiAsset)}
+          className="flex items-center gap-2 text-[11px] text-dust hover:text-chalk uppercase tracking-widest font-bold transition-colors cursor-pointer group"
+        >
+          <svg
+            className={`w-3 h-3 text-ash group-hover:text-chalk transition-transform ${showMultiAsset ? 'rotate-90' : ''}`}
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M4 2l4 4-4 4" />
+          </svg>
+          Multi-Asset Options
+          {form.allAssets.length > 0 && <span className="text-star">({form.allAssets.length} assets)</span>}
+        </button>
+
+        {showMultiAsset && (
+          <div className="mt-4 space-y-4 animate-fade-up">
+            {/* Mode + Funding toggles */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              {/* Mode */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
+                <div className="flex gap-1">
+                  {(['offchain', 'onchain'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => form.setMode(m)}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                        form.mode === m
+                          ? 'bg-star/10 text-star border border-star/25'
+                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                      }`}
+                    >
+                      {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+
+              {/* Funding */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
+                <div className="flex gap-1">
+                  {([
+                    { value: 'single', label: 'Single' },
+                    { value: 'multi', label: 'Multi' },
+                  ] as const).map((f) => (
+                    <button
+                      key={f.value}
+                      type="button"
+                      onClick={() => form.setMultiLender(f.value === 'multi')}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                        (form.multiLender ? 'multi' : 'single') === f.value
+                          ? 'bg-star/10 text-star border border-star/25'
+                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Asset Table */}
+            <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
+                <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
+                  Inscription Assets
+                  {form.allAssets.length > 0 && <span className="ml-2 text-star">({form.allAssets.length})</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => form.setAddModalOpen(true)}
+                  className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 2v8M2 6h8" />
+                  </svg>
+                  Add Asset
+                </button>
+              </div>
+
+              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
+                <div className="flex-1">Asset</div>
+                <div className="w-32 text-center">Amount / ID</div>
+                <div className="w-32 text-center">Role</div>
+                <div className="w-10"></div>
+              </div>
+
+              {form.allAssets.length === 0 ? (
+                <div
+                  onClick={() => form.setAddModalOpen(true)}
+                  className="w-full min-h-[120px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-6"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+                      <path d="M8 3v10M3 8h10" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-dust">Add extra assets via the modal for multi-asset orders</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-edge/10">
+                  {form.allAssets.map((item) => (
+                    <AssetRow
+                      key={`${item.role}-${item.asset.asset}-${item.asset.token_id}`}
+                      asset={item.asset}
+                      role={item.role}
+                      onRemove={() => form.handleRemoveAsset(item.role, item.index)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </div>
+
+      {/* ── Validation Errors ──────────────────────────────── */}
+      {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
+        <div className="px-4 py-3 rounded-xl border border-nova/20 bg-nova/5">
+          <p className="text-xs text-nova font-medium">
+            {!form.hasDebt && '• Add at least one borrow asset. '}
+            {!form.hasCollateral && '• Add at least one collateral asset.'}
+          </p>
+        </div>
+      )}
+
+      {/* ── Agreement Summary + Submit ─────────────────────── */}
+      <section className="rounded-xl border border-star/30 bg-star/5 p-5 max-w-md">
+        <div className="space-y-3">
+          <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
+            Agreement Summary
+          </span>
+          <div className="space-y-2.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-dust">Intent</span>
+              <span className="text-chalk font-medium uppercase tracking-wider">Lending</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-dust">Network Mode</span>
+              <span className={`font-medium ${form.mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
+                {form.mode === 'offchain' ? 'Gasless (Off-Chain)' : 'On-Chain'}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-dust">Duration</span>
+              <span className="text-chalk font-medium">{formatDurationHuman(Number(form.duration))}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-dust">Expiry</span>
+              <span className="text-chalk font-medium" suppressHydrationWarning>{formatTimestamp(BigInt(form.deadline))}</span>
+            </div>
+            {form.roiInfo && (
+              <div className="flex justify-between text-sm">
+                <span className="text-dust">Est. Yield</span>
+                <span className="text-aurora font-bold">+{form.roiInfo.yieldPct}%</span>
+              </div>
+            )}
+            {form.matchesVisible && form.hasMatches && (
+              <div className="flex justify-between items-center text-sm pt-1 border-t border-star/10">
+                <span className="text-dust">Broadcast</span>
+                <Switch
+                  size="sm"
+                  checked={form.broadcastMode}
+                  onCheckedChange={form.setBroadcastMode}
+                  className="data-[state=checked]:bg-star"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <FeeBreakdown type="lending" />
+        </div>
+
+        <div className="mt-5">
+          <Web3ActionWrapper message="Connect your wallet to create an inscription">
+            <Button
+              variant="gold"
+              size="lg"
+              className="w-full h-14 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
+              onClick={form.handleSubmit}
+              disabled={form.isPending || form.isCreatingOnChain || form.isChecking}
+            >
+              {form.isPending || form.isCreatingOnChain ? (
+                <div className="flex items-center gap-2">
+                  <Spinner />
+                  Processing...
+                </div>
+              ) : form.isChecking ? 'Checking matches...' : form.submitButtonText}
+            </Button>
+          </Web3ActionWrapper>
+        </div>
+      </section>
+
+      {/* ── Match Detection ──────────────────────────────── */}
+      {form.matchesVisible && form.hasMatches && !form.broadcastMode && (
+        <div>
+          <div className="mb-4 flex items-center gap-3 px-1">
+            <div className="w-2 h-2 rounded-full bg-star animate-ping" />
+            <span className="text-[10px] font-display tracking-[0.25em] text-star uppercase">
+              Match Detected
+            </span>
+          </div>
+          <InlineMatchList
+            offchainMatches={form.offchainMatches}
+            onchainMatches={form.onchainMatches}
+            isSwap={false}
+            onSettleOffchain={form.handleInstantSettle}
+            onSettleOnchain={form.handleOnchainSettle}
+            onSettleMultiple={form.handleMultiSettle}
+            isSettling={form.isSettling || form.isSettlingOnChain || form.multiSettleState.phase !== 'idle'}
+            multiSettleSelection={form.multiSettleSelection}
+            giveSymbol={form.giveSymbol}
+            receiveSymbol={form.receiveSymbol}
+          />
+        </div>
+      )}
+
+      {/* ── Modals ───────────────────────────────────────── */}
+      <AddAssetModal
+        open={form.addModalOpen}
+        onOpenChange={(open) => form.setAddModalOpen(open)}
+        onAdd={form.handleAddAsset}
+        balances={form.balances}
+        availableRoles={ROLES}
+        defaultRole={form.advancedDefaultRole}
+      />
+
+      {(() => {
+        const active = [form.createProgress, form.settleProgress, form.onchainProgress, form.onchainSettleProgress].find(p => p.open)
+        const multiOpen = form.multiSettleModalOpen && form.multiSettleState.phase !== 'idle'
+        if (active && !multiOpen) {
+          return (
+            <TransactionProgressModal
+              open
+              steps={active.steps}
+              txHash={active.txHash}
+              onClose={active.close}
+            />
+          )
+        }
+        if (multiOpen) {
+          return (
+            <MultiSettleProgressModal
+              open
+              state={form.multiSettleState}
+              onClose={() => {
+                form.setMultiSettleModalOpen(false)
+                form.resetMultiSettle()
+              }}
+            />
+          )
+        }
+        return null
+      })()}
+    </div>
   )
 }
 
@@ -1209,6 +1695,25 @@ const LEND_FAQ = [
   },
 ]
 
+const ADVANCED_FAQ = [
+  {
+    q: 'What is Advanced mode?',
+    a: 'Full multi-asset inscription builder. Combine multiple debt, collateral, and interest assets in a single on-chain or off-chain order. Same protocol, more flexibility.',
+  },
+  {
+    q: 'When should I use Advanced mode?',
+    a: 'When you need more than one debt token, mixed collateral (ERC20 + NFT), or want to specify multiple interest assets.',
+  },
+  {
+    q: 'How is it different from Lend/Borrow mode?',
+    a: 'Lend mode uses a simple two-box form. Advanced mode exposes the full inscription structure including multi-asset arrays and funding mode selection.',
+  },
+  {
+    q: 'What are the fees?',
+    a: '0.25% at settlement (0.05% relayer, 0.20% treasury). 0% to redeem. 0% on liquidation. Genesis NFT holders get up to 50% off.',
+  },
+]
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -1236,36 +1741,41 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' }) {
-  const isLend = activeTab === 'lend'
-  const faq = isLend ? LEND_FAQ : SWAP_FAQ
+function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' | 'advanced' }) {
+  const isSwap = activeTab === 'swap'
+  const isAdvanced = activeTab === 'advanced'
+  const faq = isSwap ? SWAP_FAQ : isAdvanced ? ADVANCED_FAQ : LEND_FAQ
 
   return (
     <div className="mt-16 max-w-lg mx-auto">
       {/* Hero statement */}
       <section className="text-center mb-10">
         <p className="text-star font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
-          {isLend ? 'P2P Lending on StarkNet' : 'P2P Swaps on StarkNet'}
+          {isSwap ? 'P2P Swaps on StarkNet' : isAdvanced ? 'Multi-Asset Inscriptions' : 'P2P Lending on StarkNet'}
         </p>
         <h2 className="font-display text-2xl sm:text-3xl tracking-tight text-chalk leading-[1.15] mb-4">
-          {isLend ? (
-            <>If it exists, you can <span className="text-star">lend it.</span></>
-          ) : (
+          {isSwap ? (
             <>Swap anything, <span className="text-star">peer-to-peer.</span></>
+          ) : isAdvanced ? (
+            <>If it exists, you can <span className="text-star">inscribe it.</span></>
+          ) : (
+            <>If it exists, you can <span className="text-star">lend it.</span></>
           )}
         </h2>
         <p className="text-dust text-sm leading-relaxed max-w-md mx-auto">
-          {isLend
-            ? 'Borrow any ERC20. Collateralize with tokens, NFTs, or vault shares. No listing, no oracles. Every position isolated in its own Locker.'
-            : 'Any ERC20, any amount. No pools, no slippage, no oracles. Gasless to create, settled on-chain when matched.'}
+          {isSwap
+            ? 'Any ERC20, any amount. No pools, no slippage, no oracles. Gasless to create, settled on-chain when matched.'
+            : isAdvanced
+            ? 'Bundle any combination of ERC20, ERC721, ERC1155 assets into a single inscription. Full control over debt, collateral, and interest arrays.'
+            : 'Borrow any ERC20. Collateralize with tokens, NFTs, or vault shares. No listing, no oracles. Every position isolated in its own Locker.'}
         </p>
       </section>
 
       {/* Stats bar */}
       <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
         <div className="text-center">
-          <div className="font-display text-xl text-chalk">{isLend ? '0.25%' : '0.15%'}</div>
-          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">{isLend ? 'Lending Fee' : 'Swap Fee'}</div>
+          <div className="font-display text-xl text-chalk">{isSwap ? '0.15%' : '0.25%'}</div>
+          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">{isSwap ? 'Swap Fee' : 'Lending Fee'}</div>
         </div>
         <div className="text-center">
           <div className="font-display text-xl text-chalk">0%</div>
@@ -1302,12 +1812,27 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' }) {
 
 /* ── Page ─────────────────────────────────────────────────── */
 
+type TradeMode = 'swap' | 'lend' | 'advanced'
+
 function TradeContent() {
   const searchParams = useSearchParams()
-  const initialMode = searchParams.get('mode') === 'swap' ? 'swap' : 'lend'
-  const [activeTab, setActiveTab] = useState<'swap' | 'lend'>(initialMode as 'swap' | 'lend')
+
+  const initialDebtToken = searchParams.get('debtToken') ?? undefined
+  const initialCollateralToken = searchParams.get('collateralToken') ?? undefined
+
+  const rawMode = searchParams.get('mode')
+  const initialMode: TradeMode =
+    rawMode === 'swap' ? 'swap' : rawMode === 'advanced' ? 'advanced' : 'lend'
+
+  const [activeTab, setActiveTab] = useState<TradeMode>(initialMode)
   const [offerMode, setOfferMode] = useState<'standard' | 'collection'>('standard')
   const [collectionView, setCollectionView] = useState<'create' | 'browse'>('create')
+
+  const TAB_LABELS: Record<TradeMode, string> = {
+    lend: 'Lend',
+    swap: 'Swap',
+    advanced: 'Advanced',
+  }
 
   return (
     <div className="animate-fade-up pb-24">
@@ -1315,24 +1840,24 @@ function TradeContent() {
       <div className="max-w-lg mx-auto">
         {/* Tab Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <div className="flex">
-            {(['swap', 'lend'] as const).map((tab) => (
+          <div className="flex flex-wrap">
+            {(['lend', 'swap', 'advanced'] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => { setActiveTab(tab); setOfferMode('standard'); setCollectionView('create') }}
-                className={`px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
+                className={`px-4 sm:px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
                   activeTab === tab
                     ? 'text-star border-star'
                     : 'text-dust hover:text-chalk border-transparent'
                 }`}
               >
-                {tab === 'swap' ? 'Swap' : 'Lend'}
+                {TAB_LABELS[tab]}
               </button>
             ))}
           </div>
 
-          {/* Lend mode toggle — Token vs Collection */}
+          {/* Lend mode toggle — Token vs Collection (only shown in lend tab) */}
           {activeTab === 'lend' && (
             <div className="flex flex-col items-end gap-1">
               <div className="flex gap-1">
@@ -1380,14 +1905,29 @@ function TradeContent() {
           </div>
         )}
 
-        {activeTab === 'lend' && offerMode === 'collection' ? (
+        {/* Advanced tab description */}
+        {activeTab === 'advanced' && (
+          <p className="text-[11px] text-dust mb-5 leading-relaxed">
+            Full multi-asset inscription builder — add multiple debt, collateral, and interest assets in one order.
+          </p>
+        )}
+
+        {/* Tab content */}
+        {activeTab === 'advanced' ? (
+          <AdvancedForm key="advanced" />
+        ) : activeTab === 'lend' && offerMode === 'collection' ? (
           collectionView === 'create' ? (
             <CollectionOfferForm key="collection-create" />
           ) : (
             <CollectionOfferBrowser key="collection-browse" />
           )
         ) : (
-          <TradeForm key={`${activeTab}-${offerMode}`} mode={activeTab} />
+          <TradeForm
+            key={`${activeTab}-${offerMode}`}
+            mode={activeTab === 'swap' ? 'swap' : 'lend'}
+            initialDebtToken={initialDebtToken}
+            initialCollateralToken={initialCollateralToken}
+          />
         )}
       </div>
 
