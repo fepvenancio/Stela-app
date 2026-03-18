@@ -1,0 +1,49 @@
+{
+  "task_id": "task-002",
+  "stage_run_id": "sr-task-002",
+  "status": "warn",
+  "checks": [
+    {
+      "name": "syntax",
+      "result": "pass",
+      "message": "tsc --noEmit exits 0; all four new files parse and type-check cleanly under strict mode"
+    },
+    {
+      "name": "linting",
+      "result": "warn",
+      "location": "apps/web/.eslintrc.json",
+      "message": "pnpm lint fails with a pre-existing ESLint 9 circular-structure error caused by .eslintrc.json + next/core-web-vitals config incompatibility (present on main branch; not introduced by this task). Additionally, AssetRow.tsx imports `formatTokenValue` from @fepvenancio/stela-sdk but never uses it — formatDisplayAmount from @/lib/format is used instead. This unused import would normally be flagged by no-unused-vars but is masked by the broken lint runner."
+    },
+    {
+      "name": "build",
+      "result": "skipped",
+      "message": "Full Cloudflare/OpenNext build not run; TypeScript typecheck passed as proxy for build correctness"
+    },
+    {
+      "name": "unit_tests",
+      "result": "skipped",
+      "message": "No test framework or test files exist anywhere in this repository; nothing to run"
+    },
+    {
+      "name": "coverage",
+      "result": "warn",
+      "message": "QUALITY.md mandates 80% coverage threshold, but no tests exist in the repo. New UI components have no tests. Cannot measure coverage."
+    },
+    {
+      "name": "schema",
+      "result": "skipped",
+      "message": "No typed artifact schemas are required for UI component files"
+    },
+    {
+      "name": "touch_map",
+      "result": "pass",
+      "message": "git diff shows exactly 5 files changed: .forge/handoffs/task-002.md, apps/web/src/components/trade/AddAssetModal.tsx, AssetRow.tsx, InlineBorrowForm.tsx, role-meta.ts — all match the declared writes in the handoff document. No undeclared files touched."
+    },
+    {
+      "name": "property_tests",
+      "result": "warn",
+      "message": "QUALITY.md sets property_based: optional. No property tests were written. Acceptable per policy."
+    }
+  ],
+  "escalate_to_high_court": false
+}

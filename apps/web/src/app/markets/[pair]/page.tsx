@@ -1,11 +1,9 @@
 'use client'
 
 import { use, useState, useMemo, useCallback } from 'react'
-import { useAccount, useSendTransaction } from '@starknet-react/core'
+import { useAccount } from '@starknet-react/core'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { findTokenByAddress, InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
-import { RpcProvider } from 'starknet'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { usePairListings } from '@/hooks/usePairListings'
 import { useOrderBook } from '@/hooks/useOrderBook'
 import { InscriptionListRow } from '@/components/InscriptionListRow'
@@ -29,8 +27,6 @@ import { useBatchSign } from '@/hooks/useBatchSign'
 import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { CONTRACT_ADDRESS, RPC_URL } from '@/lib/config'
-import { useSync } from '@/hooks/useSync'
 import type { AssetRow } from '@/types/api'
 import type { TokenDisplay, DurationFilter as DurationFilterType } from '@/types/orderbook'
 
@@ -82,18 +78,14 @@ const DURATION_RANGE_MAP: Record<DurationFilterType, [number, number] | null> = 
 }
 
 function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; collateralToken: string }) {
-  const router = useRouter()
-  const { address, status: walletStatus } = useAccount()
+  const { address } = useAccount()
   const { inscriptions, orders, isLoading, error, hasMore, isLoadingMore, loadMore, total, loaded } = usePairListings(debtToken, collateralToken)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [actionPendingId, setActionPendingId] = useState<string | null>(null)
   const { toggle, isSelected, count, selected } = useBatchSelection()
   const { batchSign, isPending: isBatchSignPending } = useBatchSign()
   const { settle: instantSettle, isPending: isInstantSettlePending } = useInstantSettle()
-  const { sendAsync } = useSendTransaction({})
-  const { sync } = useSync()
-  const [quickLendPending, setQuickLendPending] = useState(false)
-  const isActionPending = isBatchSignPending || isInstantSettlePending || quickLendPending
+  const isActionPending = isBatchSignPending || isInstantSettlePending
 
   // Track which side of the order book is active for the widget
   const [activeLendSide, setActiveLendSide] = useState<'left' | 'right'>('left')
@@ -367,15 +359,10 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
     }
   }, [address, instantSettle])
 
-  // Quick lend: navigate to /trade with the pair and mode pre-filled
-  const handleQuickLend = useCallback(async (_orderId: string, _source: 'offchain' | 'onchain') => {
-    const params = new URLSearchParams({
-      debtToken: activePairDisplay.base.address,
-      collateralToken: activePairDisplay.quote.address,
-      mode: mode === 'swap' ? 'swap' : 'lend',
-    })
-    router.push(`/trade?${params}`)
-  }, [activePairDisplay, mode, router])
+  // Quick lend: deep-link to Trade page with token and order context pre-filled
+  const handleQuickLend = useCallback((orderId: string, _source: 'offchain' | 'onchain') => {
+    window.location.href = `/trade?debtToken=${debtToken}&collateralToken=${collateralToken}&orderId=${orderId}`
+  }, [debtToken, collateralToken])
 
   /* -- Render --------------------------------------------- */
 
@@ -436,17 +423,6 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
             <p className="text-xs text-chalk font-medium font-mono tabular-nums">{stats.totalActive}</p>
             <p className="text-[9px] text-ash uppercase tracking-wider">Active</p>
           </div>
-          <div className="ml-auto">
-            <Link
-              href={`/trade?debtToken=${debtToken}&collateralToken=${collateralToken}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-chalk bg-star/10 border border-star/30 hover:bg-star/20 hover:border-star/50 transition-colors"
-            >
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                <path d="M6 2v8M2 6h8" />
-              </svg>
-              Trade this pair
-            </Link>
-          </div>
         </div>
       </div>
 
@@ -483,24 +459,6 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
             onRowClick={handleRowClick}
             selectedId={selectedBookOrder?.id}
           />
-
-          {/* Trade link — shown when a row is selected in the order book */}
-          {selectedBookOrder && (
-            <div className="mt-2 flex items-center justify-between px-1">
-              <span className="text-[10px] text-dust">
-                Order selected · <span className="text-chalk">{selectedBookOrder.apr != null ? `${selectedBookOrder.apr.toFixed(1)}% APR` : 'view details'}</span>
-              </span>
-              <Link
-                href={`/trade?debtToken=${activePairDisplay.base.address}&collateralToken=${activePairDisplay.quote.address}&mode=lend`}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium text-chalk bg-star/10 border border-star/30 hover:bg-star/20 hover:border-star/50 transition-colors"
-              >
-                Trade
-                <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                  <path d="M2 6h8M6 2l4 4-4 4" />
-                </svg>
-              </Link>
-            </div>
-          )}
 
           {/* Individual Stelas toggle */}
           {stelaCount > 0 && (
@@ -729,7 +687,7 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
               selectedDuration={selectedDuration}
               bestOrder={activeBestOrder}
               onLend={handleQuickLend}
-              isLending={quickLendPending}
+              isLending={false}
               activeTab={activeWidgetTab}
               onTabChange={setActiveWidgetTab}
             />

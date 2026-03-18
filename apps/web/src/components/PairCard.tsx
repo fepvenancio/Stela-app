@@ -41,13 +41,21 @@ export function PairCard({ pair }: PairCardProps) {
 
   const pairSlug = `${pair.debt_token}-${pair.collateral_token}`
 
+  // Deep-link to Trade page using contract addresses (unambiguous)
+  const tradeHref = `/trade?debtToken=${pair.debt_token}&collateralToken=${pair.collateral_token}`
+
   return (
-    <Link
-      href={`/markets/${pairSlug}`}
-      className="group flex items-center gap-4 p-4 rounded-xl border border-edge/30 bg-surface/10 hover:bg-surface/30 hover:border-edge/50 transition-all duration-200"
-    >
+    <div className="group relative flex items-center gap-4 p-4 rounded-xl border border-edge/30 bg-surface/10 hover:bg-surface/30 hover:border-edge/50 transition-all duration-200">
+      {/* Full-card invisible link to pair detail — sits below all interactive elements */}
+      <Link
+        href={`/markets/${pairSlug}`}
+        className="absolute inset-0 rounded-xl"
+        aria-label={`View ${debtSymbol} / ${collSymbol} market`}
+        tabIndex={-1}
+      />
+
       {/* Token pair avatars — overlapping */}
-      <div className="relative shrink-0 w-[44px] h-[28px]">
+      <div className="relative shrink-0 w-[44px] h-[28px] z-[1]">
         <div className="absolute left-0 top-0 z-[1]">
           <TokenIcon address={pair.debt_token} size={28} />
         </div>
@@ -57,7 +65,7 @@ export function PairCard({ pair }: PairCardProps) {
       </div>
 
       {/* Pair name */}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 z-[1]">
         <span className="text-sm font-medium text-chalk group-hover:text-star transition-colors">
           {debtSymbol} / {collSymbol}
         </span>
@@ -66,8 +74,8 @@ export function PairCard({ pair }: PairCardProps) {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="hidden sm:flex items-center gap-6 text-right">
+      {/* Stats — hidden on mobile */}
+      <div className="hidden sm:flex items-center gap-6 text-right z-[1]">
         {/* Active listings */}
         <div className="min-w-[60px]">
           <p className="text-xs text-chalk font-medium">{activeCount}</p>
@@ -83,7 +91,27 @@ export function PairCard({ pair }: PairCardProps) {
         </div>
       </div>
 
-      {/* Arrow */}
+      {/* Trade button — always visible, links to /trade with token addresses pre-filled */}
+      <Link
+        href={tradeHref}
+        className="relative z-[1] inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0"
+        aria-label={`Trade ${debtSymbol} / ${collSymbol}`}
+      >
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden="true"
+        >
+          <path d="M1 5h8M6 2l3 3-3 3" />
+        </svg>
+        Trade
+      </Link>
+
+      {/* Arrow — navigates to pair detail (paired with the invisible overlay link above) */}
       <svg
         width="16"
         height="16"
@@ -91,10 +119,11 @@ export function PairCard({ pair }: PairCardProps) {
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
-        className="text-ash group-hover:text-star transition-colors shrink-0"
+        className="text-ash group-hover:text-star transition-colors shrink-0 relative z-[1]"
+        aria-hidden="true"
       >
         <path d="M6 4l4 4-4 4" />
       </svg>
-    </Link>
+    </div>
   )
 }

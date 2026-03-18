@@ -1,0 +1,52 @@
+{
+  "task_id": "task-005",
+  "stage_run_id": "sr-task-005",
+  "status": "warn",
+  "checks": [
+    {
+      "name": "syntax",
+      "result": "pass",
+      "location": "apps/web/src/components/trade/BestTradesPanel.tsx",
+      "message": "421-line TSX file parses cleanly; all JSX tags balanced, no stray braces, 'use client' directive present."
+    },
+    {
+      "name": "linting",
+      "result": "warn",
+      "location": "apps/web/src/components/trade/BestTradesPanel.tsx",
+      "message": "node_modules not installed in worktree — `next lint` could not execute. Manual inspection finds no ESLint-violating patterns (no console.log, no missing keys in map without key prop, no unused imports). One stylistic note: `order_data: Record<string, unknown>` is accessed with dual-key fallbacks (`d.debtAssets ?? d.debt_assets`) cast via `as Array<...>` — valid but bypasses strict inference. Cannot confirm zero warnings without a live lint run."
+    },
+    {
+      "name": "build",
+      "result": "warn",
+      "location": "apps/web",
+      "message": "node_modules absent in worktree; TypeScript compiler check returned only the pre-existing `@cloudflare/workers-types` error unrelated to this change. All 6 imported modules verified to exist and export the required symbols: `MatchedOrder` (useInstantSettle.ts), `OnChainMatch` (useMatchDetection.ts), `computeYieldPercent` / `FilterableAsset` (filter-utils.ts), `formatAddress` (address.ts), `formatTokenValue` / `formatDuration` (format.ts), `findTokenByAddress` (@fepvenancio/stela-sdk). Cannot confirm clean compile without installed deps."
+    },
+    {
+      "name": "unit_tests",
+      "result": "warn",
+      "location": "apps/web/src/components/trade/BestTradesPanel.tsx",
+      "message": "No unit tests added for the new component. No QUALITY.md found to confirm threshold requirement. The ranking logic (computeSwapRate, sort with null-score handling) and the hasCompletedCheckRef dual-ref pattern are non-trivial and would benefit from test coverage."
+    },
+    {
+      "name": "coverage",
+      "result": "skipped",
+      "message": "No QUALITY.md found in repository; coverage threshold unknown. Skipped."
+    },
+    {
+      "name": "schema",
+      "result": "pass",
+      "message": "Pure UI component — no typed API artifacts, no JSON schemas, no D1 query objects introduced. Props interface BestTradesPanelProps is correctly typed against existing hook types."
+    },
+    {
+      "name": "touch_map",
+      "result": "pass",
+      "message": "Git diff shows exactly 2 files changed: `.forge/handoffs/task-005.md` and `apps/web/src/components/trade/BestTradesPanel.tsx`. Matches handoff declaration. No extraneous files written."
+    },
+    {
+      "name": "property_tests",
+      "result": "skipped",
+      "message": "No QUALITY.md present; property_based testing policy unknown. No property tests written. Skipped rather than flagged as fail."
+    }
+  ],
+  "escalate_to_high_court": false
+}

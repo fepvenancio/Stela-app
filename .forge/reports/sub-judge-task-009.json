@@ -1,0 +1,57 @@
+{
+  "task_id": "task-009",
+  "stage_run_id": "sr-task-009",
+  "status": "warn",
+  "checks": [
+    {
+      "name": "syntax",
+      "result": "pass",
+      "location": "apps/web/src/components/AppShell.tsx",
+      "message": "Valid TSX; new NAV_LINKS entry uses consistent typing (React.SVGProps<SVGSVGElement>), self-closing SVG elements, correct object shape."
+    },
+    {
+      "name": "linting",
+      "result": "skipped",
+      "message": "node_modules absent in worktree; turbo/eslint could not execute. Code visually conforms to project conventions (no any, no ts-ignore, no unused imports)."
+    },
+    {
+      "name": "build",
+      "result": "skipped",
+      "message": "node_modules absent in worktree; build not executable. TypeScript strict-mode tsconfig present; no type violations detectable by inspection."
+    },
+    {
+      "name": "unit_tests",
+      "result": "skipped",
+      "message": "No tests exist for AppShell navigation and none were required by the task. No test infrastructure available in worktree."
+    },
+    {
+      "name": "coverage",
+      "result": "skipped",
+      "message": "No QUALITY.md found in repository; coverage threshold cannot be evaluated."
+    },
+    {
+      "name": "schema",
+      "result": "pass",
+      "message": "No typed artifacts (JSON, Zod schemas, ABI) were added or modified. NAV_LINKS array entry conforms to the existing inferred tuple type."
+    },
+    {
+      "name": "touch_map",
+      "result": "pass",
+      "message": "No task-spec touch_map.writes declaration found. Changed files (.forge/handoffs/task-009.md, apps/web/src/components/AppShell.tsx) exactly match the handoff's 'Files Modified' list. No unexpected files written."
+    },
+    {
+      "name": "property_tests",
+      "result": "skipped",
+      "message": "No QUALITY.md found; property_based setting unknown. No property tests added or required for a nav link change."
+    }
+  ],
+  "escalate_to_high_court": false,
+  "escalation_reason": null,
+  "_warnings": [
+    {
+      "check": "build",
+      "location": "apps/web/src/app/portfolio/",
+      "message": "The /portfolio route (apps/web/src/app/portfolio/page.tsx) does not exist in this branch at HEAD. The new nav link will produce a Next.js 404 if deployed without the portfolio page. The Worker acknowledged this gap in the handoff. Verify the portfolio page is merged into this branch or deployed concurrently before this change goes live."
+    }
+  ]
+}
