@@ -13,3 +13,4 @@ dist/
 .dev.vars
 *.secret
 *.private.key
+.forge/
