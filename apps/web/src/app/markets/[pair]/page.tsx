@@ -3,6 +3,7 @@
 import { use, useState, useMemo, useCallback } from 'react'
 import { useAccount, useSendTransaction } from '@starknet-react/core'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { findTokenByAddress, InscriptionClient, toU256 } from '@fepvenancio/stela-sdk'
 import { RpcProvider } from 'starknet'
 import { usePairListings } from '@/hooks/usePairListings'
@@ -81,6 +82,7 @@ const DURATION_RANGE_MAP: Record<DurationFilterType, [number, number] | null> = 
 }
 
 function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; collateralToken: string }) {
+  const router = useRouter()
   const { address, status: walletStatus } = useAccount()
   const { inscriptions, orders, isLoading, error, hasMore, isLoadingMore, loadMore, total, loaded } = usePairListings(debtToken, collateralToken)
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -365,78 +367,15 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
     }
   }, [address, instantSettle])
 
-  // Quick lend: sign an on-chain inscription at 100% directly from the widget
-  const handleQuickLend = useCallback(async (orderId: string, source: 'offchain' | 'onchain') => {
-    if (!address) {
-      toast.error('Connect your wallet to continue')
-      return
-    }
-    if (source === 'offchain') {
-      // For off-chain orders, navigate to the order page
-      window.location.href = `/order/${orderId}`
-      return
-    }
-    setQuickLendPending(true)
-    try {
-      // Fetch inscription assets to build approval calls
-      const res = await fetch(`/api/inscriptions/${orderId}`)
-      if (!res.ok) {
-        toast.error('Failed to fetch inscription data')
-        setQuickLendPending(false)
-        return
-      }
-      const json = (await res.json()) as { data?: { assets?: Record<string, unknown>[] } }
-      const assets = json.data?.assets ?? []
-      const debtAssets = assets.filter((a: Record<string, unknown>) => a.asset_role === 'debt')
-
-      if (debtAssets.length === 0) {
-        toast.error('No debt asset data available', {
-          description: 'The inscription may still be indexing. Please wait a moment and refresh.',
-        })
-        setQuickLendPending(false)
-        return
-      }
-
-      // Build ERC20 approvals for debt tokens
-      const U128_MAX = (1n << 128n) - 1n
-      const approvals: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
-      const approved = new Set<string>()
-      for (const asset of debtAssets) {
-        const addr = (asset.asset_address as string).toLowerCase()
-        if (approved.has(addr)) continue
-        approved.add(addr)
-        approvals.push({
-          contractAddress: asset.asset_address as string,
-          entrypoint: 'approve',
-          calldata: [CONTRACT_ADDRESS, ...toU256(U128_MAX)],
-        })
-      }
-
-      // Build sign_inscription call (100% = 10000 BPS)
-      const client = new InscriptionClient({
-        stelaAddress: CONTRACT_ADDRESS,
-        provider: new RpcProvider({ nodeUrl: RPC_URL }),
-      })
-      const signCall = client.buildSignInscription(BigInt(orderId), 10000n)
-      const result = await sendAsync([...approvals, signCall])
-
-      toast.success('Lend transaction submitted!')
-
-      // Wait for confirmation
-      const provider = new RpcProvider({ nodeUrl: RPC_URL })
-      await provider.waitForTransaction(result.transaction_hash)
-      toast.success('Lending confirmed!')
-
-      sync(result.transaction_hash).catch(() => {})
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (!msg.includes('User abort')) {
-        toast.error(`Lend failed: ${msg.slice(0, 100)}`)
-      }
-    } finally {
-      setQuickLendPending(false)
-    }
-  }, [address, sendAsync, sync])
+  // Quick lend: navigate to /trade with the pair and mode pre-filled
+  const handleQuickLend = useCallback(async (_orderId: string, _source: 'offchain' | 'onchain') => {
+    const params = new URLSearchParams({
+      debtToken: activePairDisplay.base.address,
+      collateralToken: activePairDisplay.quote.address,
+      mode: mode === 'swap' ? 'swap' : 'lend',
+    })
+    router.push(`/trade?${params}`)
+  }, [activePairDisplay, mode, router])
 
   /* -- Render --------------------------------------------- */
 
@@ -497,6 +436,17 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
             <p className="text-xs text-chalk font-medium font-mono tabular-nums">{stats.totalActive}</p>
             <p className="text-[9px] text-ash uppercase tracking-wider">Active</p>
           </div>
+          <div className="ml-auto">
+            <Link
+              href={`/trade?debtToken=${debtToken}&collateralToken=${collateralToken}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-chalk bg-star/10 border border-star/30 hover:bg-star/20 hover:border-star/50 transition-colors"
+            >
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                <path d="M6 2v8M2 6h8" />
+              </svg>
+              Trade this pair
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -533,6 +483,24 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
             onRowClick={handleRowClick}
             selectedId={selectedBookOrder?.id}
           />
+
+          {/* Trade link — shown when a row is selected in the order book */}
+          {selectedBookOrder && (
+            <div className="mt-2 flex items-center justify-between px-1">
+              <span className="text-[10px] text-dust">
+                Order selected · <span className="text-chalk">{selectedBookOrder.apr != null ? `${selectedBookOrder.apr.toFixed(1)}% APR` : 'view details'}</span>
+              </span>
+              <Link
+                href={`/trade?debtToken=${activePairDisplay.base.address}&collateralToken=${activePairDisplay.quote.address}&mode=lend`}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium text-chalk bg-star/10 border border-star/30 hover:bg-star/20 hover:border-star/50 transition-colors"
+              >
+                Trade
+                <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                  <path d="M2 6h8M6 2l4 4-4 4" />
+                </svg>
+              </Link>
+            </div>
+          )}
 
           {/* Individual Stelas toggle */}
           {stelaCount > 0 && (

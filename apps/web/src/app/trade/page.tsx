@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
@@ -13,19 +13,27 @@ import { useOrderForm } from '@/hooks/useOrderForm'
 import { useCollectionOffer } from '@/hooks/useCollectionOffer'
 import { useAcceptCollectionOffer } from '@/hooks/useAcceptCollectionOffer'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
+import { useInstantSettle } from '@/hooks/useInstantSettle'
+import type { MatchedOrder } from '@/hooks/useInstantSettle'
+import { useMultiSettle } from '@/hooks/useMultiSettle'
+import type { OnChainMatch } from '@/hooks/useMatchDetection'
 import type { AssetInputValue } from '@/components/AssetInput'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { Button } from '@/components/ui/button'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 import { NFTCollectionSelector } from '@/components/NFTCollectionSelector'
 import type { NFTCollectionInfo } from '@/components/NFTCollectionSelector'
-import { TokenAvatar } from '@/components/TokenAvatar'
+import { TokenAvatar, TokenAvatarByAddress } from '@/components/TokenAvatar'
 import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
-import { formatTokenValue } from '@/lib/format'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
+import { Badge } from '@/components/ui/badge'
+import { formatTokenValue, formatDuration } from '@/lib/format'
 import { formatAddress } from '@/lib/address'
 import { useFeePreview } from '@/hooks/useFeePreview'
 import { NFTTokenPicker } from '@/components/NFTTokenPicker'
+import type { SelectedOrder, SelectedOffchainOrder, SelectedOnchainOrder } from '@/lib/multi-match'
+import { Loader2, CheckSquare, Square } from 'lucide-react'
 
 /* ── Constants ──────────────────────────────────────────── */
 
@@ -280,7 +288,17 @@ function OrderSettings({
 
 /* ── Trade Form ──────────────────────────────────────────── */
 
-function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
+function TradeForm({
+  mode,
+  initialDebtToken,
+  initialCollateralToken,
+  onDebtCollateralChange,
+}: {
+  mode: 'swap' | 'lend'
+  initialDebtToken?: string
+  initialCollateralToken?: string
+  onDebtCollateralChange?: (debtAddr: string, collateralAddr: string) => void
+}) {
   const isLend = mode === 'lend'
   const form = useOrderForm(isLend ? 'lending' : 'swap')
   const feePreview = useFeePreview(isLend ? 'lending' : 'swap')
@@ -295,6 +313,48 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
   const giveBalance = giveAsset.asset ? form.balances.get(giveAsset.asset.toLowerCase()) : undefined
   const receiveBalance = receiveAsset.asset ? form.balances.get(receiveAsset.asset.toLowerCase()) : undefined
   const interestBalance = interestAsset.asset ? form.balances.get(interestAsset.asset.toLowerCase()) : undefined
+
+  /* ── Apply initial tokens on mount ──── */
+
+  const appliedInitial = useRef(false)
+  useEffect(() => {
+    if (appliedInitial.current) return
+    appliedInitial.current = true
+
+    if (initialDebtToken) {
+      const token = findTokenByAddress(initialDebtToken)
+      if (token) {
+        form.setDebtAssets([{
+          asset: initialDebtToken,
+          asset_type: 'ERC20',
+          value: '',
+          token_id: '0',
+          decimals: token.decimals,
+        }])
+      }
+    }
+    if (initialCollateralToken) {
+      const token = findTokenByAddress(initialCollateralToken)
+      if (token) {
+        form.setCollateralAssets([{
+          asset: initialCollateralToken,
+          asset_type: 'ERC20',
+          value: '',
+          token_id: '0',
+          decimals: token.decimals,
+        }])
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /* ── Notify parent of token changes ──── */
+
+  useEffect(() => {
+    if (receiveAsset.asset && giveAsset.asset && onDebtCollateralChange) {
+      onDebtCollateralChange(receiveAsset.asset, giveAsset.asset)
+    }
+  }, [receiveAsset.asset, giveAsset.asset, onDebtCollateralChange])
 
   /* ── Token selection handlers ──── */
 
@@ -565,9 +625,9 @@ function TradeForm({ mode }: { mode: 'swap' | 'lend' }) {
         />
       )}
 
-      {/* ── Progress Modals ───────────────────────────────── */}
+      {/* ── Progress Modals (order creation flows only) ──── */}
       {(() => {
-        const active = [form.createProgress, form.settleProgress, form.onchainProgress, form.onchainSettleProgress].find(p => p.open)
+        const active = [form.createProgress, form.onchainProgress].find(p => p.open)
         const multiOpen = form.multiSettleModalOpen && form.multiSettleState.phase !== 'idle'
         if (active && !multiOpen) {
           return (
@@ -1137,6 +1197,792 @@ function CollectionOfferBrowser() {
   )
 }
 
+/* ── Best Trades Panel ────────────────────────────────────── */
+
+interface BestTradeRow {
+  id: string
+  type: 'offchain' | 'onchain'
+  offchainOrder?: MatchedOrder
+  onchainMatch?: OnChainMatch
+  borrower: string
+  debtAssets: Array<{ asset_address: string; value: string; asset_type: string }>
+  collateralAssets: Array<{ asset_address: string; value: string; asset_type: string }>
+  interestAssets: Array<{ asset_address: string; value: string; asset_type: string }>
+  duration: number
+  deadline: number
+}
+
+function parseBestTradeRows(
+  offchain: MatchedOrder[],
+  onchain: OnChainMatch[],
+): BestTradeRow[] {
+  const rows: BestTradeRow[] = []
+
+  for (const o of offchain) {
+    const d = o.order_data
+    rows.push({
+      id: o.id,
+      type: 'offchain',
+      offchainOrder: o,
+      borrower: (d.borrower as string) || o.borrower,
+      debtAssets: ((d.debtAssets ?? d.debt_assets) as Array<{ asset_address: string; value: string; asset_type: string }>) ?? [],
+      collateralAssets: ((d.collateralAssets ?? d.collateral_assets) as Array<{ asset_address: string; value: string; asset_type: string }>) ?? [],
+      interestAssets: ((d.interestAssets ?? d.interest_assets) as Array<{ asset_address: string; value: string; asset_type: string }>) ?? [],
+      duration: Number(d.duration ?? '0'),
+      deadline: Number(d.deadline ?? o.deadline ?? '0'),
+    })
+  }
+
+  for (const m of onchain) {
+    rows.push({
+      id: m.id,
+      type: 'onchain',
+      onchainMatch: m,
+      borrower: m.borrower,
+      debtAssets: (m.debtAssets ?? []) as Array<{ asset_address: string; value: string; asset_type: string }>,
+      collateralAssets: (m.collateralAssets ?? []) as Array<{ asset_address: string; value: string; asset_type: string }>,
+      interestAssets: (m.interestAssets ?? []) as Array<{ asset_address: string; value: string; asset_type: string }>,
+      duration: Number(m.duration ?? '0'),
+      deadline: Number(m.deadline ?? '0'),
+    })
+  }
+
+  return rows
+}
+
+interface BestTradesPanelProps {
+  debtTokenAddress: string
+  collateralTokenAddress: string
+  isSwap: boolean
+  highlightOrderId?: string
+  panelRef: React.RefObject<HTMLDivElement>
+  refreshKey: number
+  onFillSingle: (row: BestTradeRow) => void
+  onFillBatch: (orders: SelectedOrder[]) => void
+}
+
+function BestTradesPanel({
+  debtTokenAddress,
+  collateralTokenAddress,
+  isSwap,
+  highlightOrderId,
+  panelRef,
+  refreshKey,
+  onFillSingle,
+  onFillBatch,
+}: BestTradesPanelProps) {
+  const { address: userAddress } = useAccount()
+  const [offchainMatches, setOffchainMatches] = useState<MatchedOrder[]>([])
+  const [onchainMatches, setOnchainMatches] = useState<OnChainMatch[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const highlightRef = useRef<HTMLDivElement>(null)
+
+  const fetchMatches = useCallback(async () => {
+    if (!debtTokenAddress || !collateralTokenAddress) return
+    setIsLoading(true)
+    setOffchainMatches([])
+    setOnchainMatches([])
+
+    const filterAddr = userAddress ?? '0x0'
+    const offchainParams = new URLSearchParams({
+      debtToken: debtTokenAddress,
+      collateralToken: collateralTokenAddress,
+      duration: '0',
+      borrower: filterAddr,
+    })
+    const onchainParams = new URLSearchParams({
+      debtToken: debtTokenAddress,
+      collateralToken: collateralTokenAddress,
+      duration: '0',
+      lender: filterAddr,
+    })
+
+    const [offchainResult, onchainResult] = await Promise.allSettled([
+      fetch(`/api/orders/match?${offchainParams}`).then(async (res) => {
+        if (!res.ok) return []
+        const json = (await res.json()) as { data?: MatchedOrder[] }
+        return json.data ?? []
+      }),
+      fetch(`/api/inscriptions/match?${onchainParams}`).then(async (res) => {
+        if (!res.ok) return []
+        const json = (await res.json()) as { data?: OnChainMatch[] }
+        return json.data ?? []
+      }),
+    ])
+
+    setOffchainMatches(offchainResult.status === 'fulfilled' ? offchainResult.value : [])
+    setOnchainMatches(onchainResult.status === 'fulfilled' ? onchainResult.value : [])
+    setIsLoading(false)
+  }, [debtTokenAddress, collateralTokenAddress, userAddress])
+
+  useEffect(() => {
+    fetchMatches()
+  }, [fetchMatches, refreshKey])
+
+  // Scroll to highlighted order row when it appears
+  useEffect(() => {
+    if (!highlightOrderId || !highlightRef.current) return
+    const timer = setTimeout(() => {
+      highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [highlightOrderId, offchainMatches, onchainMatches])
+
+  const rows = useMemo(
+    () => parseBestTradeRows(offchainMatches, onchainMatches),
+    [offchainMatches, onchainMatches],
+  )
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const buildBatchOrders = useCallback((): SelectedOrder[] => {
+    return rows
+      .filter(r => selectedIds.has(r.id))
+      .map((r): SelectedOrder => {
+        if (r.type === 'offchain' && r.offchainOrder) {
+          return {
+            type: 'offchain',
+            order: r.offchainOrder,
+            bps: 10000,
+            giveAmount: 0n,
+            receiveAmount: 0n,
+          } satisfies SelectedOffchainOrder
+        }
+        return {
+          type: 'onchain',
+          match: r.onchainMatch!,
+          bps: 10000,
+          giveAmount: 0n,
+          receiveAmount: 0n,
+        } satisfies SelectedOnchainOrder
+      })
+  }, [rows, selectedIds])
+
+  const handleBatchFill = useCallback(() => {
+    const orders = buildBatchOrders()
+    if (orders.length > 0) onFillBatch(orders)
+  }, [buildBatchOrders, onFillBatch])
+
+  const totalRows = rows.length
+
+  if (isLoading) {
+    return (
+      <div ref={panelRef} className="mt-6">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-star font-mono text-[10px] uppercase tracking-[0.3em]">Best Trades</span>
+        </div>
+        <div className="rounded-lg border border-edge/30 p-6 flex items-center justify-center gap-2 text-dust text-xs">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Finding best trades...
+        </div>
+      </div>
+    )
+  }
+
+  if (totalRows === 0) {
+    return (
+      <div ref={panelRef} className="mt-6">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-star font-mono text-[10px] uppercase tracking-[0.3em]">Best Trades</span>
+        </div>
+        <div className="rounded-lg border border-edge/20 bg-surface/5 p-6 text-center">
+          <p className="text-sm text-dust">No orders found</p>
+          <p className="text-[11px] text-ash mt-1">Create one using the form above.</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div ref={panelRef} className="mt-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <span className="text-star font-mono text-[10px] uppercase tracking-[0.3em]">Best Trades</span>
+          <span className="text-[10px] text-dust">{totalRows} order{totalRows !== 1 ? 's' : ''}</span>
+        </div>
+        {selectedIds.size > 1 && (
+          <button
+            type="button"
+            onClick={handleBatchFill}
+            className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            Fill {selectedIds.size} selected
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="rounded-lg border border-edge/30 overflow-clip">
+        {/* Column headers */}
+        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 bg-void/95 sticky top-0 z-10">
+          <div className="w-5 shrink-0" />
+          <div className="grid grid-cols-12 gap-3 flex-1">
+            <div className="col-span-2">Type</div>
+            <div className="col-span-3">They Borrow</div>
+            <div className="col-span-2">Interest</div>
+            <div className="col-span-3">Collateral</div>
+            <div className="col-span-2 text-right">Action</div>
+          </div>
+        </div>
+
+        {/* Rows */}
+        <div className="flex flex-col max-h-[60vh] overflow-y-auto">
+          {rows.map((row) => {
+            const isHighlighted = row.id === highlightOrderId
+            const isSelected = selectedIds.has(row.id)
+            const isExpired = row.deadline > 0 && row.deadline < Math.floor(Date.now() / 1000)
+
+            return (
+              <div
+                key={row.id}
+                ref={isHighlighted ? highlightRef : undefined}
+                className={`group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 border-edge/20 ${
+                  isHighlighted
+                    ? 'bg-star/10 border-star/30'
+                    : isSelected
+                      ? 'bg-star/5'
+                      : 'hover:bg-surface/30'
+                }`}
+              >
+                {/* Checkbox */}
+                <button
+                  type="button"
+                  onClick={() => toggleSelect(row.id)}
+                  className="shrink-0 text-dust hover:text-star transition-colors cursor-pointer"
+                  aria-label={isSelected ? 'Deselect' : 'Select'}
+                >
+                  {isSelected
+                    ? <CheckSquare className="w-4 h-4 text-star" />
+                    : <Square className="w-4 h-4" />
+                  }
+                </button>
+
+                {/* Desktop layout */}
+                <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
+                  {/* Type + source */}
+                  <div className="col-span-2 flex items-center gap-1.5 min-w-0">
+                    <Badge
+                      variant={row.type === 'offchain' ? 'pending' : 'open'}
+                      className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0"
+                    >
+                      {isSwap ? 'Swap' : 'Loan'}
+                    </Badge>
+                    {row.type === 'offchain' && (
+                      <span className="text-[7px] text-ash/40 uppercase tracking-wider shrink-0">oc</span>
+                    )}
+                    <span className="font-mono text-[10px] text-dust tracking-wider truncate">
+                      {formatAddress(row.borrower)}
+                    </span>
+                  </div>
+
+                  {/* Debt */}
+                  <div className="col-span-3 flex flex-wrap gap-x-2 gap-y-1">
+                    {row.debtAssets.slice(0, 2).map((a, i) => {
+                      const token = findTokenByAddress(a.asset_address)
+                      return (
+                        <div key={i} className="flex items-center gap-1">
+                          <TokenAvatarByAddress address={a.asset_address} size={14} />
+                          <span className="text-xs text-chalk">
+                            {token ? formatTokenValue(a.value, token.decimals) : '?'}
+                            {' '}<span className="text-dust">{token?.symbol ?? '...'}</span>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Interest */}
+                  <div className="col-span-2 flex flex-wrap gap-x-2 gap-y-1">
+                    {row.interestAssets.length === 0
+                      ? <span className="text-ash/50 text-[10px]">None</span>
+                      : row.interestAssets.slice(0, 1).map((a, i) => {
+                        const token = findTokenByAddress(a.asset_address)
+                        return (
+                          <div key={i} className="flex items-center gap-1">
+                            <TokenAvatarByAddress address={a.asset_address} size={14} />
+                            <span className="text-xs text-nebula">
+                              {token ? formatTokenValue(a.value, token.decimals) : '?'}
+                              {' '}<span className="text-dust">{token?.symbol ?? '...'}</span>
+                            </span>
+                          </div>
+                        )
+                      })
+                    }
+                  </div>
+
+                  {/* Collateral */}
+                  <div className="col-span-3 flex flex-wrap gap-x-2 gap-y-1">
+                    {row.collateralAssets.slice(0, 2).map((a, i) => {
+                      const token = findTokenByAddress(a.asset_address)
+                      return (
+                        <div key={i} className="flex items-center gap-1">
+                          <TokenAvatarByAddress address={a.asset_address} size={14} />
+                          <span className="text-xs text-chalk">
+                            {token ? formatTokenValue(a.value, token.decimals) : '?'}
+                            {' '}<span className="text-dust">{token?.symbol ?? '...'}</span>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Action */}
+                  <div className="col-span-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => onFillSingle(row)}
+                      disabled={isExpired}
+                      className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {isSwap ? 'Swap' : 'Fill'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile layout */}
+                <div className="flex md:hidden flex-col gap-1.5 flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Badge
+                        variant={row.type === 'offchain' ? 'pending' : 'open'}
+                        className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0"
+                      >
+                        {isSwap ? 'Swap' : 'Loan'}
+                      </Badge>
+                      <span className="font-mono text-[10px] text-dust">{formatAddress(row.borrower)}</span>
+                    </div>
+                    {row.duration > 0 && (
+                      <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(row.duration)}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 overflow-x-auto min-w-0">
+                      {row.debtAssets[0] && (() => {
+                        const token = findTokenByAddress(row.debtAssets[0].asset_address)
+                        return (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-[8px] text-dust uppercase">D</span>
+                            <TokenAvatarByAddress address={row.debtAssets[0].asset_address} size={12} />
+                            <span className="text-xs text-chalk">
+                              {token ? formatTokenValue(row.debtAssets[0].value, token.decimals) : '?'}
+                              {' '}<span className="text-dust">{token?.symbol}</span>
+                            </span>
+                          </div>
+                        )
+                      })()}
+                      {row.collateralAssets[0] && (
+                        <>
+                          <div className="text-edge/40">|</div>
+                          {(() => {
+                            const token = findTokenByAddress(row.collateralAssets[0].asset_address)
+                            return (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className="text-[8px] text-dust uppercase">C</span>
+                                <TokenAvatarByAddress address={row.collateralAssets[0].asset_address} size={12} />
+                                <span className="text-xs text-chalk">
+                                  {token ? formatTokenValue(row.collateralAssets[0].value, token.decimals) : '?'}
+                                  {' '}<span className="text-dust">{token?.symbol}</span>
+                                </span>
+                              </div>
+                            )
+                          })()}
+                        </>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onFillSingle(row)}
+                      disabled={isExpired}
+                      className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                    >
+                      {isSwap ? 'Swap' : 'Fill'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Footer */}
+        {totalRows > 3 && (
+          <div className="px-3 py-2 border-t border-edge/20 bg-surface/5 text-center">
+            <span className="text-[10px] text-dust">
+              Showing {totalRows} order{totalRows !== 1 ? 's' : ''} — scroll to see all
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ── Settlement Drawer ────────────────────────────────────── */
+
+interface SettlementDrawerProps {
+  open: boolean
+  onClose: () => void
+  singleOffchain?: MatchedOrder
+  singleOnchain?: OnChainMatch
+  batchOrders?: SelectedOrder[]
+  isSwap: boolean
+  onSuccess: () => void
+}
+
+type DrawerPhase = 'idle' | 'signing' | 'executing' | 'confirming' | 'done' | 'error'
+
+function SettlementDrawer({
+  open,
+  onClose,
+  singleOffchain,
+  singleOnchain,
+  batchOrders,
+  isSwap,
+  onSuccess,
+}: SettlementDrawerProps) {
+  const { settle: instantSettle, isPending: isInstantPending } = useInstantSettle()
+  const { settleMultiple, state: multiState, reset: resetMulti } = useMultiSettle()
+  const [singlePhase, setSinglePhase] = useState<DrawerPhase>('idle')
+  const [singleError, setSingleError] = useState<string | null>(null)
+
+  // Determine settlement mode
+  const isBatch = Boolean(batchOrders && batchOrders.length > 0)
+  const hasOnchain = Boolean(singleOnchain)
+  const useMulti = isBatch || hasOnchain
+
+  // Derive unified phase for display
+  const phase: DrawerPhase = useMulti
+    ? (multiState.phase as DrawerPhase)
+    : singlePhase
+  const txHash = useMulti ? multiState.txHash : null
+  const errorMsg = useMulti ? multiState.error : singleError
+  const isDone = phase === 'done' || (useMulti && multiState.phase === 'done')
+  const isProcessing = isInstantPending || (useMulti && multiState.phase !== 'idle' && multiState.phase !== 'done' && multiState.phase !== 'error')
+
+  // Reset state when drawer opens
+  useEffect(() => {
+    if (open) {
+      setSinglePhase('idle')
+      setSingleError(null)
+      resetMulti()
+    }
+  }, [open, resetMulti])
+
+  // Auto-close after success
+  useEffect(() => {
+    if (!isDone) return
+    const timer = setTimeout(() => {
+      onSuccess()
+      onClose()
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [isDone, onSuccess, onClose])
+
+  const handleConfirm = useCallback(async () => {
+    if (useMulti) {
+      const orders: SelectedOrder[] = []
+      if (singleOnchain) {
+        orders.push({
+          type: 'onchain',
+          match: singleOnchain,
+          bps: 10000,
+          giveAmount: 0n,
+          receiveAmount: 0n,
+        } as SelectedOnchainOrder)
+      }
+      if (batchOrders) {
+        orders.push(...batchOrders)
+      }
+      try {
+        await settleMultiple(orders)
+      } catch {
+        // toast + state handled by hook
+      }
+    } else if (singleOffchain) {
+      setSinglePhase('signing')
+      setSingleError(null)
+      try {
+        await instantSettle(singleOffchain)
+        setSinglePhase('done')
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Settlement failed'
+        setSingleError(msg)
+        setSinglePhase('error')
+      }
+    }
+  }, [useMulti, singleOnchain, singleOffchain, batchOrders, settleMultiple, instantSettle])
+
+  // Build display data from the order(s)
+  const displayOrder = singleOffchain
+    ? (() => {
+        const d = singleOffchain.order_data
+        return {
+          borrower: (d.borrower as string) || singleOffchain.borrower,
+          debtAssets: ((d.debtAssets ?? d.debt_assets) as Array<{ asset_address: string; value: string; asset_type: string }>) ?? [],
+          interestAssets: ((d.interestAssets ?? d.interest_assets) as Array<{ asset_address: string; value: string; asset_type: string }>) ?? [],
+          collateralAssets: ((d.collateralAssets ?? d.collateral_assets) as Array<{ asset_address: string; value: string; asset_type: string }>) ?? [],
+          duration: Number(d.duration ?? '0'),
+          deadline: Number(d.deadline ?? singleOffchain.deadline ?? '0'),
+        }
+      })()
+    : singleOnchain
+      ? {
+          borrower: singleOnchain.borrower,
+          debtAssets: (singleOnchain.debtAssets ?? []) as Array<{ asset_address: string; value: string; asset_type: string }>,
+          interestAssets: (singleOnchain.interestAssets ?? []) as Array<{ asset_address: string; value: string; asset_type: string }>,
+          collateralAssets: (singleOnchain.collateralAssets ?? []) as Array<{ asset_address: string; value: string; asset_type: string }>,
+          duration: Number(singleOnchain.duration ?? '0'),
+          deadline: Number(singleOnchain.deadline ?? '0'),
+        }
+      : null
+
+  const batchCount = isBatch ? (batchOrders?.length ?? 0) : 0
+
+  const phaseLabel: Record<DrawerPhase, string> = {
+    idle: '',
+    signing: 'Signing...',
+    executing: 'Sending transaction...',
+    confirming: 'Waiting for confirmation...',
+    done: 'Settlement complete!',
+    error: 'Settlement failed',
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => { if (!o && !isProcessing) onClose() }}>
+      <SheetContent
+        side="bottom"
+        className="sm:side-right bg-abyss border-t border-edge/40 rounded-t-2xl sm:rounded-none sm:border-l sm:border-t-0 sm:inset-y-0 sm:right-0 sm:w-[420px] sm:max-w-[420px] sm:h-full sm:flex sm:flex-col"
+      >
+        <SheetHeader className="px-5 pt-5 pb-0">
+          <SheetTitle className="text-chalk font-display text-base uppercase tracking-wider">
+            {isDone ? '✓ Settled' : isBatch ? `Fill ${batchCount} Orders` : isSwap ? 'Confirm Swap' : 'Confirm Fill'}
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Order summary — single order */}
+          {displayOrder && !isBatch && (
+            <div className="space-y-3">
+              {/* Counterparty */}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-dust">Borrower</span>
+                <span className="text-chalk font-mono text-xs">{formatAddress(displayOrder.borrower)}</span>
+              </div>
+
+              {/* Source badge */}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-dust">Type</span>
+                <Badge variant={singleOffchain ? 'pending' : 'open'} className="text-[10px] px-2 py-0 uppercase font-bold">
+                  {singleOffchain ? 'Off-Chain' : 'On-Chain'}
+                </Badge>
+              </div>
+
+              {/* Debt assets */}
+              {displayOrder.debtAssets.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold">They Borrow</span>
+                  <div className="space-y-1.5">
+                    {displayOrder.debtAssets.map((a, i) => {
+                      const token = findTokenByAddress(a.asset_address)
+                      return (
+                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface/10 border border-edge/20">
+                          <TokenAvatarByAddress address={a.asset_address} size={18} />
+                          <span className="text-sm text-chalk">
+                            {token ? formatTokenValue(a.value, token.decimals) : a.value}
+                            {' '}<span className="text-dust">{token?.symbol ?? formatAddress(a.asset_address)}</span>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Interest assets */}
+              {displayOrder.interestAssets.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold">You Earn</span>
+                  <div className="space-y-1.5">
+                    {displayOrder.interestAssets.map((a, i) => {
+                      const token = findTokenByAddress(a.asset_address)
+                      return (
+                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-nebula/5 border border-nebula/20">
+                          <TokenAvatarByAddress address={a.asset_address} size={18} />
+                          <span className="text-sm text-nebula">
+                            {token ? formatTokenValue(a.value, token.decimals) : a.value}
+                            {' '}<span className="text-dust">{token?.symbol ?? formatAddress(a.asset_address)}</span>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Collateral */}
+              {displayOrder.collateralAssets.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Collateral</span>
+                  <div className="space-y-1.5">
+                    {displayOrder.collateralAssets.map((a, i) => {
+                      const token = findTokenByAddress(a.asset_address)
+                      return (
+                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface/10 border border-edge/20">
+                          <TokenAvatarByAddress address={a.asset_address} size={18} />
+                          <span className="text-sm text-chalk">
+                            {token ? formatTokenValue(a.value, token.decimals) : a.value}
+                            {' '}<span className="text-dust">{token?.symbol ?? formatAddress(a.asset_address)}</span>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Duration */}
+              {displayOrder.duration > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-dust">Duration</span>
+                  <span className="text-chalk">{formatDuration(displayOrder.duration)}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Batch order summary */}
+          {isBatch && batchOrders && (
+            <div className="space-y-2">
+              <p className="text-xs text-dust">
+                Settling {batchCount} orders in a single multicall transaction.
+              </p>
+              <div className="space-y-1.5">
+                {batchOrders.slice(0, 5).map((o, i) => {
+                  const borrower = o.type === 'offchain'
+                    ? ((o.order.order_data.borrower as string) || o.order.borrower)
+                    : o.match.borrower
+                  return (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-surface/10 border border-edge/20 text-xs">
+                      <span className="text-dust font-mono">{formatAddress(borrower)}</span>
+                      <Badge variant={o.type === 'offchain' ? 'pending' : 'open'} className="text-[9px] px-1.5 py-0 uppercase">
+                        {o.type === 'offchain' ? 'OC' : 'On-Chain'}
+                      </Badge>
+                    </div>
+                  )
+                })}
+                {batchCount > 5 && (
+                  <p className="text-[10px] text-dust text-center">+ {batchCount - 5} more</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Fees note */}
+          <div className="px-3 py-2 rounded-lg bg-star/5 border border-star/15">
+            <p className="text-[11px] text-dust">
+              You earn <span className="text-star font-medium">0.05% relayer fee</span> per settled order.
+              Full multicall: approve + settle in one transaction.
+            </p>
+          </div>
+
+          {/* Progress display */}
+          {phase !== 'idle' && (
+            <div className={`px-3 py-3 rounded-lg border ${
+              phase === 'done'
+                ? 'bg-aurora/5 border-aurora/20'
+                : phase === 'error'
+                  ? 'bg-nova/5 border-nova/20'
+                  : 'bg-star/5 border-star/20'
+            }`}>
+              <div className="flex items-center gap-2">
+                {phase !== 'done' && phase !== 'error' && (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-star shrink-0" />
+                )}
+                <span className={`text-xs font-medium ${
+                  phase === 'done' ? 'text-aurora' : phase === 'error' ? 'text-nova' : 'text-star'
+                }`}>
+                  {phaseLabel[phase]}
+                </span>
+              </div>
+              {txHash && (
+                <p className="text-[10px] text-dust mt-1 font-mono truncate">
+                  Tx: {txHash}
+                </p>
+              )}
+              {errorMsg && (
+                <p className="text-[10px] text-nova mt-1 break-words">{errorMsg}</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <SheetFooter className="px-5 pb-5 pt-2 border-t border-edge/20">
+          {phase === 'done' ? (
+            <div className="flex items-center justify-center gap-2 py-2 text-aurora text-sm font-medium">
+              Settlement complete — closing...
+            </div>
+          ) : phase === 'error' ? (
+            <div className="flex flex-col gap-2 w-full">
+              <Button
+                variant="gold"
+                className="w-full uppercase tracking-wider"
+                onClick={handleConfirm}
+                disabled={isProcessing}
+              >
+                Retry
+              </Button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-xs text-dust hover:text-chalk text-center cursor-pointer transition-colors py-1"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 w-full">
+              <Web3ActionWrapper message="Connect wallet to settle" centered={false}>
+                <Button
+                  variant="gold"
+                  className="w-full uppercase tracking-[0.15em]"
+                  onClick={handleConfirm}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {phaseLabel[phase] || 'Processing...'}
+                    </div>
+                  ) : (
+                    isBatch ? `Fill ${batchCount} Orders` : isSwap ? 'Confirm Swap' : 'Confirm Fill'
+                  )}
+                </Button>
+              </Web3ActionWrapper>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isProcessing}
+                className="text-xs text-dust hover:text-chalk text-center cursor-pointer transition-colors py-1 disabled:opacity-40"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
 /* ── FAQ Section ──────────────────────────────────────────── */
 
 const SWAP_FAQ = [
@@ -1302,12 +2148,80 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' }) {
 
 /* ── Page ─────────────────────────────────────────────────── */
 
+interface DrawerState {
+  singleOffchain?: MatchedOrder
+  singleOnchain?: OnChainMatch
+  batchOrders?: SelectedOrder[]
+}
+
 function TradeContent() {
   const searchParams = useSearchParams()
   const initialMode = searchParams.get('mode') === 'swap' ? 'swap' : 'lend'
+  const urlDebtToken = searchParams.get('debtToken') ?? ''
+  const urlCollateralToken = searchParams.get('collateralToken') ?? ''
+  const urlOrderId = searchParams.get('orderId') ?? ''
+
   const [activeTab, setActiveTab] = useState<'swap' | 'lend'>(initialMode as 'swap' | 'lend')
   const [offerMode, setOfferMode] = useState<'standard' | 'collection'>('standard')
   const [collectionView, setCollectionView] = useState<'create' | 'browse'>('create')
+
+  // Track selected tokens (lifted from form via callback)
+  const [currentDebtAddr, setCurrentDebtAddr] = useState(urlDebtToken)
+  const [currentCollateralAddr, setCurrentCollateralAddr] = useState(urlCollateralToken)
+
+  // BestTradesPanel refresh key — increment to force re-fetch
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  // Settlement drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerData, setDrawerData] = useState<DrawerState>({})
+
+  // Ref for BestTradesPanel auto-scroll
+  const bestTradesPanelRef = useRef<HTMLDivElement>(null)
+
+  const isSwap = activeTab === 'swap'
+  const showBestTrades = (offerMode === 'standard' || activeTab === 'swap') && Boolean(currentDebtAddr && currentCollateralAddr)
+
+  // Auto-scroll to best trades panel when orderId is in URL
+  useEffect(() => {
+    if (!urlOrderId || !bestTradesPanelRef.current) return
+    const timer = setTimeout(() => {
+      bestTradesPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [urlOrderId, showBestTrades])
+
+  const handleDebtCollateralChange = useCallback((debtAddr: string, collateralAddr: string) => {
+    setCurrentDebtAddr(debtAddr)
+    setCurrentCollateralAddr(collateralAddr)
+  }, [])
+
+  const handleFillSingle = useCallback((row: BestTradeRow) => {
+    setDrawerData(
+      row.type === 'offchain' && row.offchainOrder
+        ? { singleOffchain: row.offchainOrder }
+        : { singleOnchain: row.onchainMatch },
+    )
+    setDrawerOpen(true)
+  }, [])
+
+  const handleFillBatch = useCallback((orders: SelectedOrder[]) => {
+    setDrawerData({ batchOrders: orders })
+    setDrawerOpen(true)
+  }, [])
+
+  const handleSettlementSuccess = useCallback(() => {
+    setRefreshKey(k => k + 1)
+  }, [])
+
+  const handleTabChange = useCallback((tab: 'swap' | 'lend') => {
+    setActiveTab(tab)
+    setOfferMode('standard')
+    setCollectionView('create')
+    // Reset token tracking on tab change so BestTradesPanel updates
+    setCurrentDebtAddr('')
+    setCurrentCollateralAddr('')
+  }, [])
 
   return (
     <div className="animate-fade-up pb-24">
@@ -1320,7 +2234,7 @@ function TradeContent() {
               <button
                 key={tab}
                 type="button"
-                onClick={() => { setActiveTab(tab); setOfferMode('standard'); setCollectionView('create') }}
+                onClick={() => handleTabChange(tab)}
                 className={`px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
                   activeTab === tab
                     ? 'text-star border-star'
@@ -1387,12 +2301,43 @@ function TradeContent() {
             <CollectionOfferBrowser key="collection-browse" />
           )
         ) : (
-          <TradeForm key={`${activeTab}-${offerMode}`} mode={activeTab} />
+          <TradeForm
+            key={`${activeTab}-${offerMode}`}
+            mode={activeTab}
+            initialDebtToken={urlDebtToken || undefined}
+            initialCollateralToken={urlCollateralToken || undefined}
+            onDebtCollateralChange={handleDebtCollateralChange}
+          />
+        )}
+
+        {/* Best Trades Panel — below form when both tokens selected */}
+        {showBestTrades && (
+          <BestTradesPanel
+            debtTokenAddress={currentDebtAddr}
+            collateralTokenAddress={currentCollateralAddr}
+            isSwap={isSwap}
+            highlightOrderId={urlOrderId || undefined}
+            panelRef={bestTradesPanelRef}
+            refreshKey={refreshKey}
+            onFillSingle={handleFillSingle}
+            onFillBatch={handleFillBatch}
+          />
         )}
       </div>
 
       {/* Protocol info sections — full width */}
       <InfoSections activeTab={activeTab} />
+
+      {/* Settlement Drawer */}
+      <SettlementDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        singleOffchain={drawerData.singleOffchain}
+        singleOnchain={drawerData.singleOnchain}
+        batchOrders={drawerData.batchOrders}
+        isSwap={isSwap}
+        onSuccess={handleSettlementSuccess}
+      />
     </div>
   )
 }
