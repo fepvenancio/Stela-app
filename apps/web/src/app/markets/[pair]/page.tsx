@@ -22,7 +22,7 @@ import { enrichStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
 import { computeYieldPercent } from '@/lib/filter-utils'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
-import { BatchSelectionProvider, useBatchSelection } from '@/hooks/useBatchSelection'
+import { useBatchSelection } from '@/hooks/useBatchSelection'
 import { useBatchSign } from '@/hooks/useBatchSign'
 import { useInstantSettle, type MatchedOrder } from '@/hooks/useInstantSettle'
 import { toast } from 'sonner'
@@ -721,8 +721,6 @@ export default function PairPage({ params }: { params: Promise<{ pair: string }>
   const collateralToken = pair.slice(separatorIdx + 1)
 
   return (
-    <BatchSelectionProvider>
-      <PairDetailContent debtToken={debtToken} collateralToken={collateralToken} />
-    </BatchSelectionProvider>
+    <PairDetailContent debtToken={debtToken} collateralToken={collateralToken} />
   )
 }
