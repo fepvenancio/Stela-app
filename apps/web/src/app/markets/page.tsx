@@ -16,6 +16,7 @@ import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { normalizeAddress, formatAddress } from '@/lib/address'
 import { formatTokenValue } from '@/lib/format'
+import { formatDurationHuman } from '@/lib/trade-constants'
 import Link from 'next/link'
 
 type SortOption = 'active' | 'volume' | 'total' | 'name'
@@ -78,13 +79,6 @@ function parseOfferData(raw: string): ParsedOfferData {
   } catch {
     return {}
   }
-}
-
-function formatDurationHuman(seconds: number): string {
-  if (seconds < 3600) return `${Math.round(seconds / 60)} min`
-  if (seconds < 86400) return `${Math.round(seconds / 3600)} hours`
-  const days = Math.round(seconds / 86400)
-  return `${days} day${days !== 1 ? 's' : ''}`
 }
 
 /* ── Main Page ───────────────────────────────────────────── */
