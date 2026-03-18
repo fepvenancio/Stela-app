@@ -28,11 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Navigating between pages and returning shows cached data instantly, with background refresh updating without flicker
   3. Data on Browse and Trade pages auto-refreshes at regular intervals without the user reloading the page
   4. nuqs provider and Zustand stores are initialized in the app shell and available to all pages
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Infrastructure setup: TanStack Query provider, nuqs adapter, query keys, Zustand batch-selection store
+- [ ] 01-02-PLAN.md — Migrate simple hooks to useQuery and replace all stela:sync dispatchers/listeners
+- [ ] 01-03-PLAN.md — Migrate complex hooks (usePortfolio, usePairListings) and delete legacy fetch infrastructure
 
 ### Phase 2: Trade Flow
 **Goal**: Users can browse, select, and execute a lend or swap with state preserved across pages, clear fee visibility, and ranked offers
@@ -83,7 +84,7 @@ Note: Phases 2 and 3 both depend on Phase 1 but not on each other. They could be
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Layer | 0/0 | Not started | - |
+| 1. Data Layer | 0/3 | Planned | - |
 | 2. Trade Flow | 0/0 | Not started | - |
 | 3. Portfolio | 0/0 | Not started | - |
 | 4. Bot Matching | 0/0 | Not started | - |
