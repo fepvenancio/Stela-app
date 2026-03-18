@@ -360,7 +360,7 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
   }, [address, instantSettle])
 
   // Quick lend: deep-link to Trade page with token and order context pre-filled
-  const handleQuickLend = useCallback((orderId: string, _source: 'offchain' | 'onchain') => {
+  const handleQuickLend = useCallback(async (orderId: string, _source: 'offchain' | 'onchain') => {
     window.location.href = `/trade?debtToken=${debtToken}&collateralToken=${collateralToken}&orderId=${orderId}`
   }, [debtToken, collateralToken])
 
