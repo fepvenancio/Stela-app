@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
 import { ShareClient } from '@fepvenancio/stela-sdk'
@@ -20,6 +21,7 @@ import { getErrorMessage } from '@/lib/tx'
  */
 export function useShareTransfer() {
   const { address, account } = useAccount()
+  const queryClient = useQueryClient()
   const [isPending, setIsPending] = useState(false)
 
   // Read-only client for building calls (no Account needed)
@@ -50,7 +52,7 @@ export function useShareTransfer() {
         const result = await account.execute([call])
 
         toast.success('Shares transferred successfully')
-        window.dispatchEvent(new CustomEvent('stela:sync'))
+        queryClient.invalidateQueries()
 
         return result.transaction_hash
       } catch (err) {
@@ -76,7 +78,7 @@ export function useShareTransfer() {
         const result = await account.execute([call])
 
         toast.success(approved ? 'Operator approved' : 'Approval revoked')
-        window.dispatchEvent(new CustomEvent('stela:sync'))
+        queryClient.invalidateQueries()
 
         return result.transaction_hash
       } catch (err) {

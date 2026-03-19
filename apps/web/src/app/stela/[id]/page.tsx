@@ -230,9 +230,6 @@ function useT1List(endpoint: string) {
         .finally(() => setLoading(false))
     }
     fetchData()
-    const onSync = () => fetchData()
-    window.addEventListener('stela:sync', onSync)
-    return () => window.removeEventListener('stela:sync', onSync)
   }, [endpoint])
 
   return { items, loading }

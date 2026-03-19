@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, findTokenByAddress } from '@fepvenancio/stela-sdk'
@@ -33,6 +34,7 @@ export interface MatchedOrder {
  */
 export function useInstantSettle() {
   const { address, account } = useAccount()
+  const queryClient = useQueryClient()
   const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
   const pendingRef = useRef(false)
@@ -240,7 +242,7 @@ export function useInstantSettle() {
         progress?.advance()
 
         // Trigger data refresh across all hooks
-        window.dispatchEvent(new Event('stela:sync'))
+        queryClient.invalidateQueries()
       } catch (err: unknown) {
         const msg = getErrorMessage(err)
         progress?.fail(msg)

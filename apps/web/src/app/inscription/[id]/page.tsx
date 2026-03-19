@@ -41,7 +41,7 @@ function extractDataArray(json: unknown): Array<Record<string, unknown>> {
   return []
 }
 
-/** Fetch a T1 list endpoint and refresh on stela:sync events */
+/** Fetch a T1 list endpoint */
 function useT1List(endpoint: string) {
   const [items, setItems] = useState<Array<Record<string, unknown>>>([])
   const [loading, setLoading] = useState(true)
@@ -56,10 +56,6 @@ function useT1List(endpoint: string) {
     }
 
     fetchData()
-
-    const onSync = () => fetchData()
-    window.addEventListener('stela:sync', onSync)
-    return () => window.removeEventListener('stela:sync', onSync)
   }, [endpoint])
 
   return { items, loading }

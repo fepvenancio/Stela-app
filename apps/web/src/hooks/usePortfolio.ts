@@ -162,17 +162,6 @@ export function usePortfolio(address: string | undefined): PortfolioData {
     fetchOrdersPage(1, true, address)
   }, [address, fetchInscriptionsPage, fetchOrdersPage])
 
-  // ── stela:sync listener ──
-  useEffect(() => {
-    const onSync = () => {
-      if (!address) return
-      fetchInscriptionsPage(1, true, address)
-      fetchOrdersPage(1, true, address)
-    }
-    window.addEventListener('stela:sync', onSync)
-    return () => window.removeEventListener('stela:sync', onSync)
-  }, [address, fetchInscriptionsPage, fetchOrdersPage])
-
   // ── Orders refresh interval (10s) ──
   useEffect(() => {
     if (!address) return

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
 import { InscriptionClient } from '@fepvenancio/stela-sdk'
@@ -12,6 +13,7 @@ import { getErrorMessage } from '@/lib/tx'
 
 export function useRenegotiate() {
   const { address, account } = useAccount()
+  const queryClient = useQueryClient()
   const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
 
@@ -105,7 +107,7 @@ export function useRenegotiate() {
         })
 
         toast.success('Renegotiation committed!')
-        window.dispatchEvent(new Event('stela:sync'))
+        queryClient.invalidateQueries()
         return transaction_hash
       } catch (err) {
         const msg = getErrorMessage(err)
@@ -158,7 +160,7 @@ export function useRenegotiate() {
         })
 
         toast.success('Renegotiation executed!')
-        window.dispatchEvent(new Event('stela:sync'))
+        queryClient.invalidateQueries()
         return transaction_hash
       } catch (err) {
         const msg = getErrorMessage(err)

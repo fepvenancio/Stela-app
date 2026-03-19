@@ -111,13 +111,6 @@ export function usePairListings(debtToken: string, collateralToken: string) {
     fetchPage(1, true)
   }, [pairKey, fetchPage])
 
-  // stela:sync listener
-  useEffect(() => {
-    const onSync = () => { refetch() }
-    window.addEventListener('stela:sync', onSync)
-    return () => window.removeEventListener('stela:sync', onSync)
-  }, [refetch])
-
   // Refresh interval
   useEffect(() => {
     if (!pairKey) return

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { getRefinanceOfferTypedData, getRefinanceApprovalTypedData } from '@/lib/offchain'
 import { CHAIN_ID } from '@/lib/config'
@@ -10,6 +11,7 @@ import { getErrorMessage } from '@/lib/tx'
 
 export function useRefinance() {
   const { address } = useAccount()
+  const queryClient = useQueryClient()
   const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
 
@@ -119,7 +121,7 @@ export function useRefinance() {
 
         if (!res.ok) throw new Error(await res.text())
         toast.success('Refinance approved!')
-        window.dispatchEvent(new Event('stela:sync'))
+        queryClient.invalidateQueries()
       } catch (err) {
         const msg = getErrorMessage(err)
         toast.error('Failed to approve refinance', { description: msg })

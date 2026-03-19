@@ -662,13 +662,6 @@ function AllCollectionsSection() {
     fetchCollections()
   }, [fetchCollections])
 
-  // Listen for sync events
-  useEffect(() => {
-    const handler = () => fetchCollections()
-    window.addEventListener('stela:sync', handler)
-    return () => window.removeEventListener('stela:sync', handler)
-  }, [fetchCollections])
-
   /* Loading */
   if (loading) {
     return (

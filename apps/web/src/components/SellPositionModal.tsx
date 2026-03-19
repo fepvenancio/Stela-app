@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { normalizeAddress } from '@/lib/address'
@@ -51,6 +52,7 @@ export function SellPositionModal({
   debtAssets,
 }: SellPositionModalProps) {
   const { address, status } = useAccount()
+  const queryClient = useQueryClient()
   const progress = useTransactionProgress(SELL_STEPS)
 
   const [shares, setShares] = useState('')
@@ -118,7 +120,7 @@ export function SellPositionModal({
       progress.advance() // done
 
       toast.success('Listing created')
-      window.dispatchEvent(new CustomEvent('stela:sync'))
+      queryClient.invalidateQueries()
 
       // Reset form
       setShares('')

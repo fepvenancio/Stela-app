@@ -28,7 +28,7 @@ interface ApiPageResponse<T> {
 
 /**
  * Paginated fetch hook that accumulates results across pages.
- * Resets to page 1 on refetch, stela:sync events, or refreshInterval.
+ * Resets to page 1 on refetch or refreshInterval.
  */
 export function useInfiniteApi<T>(
   options: UseInfiniteApiOptions | null,
@@ -128,13 +128,6 @@ export function useInfiniteApi<T>(
     fetchPage(1, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serializedParams])
-
-  // Listen for stela:sync → reset to page 1
-  useEffect(() => {
-    const onSync = () => { refetch() }
-    window.addEventListener('stela:sync', onSync)
-    return () => window.removeEventListener('stela:sync', onSync)
-  }, [refetch])
 
   // Refresh interval → reset to page 1
   useEffect(() => {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider, typedData as starknetTypedData } from 'starknet'
 import { InscriptionClient, findTokenByAddress } from '@fepvenancio/stela-sdk'
@@ -43,6 +44,7 @@ const INITIAL_STATE: MultiSettleState = {
 
 export function useMultiSettle() {
   const { address, account } = useAccount()
+  const queryClient = useQueryClient()
   const { signTypedData } = useWalletSign()
   const [state, setState] = useState<MultiSettleState>(INITIAL_STATE)
   const pendingRef = useRef(false)
@@ -387,7 +389,7 @@ export function useMultiSettle() {
         setState((s) => ({ ...s, phase: 'done' }))
 
         // Trigger data refresh across all hooks
-        window.dispatchEvent(new Event('stela:sync'))
+        queryClient.invalidateQueries()
       } catch (err: unknown) {
         const msg = getErrorMessage(err)
         setState((s) => ({ ...s, phase: 'error', error: msg }))

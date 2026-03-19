@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 export interface SyncAssets {
   debt: { asset_address: string; asset_type: string; value: string; token_id?: string }[]
@@ -13,6 +14,7 @@ const INITIAL_DELAY_MS = 2000
 
 export function useSync() {
   const [isSyncing, setIsSyncing] = useState(false)
+  const queryClient = useQueryClient()
 
   const sync = useCallback(async (txHash: string, assets?: SyncAssets) => {
     setIsSyncing(true)
@@ -47,7 +49,7 @@ export function useSync() {
         }
       }
     } finally {
-      window.dispatchEvent(new Event('stela:sync'))
+      queryClient.invalidateQueries()
       setIsSyncing(false)
     }
   }, [])

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
 import { InscriptionClient } from '@fepvenancio/stela-sdk'
@@ -10,6 +11,7 @@ import { getErrorMessage } from '@/lib/tx'
 
 export function useClaimCollateral() {
   const { account } = useAccount()
+  const queryClient = useQueryClient()
   const [isPending, setIsPending] = useState(false)
 
   const claimCollateral = useCallback(
@@ -33,7 +35,7 @@ export function useClaimCollateral() {
         })
 
         toast.success('Collateral claimed!')
-        window.dispatchEvent(new Event('stela:sync'))
+        queryClient.invalidateQueries()
         return transaction_hash
       } catch (err) {
         const msg = getErrorMessage(err)

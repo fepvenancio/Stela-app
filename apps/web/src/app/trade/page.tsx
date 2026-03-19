@@ -1418,13 +1418,6 @@ function CollectionOfferBrowser() {
   // Fetch on mount
   useEffect(() => { fetchOffers() }, [fetchOffers])
 
-  // Listen for sync events to refresh
-  useEffect(() => {
-    const handler = () => fetchOffers()
-    window.addEventListener('stela:sync', handler)
-    return () => window.removeEventListener('stela:sync', handler)
-  }, [fetchOffers])
-
   const handleAccept = useCallback(async (offer: CollectionOfferRow) => {
     if (!address || !tokenId) return
     setAcceptingId(offer.id)

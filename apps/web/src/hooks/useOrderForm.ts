@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAccount } from '@starknet-react/core'
 import { findTokenByAddress, toU256, InscriptionClient } from '@fepvenancio/stela-sdk'
 import type { Asset, AssetType, InscriptionParams } from '@fepvenancio/stela-sdk'
@@ -34,6 +35,7 @@ export const ROLES: AssetRole[] = ['debt', 'collateral', 'interest']
 export function useOrderForm(orderType: 'lending' | 'swap') {
   const isSwap = orderType === 'swap'
   const { address, account } = useAccount()
+  const queryClient = useQueryClient()
   const { signTypedData } = useWalletSign()
   const [isPending, setIsPending] = useState(false)
 
@@ -444,7 +446,7 @@ export function useOrderForm(orderType: 'lending' | 'swap') {
       }, onchainProgress)
 
       const tempId = `pending-onchain-${Date.now()}`
-      addOptimisticInscription({
+      addOptimisticInscription(queryClient, {
         id: tempId,
         creator: address,
         borrower: address,
@@ -620,9 +622,9 @@ export function useOrderForm(orderType: 'lending' | 'swap') {
           : 'Your inscription order is now live. No gas was spent!',
       })
 
-      window.dispatchEvent(new Event('stela:sync'))
+      queryClient.invalidateQueries()
 
-      addOptimisticInscription({
+      addOptimisticInscription(queryClient, {
         id: orderId,
         creator: address,
         borrower: address,
