@@ -6,7 +6,9 @@ import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { MatchedOrder } from '@/hooks/useInstantSettle'
 import type { OnChainMatch } from '@/hooks/useMatchDetection'
 import { computeYieldPercent, type FilterableAsset } from '@/lib/filter-utils'
+import { computeInterestRate } from '@stela/core'
 import { BlendedRateSummary } from './BlendedRateSummary'
+import { BotRankBadge } from './BotRankBadge'
 import { formatAddress } from '@/lib/address'
 import { formatTokenValue, formatDuration } from '@/lib/format'
 
@@ -40,6 +42,8 @@ interface RankedTrade {
   deadline: number
   /** APR % for lending mode; collateral-per-debt-unit for swap mode. null if not computable. */
   score: number | null
+  /** Bot settlement priority (1 = lowest rate = settled first). null for swap mode. */
+  botRank: number | null
   raw: MatchedOrder | OnChainMatch
 }
 
@@ -112,6 +116,7 @@ function normalizeOffchain(match: MatchedOrder): RankedTrade {
     duration: Number((d.duration as string | number) ?? 0),
     deadline: match.deadline,
     score: null, // computed during ranking
+    botRank: null,
     raw: match,
   }
 }
@@ -127,6 +132,7 @@ function normalizeOnchain(match: OnChainMatch): RankedTrade {
     duration: match.duration,
     deadline: match.deadline,
     score: null,
+    botRank: null,
     raw: match,
   }
 }
@@ -187,12 +193,15 @@ function TradeRow({
 
   return (
     <div className="grid grid-cols-12 gap-2 sm:gap-3 items-center px-3 py-2.5 border-b border-edge/20 last:border-b-0 hover:bg-surface/20 transition-colors">
-      {/* Counterparty + source badge (col 3 mobile, 3 desktop) */}
+      {/* Counterparty + source badge + bot rank (col 3) */}
       <div className="col-span-3 flex flex-col gap-1 min-w-0">
         <span className="text-chalk font-mono text-xs truncate">
           {formatAddress(trade.counterparty)}
         </span>
-        <SourceBadge source={trade.source} />
+        <div className="flex items-center gap-1.5">
+          <SourceBadge source={trade.source} />
+          {trade.botRank !== null && <BotRankBadge rank={trade.botRank} />}
+        </div>
       </div>
 
       {/* Amount (col 3) */}
@@ -317,6 +326,32 @@ export function BestTradesPanel({
       return b.score - a.score
     })
 
+    // Compute bot settlement rank (ascending by interest rate — lowest first)
+    // Only meaningful in lending mode (swaps don't go through bot settlement)
+    if (mode === 'lending') {
+      const rateEntries = all.map((trade, idx) => {
+        const rate = computeInterestRate(
+          trade.debtAssets.map(a => ({ asset_type: a.asset_type, value: a.value ?? '0' })),
+          trade.interestAssets.map(a => ({ asset_type: a.asset_type, value: a.value ?? '0' })),
+        )
+        return { idx, rate }
+      })
+
+      // Sort ascending by rate (lowest first = bot settles first), nulls last
+      rateEntries.sort((a, b) => {
+        if (a.rate === null && b.rate === null) return 0
+        if (a.rate === null) return 1
+        if (b.rate === null) return -1
+        return a.rate - b.rate
+      })
+
+      for (let rank = 0; rank < rateEntries.length; rank++) {
+        all[rateEntries[rank].idx].botRank = rank + 1
+      }
+    } else {
+      for (const trade of all) trade.botRank = null
+    }
+
     return all.slice(0, MAX_ROWS)
   }, [offchainMatches, onchainMatches, mode])
 
@@ -346,6 +381,14 @@ export function BestTradesPanel({
           {(showResults || showStaleResults) && (
             <span className="text-[10px] text-dust">
               {ranked.length} match{ranked.length !== 1 ? 'es' : ''}
+            </span>
+          )}
+          {mode === 'lending' && (showResults || showStaleResults) && (
+            <span
+              className="text-[9px] text-dust/60 cursor-help"
+              title="The bot settles offers with the lowest interest rate first. Rank #1 = cheapest for borrower = settled first."
+            >
+              (bot-ranked)
             </span>
           )}
         </div>
@@ -416,7 +459,7 @@ export function BestTradesPanel({
             {ranked.length >= MAX_ROWS && (
               <div className="px-3 py-2 border-t border-edge/20 bg-surface/5 text-center">
                 <span className="text-[10px] text-dust">
-                  Showing top {MAX_ROWS} by {mode === 'swap' ? 'rate' : 'APR'}
+                  Showing top {MAX_ROWS} by {mode === 'swap' ? 'rate' : 'APR'}{mode === 'lending' ? ' — ranked by bot settlement priority' : ''}
                 </span>
               </div>
             )}
