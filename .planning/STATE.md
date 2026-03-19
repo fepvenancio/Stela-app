@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-19T02:26:03.023Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-19T02:49:55.358Z"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 9
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A user can go from browsing to completing a lend or swap in the fewest clicks possible, with state preserved across pages, optimal trade matching, and a working portfolio view.
-**Current focus:** Phase 03 — portfolio
+**Current focus:** Phase 04 — bot-matching
 
 ## Current Position
 
-Phase: 03 (portfolio) — COMPLETE
-Plan: 2 of 2 (DONE)
+Phase: 04 (bot-matching) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: 2 of 2 (DONE)
 | Phase 02 P01 | 7min | 2 tasks | 3 files |
 | Phase 03-portfolio P01 | 3min | 2 tasks | 4 files |
 | Phase 03-portfolio P02 | 4min | 2 tasks | 3 files |
+| Phase 04-bot-matching P01 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Recent decisions affecting current work:
 - [Phase 03-01]: PortfolioSummaryInput uses Pick<PortfolioData, ...> to avoid requiring full PortfolioData with stubs
 - [Phase 03-02]: Wrapper components instantiate all 4 transaction hooks unconditionally for React rules compliance
 - [Phase 03-02]: AssetRow.value null coalesced to '0' for DebtAssetInfo type compatibility
+- [Phase 04-01]: computeInterestRate accepts generic { asset_type, value } arrays for bot+frontend compatibility
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T02:16:27.129Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-19T02:49:55.356Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
