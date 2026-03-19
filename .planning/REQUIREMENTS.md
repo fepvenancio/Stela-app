@@ -7,8 +7,8 @@
 
 ### State & Navigation
 
-- [ ] **NAV-01**: User selections on Browse/Markets (pair, mode) persist when navigating to Trade page via URL params
-- [ ] **NAV-02**: User can share a trade link with pre-filled pair, mode, and amount
+- [x] **NAV-01**: User selections on Browse/Markets (pair, mode) persist when navigating to Trade page via URL params
+- [x] **NAV-02**: User can share a trade link with pre-filled pair, mode, and amount
 - [x] **NAV-03**: User can lend/swap directly from Browse page via quick-action without full page navigation
 
 ### Data Fetching
@@ -19,8 +19,8 @@
 
 ### Trade Flow
 
-- [ ] **TRADE-01**: Order book displays offers sorted by best interest rate first
-- [ ] **TRADE-02**: Fee breakdown is clearly displayed before user signs any transaction
+- [x] **TRADE-01**: Order book displays offers sorted by best interest rate first
+- [x] **TRADE-02**: Fee breakdown is clearly displayed before user signs any transaction
 - [x] **TRADE-03**: User can see aggregated match preview showing which offers will fill their order and at what blended rate
 
 ### Portfolio
@@ -66,14 +66,14 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | Phase 2 | Pending |
-| NAV-02 | Phase 2 | Pending |
+| NAV-01 | Phase 2 | Complete |
+| NAV-02 | Phase 2 | Complete |
 | NAV-03 | Phase 2 | Complete |
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Complete |
-| TRADE-01 | Phase 2 | Pending |
-| TRADE-02 | Phase 2 | Pending |
+| TRADE-01 | Phase 2 | Complete |
+| TRADE-02 | Phase 2 | Complete |
 | TRADE-03 | Phase 2 | Complete |
 | PORT-01 | Phase 3 | Pending |
 | PORT-02 | Phase 3 | Pending |
