@@ -176,9 +176,9 @@ export function InscriptionListRow({
                 type="button"
                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true) }}
                 disabled={actionPending}
-                className="h-8 px-4 bg-star/10 hover:bg-star/20 text-star text-[11px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40"
+                className="h-8 w-[100px] bg-star/10 hover:bg-star/20 text-star font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40 flex items-center justify-center"
               >
-                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : actionLabel ?? (isSwap ? 'Swap' : 'Lend')}
+                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="text-[11px] leading-none truncate px-1">{actionLabel ?? (isSwap ? 'Swap' : 'Lend')}</span>}
               </button>
             )
           ) : null}
@@ -199,9 +199,9 @@ export function InscriptionListRow({
               type="button"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAction() }}
               disabled={actionPending}
-              className="h-8 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0"
+              className="h-8 min-w-[90px] bg-star/10 hover:bg-star/20 text-star font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0 flex items-center justify-center"
             >
-              {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : actionLabel ?? (isSwap ? 'Swap' : 'Lend')}
+              {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="text-[10px] leading-none truncate px-1">{actionLabel ?? (isSwap ? 'Swap' : 'Lend')}</span>}
             </button>
           ) : null}
         </div>
