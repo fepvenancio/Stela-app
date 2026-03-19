@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-03-PLAN.md (Phase 01 data-layer complete)
-last_updated: "2026-03-19T00:17:15.078Z"
+stopped_at: Phase 2 UI-SPEC approved
+last_updated: "2026-03-19T01:06:11.197Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A user can go from browsing to completing a lend or swap in the fewest clicks possible, with state preserved across pages, optimal trade matching, and a working portfolio view.
-**Current focus:** Phase 01 — data-layer
+**Current focus:** Phase 02 — trade-flow
 
 ## Current Position
 
-Phase: 01 (data-layer) — COMPLETE
-Plan: 3 of 3 (all complete)
+Phase: 02 (trade-flow) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Plan: 3 of 3 (all complete)
 | Phase 01-01 P01 | 3min | 2 tasks | 6 files |
 | Phase 01-02 P02 | 8min | 2 tasks | 30 files |
 | Phase 01-03 P03 | 3min | 2 tasks | 4 files |
+| Phase 02-02 P02 | 7min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 01-02]: Contract read hooks subscribe to query cache invalidation events for refetch
 - [Phase 01-03]: Static pagination stubs (hasMore: false, loadMore: noop) to preserve PortfolioData interface
 - [Phase 01-03]: buildApiUrl kept as pure utility in api.ts after useFetchApi deletion
+- [Phase 02-02]: Web3ActionWrapper centered=false inside modals
+- [Phase 02-02]: Asset bigint values serialized to strings for JSON API submission
 
 ### Pending Todos
 
@@ -77,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T00:13:28.868Z
-Stopped at: Completed 01-03-PLAN.md (Phase 01 data-layer complete)
-Resume file: None
+Last session: 2026-03-19T01:13:29Z
+Stopped at: Completed 02-02-PLAN.md
+Resume file: .planning/phases/02-trade-flow/02-02-SUMMARY.md
