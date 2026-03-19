@@ -6,6 +6,7 @@ import {
   serializeAssetCalldata,
   hashAssets,
   serializeSignatureCalldata,
+  computeInterestRate,
 } from '@stela/core'
 import type { D1Database, StoredAsset } from '@stela/core'
 
@@ -181,14 +182,38 @@ async function settleOrders(
     return
   }
 
-  console.log(`Found ${matched.length} matched order(s) to settle`)
+  // Compute interest rate for each matched order and sort ascending (BOT-01)
+  // Lowest interest rate = best for borrower = settled first
+  const withRates = matched.map(row => {
+    let rate: number | null = null
+    try {
+      const rawData = row.order_data
+      const orderData: OrderData = JSON.parse(
+        typeof rawData === 'string' ? rawData as string : JSON.stringify(rawData)
+      )
+      rate = computeInterestRate(orderData.debtAssets, orderData.interestAssets)
+    } catch {
+      // Failed to parse — null rate, will sort last
+    }
+    return { row, rate }
+  })
+
+  // Sort: lowest rate first, null rates last
+  withRates.sort((a, b) => {
+    if (a.rate === null && b.rate === null) return 0
+    if (a.rate === null) return 1
+    if (b.rate === null) return -1
+    return a.rate - b.rate
+  })
+
+  console.log(`Found ${matched.length} matched order(s) to settle (sorted by interest rate)`)
 
   const calls: { contractAddress: string; entrypoint: string; calldata: string[] }[] = []
   const settledPairs: { order_id: string; offer_id: string; borrower: string; nonce: string }[] = []
 
   // Pre-fetch all unique nonces in parallel to minimize RPC round-trips
   const uniqueAddresses = new Set<string>()
-  for (const row of matched) {
+  for (const { row } of withRates) {
     uniqueAddresses.add(normalizeAddress(row.borrower as string))
     uniqueAddresses.add(normalizeAddress(row.lender as string))
   }
@@ -203,7 +228,7 @@ async function settleOrders(
     if (r.status === 'fulfilled') nonceCache.set(r.value.addr, r.value.nonce)
   }
 
-  for (const row of matched) {
+  for (const { row } of withRates) {
     const order_id = row.order_id as string
     const offer_id = row.offer_id as string
 
