@@ -35,16 +35,16 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 - ✓ OrderBook on Trade page sorted by best rate — Phase 2
 - ✓ FeeBreakdown visible on all signing paths — Phase 2
 - ✓ Debt-amount-weighted blended rate preview in BestTradesPanel — Phase 2
+- ✓ Portfolio page with active positions, SummaryBar, and inline actions — Phase 3
+- ✓ PortfolioInscriptionRow with Repay/Claim/Cancel/Liquidate actions — Phase 3
+- ✓ PortfolioOrderRow with SNIP-12 cancel signing — Phase 3
+- ✓ computePortfolioSummary with total lent/borrowed aggregation — Phase 3
 
 ### Active
 
 <!-- Current scope — these are hypotheses until shipped and validated -->
 
 - [ ] Optimal trade matching: bot selects lowest-interest-rate offers first, aggregates multiple until amount filled
-- [ ] Trade display: users see clearly ranked offers by best rate with aggregation preview
-- [ ] Portfolio page: shows user's active positions (as borrower and lender), history, and current status
-- [ ] Lend/Swap flow optimization: minimize clicks from intent to execution
-- [ ] Research-driven UX: study top DeFi protocols (Aave, Morpho, dYdX, Blur Blend) to identify best patterns for Stela's model
 - [ ] Bot matching display: frontend shows what the bot will match and why
 
 ### Out of Scope
@@ -81,4 +81,4 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 | Keep existing color scheme and navigation | User explicitly confirmed satisfaction with visual design and menu organization | ✓ Good |
 
 ---
-*Last updated: 2026-03-19 after Phase 2 (Trade Flow) completion*
+*Last updated: 2026-03-19 after Phase 3 (Portfolio) completion*
