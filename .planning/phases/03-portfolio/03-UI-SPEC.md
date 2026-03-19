@@ -59,10 +59,10 @@ Source: Existing Tailwind 4 defaults, confirmed from codebase patterns (SummaryB
 Notes:
 - Label uses uppercase tracking-widest per existing SummaryBar MetricCard pattern.
 - Metric values (token amounts, counts) use Cinzel font-display at text-lg per existing SummaryBar.
-- Status badges use 9px (text-[9px]) uppercase bold per existing InscriptionListRow.
+- Status badges inherit the Label role styling (10px, semibold, uppercase) per existing InscriptionListRow pattern.
 - Monospace font (IBM Plex Mono) used for addresses and hex values only.
 
-Source: `SummaryBar.tsx` (text-[10px], text-lg, font-display), `InscriptionListRow.tsx` (text-sm, text-[9px]).
+Source: `SummaryBar.tsx` (text-[10px], text-lg, font-display), `InscriptionListRow.tsx` (text-sm).
 
 ---
 
@@ -88,6 +88,8 @@ Additional semantic colors (already established in codebase):
 
 Accent reserved for: primary CTA button background, active tab underline/highlight, focus ring on inputs, star-branded decorative elements. Never used for body text or borders.
 
+Primary focal point: SummaryBar MetricCards (positions exist) or EmptyTab CTA button (no positions).
+
 Source: `globals.css` @theme block, `SummaryBar.tsx` MetricCard color props.
 
 ---
@@ -109,8 +111,8 @@ Source: `globals.css` @theme block, `SummaryBar.tsx` MetricCard color props.
 | Error state | "Failed to load portfolio. Check your connection and try again." |
 | Action: Repay | Button label: "Repay" |
 | Action: Claim (redeem shares) | Button label: "Claim" |
-| Action: Cancel (open inscription) | Button label: "Cancel" -- confirmation via inline Yes/No toggle (existing InscriptionListRow pattern) |
-| Action: Cancel (off-chain order) | Button label: "Cancel" -- confirmation via inline Yes/No toggle |
+| Action: Cancel Position (open inscription) | Button label: "Cancel Position" -- confirmation via inline Yes/No toggle (existing InscriptionListRow pattern) |
+| Action: Cancel Order (off-chain order) | Button label: "Cancel Order" -- confirmation via inline Yes/No toggle |
 | Action: Liquidate | Button label: "Liquidate" |
 | SummaryBar metric: lent | "Total Lent" |
 | SummaryBar metric: borrowed | "Total Borrowed" |
@@ -118,8 +120,8 @@ Source: `globals.css` @theme block, `SummaryBar.tsx` MetricCard color props.
 | SummaryBar metric: orders | "Active Orders" |
 
 Notes on destructive actions:
-- Cancel (inscription): Uses existing InscriptionListRow inline confirm/deny pattern. First click shows "Cancel?" with "Yes" / "No" buttons. No modal dialog.
-- Cancel (order): Same inline confirm/deny pattern on OrderListRow.
+- Cancel Position (inscription): Uses existing InscriptionListRow inline confirm/deny pattern. First click shows "Cancel Position?" with "Yes" / "No" buttons. No modal dialog.
+- Cancel Order (order): Same inline confirm/deny pattern on OrderListRow. First click shows "Cancel Order?" with "Yes" / "No" buttons.
 - Liquidate: Same inline confirm/deny pattern. Button appears only when inscription is past deadline.
 - Repay and Claim are non-destructive -- no confirmation needed, single click executes.
 
@@ -135,7 +137,7 @@ Components used or modified in this phase:
 |-----------|--------|----------------|
 | `SummaryBar` | Exists, not rendered | Wire into portfolio page above tabs. Update `PortfolioSummary` interface: rename `collateralLocked` to `totalBorrowed`. |
 | `InscriptionListRow` | Exists | Add `actionLabel?: string` prop to override hardcoded "Lend"/"Swap" text. Pass `signedAt` from portfolio. |
-| `OrderListRow` | Exists | Add `actionLabel?: string` prop for "Cancel" label from portfolio context. |
+| `OrderListRow` | Exists | Add `actionLabel?: string` prop for "Cancel Order" label from portfolio context. |
 | `PortfolioInscriptionRow` | New | Thin wrapper around `InscriptionListRow` that instantiates the correct transaction hook per status and passes `onAction`, `actionPending`, `actionLabel`. |
 | `PortfolioOrderRow` | New | Thin wrapper around `OrderListRow` for cancel action wiring. |
 | `EmptyTab` | Exists | No changes needed -- already supports `message` and `cta` props. |
@@ -163,16 +165,16 @@ Components used or modified in this phase:
 |--------|------|--------|---------------|
 | filled / grace_period | Borrower | "Repay" | Execute repay immediately, show Loader2 spinner while pending |
 | repaid / liquidated | Lender (shares > 0) | "Claim" | Execute redeem immediately, show Loader2 spinner while pending |
-| open | Creator | "Cancel" | Show inline Yes/No confirmation, then execute |
+| open | Creator | "Cancel Position" | Show inline Yes/No confirmation, then execute |
 | overdue | Anyone | "Liquidate" | Show inline Yes/No confirmation, then execute |
-| pending (order) | Borrower | "Cancel" | Show inline Yes/No confirmation, then call cancel API |
+| pending (order) | Borrower | "Cancel Order" | Show inline Yes/No confirmation, then call cancel API |
 
 ### Action Feedback
 
 | Event | Feedback |
 |-------|----------|
 | Action submitted | Button shows Loader2 spinner, disabled state |
-| Action succeeded | Toast via sonner ("Repaid successfully" / "Shares claimed" / "Position cancelled" / "Liquidation submitted") |
+| Action succeeded | Toast via sonner ("Repaid successfully" / "Shares claimed" / "Position cancelled" / "Order cancelled" / "Liquidation submitted") |
 | Action failed | Toast via sonner with error message |
 | Data refresh | TanStack Query invalidation triggers automatic refetch of portfolio data |
 
