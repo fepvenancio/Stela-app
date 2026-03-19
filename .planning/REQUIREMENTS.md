@@ -25,8 +25,8 @@
 
 ### Portfolio
 
-- [ ] **PORT-01**: Portfolio page displays user's active lending and borrowing positions with current status
-- [ ] **PORT-02**: Portfolio shows summary bar with total value lent, borrowed, and overall position health
+- [x] **PORT-01**: Portfolio page displays user's active lending and borrowing positions with current status
+- [x] **PORT-02**: Portfolio shows summary bar with total value lent, borrowed, and overall position health
 - [ ] **PORT-03**: Each position card shows inline action buttons (repay, redeem, claim) relevant to its state
 
 ### Bot Matching
@@ -75,8 +75,8 @@
 | TRADE-01 | Phase 2 | Complete |
 | TRADE-02 | Phase 2 | Complete |
 | TRADE-03 | Phase 2 | Complete |
-| PORT-01 | Phase 3 | Pending |
-| PORT-02 | Phase 3 | Pending |
+| PORT-01 | Phase 3 | Complete |
+| PORT-02 | Phase 3 | Complete |
 | PORT-03 | Phase 3 | Pending |
 | BOT-01 | Phase 4 | Pending |
 | BOT-02 | Phase 4 | Pending |

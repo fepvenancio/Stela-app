@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-19T01:21:02.665Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-19T02:16:27.131Z"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A user can go from browsing to completing a lend or swap in the fewest clicks possible, with state preserved across pages, optimal trade matching, and a working portfolio view.
-**Current focus:** Phase 02 — trade-flow
+**Current focus:** Phase 03 — portfolio
 
 ## Current Position
 
-Phase: 02 (trade-flow) — EXECUTING
-Plan: 1 of 2 -- COMPLETE
+Phase: 03 (portfolio) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: 1 of 2 -- COMPLETE
 | Phase 01-03 P03 | 3min | 2 tasks | 4 files |
 | Phase 02-02 P02 | 7min | 2 tasks | 5 files |
 | Phase 02 P01 | 7min | 2 tasks | 3 files |
+| Phase 03-portfolio P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 02]: nuqs parsers in separate search-params.ts module for reuse
 - [Phase 02]: OrderBook positioned between form and InfoSections per UI-SPEC hierarchy
 - [Phase 02]: FeeBreakdown type dynamically set based on mode in TradeForm
+- [Phase 03-01]: totalBorrowed aggregates debt assets (not collateral) from active borrowing positions
+- [Phase 03-01]: PortfolioSummaryInput uses Pick<PortfolioData, ...> to avoid requiring full PortfolioData with stubs
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T01:16:11.463Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-19T02:16:27.129Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None

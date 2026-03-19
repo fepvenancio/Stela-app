@@ -87,5 +87,5 @@ Note: Phases 2 and 3 both depend on Phase 1 but not on each other. They could be
 |-------|----------------|--------|-----------|
 | 1. Data Layer | 0/3 | Planned | - |
 | 2. Trade Flow | 0/2 | Planned | - |
-| 3. Portfolio | 0/2 | Planned | - |
+| 3. Portfolio | 1/2 | In Progress|  |
 | 4. Bot Matching | 0/0 | Not started | - |
