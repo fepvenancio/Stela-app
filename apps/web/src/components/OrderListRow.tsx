@@ -80,7 +80,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
       )}
 
       {/* Desktop: Uniswap-style grid */}
-      <div className="hidden md:grid grid-cols-[1fr_80px_80px_80px_72px_90px] gap-4 flex-1 items-center">
+      <div className="hidden md:grid grid-cols-[1fr_72px_72px_80px_80px_120px] gap-4 flex-1 items-center">
         {/* Pool pair */}
         <PoolPairDisplay
           debtAssets={debtAssets}
@@ -127,14 +127,14 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false); onAction() }}
                   disabled={actionPending}
-                  className="h-7 px-2 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer"
+                  className="h-8 px-3 bg-star hover:bg-star-bright text-void text-[11px] font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer"
                 >
                   {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
                 </button>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false) }}
-                  className="h-7 px-2 bg-surface border border-edge/30 text-dust text-[10px] font-bold uppercase rounded-md hover:text-chalk cursor-pointer"
+                  className="h-8 px-3 bg-surface border border-edge/30 text-dust text-[11px] font-bold uppercase rounded-md hover:text-chalk cursor-pointer"
                 >
                   No
                 </button>
@@ -144,7 +144,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true) }}
                 disabled={actionPending}
-                className="h-7 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40"
+                className="h-8 px-4 bg-star/10 hover:bg-star/20 text-star text-[11px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40"
               >
                 {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : actionLabel ?? (isSwap ? 'Swap' : 'Lend')}
               </button>

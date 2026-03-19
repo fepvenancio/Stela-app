@@ -98,7 +98,7 @@ export function PairCard({ pair }: PairCardProps) {
       <button
         type="button"
         onClick={() => setShowQuickLend(true)}
-        className="relative z-[1] inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0 min-h-[44px]"
+        className="relative z-[1] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0 min-h-[36px]"
         aria-label={`Quick Lend ${debtSymbol} / ${collSymbol}`}
       >
         Quick Lend
@@ -107,7 +107,7 @@ export function PairCard({ pair }: PairCardProps) {
       {/* Trade button — always visible, links to /trade with token addresses pre-filled */}
       <Link
         href={tradeHref}
-        className="relative z-[1] inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0"
+        className="relative z-[1] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0 min-h-[36px]"
         aria-label={`Trade ${debtSymbol} / ${collSymbol}`}
       >
         <svg

@@ -43,7 +43,7 @@ export function ListingTableHeader({ sortBy, onSortChange }: ListingTableHeaderP
   const hasSort = sortBy !== undefined && onSortChange !== undefined
 
   return (
-    <div className="hidden md:grid grid-cols-[1fr_80px_80px_80px_72px_90px] gap-4 px-4 py-2 text-dust border-b border-edge/30 bg-surface/20">
+    <div className="hidden md:grid grid-cols-[1fr_72px_72px_80px_80px_120px] gap-4 px-4 py-2 text-dust border-b border-edge/30 bg-surface/20">
       <span className="text-[10px] uppercase tracking-widest font-semibold">Pool</span>
       <span className="text-[10px] uppercase tracking-widest font-semibold text-center">Type</span>
       {hasSort ? (
