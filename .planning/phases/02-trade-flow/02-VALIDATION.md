@@ -38,12 +38,10 @@ created: 2026-03-19
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 2-01-01 | 01 | 1 | NAV-01 | grep | `grep -r "useQueryState\|parseAsString" apps/web/src/app/trade/ -l` | ❌ W0 | ⬜ pending |
-| 2-01-02 | 01 | 1 | NAV-02 | grep | `grep -r "useQueryState" apps/web/src/app/trade/ -l` | ❌ W0 | ⬜ pending |
-| 2-02-01 | 02 | 1 | NAV-03 | grep | `grep -r "QuickLend" apps/web/src/ -l` | ❌ W0 | ⬜ pending |
-| 2-03-01 | 03 | 2 | TRADE-01 | grep | `grep -r "sort.*rate\|sortBy.*interest" apps/web/src/ -l` | ❌ W0 | ⬜ pending |
-| 2-03-02 | 03 | 2 | TRADE-02 | grep | `grep -r "FeeBreakdown" apps/web/src/app/trade/ -l` | ✅ | ⬜ pending |
-| 2-03-03 | 03 | 2 | TRADE-03 | grep | `grep -r "blended.*rate\|aggregat" apps/web/src/ -l` | ❌ W0 | ⬜ pending |
+| 2-01-01 | 01 | 1 | NAV-01, NAV-02 | grep | `grep -r "useQueryState\|parseAsString" apps/web/src/app/trade/ -l` | ❌ W0 | ⬜ pending |
+| 2-01-02 | 01 | 1 | TRADE-01, TRADE-02 | grep | `grep -r "OrderBook\|FeeBreakdown" apps/web/src/app/trade/ -l` | ✅ | ⬜ pending |
+| 2-02-01 | 02 | 1 | TRADE-03 | grep | `grep -r "BlendedRateSummary" apps/web/src/ -l` | ❌ W0 | ⬜ pending |
+| 2-02-02 | 02 | 1 | NAV-03 | grep | `grep -r "QuickLendModal" apps/web/src/ -l` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
