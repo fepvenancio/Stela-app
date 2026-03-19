@@ -45,11 +45,11 @@ Plans:
   3. User can initiate a lend or swap directly from Browse via a quick-action button without navigating to a separate page
   4. The order book displays offers sorted by lowest interest rate first, with an aggregation preview showing the blended rate for partial fills
   5. Fee breakdown (protocol fee, relayer fee, Genesis discount if applicable) is visible before the user signs any transaction
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — nuqs URL state migration on Trade page, OrderBook integration, fee visibility audit
+- [ ] 02-02-PLAN.md — Blended rate preview in BestTradesPanel, QuickLendModal and Quick Lend button on PairCard
 
 ### Phase 3: Portfolio
 **Goal**: Users can see all their active lending and borrowing positions with summary stats and take actions directly from the portfolio
@@ -85,6 +85,6 @@ Note: Phases 2 and 3 both depend on Phase 1 but not on each other. They could be
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Layer | 0/3 | Planned | - |
-| 2. Trade Flow | 0/0 | Not started | - |
+| 2. Trade Flow | 0/2 | Planned | - |
 | 3. Portfolio | 0/0 | Not started | - |
 | 4. Bot Matching | 0/0 | Not started | - |
