@@ -40,7 +40,7 @@ Declared values (must be multiples of 4):
 | xl | 32px | Layout gaps between major sections |
 | 2xl | 48px | Page-level vertical breathing room |
 
-Exceptions: Touch targets for the Quick Lend button use min 44px height for accessibility (matches existing PairCard Trade button pattern at `py-1.5` + text = ~28px, increased to 36px min for the modal CTA).
+No exceptions. Component-level sizing constraints (touch targets, min heights) are declared in the relevant Interaction Contracts below.
 
 ---
 
@@ -66,7 +66,7 @@ All colors are pre-existing project tokens from `globals.css`. No new colors are
 | Dominant (60%) | `--color-void` | #0a0a0e | Page background |
 | Secondary (30%) | `--color-abyss` / `--color-surface` | #121216 / #1a1a1e | Cards, panels, OrderBook bg, modal bg |
 | Accent (10%) | `--color-star` | #e8a825 | See reserved-for list below |
-| Destructive | `--color-nova` | #ef4444 | Cancel order confirmation only |
+| Destructive | `--color-nova` | #ef4444 | Cancel order confirmation button only |
 | Positive | `--color-aurora` | #10b981 | Discounted fee display, positive rate indicators |
 | Info | `--color-nebula` | #3b82f6 | Blended rate highlight, match count badge |
 
@@ -101,6 +101,22 @@ Never use accent for: body text, borders at rest, skeleton loaders, section back
 | Error: order signing failed | "Signing failed. Check your wallet connection and try again." |
 | Error: order submission failed | "Order could not be submitted. The network may be congested -- please try again." |
 | Error: order book load failed | "Could not load order book. Pull down to retry." |
+
+### Destructive Actions
+
+| Action | Confirmation Pattern | Trigger Label | Confirm Label | Cancel Label | Copy |
+|--------|---------------------|---------------|---------------|--------------|------|
+| Cancel order | Confirmation dialog (shadcn AlertDialog) | "Cancel Order" (text-nova) | "Yes, Cancel Order" (bg-nova) | "Keep Order" (ghost variant) | "This will permanently cancel your order. Any pending offers will be dismissed. This cannot be undone." |
+
+---
+
+## Visual Hierarchy
+
+Trade page focal-point order:
+
+1. **Primary: Order Form** -- The main interaction area (mode tabs, token selectors, amount input, Sign button). Visually dominant via card elevation (`bg-surface`) and largest content block.
+2. **Secondary: Order Book** -- Contextual pricing data. Placed below the form. Uses `bg-abyss` to recede behind the form.
+3. **Tertiary: BestTradesPanel** -- Match preview and blended rate summary. Placed below the Order Book. Visually lightest; content appears only when matches exist.
 
 ---
 
@@ -137,6 +153,8 @@ Never use accent for: body text, borders at rest, skeleton loaders, section back
 | Close behavior | Click overlay, press Escape, or click X button |
 | Success behavior | Close modal, show Sonner toast: "Lend offer signed successfully" |
 | Loading state | Sign button shows Loader2 spinner + "Signing..." text, disabled |
+| Quick Lend button min height | 44px (accessibility touch target) |
+| Modal CTA min height | 36px (consistent with existing modal button sizing) |
 
 ### TRADE-01: Order Book on Trade Page
 
@@ -186,6 +204,7 @@ Never use accent for: body text, borders at rest, skeleton loaders, section back
 | FeeBreakdown | `components/FeeBreakdown.tsx` | Add to quick-lend modal |
 | SettlementDrawer | `components/trade/SettlementDrawer.tsx` | Verify FeeBreakdown present |
 | Dialog | `components/ui/dialog.tsx` | Use for quick-lend modal |
+| AlertDialog | `components/ui/alert-dialog.tsx` | Use for cancel order confirmation |
 | Web3ActionWrapper | (existing) | Wallet connection gate |
 
 ### New (to create)
@@ -210,7 +229,7 @@ Never use accent for: body text, borders at rest, skeleton loaders, section back
 
 | Registry | Blocks Used | Safety Gate |
 |----------|-------------|-------------|
-| shadcn official | dialog, button, input, select, tabs, skeleton, sonner, tooltip, sheet, card, badge, label, separator, switch, toggle, toggle-group | not required |
+| shadcn official | dialog, alert-dialog, button, input, select, tabs, skeleton, sonner, tooltip, sheet, card, badge, label, separator, switch, toggle, toggle-group | not required |
 | Third-party | none | not applicable |
 
 No third-party registries are declared. `components.json` shows `"registries": {}`.
