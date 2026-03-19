@@ -25,9 +25,9 @@ function SortButton({
     <button
       type="button"
       onClick={() => onSort(sortKey)}
-      className={`flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold transition-colors cursor-pointer ${
+      className={`flex items-center gap-1 text-xs transition-colors cursor-pointer ${
         align === 'right' ? 'justify-end' : ''
-      } ${active ? 'text-star' : 'text-dust hover:text-chalk'}`}
+      } ${active ? 'text-chalk' : 'text-ash hover:text-chalk'}`}
     >
       {label}
       {active && (
@@ -41,23 +41,24 @@ function SortButton({
 
 export function ListingTableHeader({ sortBy, onSortChange }: ListingTableHeaderProps) {
   const hasSort = sortBy !== undefined && onSortChange !== undefined
+  const cellClass = 'text-xs text-ash'
 
   return (
-    <div className="hidden md:grid grid-cols-[1fr_72px_72px_80px_80px_120px] gap-4 px-4 py-2 text-dust border-b border-edge/30 bg-surface/20">
-      <span className="text-[10px] uppercase tracking-widest font-semibold">Pool</span>
-      <span className="text-[10px] uppercase tracking-widest font-semibold text-center">Type</span>
+    <div className="hidden md:grid grid-cols-[1fr_56px_64px_80px_72px_110px] gap-5 px-5 py-3 border-b border-edge/20">
+      <span className={cellClass}>Pool</span>
+      <span className={`${cellClass} text-center`}>Type</span>
       {hasSort ? (
         <SortButton label="Yield" sortKey="apy" currentSort={sortBy} onSort={onSortChange} align="right" />
       ) : (
-        <span className="text-[10px] uppercase tracking-widest font-semibold text-right">Yield</span>
+        <span className={`${cellClass} text-right`}>Yield</span>
       )}
       {hasSort ? (
         <SortButton label="Duration" sortKey="duration" currentSort={sortBy} onSort={onSortChange} align="right" />
       ) : (
-        <span className="text-[10px] uppercase tracking-widest font-semibold text-right">Duration</span>
+        <span className={`${cellClass} text-right`}>Duration</span>
       )}
-      <span className="text-[10px] uppercase tracking-widest font-semibold text-center">Status</span>
-      <span className="text-[10px] uppercase tracking-widest font-semibold text-right">Action</span>
+      <span className={`${cellClass} text-center`}>Status</span>
+      <span className={`${cellClass} text-right`} />
     </div>
   )
 }

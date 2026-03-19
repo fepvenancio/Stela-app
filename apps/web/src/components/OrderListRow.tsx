@@ -79,9 +79,8 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
         </div>
       )}
 
-      {/* Desktop: Uniswap-style grid */}
-      <div className="hidden md:grid grid-cols-[1fr_72px_72px_80px_80px_120px] gap-4 flex-1 items-center">
-        {/* Pool pair */}
+      {/* Desktop grid */}
+      <div className="hidden md:grid grid-cols-[1fr_56px_64px_80px_72px_110px] gap-5 flex-1 items-center">
         <PoolPairDisplay
           debtAssets={debtAssets}
           collateralAssets={collateralAssets}
@@ -91,50 +90,47 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
         />
 
         {/* Type */}
-        <div className="flex justify-center">
-          <Badge variant={isSwap ? 'pending' : 'default'} className="h-[20px] text-[9px] px-2 py-0 uppercase font-bold">
-            {isSwap ? 'Swap' : 'Loan'}
-          </Badge>
-        </div>
+        <span className={`text-xs text-center ${isSwap ? 'text-dust' : 'text-chalk'}`}>
+          {isSwap ? 'Swap' : 'Loan'}
+        </span>
 
         {/* Yield */}
-        <div className="text-right">
-          <span className={`text-sm tabular-nums font-medium ${!isSwap && yieldDisplay !== '—' ? 'text-aurora' : 'text-dust'}`}>
-            {yieldDisplay}
-          </span>
-        </div>
+        <span className={`text-sm text-right tabular-nums font-medium ${!isSwap && yieldDisplay !== '—' ? 'text-aurora' : 'text-dust'}`}>
+          {yieldDisplay}
+        </span>
 
         {/* Duration */}
-        <div className="text-right">
-          <span className="text-sm text-chalk tabular-nums">
-            {isSwap ? 'Instant' : formatDuration(Number(duration))}
-          </span>
-        </div>
+        <span className="text-sm text-right text-chalk tabular-nums">
+          {isSwap ? 'Instant' : formatDuration(Number(duration))}
+        </span>
 
         {/* Status */}
-        <div className="flex justify-center">
-          <Badge variant={statusVariant} className="h-[20px] text-[9px] px-2 py-0 uppercase font-bold">
-            {statusLabel}
-          </Badge>
+        <div className="flex justify-center items-center gap-1.5">
+          <div className={`w-1.5 h-1.5 rounded-full ${
+            statusVariant === 'filled' || statusVariant === 'settled' ? 'bg-aurora' :
+            statusVariant === 'open' || statusVariant === 'pending' || statusVariant === 'matched' ? 'bg-star' :
+            'bg-dust'
+          }`} />
+          <span className="text-xs text-chalk capitalize">{statusLabel.toLowerCase()}</span>
         </div>
 
         {/* Action */}
         <div className="flex justify-end">
           {onAction ? (
             confirming ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false); onAction() }}
                   disabled={actionPending}
-                  className="h-8 px-3 bg-star hover:bg-star-bright text-void text-[11px] font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer"
+                  className="h-8 w-[46px] bg-star hover:bg-star-bright text-void text-xs font-semibold rounded-lg transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center"
                 >
-                  {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
+                  {actionPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Yes'}
                 </button>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false) }}
-                  className="h-8 px-3 bg-surface border border-edge/30 text-dust text-[11px] font-bold uppercase rounded-md hover:text-chalk cursor-pointer"
+                  className="h-8 w-[46px] bg-surface border border-edge/30 text-dust text-xs font-semibold rounded-lg hover:text-chalk cursor-pointer flex items-center justify-center"
                 >
                   No
                 </button>
@@ -144,9 +140,9 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true) }}
                 disabled={actionPending}
-                className="h-8 w-[100px] bg-star/10 hover:bg-star/20 text-star font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40 flex items-center justify-center"
+                className="h-8 w-[100px] rounded-lg text-xs font-semibold transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center bg-star/10 hover:bg-star/20 text-star border border-star/20 hover:border-star/40"
               >
-                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="text-[11px] leading-none truncate px-1">{actionLabel ?? (isSwap ? 'Swap' : 'Lend')}</span>}
+                {actionPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (actionLabel ?? (isSwap ? 'Swap' : 'Lend'))}
               </button>
             )
           ) : null}
