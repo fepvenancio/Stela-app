@@ -11,7 +11,7 @@ export interface TokenAmount {
 
 export interface PortfolioSummary {
   totalLent: TokenAmount[]
-  collateralLocked: TokenAmount[]
+  totalBorrowed: TokenAmount[]
   redeemableCount: number
   orderCount: number
 }
@@ -65,8 +65,8 @@ export function SummaryBar({ summary }: SummaryBarProps) {
         <TokenList amounts={summary.totalLent} />
       </MetricCard>
 
-      <MetricCard label="Collateral Locked" color="bg-nebula" info="Total collateral currently locked in your locker contracts.">
-        <TokenList amounts={summary.collateralLocked} />
+      <MetricCard label="Total Borrowed" color="bg-nebula" info="Sum of all debt tokens in your active borrowing positions.">
+        <TokenList amounts={summary.totalBorrowed} />
       </MetricCard>
 
       <MetricCard label="Redeemable" color="bg-cosmic" info="Positions where you can claim repaid debt or liquidated collateral.">
