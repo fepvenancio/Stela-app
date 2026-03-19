@@ -25,6 +25,7 @@ interface InscriptionListRowProps {
   onSelect?: () => void
   onAction?: () => void
   actionPending?: boolean
+  actionLabel?: string
 }
 
 export function InscriptionListRow({
@@ -38,6 +39,7 @@ export function InscriptionListRow({
   onSelect,
   onAction,
   actionPending,
+  actionLabel,
 }: InscriptionListRowProps) {
   const statusKey = getStatusBadgeVariant(status)
   const label = getStatusLabel(status)
@@ -176,7 +178,7 @@ export function InscriptionListRow({
                 disabled={actionPending}
                 className="h-7 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40"
               >
-                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : actionLabel ?? (isSwap ? 'Swap' : 'Lend')}
               </button>
             )
           ) : null}
@@ -199,7 +201,7 @@ export function InscriptionListRow({
               disabled={actionPending}
               className="h-8 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0"
             >
-              {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+              {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : actionLabel ?? (isSwap ? 'Swap' : 'Lend')}
             </button>
           ) : null}
         </div>

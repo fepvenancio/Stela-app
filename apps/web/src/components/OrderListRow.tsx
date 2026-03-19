@@ -18,9 +18,10 @@ interface OrderListRowProps {
   onSelect?: () => void
   onAction?: () => void
   actionPending?: boolean
+  actionLabel?: string
 }
 
-export function OrderListRow({ order, selectable, selected, onSelect, onAction, actionPending }: OrderListRowProps) {
+export function OrderListRow({ order, selectable, selected, onSelect, onAction, actionPending, actionLabel }: OrderListRowProps) {
   const orderData = useMemo(() => {
     if (!order.order_data) return normalizeOrderData({})
     const raw: RawOrderData = typeof order.order_data === 'string'
@@ -145,7 +146,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
                 disabled={actionPending}
                 className="h-7 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 hover:border-star/40"
               >
-                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+                {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : actionLabel ?? (isSwap ? 'Swap' : 'Lend')}
               </button>
             )
           ) : null}
@@ -169,7 +170,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
               disabled={actionPending}
               className="h-8 px-3 bg-star/10 hover:bg-star/20 text-star text-[10px] font-bold uppercase tracking-wider rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0"
             >
-              {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Lend'}
+              {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : actionLabel ?? (isSwap ? 'Swap' : 'Lend')}
             </button>
           ) : null}
         </div>
