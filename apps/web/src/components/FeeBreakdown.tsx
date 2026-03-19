@@ -71,13 +71,12 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
           <span className="font-mono text-chalk">
             {hasDiscount ? (
               <>
-                <span className="text-dust line-through mr-1">{fee.treasuryBps}</span>
-                <span className="text-aurora">{fee.effectiveTreasuryBps}</span>
+                <span className="text-dust line-through mr-1">{bpsToPercent(fee.treasuryBps)}</span>
+                <span className="text-aurora">{bpsToPercent(fee.effectiveTreasuryBps)}</span>
               </>
             ) : (
-              fee.treasuryBps
+              bpsToPercent(fee.treasuryBps)
             )}
-            <span className="text-dust ml-0.5">bps</span>
           </span>
         </div>
 
@@ -85,8 +84,7 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
         <div className="flex items-center justify-between text-xs">
           <span className="text-dust">Relayer</span>
           <span className="font-mono text-chalk">
-            {fee.relayerBps}
-            <span className="text-dust ml-0.5">bps</span>
+            {bpsToPercent(fee.relayerBps)}
             <span className="text-ash ml-1 text-[10px]">(fixed)</span>
           </span>
         </div>
