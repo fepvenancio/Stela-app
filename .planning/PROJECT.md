@@ -25,6 +25,10 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 - ✓ Browse/Markets page listing inscriptions and orders — existing
 - ✓ Create inscription page — existing
 - ✓ Lend/Swap tab toggle on trade pages — existing
+- ✓ TanStack Query data fetching with stale-while-revalidate — Phase 1
+- ✓ nuqs URL state management infrastructure — Phase 1
+- ✓ Zustand client state store (batch selection) — Phase 1
+- ✓ Auto-refresh at appropriate intervals without manual reload — Phase 1
 
 ### Active
 
@@ -72,4 +76,4 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 | Keep existing color scheme and navigation | User explicitly confirmed satisfaction with visual design and menu organization | ✓ Good |
 
 ---
-*Last updated: 2026-03-18 after initialization*
+*Last updated: 2026-03-19 after Phase 1 (Data Layer) completion*
