@@ -44,7 +44,8 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 
 <!-- Current scope — these are hypotheses until shipped and validated -->
 
-- [ ] Optimal trade matching: bot selects lowest-interest-rate offers first, aggregates multiple until amount filled
+- ✓ Bot rate-sorted settlement with shared computeInterestRate in @stela/core — Phase 4
+- ✓ BotRankBadge matching preview in BestTradesPanel — Phase 4
 - [ ] Bot matching display: frontend shows what the bot will match and why
 
 ### Out of Scope
@@ -81,4 +82,4 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 | Keep existing color scheme and navigation | User explicitly confirmed satisfaction with visual design and menu organization | ✓ Good |
 
 ---
-*Last updated: 2026-03-19 after Phase 3 (Portfolio) completion*
+*Last updated: 2026-03-19 after Phase 4 (Bot Matching) — all phases complete*
