@@ -21,8 +21,8 @@ export function OrderBook({ data, isLoading, mode, duration, onDurationChange }:
   return (
     <div className="flex flex-col w-full rounded-lg border border-edge/30 bg-abyss overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-edge/20">
-        <h3 className="text-xs font-display uppercase tracking-wider text-chalk">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-edge/20 gap-2 min-w-0">
+        <h3 className="text-xs font-display uppercase tracking-wider text-chalk shrink-0">
           Order Book
         </h3>
 

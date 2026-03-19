@@ -69,8 +69,8 @@ export function LendingBook({ asks, totalAskVolume, baseSymbol, baseDecimals }: 
       )}
 
       {/* Summary stats */}
-      <div className="flex items-center justify-between px-3 py-2 border-t border-edge/20 text-[10px]">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-3 py-2 border-t border-edge/20 text-[10px] gap-2 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <span className="text-ash">
             Volume:{' '}
             <span className="text-chalk font-mono tabular-nums">

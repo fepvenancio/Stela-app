@@ -148,7 +148,7 @@ export function QuickLendModal({ open, onClose, debtToken, collateralToken }: Qu
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="max-w-md bg-abyss border-edge/30">
+      <DialogContent className="max-w-md bg-abyss border-edge/30 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-chalk font-display text-xs uppercase tracking-wider">
             {title}
@@ -176,7 +176,7 @@ export function QuickLendModal({ open, onClose, debtToken, collateralToken }: Qu
             <label className="text-[10px] uppercase tracking-widest font-bold text-dust mb-1.5 block">
               Duration
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {DURATION_PRESETS.map((preset) => (
                 <button
                   key={preset.value}

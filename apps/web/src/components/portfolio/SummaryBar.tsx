@@ -26,7 +26,7 @@ function TokenList({ amounts }: { amounts: TokenAmount[] }) {
   return (
     <div className="flex flex-col gap-1.5">
       {amounts.map((t) => (
-        <span key={t.address} className="inline-flex items-center gap-1.5 text-chalk font-display text-lg">
+        <span key={t.address} className="inline-flex items-center gap-1.5 text-chalk font-display text-lg truncate">
           <TokenAvatarByAddress address={t.address} size={16} />
           {formatTokenValue(t.total.toString(), t.decimals)} {t.symbol}
         </span>
@@ -47,7 +47,7 @@ function MetricCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-edge/30 bg-surface/20 p-4">
+    <div className="rounded-2xl border border-edge/30 bg-surface/20 p-4 min-w-0 overflow-hidden">
       <div className="flex items-center gap-2 mb-2">
         <div className={`w-2 h-2 rounded-full ${color}`} />
         <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">{label}</span>
@@ -60,7 +60,7 @@ function MetricCard({
 
 export function SummaryBar({ summary }: SummaryBarProps) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-8">
       <MetricCard label="Total Lent" color="bg-star" info="Sum of all debt tokens you have provided as a lender.">
         <TokenList amounts={summary.totalLent} />
       </MetricCard>

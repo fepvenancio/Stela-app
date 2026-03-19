@@ -95,7 +95,7 @@ function TokenBox({
   const token = asset.asset ? findTokenByAddress(asset.asset) : null
 
   return (
-    <div className={`${bgClass} border ${borderClass} rounded-lg p-4`}>
+    <div className={`${bgClass} border ${borderClass} rounded-lg p-3 sm:p-4 overflow-hidden`}>
       <div className="flex items-center justify-between mb-2">
         <span className={`text-[10px] uppercase tracking-widest font-bold ${accentClass}`}>{label}</span>
         {token && balance !== undefined && balance > 0n && (
@@ -115,11 +115,11 @@ function TokenBox({
           </div>
         )}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={onTokenClick}
-          className="flex items-center gap-2 h-10 px-3 rounded-md bg-surface/60 border border-edge/40 text-sm transition-colors hover:bg-elevated hover:border-edge-bright cursor-pointer shrink-0"
+          className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 sm:px-3 rounded-md bg-surface/60 border border-edge/40 text-sm transition-colors hover:bg-elevated hover:border-edge-bright cursor-pointer shrink-0"
         >
           {token ? (
             <>
@@ -142,7 +142,7 @@ function TokenBox({
             const raw = e.target.value
             if (raw === '' || /^\d*\.?\d{0,18}$/.test(raw)) onAmountChange(raw)
           }}
-          className="flex-1 text-right text-xl font-mono bg-transparent outline-none text-chalk placeholder:text-ash/40"
+          className="flex-1 min-w-0 text-right text-lg sm:text-xl font-mono bg-transparent outline-none text-chalk placeholder:text-ash/40"
         />
       </div>
     </div>
@@ -1861,7 +1861,7 @@ function TradeContent() {
 
           {/* Lend mode toggle — Token vs Collection (only shown in lend tab) */}
           {mode === 'lend' && (
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-col items-start sm:items-end gap-1">
               <div className="flex gap-1">
                 {(['standard', 'collection'] as const).map((m) => (
                   <button

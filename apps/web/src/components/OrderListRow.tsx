@@ -46,7 +46,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
   const inner = (
     <div
       onClick={selectable ? () => onSelect?.() : undefined}
-      className={`group flex items-center gap-3 px-4 py-3 border-b transition-colors duration-100 ${
+      className={`group flex items-center gap-3 px-3 sm:px-4 py-3 border-b transition-colors duration-100 overflow-hidden ${
         selectable ? 'cursor-pointer' : ''
       } ${
         selected

@@ -51,7 +51,7 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
         <span className="text-[10px] text-dust uppercase tracking-widest font-bold">
           Protocol Fee
         </span>
-        <span className="font-mono text-sm text-chalk">
+        <span className="font-mono text-sm text-chalk shrink-0">
           {hasDiscount ? (
             <>
               <span className="text-dust line-through mr-1.5">{bpsToPercent(fee.totalBaseBps)}</span>
@@ -66,9 +66,9 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
       {/* Detail rows */}
       <div className="px-3 py-2 space-y-1.5">
         {/* Treasury line */}
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-dust">Treasury</span>
-          <span className="font-mono text-chalk">
+        <div className="flex items-center justify-between text-xs gap-2">
+          <span className="text-dust shrink-0">Treasury</span>
+          <span className="font-mono text-chalk text-right">
             {hasDiscount ? (
               <>
                 <span className="text-dust line-through mr-1">{bpsToPercent(fee.treasuryBps)}</span>
@@ -81,9 +81,9 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
         </div>
 
         {/* Relayer line */}
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-dust">Relayer</span>
-          <span className="font-mono text-chalk">
+        <div className="flex items-center justify-between text-xs gap-2">
+          <span className="text-dust shrink-0">Relayer</span>
+          <span className="font-mono text-chalk text-right">
             {bpsToPercent(fee.relayerBps)}
             <span className="text-ash ml-1 text-[10px]">(fixed)</span>
           </span>
@@ -91,9 +91,9 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
 
         {/* Discount line */}
         {address && hasDiscount && (
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-edge/10">
-            <span className="text-dust">Discount</span>
-            <span className="font-mono text-star">
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-edge/10 gap-2">
+            <span className="text-dust shrink-0">Discount</span>
+            <span className="font-mono text-star text-right">
               -{fee.discountPercent}%
               <span className="text-ash ml-1 text-[10px]">
                 ({Number(fee.nftBalance)} NFT{fee.nftBalance !== 1n ? 's' : ''}
