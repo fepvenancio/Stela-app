@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Data Layer** - Replace custom fetch hooks with TanStack Query, set up nuqs URL state and Zustand client store
 - [ ] **Phase 2: Trade Flow** - State-preserving navigation from Browse to Trade, sorted order book, fee display, and quick-action lending
 - [ ] **Phase 3: Portfolio** - Working portfolio page with active positions, summary stats, and inline actions
-- [ ] **Phase 4: Bot Matching** - Optimal rate-based settlement logic and frontend matching preview
+- [x] **Phase 4: Bot Matching** - Optimal rate-based settlement logic and frontend matching preview (completed 2026-03-19)
 
 ## Phase Details
 
@@ -89,4 +89,4 @@ Note: Phases 2 and 3 both depend on Phase 1 but not on each other. They could be
 | 1. Data Layer | 0/3 | Planned | - |
 | 2. Trade Flow | 0/2 | Planned | - |
 | 3. Portfolio | 1/2 | In Progress|  |
-| 4. Bot Matching | 0/2 | Planned | - |
+| 4. Bot Matching | 2/2 | Complete   | 2026-03-19 |

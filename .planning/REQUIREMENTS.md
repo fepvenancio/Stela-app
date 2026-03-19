@@ -32,7 +32,7 @@
 ### Bot Matching
 
 - [x] **BOT-01**: Bot settles offers in order of lowest interest rate first, aggregating multiple until the requested amount is filled
-- [ ] **BOT-02**: Frontend displays which offers the bot will match for a given order and the reasoning (rate ranking)
+- [x] **BOT-02**: Frontend displays which offers the bot will match for a given order and the reasoning (rate ranking)
 
 ## v2 Requirements
 
@@ -79,7 +79,7 @@
 | PORT-02 | Phase 3 | Complete |
 | PORT-03 | Phase 3 | Complete |
 | BOT-01 | Phase 4 | Complete |
-| BOT-02 | Phase 4 | Pending |
+| BOT-02 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 14 total
