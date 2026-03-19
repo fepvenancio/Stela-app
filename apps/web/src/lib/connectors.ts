@@ -77,7 +77,23 @@ const policies: SessionPolicies = {
 }
 
 /** Cartridge Controller — passkey/social login, session keys, no extension needed. */
-const cartridge = new ControllerConnector({ policies })
+let cartridge: ControllerConnector | null = null
 
-/** Single source of truth for wallet connectors. */
-export const connectors = [argent(), braavos(), cartridge]
+function getCartridge(): ControllerConnector | null {
+  if (cartridge) return cartridge
+  try {
+    cartridge = new ControllerConnector({ policies })
+    return cartridge
+  } catch {
+    console.warn('Cartridge Controller failed to initialize (expected during SSR)')
+    return null
+  }
+}
+
+/** Single source of truth for wallet connectors. Lazy-initializes Cartridge on first access. */
+export function getConnectors() {
+  const base = [argent(), braavos()]
+  const ctrl = getCartridge()
+  if (ctrl) base.push(ctrl)
+  return base
+}

@@ -7,7 +7,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { StarknetConfig, jsonRpcProvider } from '@starknet-react/core'
 import { sepolia, mainnet } from '@starknet-react/chains'
 import { NETWORK } from '@/lib/config'
-import { connectors } from '@/lib/connectors'
+import { getConnectors } from '@/lib/connectors'
 
 const chains = NETWORK === 'mainnet' ? [mainnet] : [sepolia]
 
@@ -28,6 +28,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       },
     },
   }))
+
+  const [connectors] = useState(() => getConnectors())
 
   return (
     <QueryClientProvider client={queryClient}>
