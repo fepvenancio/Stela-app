@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
+import { QuickLendModal } from '@/components/QuickLendModal'
 import { TokenAvatar, stringToColor } from '@/components/TokenAvatar'
 import { formatTokenValue } from '@/lib/format'
 import { formatAddress } from '@/lib/address'
@@ -26,6 +28,7 @@ function TokenIcon({ address, size = 28 }: { address: string; size?: number }) {
 }
 
 export function PairCard({ pair }: PairCardProps) {
+  const [showQuickLend, setShowQuickLend] = useState(false)
   const debtToken = findTokenByAddress(pair.debt_token)
   const collToken = findTokenByAddress(pair.collateral_token)
 
@@ -91,6 +94,16 @@ export function PairCard({ pair }: PairCardProps) {
         </div>
       </div>
 
+      {/* Quick Lend button -- opens modal without leaving Browse page */}
+      <button
+        type="button"
+        onClick={() => setShowQuickLend(true)}
+        className="relative z-[1] inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0 min-h-[44px]"
+        aria-label={`Quick Lend ${debtSymbol} / ${collSymbol}`}
+      >
+        Quick Lend
+      </button>
+
       {/* Trade button — always visible, links to /trade with token addresses pre-filled */}
       <Link
         href={tradeHref}
@@ -124,6 +137,15 @@ export function PairCard({ pair }: PairCardProps) {
       >
         <path d="M6 4l4 4-4 4" />
       </svg>
+
+      {showQuickLend && (
+        <QuickLendModal
+          open={showQuickLend}
+          onClose={() => setShowQuickLend(false)}
+          debtToken={pair.debt_token}
+          collateralToken={pair.collateral_token}
+        />
+      )}
     </div>
   )
 }
