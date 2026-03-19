@@ -19,6 +19,7 @@ import { AuctionTimer } from '@/components/AuctionTimer'
 import { AuctionPrice } from '@/components/AuctionPrice'
 import { GRACE_PERIOD, AUCTION_DURATION } from '@/lib/offchain'
 import { formatAddress, addressesEqual } from '@/lib/address'
+import { AddressDisplay } from '@/components/AddressDisplay'
 import { findTokenByAddress, STATUS_LABELS } from '@fepvenancio/stela-sdk'
 import type { InscriptionStatus } from '@fepvenancio/stela-sdk'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
@@ -85,7 +86,7 @@ function T1Section({ inscriptionId, title, endpoint, renderRow }: T1SectionProps
   )
 }
 
-function T1Row({ label, detail, status }: { label: string; detail: string; status: string }) {
+function T1Row({ label, detail, status }: { label: React.ReactNode; detail: string; status: string }) {
   return (
     <div className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
       <div className="space-y-1 min-w-0">
@@ -150,9 +151,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
                   className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10"
                 >
                   <div className="space-y-1 min-w-0">
-                    <span className="text-xs text-chalk font-mono truncate block">
-                      {formatAddress(String(offer.new_lender ?? ''))}
-                    </span>
+                    <AddressDisplay address={String(offer.new_lender ?? '')} className="text-xs" />
                     <span className="text-[10px] text-dust block truncate">
                       Nonce: {String(offer.nonce ?? '--')}
                     </span>
@@ -365,11 +364,11 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
           {/* Specifications Grid */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
              {[
-               { label: 'Borrower', value: a?.borrower ? formatAddress(a.borrower as string) : '--', mono: true },
+               { label: 'Borrower', value: a?.borrower ? <AddressDisplay address={a.borrower as string} className="text-sm" /> : '--', mono: true },
                { label: 'Lender', ...(() => {
                  const lender = a?.lender as string | undefined
                  const isFilled = status === 'filled' || status === 'repaid' || status === 'liquidated'
-                 if (lender && lender !== '0x0') return { value: formatAddress(lender), mono: true }
+                 if (lender && lender !== '0x0') return { value: <AddressDisplay address={lender} className="text-sm" />, mono: true }
                  if (isFilled) return { value: '\u{1F512} Private Lender', mono: false }
                  return { value: a?.multi_lender ? 'Multi-Lender' : 'Waiting...', mono: false }
                })() },
@@ -482,7 +481,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
               renderRow={(p, i) => (
                 <T1Row
                   key={String(p.id ?? i)}
-                  label={formatAddress(String(p.proposer ?? ''))}
+                  label={<AddressDisplay address={String(p.proposer ?? '')} className="text-xs" />}
                   detail={p.new_duration ? `New duration: ${p.new_duration}s` : 'New interest terms'}
                   status={String(p.status ?? 'pending')}
                 />
@@ -499,7 +498,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
               renderRow={(sale, i) => (
                 <T1Row
                   key={String(sale.id ?? i)}
-                  label={formatAddress(String(sale.buyer ?? ''))}
+                  label={<AddressDisplay address={String(sale.buyer ?? '')} className="text-xs" />}
                   detail={`Min price: ${String(sale.min_price ?? '--')}`}
                   status={String(sale.status ?? 'pending')}
                 />

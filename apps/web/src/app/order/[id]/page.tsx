@@ -9,6 +9,7 @@ import { useOrder } from '@/hooks/useOrders'
 import { useSignOrder } from '@/hooks/useSignOrder'
 import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import { formatAddress, addressesEqual } from '@/lib/address'
+import { AddressDisplay } from '@/components/AddressDisplay'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { getCancelOrderTypedData } from '@/lib/offchain'
 import { parseAmount } from '@/lib/amount'
@@ -164,7 +165,7 @@ export default function OrderPage({ params }: OrderPageProps) {
           {/* Specifications Grid */}
           <section className="grid sm:grid-cols-3 gap-4">
             {[
-              { label: 'Borrower', value: order?.borrower ? formatAddress(order.borrower) : '--', mono: true },
+              { label: 'Borrower', value: order?.borrower ? <AddressDisplay address={order.borrower} className="text-sm" /> : '--', mono: true },
               { label: 'Status', value: order?.status ?? '--', mono: false },
               { label: 'Type', value: isMultiLender ? 'Multi-Lender' : 'Single-Lender', mono: false },
             ].map((field, i) => (
@@ -224,7 +225,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                   <div key={offer.id} className="flex items-center justify-between p-4 bg-abyss/40 border border-edge/20 rounded-lg">
                     <div>
                       <span className="text-[10px] text-dust uppercase tracking-widest block">Lender</span>
-                      <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
+                      <AddressDisplay address={offer.lender} className="text-sm" />
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-dust uppercase tracking-widest block">Percentage</span>

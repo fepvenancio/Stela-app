@@ -10,6 +10,7 @@ import { useInscriptionDetail } from '@/hooks/useInscriptionDetail'
 import { useShares } from '@/hooks/useShares'
 import { computeStatus, enrichStatus } from '@/lib/status'
 import { formatAddress, addressesEqual } from '@/lib/address'
+import { AddressDisplay } from '@/components/AddressDisplay'
 import { formatTokenValue, formatDuration, formatTimestamp } from '@/lib/format'
 import { normalizeOrderData, type RawOrderData } from '@/lib/order-utils'
 import { InscriptionActions } from '@/components/InscriptionActions'
@@ -162,7 +163,7 @@ function OrderView({ id }: { id: string }) {
       durationLabel="From settlement"
       multiLender={isMultiLender}
       specs={[
-        { label: 'Borrower', value: order?.borrower ? formatAddress(order.borrower) : '--', mono: true },
+        { label: 'Borrower', value: order?.borrower ? <AddressDisplay address={order.borrower} className="text-xs" /> : '--', mono: true },
         { label: 'Status', value: order?.status ?? '--', mono: false },
         { label: 'Created', value: order?.created_at ? formatTimestamp(BigInt(order.created_at)) : '--', mono: false },
         { label: 'Deadline', value: order?.deadline ? formatTimestamp(BigInt(order.deadline)) : '--', mono: false },
@@ -183,7 +184,7 @@ function OrderView({ id }: { id: string }) {
                 <div key={offer.id} className="flex items-center justify-between p-4 bg-surface/20 border border-edge/20 rounded-2xl">
                   <div>
                     <span className="text-[9px] text-dust uppercase tracking-widest block mb-0.5">Lender</span>
-                    <span className="text-sm text-chalk font-mono">{formatAddress(offer.lender)}</span>
+                    <AddressDisplay address={offer.lender} className="text-sm" />
                   </div>
                   <div className="text-right">
                     <span className="text-[9px] text-dust uppercase tracking-widest block mb-0.5">Share</span>
@@ -235,7 +236,7 @@ function useT1List(endpoint: string) {
   return { items, loading }
 }
 
-function T1Row({ label, detail, status }: { label: string; detail: string; status: string }) {
+function T1Row({ label, detail, status }: { label: React.ReactNode; detail: string; status: string }) {
   return (
     <div className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
       <div className="space-y-1 min-w-0">
@@ -306,7 +307,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
               return (
                 <div key={offerId || i} className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
                   <div className="space-y-1 min-w-0">
-                    <span className="text-xs text-chalk font-mono truncate block">{formatAddress(String(offer.new_lender ?? ''))}</span>
+                    <AddressDisplay address={String(offer.new_lender ?? '')} className="text-xs" />
                     <span className="text-[10px] text-dust block truncate">Nonce: {String(offer.nonce ?? '--')}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -354,7 +355,7 @@ function RenegotiationSection({ inscriptionId, isBorrower, isLender }: { inscrip
         {!loading && items.length > 0 && items.map((p, i) => (
           <T1Row
             key={String(p.id ?? i)}
-            label={formatAddress(String(p.proposer ?? ''))}
+            label={<AddressDisplay address={String(p.proposer ?? '')} className="text-xs" />}
             detail={p.new_duration ? `New duration: ${p.new_duration}s` : 'Proposed new terms'}
             status={String(p.status ?? 'pending')}
           />
@@ -455,7 +456,7 @@ function InscriptionView({ id }: { id: string }) {
   const lenderDisplay = (() => {
     const lender = detail?.lender
     const isFilled = status === 'filled' || status === 'repaid' || status === 'liquidated'
-    if (lender && lender !== '0x0') return { value: formatAddress(lender), mono: true }
+    if (lender && lender !== '0x0') return { value: <AddressDisplay address={lender} className="text-xs" />, mono: true }
     if (isFilled) return { value: 'Private Lender', mono: false, isPrivate: true }
     return { value: detail?.multi_lender ? 'Multi-Lender' : 'Waiting...', mono: false }
   })()
@@ -476,7 +477,7 @@ function InscriptionView({ id }: { id: string }) {
       durationLabel="From signing"
       multiLender={Boolean(detail?.multi_lender)}
       specs={[
-        { label: 'Borrower', value: detail?.borrower ? formatAddress(detail.borrower) : '--', mono: true },
+        { label: 'Borrower', value: detail?.borrower ? <AddressDisplay address={detail.borrower} className="text-xs" /> : '--', mono: true },
         { label: 'Lender', value: lenderDisplay.value, mono: lenderDisplay.mono, isPrivate: 'isPrivate' in lenderDisplay },
         { label: 'Issued Debt', value: detail?.issued_debt_percentage ? `${Number(BigInt(detail.issued_debt_percentage)) / 100}%` : '0%', mono: false },
         { label: 'Signed At', value: detail?.signed_at && detail.signed_at !== '0' ? formatTimestamp(BigInt(detail.signed_at)) : 'Unsigned', mono: false },
@@ -504,7 +505,7 @@ function InscriptionView({ id }: { id: string }) {
               renderRow={(sale, i) => (
                 <T1Row
                   key={String(sale.id ?? i)}
-                  label={formatAddress(String(sale.buyer ?? ''))}
+                  label={<AddressDisplay address={String(sale.buyer ?? '')} className="text-xs" />}
                   detail={`Min price: ${String(sale.min_price ?? '--')}`}
                   status={String(sale.status ?? 'pending')}
                 />
@@ -577,7 +578,7 @@ interface StelaLayoutProps {
   duration: string | null
   durationLabel: string
   multiLender?: boolean
-  specs: { label: string; value: string; mono: boolean; isPrivate?: boolean }[]
+  specs: { label: string; value: React.ReactNode; mono: boolean; isPrivate?: boolean }[]
   assets: React.ReactNode
   extraContent: React.ReactNode
   sidebarTitle: string
