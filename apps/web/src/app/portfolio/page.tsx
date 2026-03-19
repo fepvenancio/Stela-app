@@ -5,8 +5,10 @@ import { useAccount } from '@starknet-react/core'
 import { normalizeAddress } from '@/lib/address'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
-import { InscriptionListRow } from '@/components/InscriptionListRow'
-import { OrderListRow } from '@/components/OrderListRow'
+import { SummaryBar } from '@/components/portfolio/SummaryBar'
+import { computePortfolioSummary } from '@/lib/portfolio-utils'
+import { PortfolioInscriptionRow } from '@/components/portfolio/PortfolioInscriptionRow'
+import { PortfolioOrderRow } from '@/components/portfolio/PortfolioOrderRow'
 import { ListingTableHeader } from '@/components/ListingTableHeader'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -37,25 +39,6 @@ function EmptyTab({ message, cta }: { message: string; cta?: { label: string; hr
           {cta.label}
         </Link>
       )}
-    </div>
-  )
-}
-
-function InscriptionList({ items }: { items: EnrichedInscription[] }) {
-  return (
-    <div className="flex flex-col">
-      {items.map((ins) => (
-        <InscriptionListRow
-          key={ins.id}
-          id={ins.id}
-          status={ins.computedStatus}
-          creator={ins.creator}
-          multiLender={ins.multi_lender}
-          duration={ins.duration}
-          assets={ins.assets ?? []}
-          pendingShares={ins.pendingShares}
-        />
-      ))}
     </div>
   )
 }
@@ -193,6 +176,11 @@ export default function PortfolioPage() {
 
   const totalPositions = lending.length + borrowing.length + repaid.length + redeemable.length + orders.length + swapOrders.length
 
+  const summary = useMemo(
+    () => computePortfolioSummary({ lending, borrowing, redeemable, borrowingOrders, lendingOrders }),
+    [lending, borrowing, redeemable, borrowingOrders, lendingOrders],
+  )
+
   const hasRedeemable = redeemable.length > 0
 
   return (
@@ -267,6 +255,8 @@ export default function PortfolioPage() {
                 </Link>
               </div>
             ) : (
+              <>
+              <SummaryBar summary={summary} />
               <Tabs defaultValue={defaultTab}>
                 <TabsList variant="line" className="mb-4 overflow-x-auto">
                   {TAB_CONFIG.map((tab) => (
@@ -308,11 +298,15 @@ export default function PortfolioPage() {
                           {activeLendingOrders.length > 0 && (
                             <div className="flex flex-col">
                               {activeLendingOrders.map((order) => (
-                                <OrderListRow key={order.id} order={order} />
+                                <PortfolioOrderRow key={order.id} order={order} />
                               ))}
                             </div>
                           )}
-                          <InscriptionList items={activeLendingInscriptions} />
+                          <div className="flex flex-col">
+                            {activeLendingInscriptions.map((ins) => (
+                              <PortfolioInscriptionRow key={ins.id} ins={ins} />
+                            ))}
+                          </div>
                         </>
                       )}
 
@@ -323,11 +317,15 @@ export default function PortfolioPage() {
                           {activeBorrowingOrders.length > 0 && (
                             <div className="flex flex-col">
                               {activeBorrowingOrders.map((order) => (
-                                <OrderListRow key={order.id} order={order} />
+                                <PortfolioOrderRow key={order.id} order={order} />
                               ))}
                             </div>
                           )}
-                          <InscriptionList items={activeBorrowingInscriptions} />
+                          <div className="flex flex-col">
+                            {activeBorrowingInscriptions.map((ins) => (
+                              <PortfolioInscriptionRow key={ins.id} ins={ins} />
+                            ))}
+                          </div>
                         </>
                       )}
                     </div>
@@ -346,10 +344,10 @@ export default function PortfolioPage() {
                       <ListingTableHeader />
                       <div className="flex flex-col">
                         {pendingOrders.map((order) => (
-                          <OrderListRow key={order.id} order={order} />
+                          <PortfolioOrderRow key={order.id} order={order} />
                         ))}
                         {pendingSwaps.map((order) => (
-                          <OrderListRow key={order.id} order={order} />
+                          <PortfolioOrderRow key={order.id} order={order} />
                         ))}
                       </div>
                     </div>
@@ -368,7 +366,11 @@ export default function PortfolioPage() {
                       {filteredRedeemable.length > 0 && (
                         <>
                           <SectionHeading label="Redeemable" />
-                          <InscriptionList items={filteredRedeemable} />
+                          <div className="flex flex-col">
+                            {filteredRedeemable.map((ins) => (
+                              <PortfolioInscriptionRow key={ins.id} ins={ins} />
+                            ))}
+                          </div>
                         </>
                       )}
 
@@ -376,7 +378,11 @@ export default function PortfolioPage() {
                       {filteredRepaid.length > 0 && (
                         <>
                           <SectionHeading label="Repaid" />
-                          <InscriptionList items={filteredRepaid} />
+                          <div className="flex flex-col">
+                            {filteredRepaid.map((ins) => (
+                              <PortfolioInscriptionRow key={ins.id} ins={ins} />
+                            ))}
+                          </div>
                         </>
                       )}
 
@@ -386,10 +392,10 @@ export default function PortfolioPage() {
                           <SectionHeading label="Past Orders" />
                           <div className="flex flex-col">
                             {historyOrders.map((order) => (
-                              <OrderListRow key={order.id} order={order} />
+                              <PortfolioOrderRow key={order.id} order={order} />
                             ))}
                             {historySwaps.map((order) => (
-                              <OrderListRow key={order.id} order={order} />
+                              <PortfolioOrderRow key={order.id} order={order} />
                             ))}
                           </div>
                         </>
@@ -398,6 +404,7 @@ export default function PortfolioPage() {
                   )}
                 </TabsContent>
               </Tabs>
+              </>
             )}
           </>
         )}
