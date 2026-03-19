@@ -6,6 +6,7 @@ import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { MatchedOrder } from '@/hooks/useInstantSettle'
 import type { OnChainMatch } from '@/hooks/useMatchDetection'
 import { computeYieldPercent, type FilterableAsset } from '@/lib/filter-utils'
+import { BlendedRateSummary } from './BlendedRateSummary'
 import { formatAddress } from '@/lib/address'
 import { formatTokenValue, formatDuration } from '@/lib/format'
 
@@ -319,6 +320,11 @@ export function BestTradesPanel({
     return all.slice(0, MAX_ROWS)
   }, [offchainMatches, onchainMatches, mode])
 
+  const blendedEntries = ranked.map(t => ({
+    apr: t.score,
+    debtAmount: sumRawAssets(t.debtAssets),
+  }))
+
   const isLoading = isChecking && ranked.length === 0
   const isEmpty = !isChecking && ranked.length === 0 && hasCompletedCheckRef.current
 
@@ -330,6 +336,7 @@ export function BestTradesPanel({
 
   return (
     <section aria-label="Best available trades" className="space-y-3">
+      <BlendedRateSummary entries={blendedEntries} mode={mode} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
