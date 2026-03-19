@@ -64,9 +64,9 @@ export interface PortfolioData {
 }
 
 const ACTIVE_STATUSES = new Set(['open', 'partial', 'filled'])
-const INSCRIPTIONS_LIMIT = 200
-const ORDERS_LIMIT = 200
-const T1_LIMIT = 100
+const INSCRIPTIONS_LIMIT = 50
+const ORDERS_LIMIT = 50
+const T1_LIMIT = 50
 
 export function usePortfolio(address: string | undefined): PortfolioData {
   // ── Inscriptions query ──
