@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useFetchApi, buildApiUrl } from './api'
+import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
+import { buildApiUrl } from './api'
 import type { OrderBookResponse, DurationFilter } from '@/types/orderbook'
 
 interface UseOrderBookOptions {
@@ -16,16 +17,21 @@ export function useOrderBook(
   collateralToken: string,
   options?: UseOrderBookOptions,
 ) {
-  const url = useMemo(() => {
-    if (!debtToken || !collateralToken) return null
-    return buildApiUrl(`/api/orderbook/${debtToken}_${collateralToken}`, {
-      duration: options?.duration && options.duration !== 'all' ? options.duration : undefined,
-    })
-  }, [debtToken, collateralToken, options?.duration])
+  const durationParam = options?.duration && options.duration !== 'all' ? options.duration : undefined
 
-  const interval = options?.refreshInterval ?? 30_000
-
-  const { data, isLoading, error, refetch } = useFetchApi<OrderBookResponse>(url, undefined, interval)
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: queryKeys.orders.book(debtToken, collateralToken, durationParam),
+    queryFn: async () => {
+      const url = buildApiUrl(`/api/orderbook/${debtToken}_${collateralToken}`, {
+        duration: durationParam,
+      })
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json() as Promise<OrderBookResponse>
+    },
+    enabled: Boolean(debtToken && collateralToken),
+    refetchInterval: options?.refreshInterval ?? 30_000,
+  })
 
   return { data: data ?? null, isLoading, error: error?.message ?? null, refetch }
 }

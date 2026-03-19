@@ -1,6 +1,7 @@
 'use client'
 
-import { useFetchApi } from './api'
+import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
 import type { PairAggregate } from '@stela/core'
 
 interface PairsResponse {
@@ -10,14 +11,19 @@ interface PairsResponse {
 export type { PairAggregate }
 
 export function usePairs() {
-  const { data: raw, isLoading, error, refetch } = useFetchApi<PairsResponse>(
-    '/api/pairs',
-    undefined,
-    15_000,
-  )
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: queryKeys.pairs.all,
+    queryFn: async () => {
+      const res = await fetch('/api/pairs')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json: PairsResponse = await res.json()
+      return json.data
+    },
+    refetchInterval: 15_000,
+  })
 
   return {
-    data: raw?.data ?? [],
+    data: data ?? [],
     isLoading,
     error,
     refetch,

@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useFetchApi, buildApiUrl } from './api'
+import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
+import { buildApiUrl } from './api'
 
 /** Row shape returned by the /api/orders list endpoint */
 export interface OrderRow {
@@ -44,26 +45,45 @@ interface ApiOrderListResponse {
 }
 
 export function useOrders(params?: OrderListParams) {
-  const url = useMemo(
-    () =>
-      buildApiUrl('/api/orders', {
-        status: params?.status ?? 'all',
-        address: params?.address,
-        page: params?.page,
-        limit: params?.limit ?? 50,
-      }),
-    [params?.status, params?.address, params?.page, params?.limit],
-  )
+  const filters = {
+    status: params?.status,
+    address: params?.address,
+    page: params?.page,
+    limit: params?.limit,
+  }
 
-  const { data: raw, isLoading, error, refetch } = useFetchApi<ApiOrderListResponse>(url, undefined, 30_000)
-  const data = raw?.data ?? []
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: queryKeys.orders.list(filters),
+    queryFn: async () => {
+      const url = buildApiUrl('/api/orders', {
+        status: filters.status ?? 'all',
+        address: filters.address,
+        page: filters.page,
+        limit: filters.limit ?? 50,
+      })
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json: ApiOrderListResponse = await res.json()
+      return json.data
+    },
+    refetchInterval: 30_000,
+  })
 
-  return { data, isLoading, error, refetch }
+  return { data: data ?? [], isLoading, error, refetch }
 }
 
 export function useOrder(id: string) {
-  const url = useMemo(() => (id ? `/api/orders/${id}` : null), [id])
-  const { data: raw, isLoading, error, refetch } = useFetchApi<{ data: OrderDetailResponse }>(url, undefined, 5_000)
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: queryKeys.orders.detail(id),
+    queryFn: async () => {
+      const res = await fetch(`/api/orders/${id}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json: { data: OrderDetailResponse } = await res.json()
+      return json.data
+    },
+    enabled: Boolean(id),
+    refetchInterval: 5_000,
+  })
 
-  return { data: raw?.data, isLoading, error, refetch }
+  return { data, isLoading, error, refetch }
 }

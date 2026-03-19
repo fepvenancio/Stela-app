@@ -1,6 +1,8 @@
 'use client'
 
-import { useFetchApi, buildApiUrl } from './api'
+import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
+import { buildApiUrl } from './api'
 
 interface ShareListing {
   id: string
@@ -25,20 +27,45 @@ export function useShareListings(params?: {
   page?: number
   limit?: number
 }) {
-  const url = buildApiUrl('/api/share-listings', {
+  const filterParams: Record<string, string | undefined> = {
     inscription_id: params?.inscription_id,
     seller: params?.seller,
     status: params?.status ?? 'active',
-    page: params?.page,
-    limit: params?.limit,
+    page: params?.page?.toString(),
+    limit: params?.limit?.toString(),
+  }
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: queryKeys.shares.listings(filterParams),
+    queryFn: async () => {
+      const url = buildApiUrl('/api/share-listings', {
+        inscription_id: params?.inscription_id,
+        seller: params?.seller,
+        status: params?.status ?? 'active',
+        page: params?.page,
+        limit: params?.limit,
+      })
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json() as Promise<{ data: ShareListing[] }>
+    },
+    refetchInterval: 30_000,
   })
 
-  return useFetchApi<{ data: ShareListing[] }>(url, undefined, 30_000)
+  return { data, isLoading, error, refetch }
 }
 
 /** Fetch a single share listing by ID */
 export function useShareListing(id: string | null) {
-  return useFetchApi<{ data: ShareListing }>(
-    id ? `/api/share-listings/${id}` : null
-  )
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: queryKeys.shares.detail(id ?? ''),
+    queryFn: async () => {
+      const res = await fetch(`/api/share-listings/${id}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json() as Promise<{ data: ShareListing }>
+    },
+    enabled: Boolean(id),
+  })
+
+  return { data, isLoading, error, refetch }
 }
