@@ -59,10 +59,11 @@ Plans:
   1. Portfolio page displays a list of the user's active positions as both borrower and lender, each showing current status (open, filled, partial, etc.)
   2. A summary bar at the top shows total value lent, total value borrowed, and overall position health
   3. Each position card has inline action buttons (repay, redeem, claim) appropriate to the position's current state, and clicking them initiates the transaction
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Add actionLabel prop to list row components, create computePortfolioSummary utility, update SummaryBar interface
+- [ ] 03-02-PLAN.md — Wire SummaryBar, PortfolioInscriptionRow/PortfolioOrderRow action wrappers, and signedAt into portfolio page
 
 ### Phase 4: Bot Matching
 **Goal**: The bot settles offers optimally by rate, and users can see exactly which offers will be matched and why
@@ -86,5 +87,5 @@ Note: Phases 2 and 3 both depend on Phase 1 but not on each other. They could be
 |-------|----------------|--------|-----------|
 | 1. Data Layer | 0/3 | Planned | - |
 | 2. Trade Flow | 0/2 | Planned | - |
-| 3. Portfolio | 0/0 | Not started | - |
+| 3. Portfolio | 0/2 | Planned | - |
 | 4. Bot Matching | 0/0 | Not started | - |
