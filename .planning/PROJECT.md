@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A comprehensive UX overhaul of the Stela P2P lending/inscriptions protocol frontend. The app already works end-to-end (browse, create, lend, swap, settle, liquidate) but the user flows have friction: data gets lost navigating between Browse and Trade pages, the lend/swap selection could be smoother, the bot doesn't optimally select and display the best trades, and the portfolio page shows nothing. This project fixes these flows, researches how top DeFi protocols handle similar UX, and delivers the simplest possible experience for Stela's unique inscription-based model.
+A P2P lending/inscriptions protocol frontend on StarkNet with a polished, low-friction UX. Users can browse markets, lend or swap in minimal clicks with state preserved across pages, view a full portfolio with inline actions, and see transparent bot matching logic. The app runs entirely on Cloudflare Workers with D1, uses TanStack Query for data fetching, nuqs for URL state, and Zustand for client state.
 
 ## Core Value
 
@@ -12,8 +12,6 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 
 ### Validated
 
-<!-- Existing capabilities confirmed from codebase -->
-
 - ✓ On-chain inscription lifecycle (create, sign, repay, cancel, liquidate) — existing
 - ✓ Off-chain order flow with SNIP-12 signatures (create order, submit offer, settle) — existing
 - ✓ Apibara event indexing pipeline (DNA stream → webhook → D1) — existing
@@ -22,64 +20,60 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 - ✓ Rate limiting, signature verification, nonce validation on API routes — existing
 - ✓ Wallet integration (Cartridge Controller, Argent, Braavos) — existing
 - ✓ Genesis NFT fee discount system — existing
-- ✓ Browse/Markets page listing inscriptions and orders — existing
-- ✓ Create inscription page — existing
-- ✓ Lend/Swap tab toggle on trade pages — existing
-- ✓ TanStack Query data fetching with stale-while-revalidate — Phase 1
-- ✓ nuqs URL state management infrastructure — Phase 1
-- ✓ Zustand client state store (batch selection) — Phase 1
-- ✓ Auto-refresh at appropriate intervals without manual reload — Phase 1
-- ✓ State preservation: Browse/Markets selections carry over to Trade page via nuqs URL params — Phase 2
-- ✓ Shareable trade links with pre-filled pair, mode, and amount — Phase 2
-- ✓ Quick Lend from Browse via in-place signing modal — Phase 2
-- ✓ OrderBook on Trade page sorted by best rate — Phase 2
-- ✓ FeeBreakdown visible on all signing paths — Phase 2
-- ✓ Debt-amount-weighted blended rate preview in BestTradesPanel — Phase 2
-- ✓ Portfolio page with active positions, SummaryBar, and inline actions — Phase 3
-- ✓ PortfolioInscriptionRow with Repay/Claim/Cancel/Liquidate actions — Phase 3
-- ✓ PortfolioOrderRow with SNIP-12 cancel signing — Phase 3
-- ✓ computePortfolioSummary with total lent/borrowed aggregation — Phase 3
+- ✓ TanStack Query data fetching with stale-while-revalidate — v1.0
+- ✓ nuqs URL state management — v1.0
+- ✓ Zustand client state store — v1.0
+- ✓ Auto-refresh without manual reload — v1.0
+- ✓ State preservation: Browse→Trade via URL params — v1.0
+- ✓ Shareable trade links — v1.0
+- ✓ Quick Lend from Browse via in-place signing modal — v1.0
+- ✓ OrderBook on Trade page sorted by best rate — v1.0
+- ✓ FeeBreakdown on all signing paths — v1.0
+- ✓ Debt-amount-weighted blended rate preview — v1.0
+- ✓ Portfolio with positions, SummaryBar, inline actions — v1.0
+- ✓ Bot rate-sorted settlement with shared computeInterestRate — v1.0
+- ✓ BotRankBadge matching preview — v1.0
 
 ### Active
 
-<!-- Current scope — these are hypotheses until shipped and validated -->
-
-- ✓ Bot rate-sorted settlement with shared computeInterestRate in @stela/core — Phase 4
-- ✓ BotRankBadge matching preview in BestTradesPanel — Phase 4
-- [ ] Bot matching display: frontend shows what the bot will match and why
+(None — v1.0 complete. Define next milestone requirements via `/gsd:new-milestone`)
 
 ### Out of Scope
 
-- UI color scheme / visual design changes — user confirmed they love current colors
-- Menu structure / navigation organization — user confirmed current organization works well
-- Smart contract changes — this is frontend + bot logic only
-- New financial features (new order types, new collateral types) — focus is UX of existing features
+- UI color scheme / visual design changes — user loves current colors
+- Menu structure / navigation organization — confirmed working well
+- Smart contract changes — frontend + bot logic only
+- New financial features (new order types, new collateral types)
 - Mobile app — web-first
+- WebSocket real-time updates — Cloudflare Workers stateless
+- Client-side price charts — not a DEX
 
 ## Context
 
-- Stela uses an inscription-based P2P lending model where borrowers create inscriptions (or off-chain orders) specifying debt, interest, and collateral assets. Lenders sign offers against these.
-- The bot runs every 2 minutes to settle matched orders on-chain and liquidate expired inscriptions.
-- Current bot settles orders individually via `settle()` — no intelligence about picking optimal matches when multiple offers exist.
-- Frontend has `batch_settle()` support via `useMultiSettle` hook for aggregate settlement with one lender signature.
-- Portfolio page exists at `/portfolio/page.tsx` but shows nothing — needs investigation.
-- State between pages is lost because selections on Browse don't persist to Trade navigation.
-- The Stela contract repo at `../stela-contracts/` (separate repo) should be studied to understand the full on-chain mechanics.
+Shipped v1.0 UX Overhaul across 4 phases, 9 plans.
+Stack: Next.js 15 on Cloudflare Workers, TanStack Query, nuqs, Zustand, starknet.js v6/v9.
+Key infrastructure: `@stela/core` shared types/queries/rate computation, D1 database, Apibara indexer.
+Bot now settles by lowest interest rate first using shared `computeInterestRate`.
 
 ## Constraints
 
-- **Runtime**: Everything runs on Cloudflare Workers — no server-side sessions, state must flow via URL params, query strings, or client-side state
-- **Tech stack**: Next.js 15, React 19, Tailwind CSS 4, starknet.js — no new frameworks
-- **Bot environment**: Cloudflare Worker cron — no persistent process, must complete within Worker time limits
-- **Database**: D1 (SQLite) — all queries through `@stela/core` `createD1Queries`
+- **Runtime**: Cloudflare Workers — no server-side sessions
+- **Tech stack**: Next.js 15, React 19, Tailwind CSS 4, starknet.js
+- **Bot environment**: Cloudflare Worker cron (2-min interval)
+- **Database**: D1 (SQLite) via `@stela/core` `createD1Queries`
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Research top DeFi protocol UX before redesigning flows | User wants the simplest approach validated against industry standards | — Pending |
-| Study stela-contracts repo for optimal matching logic | Need to understand on-chain mechanics to design best bot matching | — Pending |
-| Keep existing color scheme and navigation | User explicitly confirmed satisfaction with visual design and menu organization | ✓ Good |
+| Keep existing color scheme and navigation | User confirmed satisfaction | ✓ Good |
+| Activate TanStack Query (already installed) | Zero new deps, replaces custom useFetchApi | ✓ Good |
+| nuqs for URL state instead of global store | Cloudflare Workers has no sessions; URL is the state carrier | ✓ Good |
+| Zustand replaces React Context for batch selection | Provider-free, selector-based re-renders | ✓ Good |
+| QuickLendModal signs in-place (no navigation) | Minimizes clicks; keeps user on Browse page | ✓ Good |
+| computeInterestRate in @stela/core | Single source of truth for bot and frontend rate calculation | ✓ Good |
+| Debt-amount-weighted blended rate | Research validated this over simple average | ✓ Good |
+| PortfolioRow wrapper pattern (hooks per row) | React hook rules require wrapper components for conditional logic | ✓ Good |
 
 ---
-*Last updated: 2026-03-19 after Phase 4 (Bot Matching) — all phases complete*
+*Last updated: 2026-03-19 after v1.0 milestone*
