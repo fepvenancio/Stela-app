@@ -29,12 +29,17 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 - ✓ nuqs URL state management infrastructure — Phase 1
 - ✓ Zustand client state store (batch selection) — Phase 1
 - ✓ Auto-refresh at appropriate intervals without manual reload — Phase 1
+- ✓ State preservation: Browse/Markets selections carry over to Trade page via nuqs URL params — Phase 2
+- ✓ Shareable trade links with pre-filled pair, mode, and amount — Phase 2
+- ✓ Quick Lend from Browse via in-place signing modal — Phase 2
+- ✓ OrderBook on Trade page sorted by best rate — Phase 2
+- ✓ FeeBreakdown visible on all signing paths — Phase 2
+- ✓ Debt-amount-weighted blended rate preview in BestTradesPanel — Phase 2
 
 ### Active
 
 <!-- Current scope — these are hypotheses until shipped and validated -->
 
-- [ ] State preservation: selections made on Browse/Markets carry over to Trade page
 - [ ] Optimal trade matching: bot selects lowest-interest-rate offers first, aggregates multiple until amount filled
 - [ ] Trade display: users see clearly ranked offers by best rate with aggregation preview
 - [ ] Portfolio page: shows user's active positions (as borrower and lender), history, and current status
@@ -76,4 +81,4 @@ A user can go from browsing available inscriptions to completing a lend or swap 
 | Keep existing color scheme and navigation | User explicitly confirmed satisfaction with visual design and menu organization | ✓ Good |
 
 ---
-*Last updated: 2026-03-19 after Phase 1 (Data Layer) completion*
+*Last updated: 2026-03-19 after Phase 2 (Trade Flow) completion*
