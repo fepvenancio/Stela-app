@@ -28,6 +28,9 @@ import { TransactionProgressModal } from '@/components/TransactionProgressModal'
 import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
 import { InlineMatchList } from '@/components/InlineMatchList'
 import { FeeBreakdown } from '@/components/FeeBreakdown'
+import { OrderBook } from '@/components/orderbook/OrderBook'
+import { useOrderBook } from '@/hooks/useOrderBook'
+import type { DurationFilter } from '@/types/orderbook'
 import { formatTokenValue, formatTimestamp } from '@/lib/format'
 import { BestTradesPanel } from '@/components/trade/BestTradesPanel'
 import { SettlementDrawer, type SettlementSummary } from '@/components/trade/SettlementDrawer'
@@ -497,6 +500,11 @@ function TradeForm({
             )}
             <OrderSettings form={form} isLend={isLend} deadlinePresets={deadlinePresets} />
           </div>
+        )}
+
+        {/* Fee breakdown */}
+        {hasTokens && (
+          <FeeBreakdown type={isLend ? 'lending' : 'swap'} />
         )}
 
         {/* Submit button */}
@@ -1815,6 +1823,12 @@ function TradeContent() {
 
   const [offerMode, setOfferMode] = useState<'standard' | 'collection'>('standard')
   const [collectionView, setCollectionView] = useState<'create' | 'browse'>('create')
+  const [durationFilter, setDurationFilter] = useState<DurationFilter>('all')
+
+  const { data: orderBookData, isLoading: obLoading } = useOrderBook(
+    debtToken ?? '',
+    collateralToken ?? '',
+  )
 
   const TAB_LABELS: Record<TradeMode, string> = {
     lend: 'Lend',
@@ -1918,6 +1932,19 @@ function TradeContent() {
           />
         )}
       </div>
+
+      {/* Order Book — below form, above info sections */}
+      {debtToken && collateralToken && (
+        <div className="max-w-lg mx-auto mt-6">
+          <OrderBook
+            data={orderBookData}
+            isLoading={obLoading}
+            mode={mode === 'swap' ? 'swap' : 'lending'}
+            duration={durationFilter}
+            onDurationChange={setDurationFilter}
+          />
+        </div>
+      )}
 
       {/* Protocol info sections — full width */}
       <InfoSections activeTab={mode} />
