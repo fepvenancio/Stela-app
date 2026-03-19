@@ -63,3 +63,5 @@ export type {
 } from './d1.js'
 
 export { createD1Queries } from './d1.js'
+
+export { computeInterestRate } from './rate.js'
