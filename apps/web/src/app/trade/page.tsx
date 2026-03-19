@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useQueryState } from 'nuqs'
+import { tradeParsers } from './search-params'
 import { useAccount } from '@starknet-react/core'
 import { RpcProvider } from 'starknet'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
@@ -654,8 +655,7 @@ function TradeForm({
 
 /* ── Advanced Form (multi-asset borrow) ──────────────────── */
 
-function AdvancedForm() {
-  const searchParams = useSearchParams()
+function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null; collateralToken: string | null }) {
   const form = useOrderForm('lending')
   const [showMultiAsset, setShowMultiAsset] = useState(false)
   const hasPreFilled = useRef(false)
@@ -663,8 +663,8 @@ function AdvancedForm() {
   /* ── URL param pre-fill (runs once on mount) ── */
   useEffect(() => {
     if (hasPreFilled.current) return
-    const debtParam = searchParams.get('debtToken')
-    const collateralParam = searchParams.get('collateralToken')
+    const debtParam = debtToken
+    const collateralParam = collateralToken
     if (!debtParam && !collateralParam) return
     hasPreFilled.current = true
 
@@ -1808,16 +1808,11 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' | 'advanced' }
 type TradeMode = 'swap' | 'lend' | 'advanced'
 
 function TradeContent() {
-  const searchParams = useSearchParams()
+  const [debtToken] = useQueryState('debtToken', tradeParsers.debtToken)
+  const [collateralToken] = useQueryState('collateralToken', tradeParsers.collateralToken)
+  const [mode, setMode] = useQueryState('mode', tradeParsers.mode)
+  const [, setAmount] = useQueryState('amount', tradeParsers.amount)
 
-  const initialDebtToken = searchParams.get('debtToken') ?? undefined
-  const initialCollateralToken = searchParams.get('collateralToken') ?? undefined
-
-  const rawMode = searchParams.get('mode')
-  const initialMode: TradeMode =
-    rawMode === 'swap' ? 'swap' : rawMode === 'advanced' ? 'advanced' : 'lend'
-
-  const [activeTab, setActiveTab] = useState<TradeMode>(initialMode)
   const [offerMode, setOfferMode] = useState<'standard' | 'collection'>('standard')
   const [collectionView, setCollectionView] = useState<'create' | 'browse'>('create')
 
@@ -1838,9 +1833,9 @@ function TradeContent() {
               <button
                 key={tab}
                 type="button"
-                onClick={() => { setActiveTab(tab); setOfferMode('standard'); setCollectionView('create') }}
+                onClick={() => { setMode(tab); setOfferMode('standard'); setCollectionView('create') }}
                 className={`px-4 sm:px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
-                  activeTab === tab
+                  mode === tab
                     ? 'text-star border-star'
                     : 'text-dust hover:text-chalk border-transparent'
                 }`}
@@ -1851,7 +1846,7 @@ function TradeContent() {
           </div>
 
           {/* Lend mode toggle — Token vs Collection (only shown in lend tab) */}
-          {activeTab === 'lend' && (
+          {mode === 'lend' && (
             <div className="flex flex-col items-end gap-1">
               <div className="flex gap-1">
                 {(['standard', 'collection'] as const).map((m) => (
@@ -1879,7 +1874,7 @@ function TradeContent() {
         </div>
 
         {/* Collection sub-tabs: Create / Browse */}
-        {activeTab === 'lend' && offerMode === 'collection' && (
+        {mode === 'lend' && offerMode === 'collection' && (
           <div className="flex gap-1 mb-4">
             {(['create', 'browse'] as const).map((v) => (
               <button
@@ -1899,16 +1894,16 @@ function TradeContent() {
         )}
 
         {/* Advanced tab description */}
-        {activeTab === 'advanced' && (
+        {mode === 'advanced' && (
           <p className="text-[11px] text-dust mb-5 leading-relaxed">
             Full multi-asset inscription builder — add multiple debt, collateral, and interest assets in one order.
           </p>
         )}
 
         {/* Tab content */}
-        {activeTab === 'advanced' ? (
-          <AdvancedForm key="advanced" />
-        ) : activeTab === 'lend' && offerMode === 'collection' ? (
+        {mode === 'advanced' ? (
+          <AdvancedForm key="advanced" debtToken={debtToken} collateralToken={collateralToken} />
+        ) : mode === 'lend' && offerMode === 'collection' ? (
           collectionView === 'create' ? (
             <CollectionOfferForm key="collection-create" />
           ) : (
@@ -1916,16 +1911,16 @@ function TradeContent() {
           )
         ) : (
           <TradeForm
-            key={`${activeTab}-${offerMode}`}
-            mode={activeTab === 'swap' ? 'swap' : 'lend'}
-            initialDebtToken={initialDebtToken}
-            initialCollateralToken={initialCollateralToken}
+            key={`${mode}-${offerMode}`}
+            mode={mode === 'swap' ? 'swap' : 'lend'}
+            initialDebtToken={debtToken ?? undefined}
+            initialCollateralToken={collateralToken ?? undefined}
           />
         )}
       </div>
 
       {/* Protocol info sections — full width */}
-      <InfoSections activeTab={activeTab} />
+      <InfoSections activeTab={mode} />
     </div>
   )
 }
