@@ -72,10 +72,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. When multiple offers exist for an order, the bot settles them starting from the lowest interest rate, aggregating until the requested amount is filled
   2. On the Trade page, users can see a matching preview that shows which offers the bot will select for a given order and the rate ranking logic behind it
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Shared computeInterestRate in @stela/core, bot rate-sorted settlement
+- [ ] 04-02-PLAN.md — BotRankBadge component and bot matching preview in BestTradesPanel
 
 ## Progress
 
@@ -88,4 +89,4 @@ Note: Phases 2 and 3 both depend on Phase 1 but not on each other. They could be
 | 1. Data Layer | 0/3 | Planned | - |
 | 2. Trade Flow | 0/2 | Planned | - |
 | 3. Portfolio | 1/2 | In Progress|  |
-| 4. Bot Matching | 0/0 | Not started | - |
+| 4. Bot Matching | 0/2 | Planned | - |
