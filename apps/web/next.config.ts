@@ -89,8 +89,18 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/stelas',
-        destination: '/markets',
+        source: '/trade',
+        destination: '/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/markets',
+        destination: '/stelas',
+        permanent: true,
+      },
+      {
+        source: '/markets/:pair',
+        destination: '/stelas',
         permanent: true,
       },
       {
