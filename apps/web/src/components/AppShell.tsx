@@ -26,8 +26,8 @@ import {
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/trade', label: 'Lend', icon: HandCoins },
-  { href: '/borrow', label: 'Borrow', icon: FileSignature },
-  { href: '/swap', label: 'Swap', icon: ArrowLeftRight },
+  { href: '/trade?mode=advanced', label: 'Borrow', icon: FileSignature },
+  { href: '/trade?mode=swap', label: 'Swap', icon: ArrowLeftRight },
   { href: '/stelas', label: 'Stelas', icon: Layers },
   { href: '/portfolio', label: 'Portfolio', icon: Briefcase },
   { href: '/nft', label: 'NFT', icon: Gem },

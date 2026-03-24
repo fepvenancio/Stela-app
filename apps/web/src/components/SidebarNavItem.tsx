@@ -10,11 +10,14 @@ interface SidebarNavItemProps {
   label: string
   icon: LucideIcon
   isOpen: boolean
+  /** Match active state by this path instead of href (for query-param routes) */
+  activePath?: string
 }
 
-export function SidebarNavItem({ href, label, icon: Icon, isOpen }: SidebarNavItemProps) {
+export function SidebarNavItem({ href, label, icon: Icon, isOpen, activePath }: SidebarNavItemProps) {
   const pathname = usePathname()
-  const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
+  const matchPath = activePath ?? href
+  const active = matchPath === '/' ? pathname === '/' : pathname === matchPath
 
   return (
     <Link
