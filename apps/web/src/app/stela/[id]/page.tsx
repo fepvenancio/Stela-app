@@ -42,8 +42,8 @@ function detectIdType(id: string): IdType {
 
 const ROLE_META = {
   debt: { label: 'Borrow', dot: 'bg-nebula', text: 'text-nebula', bg: 'bg-nebula/8', border: 'border-nebula/20' },
-  interest: { label: 'Interest', dot: 'bg-aurora', text: 'text-aurora', bg: 'bg-aurora/8', border: 'border-aurora/20' },
-  collateral: { label: 'Collateral', dot: 'bg-star', text: 'text-star', bg: 'bg-star/8', border: 'border-star/20' },
+  interest: { label: 'Interest', dot: 'bg-green-500', text: 'text-aurora', bg: 'bg-green-500/8', border: 'border-aurora/20' },
+  collateral: { label: 'Collateral', dot: 'bg-accent', text: 'text-accent', bg: 'bg-accent/8', border: 'border-accent/20' },
 } as const
 
 type AssetRole = keyof typeof ROLE_META
@@ -64,9 +64,9 @@ function AssetPillDisplay({ asset }: { asset: DisplayAsset }) {
     : `${formatTokenValue(asset.value ?? '0', token?.decimals ?? 18)} ${symbol}`
 
   return (
-    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface/40 border border-edge/25">
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface/40 border border-border/25">
       <TokenAvatarByAddress address={asset.address} size={16} />
-      <span className="text-xs text-chalk font-medium">{formatted}</span>
+      <span className="text-xs text-white font-medium">{formatted}</span>
     </div>
   )
 }
@@ -79,7 +79,7 @@ function AssetSection({ role, assets, isLoading }: { role: AssetRole; assets: Di
         <div className={`w-2 h-2 rounded-full ${meta.dot}`} />
         <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${meta.text}`}>{meta.label}</span>
         {assets.length > 1 && (
-          <span className="text-[10px] font-mono text-dust bg-surface/60 px-1.5 py-0.5 rounded-md">{assets.length}</span>
+          <span className="text-[10px] font-mono text-gray-400 bg-surface/60 px-1.5 py-0.5 rounded-md">{assets.length}</span>
         )}
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -88,7 +88,7 @@ function AssetSection({ role, assets, isLoading }: { role: AssetRole; assets: Di
         ) : assets.length > 0 ? (
           assets.map((a, i) => <AssetPillDisplay key={`${role}-${i}`} asset={a} />)
         ) : (
-          <span className="text-[11px] text-ash/50 italic pl-4">None</span>
+          <span className="text-[11px] text-gray-500/50 italic pl-4">None</span>
         )}
       </div>
     </div>
@@ -133,7 +133,7 @@ function OrderView({ id }: { id: string }) {
     return null
   }, [debtAssets, interestAssets])
 
-  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load order</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
+  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load order</p><Link href="/markets" className="text-accent text-sm hover:underline">Back to Markets</Link></div>
 
   const isPending = order?.status === 'pending'
   const hasOffers = (order?.offers?.length ?? 0) > 0
@@ -178,17 +178,17 @@ function OrderView({ id }: { id: string }) {
       extraContent={
         hasOffers ? (
           <section className="space-y-3">
-            <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em] pl-1">Lending Offers</h3>
+            <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em] pl-1">Lending Offers</h3>
             <div className="space-y-2">
               {order?.offers?.map((offer) => (
-                <div key={offer.id} className="flex items-center justify-between p-4 bg-surface/20 border border-edge/20 rounded-2xl">
+                <div key={offer.id} className="flex items-center justify-between p-4 bg-surface/20 border border-border/20 rounded-2xl">
                   <div>
-                    <span className="text-[9px] text-dust uppercase tracking-widest block mb-0.5">Lender</span>
+                    <span className="text-[9px] text-gray-400 uppercase tracking-widest block mb-0.5">Lender</span>
                     <AddressDisplay address={offer.lender} className="text-sm" />
                   </div>
                   <div className="text-right">
-                    <span className="text-[9px] text-dust uppercase tracking-widest block mb-0.5">Share</span>
-                    <span className="text-sm text-star font-display">{(offer.bps / 100).toFixed(2)}%</span>
+                    <span className="text-[9px] text-gray-400 uppercase tracking-widest block mb-0.5">Share</span>
+                    <span className="text-sm text-accent font-bold">{(offer.bps / 100).toFixed(2)}%</span>
                   </div>
                 </div>
               ))}
@@ -238,10 +238,10 @@ function useT1List(endpoint: string) {
 
 function T1Row({ label, detail, status }: { label: React.ReactNode; detail: string; status: string }) {
   return (
-    <div className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
+    <div className="flex items-start sm:items-center justify-between gap-2 p-3 bg-surface/40 rounded-xl border border-border/10">
       <div className="space-y-1 min-w-0">
-        <span className="text-xs text-chalk font-mono truncate block">{label}</span>
-        <span className="text-[10px] text-dust block truncate">{detail}</span>
+        <span className="text-xs text-white font-mono truncate block">{label}</span>
+        <span className="text-[10px] text-gray-400 block truncate">{detail}</span>
       </div>
       <Badge variant={status as 'pending'} className="rounded-full px-3 py-0.5 text-[10px] uppercase tracking-widest shrink-0">
         {status}
@@ -257,9 +257,9 @@ function T1Section({ inscriptionId, title, endpoint, renderRow }: {
   const { items, loading } = useT1List(`${endpoint}?inscription_id=${inscriptionId}`)
   if (loading || items.length === 0) return null
   return (
-    <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-edge/20 bg-surface/25">
-        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">{title}</h3>
+    <section className="bg-surface/10 border border-border/20 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/20 bg-surface/25">
+        <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">{title}</h3>
       </div>
       <div className="p-5 space-y-3">
         {items.map((item, i) => renderRow(item, i))}
@@ -278,15 +278,15 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
   const canCreateOffer = isConnected && !isBorrower
 
   return (
-    <section id="refinance" className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-edge/20 bg-surface/25 flex items-center justify-between">
-        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Refinance Offers</h3>
+    <section id="refinance" className="bg-surface/10 border border-border/20 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/20 bg-surface/25 flex items-center justify-between">
+        <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Refinance Offers</h3>
         {canCreateOffer && !showForm && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowForm(true)}
-            className="text-[10px] uppercase tracking-widest border-star/30 text-star hover:bg-star/10"
+            className="text-[10px] uppercase tracking-widest border-accent/30 text-accent hover:bg-accent/10"
           >
             Make Offer
           </Button>
@@ -294,7 +294,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
       </div>
       <div className="p-5 space-y-4">
         {showForm && (
-          <div className="border border-star/20 rounded-xl p-4 bg-star/[0.02]">
+          <div className="border border-accent/20 rounded-xl p-4 bg-accent/[0.02]">
             <RefinanceOfferForm inscriptionId={inscriptionId} onClose={() => setShowForm(false)} />
           </div>
         )}
@@ -305,10 +305,10 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
               const offerStatus = String(offer.status ?? 'pending')
               const canApprove = isBorrower && offerStatus === 'pending'
               return (
-                <div key={offerId || i} className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
+                <div key={offerId || i} className="flex items-start sm:items-center justify-between gap-2 p-3 bg-surface/40 rounded-xl border border-border/10">
                   <div className="space-y-1 min-w-0">
                     <AddressDisplay address={String(offer.new_lender ?? '')} className="text-xs" />
-                    <span className="text-[10px] text-dust block truncate">Nonce: {String(offer.nonce ?? '--')}</span>
+                    <span className="text-[10px] text-gray-400 block truncate">Nonce: {String(offer.nonce ?? '--')}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {canApprove && (
@@ -335,7 +335,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
           </div>
         )}
         {!loading && items.length === 0 && !showForm && (
-          <p className="text-xs text-dust italic text-center py-2">No refinance offers yet.</p>
+          <p className="text-xs text-gray-400 italic text-center py-2">No refinance offers yet.</p>
         )}
       </div>
     </section>
@@ -347,9 +347,9 @@ function RenegotiationSection({ inscriptionId, isBorrower, isLender }: { inscrip
   const isParty = isBorrower || isLender
 
   return (
-    <section id="renegotiation" className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-edge/20 bg-surface/25 flex items-center justify-between">
-        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Renegotiation</h3>
+    <section id="renegotiation" className="bg-surface/10 border border-border/20 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/20 bg-surface/25 flex items-center justify-between">
+        <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Renegotiation</h3>
       </div>
       <div className="p-5 space-y-3">
         {!loading && items.length > 0 && items.map((p, i) => (
@@ -361,7 +361,7 @@ function RenegotiationSection({ inscriptionId, isBorrower, isLender }: { inscrip
           />
         ))}
         {!loading && items.length === 0 && (
-          <p className="text-xs text-dust italic text-center py-2">
+          <p className="text-xs text-gray-400 italic text-center py-2">
             {isParty
               ? 'No renegotiation proposals. Either party can propose new terms.'
               : 'No renegotiation proposals yet.'}
@@ -443,7 +443,7 @@ function InscriptionView({ id }: { id: string }) {
     return null
   }, [assets])
 
-  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
+  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/markets" className="text-accent text-sm hover:underline">Back to Markets</Link></div>
 
   const debtAssets = assets.filter(r => r.asset_role === 'debt')
   const interestAssets = assets.filter(r => r.asset_role === 'interest')
@@ -536,25 +536,25 @@ function InscriptionView({ id }: { id: string }) {
               auctionStarted={Boolean(detail?.auction_started)}
             />
             {(enrichedStatusValue === 'filled' || enrichedStatusValue === 'grace_period') && (
-              <div className="mt-5 pt-5 border-t border-edge/15 space-y-2">
-                <span className="text-[9px] text-dust uppercase tracking-widest font-bold block mb-3">Advanced</span>
-                <a href="#refinance" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface/20 border border-edge/20 hover:bg-surface/40 hover:border-edge/40 transition-all group">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star shrink-0">
+              <div className="mt-5 pt-5 border-t border-border/15 space-y-2">
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold block mb-3">Advanced</span>
+                <a href="#refinance" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface/20 border border-border/20 hover:bg-surface/40 hover:border-border/40 transition-all group">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent shrink-0">
                     <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 014-4h14" />
                     <path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 01-4 4H3" />
                   </svg>
                   <div>
-                    <span className="text-xs text-chalk font-medium group-hover:text-star transition-colors">Refinance</span>
-                    <span className="text-[10px] text-dust block">Replace the current lender</span>
+                    <span className="text-xs text-white font-medium group-hover:text-accent transition-colors">Refinance</span>
+                    <span className="text-[10px] text-gray-400 block">Replace the current lender</span>
                   </div>
                 </a>
-                <a href="#renegotiation" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface/20 border border-edge/20 hover:bg-surface/40 hover:border-edge/40 transition-all group">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star shrink-0">
+                <a href="#renegotiation" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface/20 border border-border/20 hover:bg-surface/40 hover:border-border/40 transition-all group">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent shrink-0">
                     <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
                   </svg>
                   <div>
-                    <span className="text-xs text-chalk font-medium group-hover:text-star transition-colors">Renegotiate</span>
-                    <span className="text-[10px] text-dust block">Propose new loan terms</span>
+                    <span className="text-xs text-white font-medium group-hover:text-accent transition-colors">Renegotiate</span>
+                    <span className="text-[10px] text-gray-400 block">Propose new loan terms</span>
                   </div>
                 </a>
               </div>
@@ -593,14 +593,14 @@ function StelaLayout({
     <div className="animate-fade-in max-w-5xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center justify-between mb-6">
-        <Link href="/markets" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
+        <Link href="/markets" className="text-gray-500 hover:text-accent transition-colors text-sm flex items-center gap-2 group">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Markets
         </Link>
-        <div className="flex items-center gap-2 bg-surface/40 px-3 py-1 rounded-full border border-edge/25">
-          <span className="text-[10px] font-mono text-dust uppercase tracking-widest">{idLabel}</span>
+        <div className="flex items-center gap-2 bg-surface/40 px-3 py-1 rounded-full border border-border/25">
+          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">{idLabel}</span>
           <CopyButton value={id} />
         </div>
       </div>
@@ -609,7 +609,7 @@ function StelaLayout({
         {/* Main Column */}
         <div className="lg:col-span-2 space-y-5">
           {/* Hero — compact */}
-          <section className="bg-surface/15 border border-edge/25 rounded-2xl p-6 relative overflow-hidden granite-noise">
+          <section className="bg-surface/15 border border-border/25 rounded-2xl p-6 relative overflow-hidden">
             {/* Status badges */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
@@ -629,22 +629,22 @@ function StelaLayout({
             {/* Key metrics — 2-col */}
             <div className="grid sm:grid-cols-2 gap-8">
               <div className="space-y-1">
-                <span className="text-[9px] text-dust uppercase tracking-[0.2em] font-bold">Lender Yield</span>
+                <span className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-bold">Lender Yield</span>
                 {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-display text-star">
+                    <span className="text-3xl font-bold text-accent">
                       {roiInfo ? `+${roiInfo.yieldPct}%` : 'Variable'}
                     </span>
-                    {roiInfo && <span className="text-dust text-xs">in {roiInfo.symbol}</span>}
+                    {roiInfo && <span className="text-gray-400 text-xs">in {roiInfo.symbol}</span>}
                   </div>
                 )}
               </div>
               <div className="space-y-1">
-                <span className="text-[9px] text-dust uppercase tracking-[0.2em] font-bold">Duration</span>
+                <span className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-bold">Duration</span>
                 {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
                   <div>
-                    <span className="text-3xl font-display text-chalk">{duration ?? '--'}</span>
-                    <span className="text-[9px] text-dust uppercase tracking-widest block mt-0.5">{durationLabel}</span>
+                    <span className="text-3xl font-bold text-white">{duration ?? '--'}</span>
+                    <span className="text-[9px] text-gray-400 uppercase tracking-widest block mt-0.5">{durationLabel}</span>
                   </div>
                 )}
               </div>
@@ -654,27 +654,27 @@ function StelaLayout({
           {/* Specs — inline chips */}
           <div className="flex flex-wrap gap-2">
             {specs.map((field, i) => (
-              <div key={i} className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface/20 border border-edge/20 rounded-xl">
-                <span className="text-[9px] text-dust uppercase tracking-widest">{field.label}</span>
+              <div key={i} className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface/20 border border-border/20 rounded-xl">
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest">{field.label}</span>
                 {field.isPrivate ? (
-                  <span className="text-xs text-chalk font-display flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-star" aria-hidden="true">
+                  <span className="text-xs text-white font-bold flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent" aria-hidden="true">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0110 0v4" />
                     </svg>
                     {field.value}
                   </span>
                 ) : (
-                  <span className={`text-xs text-chalk ${field.mono ? 'font-mono' : 'font-medium'}`}>{field.value}</span>
+                  <span className={`text-xs text-white ${field.mono ? 'font-mono' : 'font-medium'}`}>{field.value}</span>
                 )}
               </div>
             ))}
           </div>
 
           {/* Assets */}
-          <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
-            <div className="px-5 py-3 border-b border-edge/20 bg-surface/25">
-              <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Assets</h3>
+          <section className="bg-surface/10 border border-border/20 rounded-2xl overflow-hidden">
+            <div className="px-5 py-3 border-b border-border/20 bg-surface/25">
+              <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Assets</h3>
             </div>
             <div className="p-5 space-y-5">
               {assets}
@@ -686,9 +686,9 @@ function StelaLayout({
 
         {/* Sidebar */}
         <aside className="space-y-5">
-          <div className="border border-star/15 bg-star/[0.02] rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-star/10">
-              <h3 className="font-display text-sm text-star uppercase tracking-[0.2em]">{sidebarTitle}</h3>
+          <div className="border border-accent/15 bg-accent/[0.02] rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-accent/10">
+              <h3 className="font-bold text-sm text-accent uppercase tracking-[0.2em]">{sidebarTitle}</h3>
             </div>
             <div className="p-6">
               {sidebarActions}
@@ -707,7 +707,7 @@ export default function StelaPage({ params }: StelaPageProps) {
   const idType = detectIdType(id)
 
   if (idType === 'invalid') {
-    return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Invalid ID format</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
+    return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Invalid ID format</p><Link href="/markets" className="text-accent text-sm hover:underline">Back to Markets</Link></div>
   }
 
   if (idType === 'order') {

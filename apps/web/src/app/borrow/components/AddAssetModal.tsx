@@ -26,15 +26,15 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
     label: 'You Lock',
     short: 'You Lock',
     color: 'star',
-    bgClass: 'bg-star/10',
-    borderClass: 'border-star/25',
-    textClass: 'text-star',
+    bgClass: 'bg-accent/10',
+    borderClass: 'border-accent/25',
+    textClass: 'text-accent',
   },
   interest: {
     label: 'You Pay Interest',
     short: 'You Pay Interest',
     color: 'aurora',
-    bgClass: 'bg-aurora/10',
+    bgClass: 'bg-green-500/10',
     borderClass: 'border-aurora/25',
     textClass: 'text-aurora',
   },
@@ -147,9 +147,9 @@ export function AddAssetModal({
           }
         }}
       >
-        <DialogContent className="bg-void border-edge/50 text-chalk p-0 gap-0 sm:max-w-md overflow-hidden" showCloseButton={false}>
+        <DialogContent className="bg-[#050505] border-border/50 text-white p-0 gap-0 sm:max-w-md overflow-hidden" showCloseButton={false}>
           <DialogHeader className="px-5 pt-5 pb-0">
-            <DialogTitle className="font-display text-sm tracking-widest text-star uppercase flex items-center gap-2.5">
+            <DialogTitle className="font-bold text-sm tracking-widest text-accent uppercase flex items-center gap-2.5">
               {selectedToken ? (
                 <>
                   <TokenAvatar token={selectedToken} size={20} />
@@ -164,7 +164,7 @@ export function AddAssetModal({
           <div className="px-5 pt-4 pb-5 space-y-4">
             {isCustom && (
               <div className="space-y-2">
-                <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Contract Address</Label>
+                <Label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Contract Address</Label>
                 <Input
                   type="text"
                   placeholder="0x..."
@@ -180,8 +180,8 @@ export function AddAssetModal({
                       onClick={() => setAssetType(t)}
                       className={`px-2 py-1 rounded-lg text-[10px] font-mono border transition-colors cursor-pointer ${
                         assetType === t
-                          ? 'border-star/40 bg-star/10 text-star'
-                          : 'border-edge text-ash hover:text-chalk hover:border-edge-bright'
+                          ? 'border-accent/40 bg-accent/10 text-accent'
+                          : 'border-border text-gray-500 hover:text-white hover:border-white/20'
                       }`}
                     >
                       {t}
@@ -192,7 +192,7 @@ export function AddAssetModal({
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">
+              <Label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
                 {isNft ? 'Token ID' : 'Amount'}
               </Label>
               {isNft ? (
@@ -219,7 +219,7 @@ export function AddAssetModal({
                     autoFocus
                   />
                   {selectedToken && (
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-dust font-mono pointer-events-none">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono pointer-events-none">
                       {selectedToken.symbol}
                     </span>
                   )}
@@ -228,7 +228,7 @@ export function AddAssetModal({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest font-bold">Role</Label>
+              <Label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Role</Label>
               <div className={`grid gap-1.5 ${availableRoles.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                 {availableRoles.map((r) => {
                   const meta = ROLE_META[r]
@@ -241,7 +241,7 @@ export function AddAssetModal({
                       className={`py-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
                         selected
                           ? `${meta.borderClass} ${meta.bgClass} ${meta.textClass}`
-                          : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                          : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
                       }`}
                     >
                       {meta.label}

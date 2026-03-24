@@ -24,7 +24,7 @@ const STARKSCAN_BASE = NETWORK === 'mainnet'
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-3xl sm:text-4xl text-chalk tracking-tight mb-8">
+    <h2 className="font-bold text-3xl sm:text-4xl text-white tracking-tight mb-8">
       {children}
     </h2>
   )
@@ -32,8 +32,8 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function SubHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-display text-lg text-chalk uppercase tracking-widest mb-4 flex items-center gap-3">
-      <div className="w-1.5 h-1.5 bg-star rotate-45" />
+    <h3 className="font-bold text-lg text-white uppercase tracking-widest mb-4 flex items-center gap-3">
+      <div className="w-1.5 h-1.5 bg-accent rotate-45" />
       {children}
     </h3>
   )
@@ -42,13 +42,13 @@ function SubHeading({ children }: { children: React.ReactNode }) {
 function StepCard({ numeral, title, children }: { numeral: string; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-8 group items-start">
-      <div className="flex-shrink-0 w-16 h-16 rounded-[20px] bg-abyss border border-edge/50 flex items-center justify-center text-star font-display text-2xl group-hover:border-star/50 transition-all shadow-xl shadow-black/40 relative overflow-hidden">
+      <div className="flex-shrink-0 w-16 h-16 rounded-[20px] bg-surface border border-border/50 flex items-center justify-center text-accent font-bold text-2xl group-hover:border-accent/50 transition-all shadow-xl shadow-black/40 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-star/5 to-transparent pointer-events-none" />
         {numeral}
       </div>
       <div className="pt-3">
-        <h4 className="text-star font-display text-lg uppercase tracking-widest mb-3 group-hover:text-star-bright transition-colors">{title}</h4>
-        <div className="text-dust text-sm leading-relaxed space-y-3 max-w-2xl">{children}</div>
+        <h4 className="text-accent font-bold text-lg uppercase tracking-widest mb-3 group-hover:text-accent/80 transition-colors">{title}</h4>
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3 max-w-2xl">{children}</div>
       </div>
     </div>
   )
@@ -56,29 +56,29 @@ function StepCard({ numeral, title, children }: { numeral: string; title: string
 
 function InfoCard({ label, children, mono }: { label: string; children: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="bg-abyss border border-edge/20 rounded-lg p-6 group hover:border-star/20 transition-all">
-      <span className="text-[10px] text-dust uppercase tracking-[0.2em] block mb-3 font-bold">{label}</span>
-      <div className={`text-sm text-chalk leading-relaxed ${mono ? 'font-mono break-all' : ''}`}>{children}</div>
+    <div className="bg-surface border border-border/20 rounded-lg p-6 group hover:border-accent/20 transition-all">
+      <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] block mb-3 font-bold">{label}</span>
+      <div className={`text-sm text-white leading-relaxed ${mono ? 'font-mono break-all' : ''}`}>{children}</div>
     </div>
   )
 }
 
 function StatusNode({ label, description, color = 'star', icon }: { label: string; description?: string; color?: string; icon?: React.ReactNode }) {
   const colorMap: Record<string, string> = {
-    star: 'text-star border-star/20',
+    star: 'text-accent border-accent/20',
     aurora: 'text-aurora border-aurora/20',
     nova: 'text-nova border-nova/20',
-    ash: 'text-ash border-edge/40',
-    chalk: 'text-chalk border-edge/40'
+    ash: 'text-gray-500 border-border/40',
+    chalk: 'text-white border-border/40'
   }
 
   return (
     <div className="flex flex-col items-center gap-1.5 group">
-      <div className={`px-4 py-2 rounded-md border bg-abyss transition-all duration-300 flex items-center gap-2 min-w-[100px] justify-center ${colorMap[color] || colorMap.star}`}>
+      <div className={`px-4 py-2 rounded-md border bg-surface transition-all duration-300 flex items-center gap-2 min-w-[100px] justify-center ${colorMap[color] || colorMap.star}`}>
         {icon && <div className="opacity-70">{icon}</div>}
-        <span className="font-display text-[10px] tracking-[0.15em] uppercase font-bold">{label}</span>
+        <span className="font-bold text-[10px] tracking-[0.15em] uppercase font-bold">{label}</span>
       </div>
-      {description && <span className="text-[8px] text-ash uppercase tracking-widest font-bold opacity-60">{description}</span>}
+      {description && <span className="text-[8px] text-gray-500 uppercase tracking-widest font-bold opacity-60">{description}</span>}
     </div>
   )
 }
@@ -89,24 +89,24 @@ function DocsRepoCard({ title, description, href, icon, files }: { title: string
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group bg-abyss border border-edge/20 hover:border-star/40 rounded-lg p-8 transition-all relative overflow-hidden"
+      className="group bg-surface border border-border/20 hover:border-accent/40 rounded-lg p-8 transition-all relative overflow-hidden"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-star/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-5">
-          <div className="w-12 h-12 rounded-lg bg-void border border-edge/50 flex items-center justify-center text-star group-hover:border-star/40 transition-all shadow-lg shadow-black/30">
+          <div className="w-12 h-12 rounded-lg bg-[#050505] border border-border/50 flex items-center justify-center text-accent group-hover:border-accent/40 transition-all shadow-lg shadow-black/30">
             {icon}
           </div>
-          <svg className="w-4 h-4 text-ash group-hover:text-star transition-colors mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <svg className="w-4 h-4 text-gray-500 group-hover:text-accent transition-colors mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
         </div>
-        <h4 className="font-display text-chalk text-sm uppercase tracking-widest mb-2 group-hover:text-star transition-colors">{title}</h4>
-        <p className="text-dust text-xs leading-relaxed mb-5">{description}</p>
+        <h4 className="font-bold text-white text-sm uppercase tracking-widest mb-2 group-hover:text-accent transition-colors">{title}</h4>
+        <p className="text-gray-400 text-xs leading-relaxed mb-5">{description}</p>
         <div className="space-y-1.5">
           {files.map(file => (
-            <div key={file} className="flex items-center gap-2 text-[10px] text-ash group-hover:text-dust transition-colors">
-              <div className="w-1 h-1 bg-star/40 rounded-full flex-shrink-0" />
+            <div key={file} className="flex items-center gap-2 text-[10px] text-gray-500 group-hover:text-gray-400 transition-colors">
+              <div className="w-1 h-1 bg-accent/40 rounded-full flex-shrink-0" />
               <span className="font-mono tracking-wide">{file}</span>
             </div>
           ))}
@@ -121,7 +121,7 @@ function FlowArrow({ label, vertical = false, className = '' }: { label?: string
      return (
        <div className={`flex flex-col items-center py-2 ${className}`}>
           <div className="w-[1px] h-8 bg-gradient-to-b from-edge/40 via-star/20 to-edge/40" />
-          {label && <span className="text-[7px] text-star/40 uppercase tracking-widest font-bold my-1">{label}</span>}
+          {label && <span className="text-[7px] text-accent/40 uppercase tracking-widest font-bold my-1">{label}</span>}
           <div className="w-[1px] h-8 bg-gradient-to-b from-edge/40 via-star/20 to-edge/40" />
        </div>
      )
@@ -129,7 +129,7 @@ function FlowArrow({ label, vertical = false, className = '' }: { label?: string
   return (
     <div className={`flex items-center gap-1 px-2 ${className}`}>
       <div className="h-[1px] w-6 sm:w-8 bg-gradient-to-r from-edge/20 via-star/30 to-edge/20" />
-      {label && <span className="text-[7px] text-star/40 uppercase tracking-widest font-bold whitespace-nowrap">{label}</span>}
+      {label && <span className="text-[7px] text-accent/40 uppercase tracking-widest font-bold whitespace-nowrap">{label}</span>}
       <div className="h-[1px] w-6 sm:w-8 bg-gradient-to-r from-edge/20 via-star/30 to-edge/10" />
     </div>
   )
@@ -140,11 +140,11 @@ export default function DocsPage() {
     <div className="animate-fade-up pb-24">
       {/* Hero */}
       <div className="mb-16 relative py-12">
-        <p className="text-star font-mono text-xs uppercase tracking-[0.3em] mb-6">Protocol Documentation</p>
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
+        <p className="text-accent font-mono text-xs uppercase tracking-[0.3em] mb-6">Protocol Documentation</p>
+        <h1 className="font-bold text-3xl sm:text-4xl tracking-widest text-white mb-3 uppercase">
           The Stela Codex
         </h1>
-        <p className="text-dust max-w-2xl leading-relaxed text-lg">
+        <p className="text-gray-400 max-w-2xl leading-relaxed text-lg">
           Everything you need to understand, integrate, and build on the Stela P2P lending protocol.
         </p>
         <div className="w-32 h-px bg-gradient-to-r from-transparent via-star/50 to-transparent mt-12" />
@@ -155,30 +155,30 @@ export default function DocsPage() {
         <section className="relative">
           <SectionHeading>What is Stela?</SectionHeading>
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 text-dust text-base leading-relaxed">
+            <div className="space-y-6 text-gray-400 text-base leading-relaxed">
               <p>
-                Stela is a <span className="text-chalk font-semibold">peer-to-peer lending protocol</span> on StarkNet.
+                Stela is a <span className="text-white font-semibold">peer-to-peer lending protocol</span> on StarkNet.
                 No liquidity pools, no oracles, no intermediaries — just direct agreements between borrowers and lenders.
               </p>
               <p>
-                Every loan is an <span className="text-star italic">inscription</span> — an immutable on-chain record
-                with its own isolated <span className="text-chalk font-semibold">Collateral Locker</span> contract.
-                Lenders receive <span className="text-chalk font-semibold">ERC1155 Shares</span> as transferable proof of their position.
+                Every loan is an <span className="text-accent italic">inscription</span> — an immutable on-chain record
+                with its own isolated <span className="text-white font-semibold">Collateral Locker</span> contract.
+                Lenders receive <span className="text-white font-semibold">ERC1155 Shares</span> as transferable proof of their position.
               </p>
               <p>
-                The protocol supports <span className="text-chalk font-semibold">ERC20, ERC721, ERC1155, and ERC4626</span> assets
+                The protocol supports <span className="text-white font-semibold">ERC20, ERC721, ERC1155, and ERC4626</span> assets
                 for debt, interest, and collateral — from stablecoins to NFTs.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-[40px] p-10 relative overflow-hidden group">
+            <div className="bg-surface border border-border/20 rounded-[40px] p-10 relative overflow-hidden group">
                <div className="absolute inset-0 bg-gradient-to-br from-star/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                <div className="space-y-6 relative z-10">
-                  <div className="w-12 h-16 bg-star/10 border-x border-t border-star/30 rounded-t-lg mx-auto relative">
-                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-[1px] bg-star/50" />
+                  <div className="w-12 h-16 bg-accent/10 border-x border-t border-accent/30 rounded-t-lg mx-auto relative">
+                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-[1px] bg-accent/50" />
                   </div>
                   <div className="text-center space-y-2">
-                    <div className="font-display text-star uppercase tracking-widest text-sm">Immutable Agreement</div>
-                    <div className="text-[10px] text-dust uppercase tracking-widest">Signed & Sealed</div>
+                    <div className="font-bold text-accent uppercase tracking-widest text-sm">Immutable Agreement</div>
+                    <div className="text-[10px] text-gray-400 uppercase tracking-widest">Signed & Sealed</div>
                   </div>
                   <div className="space-y-2">
                      {[1,2,3].map(i => (
@@ -193,22 +193,22 @@ export default function DocsPage() {
         {/* 2. Quick Start */}
         <section>
           <SectionHeading>Quick Start</SectionHeading>
-          <p className="text-dust mb-12 leading-relaxed text-lg max-w-3xl">
+          <p className="text-gray-400 mb-12 leading-relaxed text-lg max-w-3xl">
             Get started with Stela in three steps. No deposits into pools, no complex setup — just sign and go.
           </p>
 
           <div className="space-y-16 max-w-4xl">
             <StepCard numeral="1" title="Connect Your Wallet">
               <p>
-                Connect a <span className="text-chalk font-semibold">StarkNet wallet</span> — either
-                <span className="text-star"> Argent</span> or <span className="text-star">Braavos</span>.
+                Connect a <span className="text-white font-semibold">StarkNet wallet</span> — either
+                <span className="text-accent"> Argent</span> or <span className="text-accent">Braavos</span>.
                 Click the connect button in the top right corner of any page.
               </p>
             </StepCard>
 
             <StepCard numeral="2" title="Create a Borrow Order">
               <p>
-                Go to the <Link href="/trade?mode=lend" className="text-star underline hover:text-star-bright transition-colors">Borrow</Link> page.
+                Go to the <Link href="/trade?mode=lend" className="text-accent underline hover:text-accent/80 transition-colors">Borrow</Link> page.
                 Fill in what you want to borrow (debt), what you will put up as collateral, and the interest
                 you are offering to the lender. Set a duration and deadline, then sign the order with your wallet.
               </p>
@@ -216,17 +216,17 @@ export default function DocsPage() {
 
             <StepCard numeral="3" title="Wait for a Lender">
               <p>
-                Your signed order appears on the <Link href="/markets" className="text-star underline hover:text-star-bright transition-colors">Markets</Link> page.
+                Your signed order appears on the <Link href="/markets" className="text-accent underline hover:text-accent/80 transition-colors">Markets</Link> page.
                 When a lender fills your order, a relayer bot settles it on-chain — locking your collateral, transferring the
                 debt to you, and minting ERC1155 shares for the lender. No extra action needed from you.
               </p>
             </StepCard>
           </div>
 
-          <div className="bg-abyss border border-star/20 rounded-lg p-8 mt-12">
-            <h4 className="font-display text-star text-lg mb-3">Atomic Swaps</h4>
-            <p className="text-dust text-sm leading-relaxed">
-              Use the <Link href="/trade?mode=swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page for atomic peer-to-peer trades. Assets exchange instantly in a single transaction with no repayment
+          <div className="bg-surface border border-accent/20 rounded-lg p-8 mt-12">
+            <h4 className="font-bold text-accent text-lg mb-3">Atomic Swaps</h4>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Use the <Link href="/trade?mode=swap" className="text-accent underline hover:text-accent/80 transition-colors">Swap</Link> page for atomic peer-to-peer trades. Assets exchange instantly in a single transaction with no repayment
               period and a lower fee (0.15% vs 0.25%).
             </p>
           </div>
@@ -236,28 +236,28 @@ export default function DocsPage() {
         <section>
           <SectionHeading>Core Terminology</SectionHeading>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Collateral</h4>
-              <p className="text-dust text-sm leading-relaxed">
-                The <span className="text-chalk font-medium">Guarantee</span>. Assets provided by the borrower and locked in a secure per-inscription Locker contract. If the borrower defaults, these assets are forfeit to the lender.
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Collateral</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                The <span className="text-white font-medium">Guarantee</span>. Assets provided by the borrower and locked in a secure per-inscription Locker contract. If the borrower defaults, these assets are forfeit to the lender.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Debt</h4>
-              <p className="text-dust text-sm leading-relaxed">
-                The <span className="text-chalk font-medium">Principal</span>. The exact assets and amounts the borrower wishes to receive. Lenders provide these assets to "seal" the inscription.
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Debt</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                The <span className="text-white font-medium">Principal</span>. The exact assets and amounts the borrower wishes to receive. Lenders provide these assets to "seal" the inscription.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Interest</h4>
-              <p className="text-dust text-sm leading-relaxed">
-                The <span className="text-chalk font-medium">Reward</span>. The additional assets the borrower agrees to pay the lender on top of the debt principal upon repayment. Interest is pro-rated by elapsed time on early repayment — borrowers only pay for the time they held the debt.
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Interest</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                The <span className="text-white font-medium">Reward</span>. The additional assets the borrower agrees to pay the lender on top of the debt principal upon repayment. Interest is pro-rated by elapsed time on early repayment — borrowers only pay for the time they held the debt.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Deadline</h4>
-              <p className="text-dust text-sm leading-relaxed">
-                The <span className="text-chalk font-medium">Discovery Period</span>. A unix timestamp defining when the inscription stops accepting lenders. If reached without a signature, the inscription expires and collateral can be reclaimed.
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Deadline</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                The <span className="text-white font-medium">Discovery Period</span>. A unix timestamp defining when the inscription stops accepting lenders. If reached without a signature, the inscription expires and collateral can be reclaimed.
               </p>
             </div>
           </div>
@@ -266,43 +266,43 @@ export default function DocsPage() {
         {/* 4. How It Works — Inscription Lifecycle */}
         <section>
           <SectionHeading>Inscription Lifecycle</SectionHeading>
-          <p className="text-dust mb-16 leading-relaxed text-lg max-w-3xl">
+          <p className="text-gray-400 mb-16 leading-relaxed text-lg max-w-3xl">
             Every inscription follows a clear sequence of state transitions, from creation to final redemption.
           </p>
 
           <div className="space-y-16 max-w-4xl">
             <StepCard numeral="I" title="Inscribe (Open)">
               <p>
-                The <span className="text-chalk font-medium">borrower</span> locks collateral into a
-                dedicated <span className="text-star">Locker contract</span> and defines the terms:
+                The <span className="text-white font-medium">borrower</span> locks collateral into a
+                dedicated <span className="text-accent">Locker contract</span> and defines the terms:
                 debt requested, interest offered, collateral, and duration.
               </p>
-              <div className="bg-surface/20 border border-edge/20 rounded-md p-4 mt-4">
-                 <ul className="grid grid-cols-2 gap-4 text-xs font-display uppercase tracking-wider text-dust">
-                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Collateral</li>
-                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Debt</li>
-                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Interest</li>
-                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-star" /> Deadline</li>
+              <div className="bg-surface/20 border border-border/20 rounded-md p-4 mt-4">
+                 <ul className="grid grid-cols-2 gap-4 text-xs font-bold uppercase tracking-wider text-gray-400">
+                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-accent" /> Collateral</li>
+                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-accent" /> Debt</li>
+                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-accent" /> Interest</li>
+                    <li className="flex items-center gap-2"><div className="w-1 h-1 bg-accent" /> Deadline</li>
                  </ul>
               </div>
             </StepCard>
 
             <StepCard numeral="II" title="Fund (Filled)">
               <p>
-                A <span className="text-chalk font-medium">lender</span> signs the inscription, providing the debt assets.
+                A <span className="text-white font-medium">lender</span> signs the inscription, providing the debt assets.
                 The borrower receives liquidity immediately. The lender receives
-                <span className="text-star font-medium"> ERC1155 shares</span> as proof of their position.
+                <span className="text-accent font-medium"> ERC1155 shares</span> as proof of their position.
                 The repayment clock starts now.
               </p>
             </StepCard>
 
             <StepCard numeral="III" title="Repay (Repaid)">
               <p>
-                The <span className="text-chalk font-medium">borrower returns</span> the debt plus interest before
+                The <span className="text-white font-medium">borrower returns</span> the debt plus interest before
                 the duration expires. Collateral is released. Shareholders can now redeem.
-                Interest is <span className="text-star font-medium">pro-rated</span> by elapsed time —
+                Interest is <span className="text-accent font-medium">pro-rated</span> by elapsed time —
                 early repayment means lower interest cost. The formula
-                uses <span className="text-chalk font-mono">ceil(interest &times; elapsed / duration)</span>,
+                uses <span className="text-white font-mono">ceil(interest &times; elapsed / duration)</span>,
                 rounding up to protect lenders.
               </p>
             </StepCard>
@@ -310,7 +310,7 @@ export default function DocsPage() {
             <StepCard numeral="IV" title="Liquidate (Liquidated)">
               <p>
                 If the borrower fails to repay before the duration expires, anyone can call
-                <span className="text-chalk font-mono"> liquidate()</span>. The collateral becomes claimable
+                <span className="text-white font-mono"> liquidate()</span>. The collateral becomes claimable
                 by shareholders proportionally.
               </p>
             </StepCard>
@@ -328,23 +328,23 @@ export default function DocsPage() {
         <section>
           <SectionHeading>Other States</SectionHeading>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8 relative overflow-hidden">
+            <div className="bg-surface border border-border/20 rounded-lg p-8 relative overflow-hidden">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full border border-nova/30 flex items-center justify-center text-nova font-display text-sm">!</div>
+                <div className="w-8 h-8 rounded-full border border-nova/30 flex items-center justify-center text-nova font-bold text-sm">!</div>
                 <span className="text-xs text-nova uppercase tracking-[0.2em] font-bold">Expired</span>
               </div>
-              <p className="text-dust text-sm leading-relaxed">
+              <p className="text-gray-400 text-sm leading-relaxed">
                 If the deadline passes without a signature, the inscription expires.
                 No debt was ever issued, so no assets are at risk.
-                The borrower can safely <span className="text-chalk">cancel and reclaim</span> their collateral.
+                The borrower can safely <span className="text-white">cancel and reclaim</span> their collateral.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8 relative overflow-hidden">
+            <div className="bg-surface border border-border/20 rounded-lg p-8 relative overflow-hidden">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full border border-edge/30 flex items-center justify-center text-ash font-display text-sm">X</div>
-                <span className="text-xs text-dust uppercase tracking-[0.2em] font-bold">Cancelled</span>
+                <div className="w-8 h-8 rounded-full border border-border/30 flex items-center justify-center text-gray-500 font-bold text-sm">X</div>
+                <span className="text-xs text-gray-400 uppercase tracking-[0.2em] font-bold">Cancelled</span>
               </div>
-              <p className="text-dust text-sm leading-relaxed">
+              <p className="text-gray-400 text-sm leading-relaxed">
                 Borrowers may cancel an open inscription at any time before it is signed.
                 The locker releases the collateral, and the Stela is permanently deactivated.
               </p>
@@ -355,16 +355,16 @@ export default function DocsPage() {
         {/* Status Diagram */}
         <section>
           <SectionHeading>Status Flow</SectionHeading>
-          <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-20 overflow-hidden relative shadow-2xl">
+          <div className="bg-[#050505]/40 border border-border/20 rounded-[40px] p-12 lg:p-20 overflow-hidden relative shadow-2xl">
              <div className="flex flex-col items-center gap-12 relative z-10">
                 {/* Primary Path */}
                 <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 w-full">
                    <StatusNode label="Open" description="Inscription" />
                    <FlowArrow label="Sign" className="hidden lg:flex" />
-                   <div className="lg:hidden h-6 w-px bg-star/20" />
+                   <div className="lg:hidden h-6 w-px bg-accent/20" />
                    <StatusNode label="Filled" description="Sealed" />
                    <FlowArrow label="Repay" className="hidden lg:flex" />
-                   <div className="lg:hidden h-6 w-px bg-star/20" />
+                   <div className="lg:hidden h-6 w-px bg-accent/20" />
                    <StatusNode
                     label="Repaid"
                     description="Settled"
@@ -372,7 +372,7 @@ export default function DocsPage() {
                     icon={<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                    />
                    <FlowArrow label="Redeem" className="hidden lg:flex" />
-                   <div className="lg:hidden h-6 w-px bg-star/20" />
+                   <div className="lg:hidden h-6 w-px bg-accent/20" />
                    <StatusNode
                     label="Redeemed"
                     description="Success"
@@ -403,8 +403,8 @@ export default function DocsPage() {
             <div className="space-y-8">
               <div>
                 <SubHeading>Shares (ERC1155)</SubHeading>
-                <p className="text-dust text-sm leading-relaxed">
-                  Stela issues <span className="text-chalk">ERC1155 Share Tokens</span> for every loan. These tokens are
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Stela issues <span className="text-white">ERC1155 Share Tokens</span> for every loan. These tokens are
                   transferable receipts of your lending position. Whoever holds the shares at the time of
                   settlement holds the right to claim the underlying assets.
                 </p>
@@ -412,8 +412,8 @@ export default function DocsPage() {
 
               <div>
                 <SubHeading>Percentage Precision</SubHeading>
-                <p className="text-dust text-sm leading-relaxed">
-                  The protocol operates with <span className="text-chalk font-mono">0.01%</span> precision (1/10,000).
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  The protocol operates with <span className="text-white font-mono">0.01%</span> precision (1/10,000).
                   Interest rates and multi-lender contributions are all calculated with this granularity
                   to ensure maximum accuracy without floating-point errors.
                 </p>
@@ -423,17 +423,17 @@ export default function DocsPage() {
             <div className="space-y-8">
               <div>
                 <SubHeading>Multi-Lender Mode</SubHeading>
-                <p className="text-dust text-sm leading-relaxed">
+                <p className="text-gray-400 text-sm leading-relaxed">
                   Inscriptions can be "crowdfunded." Multiple lenders can sign a single Stela,
                   each providing a percentage of the total debt. The ritual remains
-                  <span className="text-chalk">Partial</span> until 100% of the debt is covered.
+                  <span className="text-white">Partial</span> until 100% of the debt is covered.
                 </p>
               </div>
 
               <div>
                 <SubHeading>Collateral Lockers</SubHeading>
-                <p className="text-dust text-sm leading-relaxed">
-                  Stela uses a <span className="text-chalk">Factory Pattern</span> to deploy a fresh
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Stela uses a <span className="text-white">Factory Pattern</span> to deploy a fresh
                   Locker Contract for every inscription. This unique architecture ensures that
                   your collateral is never pooled with others, providing absolute isolation.
                 </p>
@@ -446,34 +446,34 @@ export default function DocsPage() {
             <SubHeading>Atomic Swaps (Duration = 0)</SubHeading>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
-                <p className="text-dust text-sm leading-relaxed">
-                  Head to the <Link href="/trade?mode=swap" className="text-star underline hover:text-star-bright transition-colors">Swap</Link> page to create an <span className="text-star">atomic swap</span>. Both sides of the
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Head to the <Link href="/trade?mode=swap" className="text-accent underline hover:text-accent/80 transition-colors">Swap</Link> page to create an <span className="text-accent">atomic swap</span>. Both sides of the
                   trade execute in a single transaction — assets swap atomically with no repayment period, no
                   interest assets required, and no liquidation risk.
                 </p>
-                <p className="text-dust text-sm leading-relaxed">
-                  Swaps pay a reduced fee of <span className="text-chalk font-semibold">0.15%</span> (vs 0.25% for
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Swaps pay a reduced fee of <span className="text-white font-semibold">0.15%</span> (vs 0.25% for
                   loans), split between the relayer (0.05%) and treasury (0.10%).
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-4">Swap Use Cases</h4>
-                <ul className="space-y-3 text-dust text-sm leading-relaxed">
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-4">Swap Use Cases</h4>
+                <ul className="space-y-3 text-gray-400 text-sm leading-relaxed">
                   <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 bg-star rotate-45 mt-1.5 flex-shrink-0" />
-                    <span><span className="text-chalk font-medium">OTC trades</span> — large token swaps without slippage or AMM price impact</span>
+                    <div className="w-1.5 h-1.5 bg-accent rotate-45 mt-1.5 flex-shrink-0" />
+                    <span><span className="text-white font-medium">OTC trades</span> — large token swaps without slippage or AMM price impact</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 bg-star rotate-45 mt-1.5 flex-shrink-0" />
-                    <span><span className="text-chalk font-medium">Multi-asset swaps</span> — trade bundles of tokens in a single transaction</span>
+                    <div className="w-1.5 h-1.5 bg-accent rotate-45 mt-1.5 flex-shrink-0" />
+                    <span><span className="text-white font-medium">Multi-asset swaps</span> — trade bundles of tokens in a single transaction</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 bg-star rotate-45 mt-1.5 flex-shrink-0" />
-                    <span><span className="text-chalk font-medium">NFT trades</span> — swap ERC721 or ERC1155 tokens peer-to-peer</span>
+                    <div className="w-1.5 h-1.5 bg-accent rotate-45 mt-1.5 flex-shrink-0" />
+                    <span><span className="text-white font-medium">NFT trades</span> — swap ERC721 or ERC1155 tokens peer-to-peer</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 bg-star rotate-45 mt-1.5 flex-shrink-0" />
-                    <span><span className="text-chalk font-medium">Cross-standard swaps</span> — exchange ERC20 for ERC721, or any combination of asset types</span>
+                    <div className="w-1.5 h-1.5 bg-accent rotate-45 mt-1.5 flex-shrink-0" />
+                    <span><span className="text-white font-medium">Cross-standard swaps</span> — exchange ERC20 for ERC721, or any combination of asset types</span>
                   </li>
                 </ul>
               </div>
@@ -484,7 +484,7 @@ export default function DocsPage() {
         {/* 6. Off-Chain Signing */}
         <section>
           <SectionHeading>Off-Chain Signing</SectionHeading>
-          <p className="text-dust mb-12 leading-relaxed text-lg max-w-3xl">
+          <p className="text-gray-400 mb-12 leading-relaxed text-lg max-w-3xl">
             Borrowers create orders by signing SNIP-12 typed data — no gas required.
             When a lender matches, a relayer bot settles the order on-chain.
           </p>
@@ -492,14 +492,14 @@ export default function DocsPage() {
           <div className="space-y-16 max-w-4xl">
             <StepCard numeral="I" title="Sign Order (Off-Chain)">
               <p>
-                The <span className="text-chalk font-medium">borrower</span> signs a
-                <span className="text-star"> SNIP-12 InscriptionOrder</span> typed data message with their wallet.
+                The <span className="text-white font-medium">borrower</span> signs a
+                <span className="text-accent"> SNIP-12 InscriptionOrder</span> typed data message with their wallet.
                 This contains all loan terms — collateral, debt, interest, duration, deadline, and a nonce for replay protection.
-                No transaction is sent, so <span className="text-chalk font-semibold">no gas is paid</span>.
+                No transaction is sent, so <span className="text-white font-semibold">no gas is paid</span>.
               </p>
-              <div className="bg-surface/20 border border-edge/20 rounded-md p-4 mt-4">
-                <span className="text-[10px] text-dust uppercase tracking-widest font-bold block mb-2">SNIP-12 Typed Data</span>
-                <p className="text-xs text-dust">
+              <div className="bg-surface/20 border border-border/20 rounded-md p-4 mt-4">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">SNIP-12 Typed Data</span>
+                <p className="text-xs text-gray-400">
                   StarkNet&apos;s typed data standard (like EIP-712 on Ethereum). The wallet shows the user exactly what
                   they are signing — asset types, amounts, and terms — before they approve.
                 </p>
@@ -508,8 +508,8 @@ export default function DocsPage() {
 
             <StepCard numeral="II" title="Submit Offer (Off-Chain)">
               <p>
-                A <span className="text-chalk font-medium">lender</span> signs a
-                <span className="text-star"> SNIP-12 LendOffer</span> specifying the order ID and the
+                A <span className="text-white font-medium">lender</span> signs a
+                <span className="text-accent"> SNIP-12 LendOffer</span> specifying the order ID and the
                 percentage of debt they want to provide. The signed offer is stored off-chain
                 alongside the order.
               </p>
@@ -518,24 +518,24 @@ export default function DocsPage() {
             <StepCard numeral="III" title="Bot Settlement (On-Chain)">
               <p>
                 When an order is fully matched (offers total 100%), the
-                <span className="text-star font-medium"> relayer bot</span> calls
-                <span className="text-chalk font-mono"> settle()</span> on the Stela contract with both signatures.
+                <span className="text-accent font-medium"> relayer bot</span> calls
+                <span className="text-white font-mono"> settle()</span> on the Stela contract with both signatures.
                 The contract verifies each signature on-chain via SNIP-12 typed data hashing, then
                 executes the loan — locking collateral, transferring debt, and minting shares.
               </p>
-              <div className="bg-surface/20 border border-edge/20 rounded-md p-4 mt-4">
+              <div className="bg-surface/20 border border-border/20 rounded-md p-4 mt-4">
                 <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
-                    <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
-                    <span className="text-star font-mono">0.25% lending / 0.15% swap</span>
+                    <span className="text-gray-400 uppercase tracking-widest font-bold text-[10px] block mb-1">Settlement Fee</span>
+                    <span className="text-accent font-mono">0.25% lending / 0.15% swap</span>
                   </div>
                   <div>
-                    <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
-                    <span className="text-chalk font-mono">0.05% relayer / 0.20% treasury (lending) or 0.05%+0.10% (swap)</span>
+                    <span className="text-gray-400 uppercase tracking-widest font-bold text-[10px] block mb-1">Fee Split</span>
+                    <span className="text-white font-mono">0.05% relayer / 0.20% treasury (lending) or 0.05%+0.10% (swap)</span>
                   </div>
                   <div>
-                    <span className="text-dust uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>
-                    <span className="text-chalk font-mono">NoncesComponent</span>
+                    <span className="text-gray-400 uppercase tracking-widest font-bold text-[10px] block mb-1">Replay Protection</span>
+                    <span className="text-white font-mono">NoncesComponent</span>
                   </div>
                 </div>
               </div>
@@ -543,9 +543,9 @@ export default function DocsPage() {
 
             <StepCard numeral="IV" title="On-Chain Verification">
               <p>
-                The <span className="text-chalk font-mono">settle()</span> entrypoint reconstructs the SNIP-12
-                type hashes for both <span className="text-star">InscriptionOrder</span> and
-                <span className="text-star"> LendOffer</span>, verifies signatures against the signer
+                The <span className="text-white font-mono">settle()</span> entrypoint reconstructs the SNIP-12
+                type hashes for both <span className="text-accent">InscriptionOrder</span> and
+                <span className="text-accent"> LendOffer</span>, verifies signatures against the signer
                 accounts, consumes nonces, and executes the inscription creation and signing atomically.
               </p>
             </StepCard>
@@ -554,32 +554,32 @@ export default function DocsPage() {
           {/* Order Book */}
           <div className="mt-16 mb-16">
             <SubHeading>Order Book Model</SubHeading>
-            <p className="text-dust mb-8 leading-relaxed max-w-3xl">
-              Borrowers can post <span className="text-chalk font-semibold">multiple orders</span> with
+            <p className="text-gray-400 mb-8 leading-relaxed max-w-3xl">
+              Borrowers can post <span className="text-white font-semibold">multiple orders</span> with
               different terms. Lenders browse and choose which to fund — creating a
-              <span className="text-star"> peer-to-peer order book</span>.
+              <span className="text-accent"> peer-to-peer order book</span>.
             </p>
 
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">Compete on Terms</h4>
-                <p className="text-dust text-sm leading-relaxed">
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">Compete on Terms</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
                   Post multiple orders with different rates, collateral ratios, or durations.
                   Lenders pick the terms they prefer — the market decides which fills.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">First Fill Wins</h4>
-                <p className="text-dust text-sm leading-relaxed">
-                  All orders from the same borrower share a <span className="text-chalk font-mono text-xs">nonce</span>.
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">First Fill Wins</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  All orders from the same borrower share a <span className="text-white font-mono text-xs">nonce</span>.
                   When one settles on-chain and consumes the nonce, all sibling orders are
-                  automatically expired — like <span className="text-chalk font-medium">cancel-on-fill</span> limit orders.
+                  automatically expired — like <span className="text-white font-medium">cancel-on-fill</span> limit orders.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">No Double Settlement</h4>
-                <p className="text-dust text-sm leading-relaxed">
-                  The on-chain <span className="text-chalk font-mono text-xs">NoncesComponent</span> enforces strict
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">No Double Settlement</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  The on-chain <span className="text-white font-mono text-xs">NoncesComponent</span> enforces strict
                   equality — even if multiple orders exist, only one can ever settle.
                   The contract guarantees this cryptographically.
                 </p>
@@ -588,18 +588,18 @@ export default function DocsPage() {
           </div>
 
           {/* Off-chain flow diagram */}
-          <div className="bg-void/40 border border-edge/20 rounded-[40px] p-12 lg:p-16 overflow-hidden relative shadow-2xl mt-16">
-            <h4 className="font-display text-xs text-dust uppercase tracking-[0.2em] text-center mb-12 font-bold">Off-Chain Settlement Flow</h4>
+          <div className="bg-[#050505]/40 border border-border/20 rounded-[40px] p-12 lg:p-16 overflow-hidden relative shadow-2xl mt-16">
+            <h4 className="font-bold text-xs text-gray-400 uppercase tracking-[0.2em] text-center mb-12 font-bold">Off-Chain Settlement Flow</h4>
             <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 w-full">
               <StatusNode label="Borrower" description="Signs order" />
               <FlowArrow label="SNIP-12" className="hidden lg:flex" />
-              <div className="lg:hidden h-6 w-px bg-star/20" />
+              <div className="lg:hidden h-6 w-px bg-accent/20" />
               <StatusNode label="D1 Store" description="Off-chain" color="ash" />
               <FlowArrow label="Match" className="hidden lg:flex" />
-              <div className="lg:hidden h-6 w-px bg-star/20" />
+              <div className="lg:hidden h-6 w-px bg-accent/20" />
               <StatusNode label="Lender" description="Signs offer" />
               <FlowArrow label="Bot" className="hidden lg:flex" />
-              <div className="lg:hidden h-6 w-px bg-star/20" />
+              <div className="lg:hidden h-6 w-px bg-accent/20" />
               <StatusNode
                 label="Settle"
                 description="On-chain"
@@ -613,83 +613,83 @@ export default function DocsPage() {
         {/* 7. Fee Structure */}
         <section className="relative">
           <SectionHeading>Fee Structure</SectionHeading>
-          <div className="bg-abyss border border-edge/20 rounded-lg overflow-hidden">
+          <div className="bg-surface border border-border/20 rounded-lg overflow-hidden">
             <div className="grid grid-cols-4 gap-px bg-edge/10">
-              <div className="bg-abyss/60 p-5">
-                <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Event</span>
+              <div className="bg-surface/60 p-5">
+                <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Event</span>
               </div>
-              <div className="bg-abyss/60 p-5 text-center">
-                <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Total</span>
+              <div className="bg-surface/60 p-5 text-center">
+                <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Total</span>
               </div>
-              <div className="bg-abyss/60 p-5 text-center">
-                <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Relayer</span>
+              <div className="bg-surface/60 p-5 text-center">
+                <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Relayer</span>
               </div>
-              <div className="bg-abyss/60 p-5 text-center">
-                <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Treasury</span>
+              <div className="bg-surface/60 p-5 text-center">
+                <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Treasury</span>
               </div>
             </div>
             {/* Settlement (Lending) */}
             <div className="grid grid-cols-4 gap-px bg-edge/10">
               <div className="bg-surface/10 p-5">
-                <span className="text-sm text-chalk font-display uppercase tracking-widest">Settlement (Lending)</span>
+                <span className="text-sm text-white font-bold uppercase tracking-widest">Settlement (Lending)</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-star font-semibold">0.25%</span>
+                <span className="text-sm text-accent font-semibold">0.25%</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0.05%</span>
+                <span className="text-sm text-gray-400">0.05%</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0.20%</span>
+                <span className="text-sm text-gray-400">0.20%</span>
               </div>
             </div>
             {/* Swap */}
             <div className="grid grid-cols-4 gap-px bg-edge/10">
               <div className="bg-surface/10 p-5">
-                <span className="text-sm text-chalk font-display uppercase tracking-widest">Swap</span>
+                <span className="text-sm text-white font-bold uppercase tracking-widest">Swap</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-star font-semibold">0.15%</span>
+                <span className="text-sm text-accent font-semibold">0.15%</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0.05%</span>
+                <span className="text-sm text-gray-400">0.05%</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0.10%</span>
+                <span className="text-sm text-gray-400">0.10%</span>
               </div>
             </div>
             {/* Redemption */}
             <div className="grid grid-cols-4 gap-px bg-edge/10">
               <div className="bg-surface/10 p-5">
-                <span className="text-sm text-chalk font-display uppercase tracking-widest">Redemption</span>
+                <span className="text-sm text-white font-bold uppercase tracking-widest">Redemption</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-star font-semibold">0%</span>
+                <span className="text-sm text-accent font-semibold">0%</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0%</span>
+                <span className="text-sm text-gray-400">0%</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0%</span>
+                <span className="text-sm text-gray-400">0%</span>
               </div>
             </div>
             {/* Liquidation */}
             <div className="grid grid-cols-4 gap-px bg-edge/10">
               <div className="bg-surface/10 p-5">
-                <span className="text-sm text-chalk font-display uppercase tracking-widest">Liquidation</span>
+                <span className="text-sm text-white font-bold uppercase tracking-widest">Liquidation</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-star font-semibold">0%</span>
+                <span className="text-sm text-accent font-semibold">0%</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0</span>
+                <span className="text-sm text-gray-400">0</span>
               </div>
               <div className="bg-surface/10 p-5 text-center">
-                <span className="text-sm text-dust">0</span>
+                <span className="text-sm text-gray-400">0</span>
               </div>
             </div>
           </div>
-          <p className="text-dust text-xs mt-6 leading-relaxed">
+          <p className="text-gray-400 text-xs mt-6 leading-relaxed">
             All fees are hardcoded in the immutable contract. Non-relayer fees go to the protocol treasury.
             Genesis NFT holders receive automatic fee discounts (up to 50%) on settle operations.
           </p>
@@ -699,27 +699,27 @@ export default function DocsPage() {
         <section>
           <SectionHeading>Genesis NFT Discounts</SectionHeading>
           <div className="space-y-6">
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">NFT Fee Discounts</h4>
-              <p className="text-dust text-sm leading-relaxed">
-                Genesis NFT holders receive automatic protocol fee discounts. Holding 1+ NFT grants a <span className="text-chalk font-semibold">15% base discount</span>, plus <span className="text-chalk font-semibold">+5% per volume tier</span> (7 tiers from $10K to $1M+) and <span className="text-chalk font-semibold">+2% per additional NFT</span>, capped at <span className="text-chalk font-semibold">50% off</span>. Discounts apply to the treasury portion of fees only — the 0.05% relayer fee is never discounted. Applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">NFT Fee Discounts</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Genesis NFT holders receive automatic protocol fee discounts. Holding 1+ NFT grants a <span className="text-white font-semibold">15% base discount</span>, plus <span className="text-white font-semibold">+5% per volume tier</span> (7 tiers from $10K to $1M+) and <span className="text-white font-semibold">+2% per additional NFT</span>, capped at <span className="text-white font-semibold">50% off</span>. Discounts apply to the treasury portion of fees only — the 0.05% relayer fee is never discounted. Applied on-chain by reading the holder&apos;s NFT balance — no claiming or staking required. Treasury NFTs (IDs 1-50) are held by the protocol. Public minters (IDs 51-300) purchase at 1,000 STRK each.
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">Discount Floors</h4>
-                <p className="text-dust text-sm leading-relaxed">
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">Discount Floors</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
                   Even at the maximum 50% discount, the treasury always receives a minimum fee.
-                  For lending settlements, the treasury floor is <span className="text-chalk font-semibold">10 BPS (0.10%)</span>.
-                  For swaps, the treasury floor is <span className="text-chalk font-semibold">5 BPS (0.05%)</span>.
+                  For lending settlements, the treasury floor is <span className="text-white font-semibold">10 BPS (0.10%)</span>.
+                  For swaps, the treasury floor is <span className="text-white font-semibold">5 BPS (0.05%)</span>.
                   The relayer&apos;s 5 BPS is never discounted.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">Volume Tiers</h4>
-                <p className="text-dust text-sm leading-relaxed">
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">Volume Tiers</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
                   Your cumulative settlement volume is tracked per-address on-chain (only whitelisted tokens count toward
-                  volume). Each tier adds <span className="text-chalk font-semibold">+5%</span> to your discount:
+                  volume). Each tier adds <span className="text-white font-semibold">+5%</span> to your discount:
                   $10K, $25K, $50K, $100K, $250K, $500K, and $1M+.
                 </p>
               </div>
@@ -732,48 +732,48 @@ export default function DocsPage() {
           <SectionHeading>Treasury & Governance</SectionHeading>
           <div className="space-y-6">
             <div className="grid sm:grid-cols-3 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">No Admin</h4>
-                <p className="text-dust text-sm leading-relaxed">
-                  Ownership has been <span className="text-chalk font-medium">permanently renounced</span> on all deployed contracts. There is no multisig, no governance, no backdoor.
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">No Admin</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Ownership has been <span className="text-white font-medium">permanently renounced</span> on all deployed contracts. There is no multisig, no governance, no backdoor.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">No Upgrades</h4>
-                <p className="text-dust text-sm leading-relaxed">
-                  Contracts are <span className="text-chalk font-medium">immutable</span>. No pause function, no proxy pattern, no parameter changes. The code is the protocol.
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">No Upgrades</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Contracts are <span className="text-white font-medium">immutable</span>. No pause function, no proxy pattern, no parameter changes. The code is the protocol.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">Open Access</h4>
-                <p className="text-dust text-sm leading-relaxed">
-                  Every protocol function — <span className="text-chalk font-medium">settle, liquidate, redeem, repay, cancel</span> — is callable by anyone. No whitelists, no gatekeepers.
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">Open Access</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Every protocol function — <span className="text-white font-medium">settle, liquidate, redeem, repay, cancel</span> — is callable by anyone. No whitelists, no gatekeepers.
                 </p>
               </div>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Treasury Reserve</h4>
-              <p className="text-dust text-sm leading-relaxed">
-                <span className="text-chalk font-semibold">50 of 300</span> Genesis NFTs are minted to the protocol treasury at deployment. This is hardcoded in the constructor — not an admin action. Treasury NFTs are held for protocol development: <span className="text-chalk font-medium">security audits, ecosystem growth, and operational costs</span>.
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Treasury Reserve</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                <span className="text-white font-semibold">50 of 300</span> Genesis NFTs are minted to the protocol treasury at deployment. This is hardcoded in the constructor — not an admin action. Treasury NFTs are held for protocol development: <span className="text-white font-medium">security audits, ecosystem growth, and operational costs</span>.
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-6">
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">Per-Wallet Limit</h4>
-                <p className="text-dust text-sm leading-relaxed">
-                  Public minting is capped at <span className="text-chalk font-semibold">5 NFTs per wallet</span>, enforced on-chain via the <span className="text-chalk font-mono text-xs">MAX_PER_WALLET</span> constant. No single participant can accumulate an outsized fee discount.
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">Per-Wallet Limit</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Public minting is capped at <span className="text-white font-semibold">5 NFTs per wallet</span>, enforced on-chain via the <span className="text-white font-mono text-xs">MAX_PER_WALLET</span> constant. No single participant can accumulate an outsized fee discount.
                 </p>
               </div>
-              <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-                <h4 className="font-display text-star text-lg mb-3">Ownership Renounced</h4>
-                <p className="text-dust text-sm leading-relaxed">
-                  After deployment, contract ownership is <span className="text-chalk font-semibold">permanently renounced</span> via OpenZeppelin&apos;s <span className="text-chalk font-mono text-xs">renounce_ownership()</span>. No admin functions can ever be called again — mint price, mint status, base URI, and admin minting are all permanently locked.
+              <div className="bg-surface border border-border/20 rounded-lg p-8">
+                <h4 className="font-bold text-accent text-lg mb-3">Ownership Renounced</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  After deployment, contract ownership is <span className="text-white font-semibold">permanently renounced</span> via OpenZeppelin&apos;s <span className="text-white font-mono text-xs">renounce_ownership()</span>. No admin functions can ever be called again — mint price, mint status, base URI, and admin minting are all permanently locked.
                 </p>
               </div>
             </div>
-            <div className="bg-abyss border border-star/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Immutable Parameters</h4>
-              <p className="text-dust text-sm leading-relaxed mb-4">
+            <div className="bg-surface border border-accent/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Immutable Parameters</h4>
+              <p className="text-gray-400 text-sm leading-relaxed mb-4">
                 After ownership is renounced, the following parameters are permanent and can never be modified by anyone:
               </p>
               <div className="flex flex-wrap justify-center gap-3">
@@ -784,9 +784,9 @@ export default function DocsPage() {
                   { label: 'Treasury', value: '50' },
                   { label: 'Per Wallet', value: '5' },
                 ].map((item) => (
-                  <div key={item.label} className="bg-surface/20 border border-edge/30 rounded-md p-4 text-center min-w-[100px] flex-1 max-w-[160px]">
-                    <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold block mb-1">{item.label}</span>
-                    <span className="text-sm text-chalk font-semibold">{item.value}</span>
+                  <div key={item.label} className="bg-surface/20 border border-border/30 rounded-md p-4 text-center min-w-[100px] flex-1 max-w-[160px]">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold block mb-1">{item.label}</span>
+                    <span className="text-sm text-white font-semibold">{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -799,23 +799,23 @@ export default function DocsPage() {
                 href={GITHUB_LINKS.relayer}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block bg-abyss border border-star/20 hover:border-star/50 rounded-lg p-10 transition-all relative overflow-hidden"
+                className="group block bg-surface border border-accent/20 hover:border-accent/50 rounded-lg p-10 transition-all relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-star/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-8">
-                  <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-void border border-star/30 flex items-center justify-center group-hover:border-star/60 transition-all shadow-lg shadow-black/30">
-                    <svg className="w-7 h-7 text-star" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-[#050505] border border-accent/30 flex items-center justify-center group-hover:border-accent/60 transition-all shadow-lg shadow-black/30">
+                    <svg className="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-display text-star text-lg uppercase tracking-widest mb-2 group-hover:text-star-bright transition-colors">
+                    <h4 className="font-bold text-accent text-lg uppercase tracking-widest mb-2 group-hover:text-accent/80 transition-colors">
                       Earn by Running a Relayer
                     </h4>
-                    <p className="text-dust text-sm leading-relaxed mb-3">
-                      Anyone can run a relayer bot to settle matched lending orders on-chain. Relayers earn <span className="text-chalk font-semibold">0.05%</span> of each debt asset on every successful settlement.
+                    <p className="text-gray-400 text-sm leading-relaxed mb-3">
+                      Anyone can run a relayer bot to settle matched lending orders on-chain. Relayers earn <span className="text-white font-semibold">0.05%</span> of each debt asset on every successful settlement.
                     </p>
-                    <span className="inline-flex items-center gap-2 text-xs text-star font-display uppercase tracking-widest">
+                    <span className="inline-flex items-center gap-2 text-xs text-accent font-bold uppercase tracking-widest">
                       View on GitHub
                       <svg className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -831,43 +831,43 @@ export default function DocsPage() {
         {/* 10. Risks & Limitations */}
         <section>
           <SectionHeading>Risks & Limitations</SectionHeading>
-          <p className="text-dust mb-8 leading-relaxed text-lg max-w-3xl">
+          <p className="text-gray-400 mb-8 leading-relaxed text-lg max-w-3xl">
             Stela has been audited, but all DeFi protocols carry inherent risks. Understand these before using the protocol.
           </p>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Smart Contract Risk</h4>
-              <p className="text-dust text-sm leading-relaxed">
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Smart Contract Risk</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
                 The Stela contracts have been audited, but no audit can guarantee the absence of bugs. Smart contracts are immutable once deployed — if a vulnerability is discovered, the affected contract cannot be patched.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Counterparty Risk</h4>
-              <p className="text-dust text-sm leading-relaxed">
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Counterparty Risk</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
                 Stela uses time-based liquidation, not price-based. If collateral value drops below debt value during the loan period, the lender receives the depreciated collateral upon liquidation. There is no automatic margin call or early liquidation trigger.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">No Price-Based Liquidation</h4>
-              <p className="text-dust text-sm leading-relaxed">
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">No Price-Based Liquidation</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
                 This is by design — Stela uses no oracles, which eliminates oracle manipulation risk. However, it means lenders must independently evaluate collateral quality and volatility. The protocol does not protect against collateral depreciation during the loan term.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Flash-Loan NFT Gaming</h4>
-              <p className="text-dust text-sm leading-relaxed">
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Flash-Loan NFT Gaming</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
                 A user could theoretically flash-loan a Genesis NFT to receive a fee discount, then return it in the same transaction. This is an accepted low risk on StarkNet due to the transaction structure making such attacks impractical compared to other chains.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Fee-on-Transfer Tokens</h4>
-              <p className="text-dust text-sm leading-relaxed">
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Fee-on-Transfer Tokens</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
                 Tokens that charge fees on transfer (deflationary tokens, tax tokens) may cause accounting discrepancies. The contract records the nominal transfer amount, but fewer tokens may actually arrive. Use standard ERC20 tokens for best results.
               </p>
             </div>
-            <div className="bg-abyss border border-edge/20 rounded-lg p-8">
-              <h4 className="font-display text-star text-lg mb-3">Rounding Dust</h4>
-              <p className="text-dust text-sm leading-relaxed">
+            <div className="bg-surface border border-border/20 rounded-lg p-8">
+              <h4 className="font-bold text-accent text-lg mb-3">Rounding Dust</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
                 Very small amounts (less than 1 wei) may be lost to integer rounding in share calculations and proportional distributions. This is inherent to integer arithmetic on-chain and affects negligible amounts only.
               </p>
             </div>
@@ -884,41 +884,41 @@ export default function DocsPage() {
               { type: 'ERC1155', icon: 'S' },
               { type: 'ERC4626', icon: 'V' },
             ].map(({ type, icon }) => (
-              <div key={type} className="bg-abyss border border-edge/20 rounded-lg p-6 text-center group hover:border-star/40 transition-all">
-                <div className="w-10 h-10 rounded-full bg-void border border-edge/50 flex items-center justify-center text-star font-display text-sm mx-auto mb-4 group-hover:scale-110 transition-transform">{icon}</div>
-                <span className="font-display text-chalk text-xs tracking-widest uppercase">{type}</span>
+              <div key={type} className="bg-surface border border-border/20 rounded-lg p-6 text-center group hover:border-accent/40 transition-all">
+                <div className="w-10 h-10 rounded-full bg-[#050505] border border-border/50 flex items-center justify-center text-accent font-bold text-sm mx-auto mb-4 group-hover:scale-110 transition-transform">{icon}</div>
+                <span className="font-bold text-white text-xs tracking-widest uppercase">{type}</span>
               </div>
             ))}
           </div>
         </section>
 
         {/* Contract Addresses */}
-        <section className="bg-abyss border border-edge/20 rounded-[40px] p-8 sm:p-12 relative overflow-hidden">
+        <section className="bg-surface border border-border/20 rounded-[40px] p-8 sm:p-12 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8">
-             <div className="w-24 h-24 border-r-2 border-t-2 border-star/10 rounded-tr-3xl" />
+             <div className="w-24 h-24 border-r-2 border-t-2 border-accent/10 rounded-tr-3xl" />
           </div>
           <SectionHeading>Deployment</SectionHeading>
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-6">
-              <p className="text-dust text-sm leading-relaxed">
+              <p className="text-gray-400 text-sm leading-relaxed">
                 Stela is a protocol for the permanent record. Currently deployed on the
-                <span className="text-star uppercase font-bold tracking-widest px-2">{NETWORK}</span> network.
+                <span className="text-accent uppercase font-bold tracking-widest px-2">{NETWORK}</span> network.
               </p>
               <InfoCard label="Core Contract" mono>
-                <p className="text-star font-semibold">{CONTRACT_ADDRESS}</p>
+                <p className="text-accent font-semibold">{CONTRACT_ADDRESS}</p>
                 <div className="flex gap-4 mt-4">
-                   <a href={`${VOYAGER_BASE}/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" className="text-[10px] text-ash hover:text-star uppercase tracking-widest font-bold underline transition-colors">Voyager</a>
-                   <a href={`${STARKSCAN_BASE}/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" className="text-[10px] text-ash hover:text-star uppercase tracking-widest font-bold underline transition-colors">StarkScan</a>
+                   <a href={`${VOYAGER_BASE}/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" className="text-[10px] text-gray-500 hover:text-accent uppercase tracking-widest font-bold underline transition-colors">Voyager</a>
+                   <a href={`${STARKSCAN_BASE}/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" className="text-[10px] text-gray-500 hover:text-accent uppercase tracking-widest font-bold underline transition-colors">StarkScan</a>
                 </div>
               </InfoCard>
             </div>
             <div className="grid grid-cols-2 gap-4">
-               <div className="bg-void/50 border border-edge/20 rounded-lg p-5">
-                  <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">Network ID</span>
-                  <span className="text-chalk font-mono text-sm">{NETWORK === 'mainnet' ? 'SN_MAIN' : 'SN_SEPOLIA'}</span>
+               <div className="bg-[#050505]/50 border border-border/20 rounded-lg p-5">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest block mb-2">Network ID</span>
+                  <span className="text-white font-mono text-sm">{NETWORK === 'mainnet' ? 'SN_MAIN' : 'SN_SEPOLIA'}</span>
                </div>
-               <div className="bg-void/50 border border-edge/20 rounded-lg p-5">
-                  <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">Status</span>
+               <div className="bg-[#050505]/50 border border-border/20 rounded-lg p-5">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest block mb-2">Status</span>
                   <span className="text-aurora font-mono text-sm uppercase">Active</span>
                </div>
             </div>
@@ -955,9 +955,9 @@ export default function DocsPage() {
                 a: 'No. Interest is pro-rated by elapsed time using ceil(interest x elapsed / duration). Repaying a 30-day loan at day 15 costs roughly half the interest. Rounding is ceiling (up) so lenders always receive at least 1 wei. Swaps (duration = 0) always charge full interest.',
               },
             ].map(({ q, a }) => (
-              <div key={q} className="bg-abyss border border-edge/20 rounded-lg p-8 hover:border-star/20 transition-colors">
-                <h4 className="font-display text-chalk text-sm tracking-widest uppercase mb-4">{q}</h4>
-                <p className="text-dust text-sm leading-relaxed">{a}</p>
+              <div key={q} className="bg-surface border border-border/20 rounded-lg p-8 hover:border-accent/20 transition-colors">
+                <h4 className="font-bold text-white text-sm tracking-widest uppercase mb-4">{q}</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">{a}</p>
               </div>
             ))}
           </div>
@@ -966,7 +966,7 @@ export default function DocsPage() {
         {/* Architecture */}
         <section>
           <SectionHeading>Architecture</SectionHeading>
-          <p className="text-dust mb-8 leading-relaxed">
+          <p className="text-gray-400 mb-8 leading-relaxed">
             Stela is a fully on-chain protocol with off-chain indexing for discovery.
             All state transitions happen through direct smart contract interactions — the backend
             never proxies writes.
@@ -974,16 +974,16 @@ export default function DocsPage() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <InfoCard label="Smart Contracts (Cairo)">
-              <p className="text-dust text-sm">Core protocol logic, inscription state machine, locker deployment, share minting. Written in Cairo for StarkNet.</p>
+              <p className="text-gray-400 text-sm">Core protocol logic, inscription state machine, locker deployment, share minting. Written in Cairo for StarkNet.</p>
             </InfoCard>
             <InfoCard label="Indexer (Cloudflare Worker)">
-              <p className="text-dust text-sm">Polls StarkNet RPC for contract events and writes to D1 (SQLite). Enables browsing and discovery of inscriptions.</p>
+              <p className="text-gray-400 text-sm">Polls StarkNet RPC for contract events and writes to D1 (SQLite). Enables browsing and discovery of inscriptions.</p>
             </InfoCard>
             <InfoCard label="Frontend (Next.js)">
-              <p className="text-dust text-sm">Server-rendered UI deployed on Cloudflare. Reads from D1 for listing, connects directly to StarkNet for writes via user wallet.</p>
+              <p className="text-gray-400 text-sm">Server-rendered UI deployed on Cloudflare. Reads from D1 for listing, connects directly to StarkNet for writes via user wallet.</p>
             </InfoCard>
             <InfoCard label="Liquidation Bot (Cloudflare Worker)">
-              <p className="text-dust text-sm">Automated cron job that monitors for expired inscriptions and executes liquidations on-chain.</p>
+              <p className="text-gray-400 text-sm">Automated cron job that monitors for expired inscriptions and executes liquidations on-chain.</p>
             </InfoCard>
           </div>
         </section>
@@ -991,7 +991,7 @@ export default function DocsPage() {
         {/* Documentation Hub */}
         <section>
           <SectionHeading>Documentation Hub</SectionHeading>
-          <p className="text-dust mb-12 leading-relaxed text-lg max-w-3xl">
+          <p className="text-gray-400 mb-12 leading-relaxed text-lg max-w-3xl">
             Each repository maintains its own technical documentation.
           </p>
 
@@ -1001,7 +1001,7 @@ export default function DocsPage() {
               description="Cairo smart contracts powering the protocol — inscription state machine, collateral lockers, ERC1155 shares, Genesis NFT fee discounts, and the settle() entrypoint."
               href={DOCS_LINKS.protocol}
               icon={
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-accent">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
               }
@@ -1012,7 +1012,7 @@ export default function DocsPage() {
               description="Client library for interacting with Stela programmatically — InscriptionClient, ShareClient, and off-chain signing helpers."
               href={DOCS_LINKS.sdk}
               icon={
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-accent">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
                 </svg>
               }
@@ -1023,7 +1023,7 @@ export default function DocsPage() {
               description="Next.js frontend, Cloudflare Workers (indexer + bot), D1 database schema, API routes, and deployment guides."
               href={DOCS_LINKS.app}
               icon={
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-star">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-accent">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
                 </svg>
               }
@@ -1035,22 +1035,22 @@ export default function DocsPage() {
         {/* SDK */}
         <section>
           <SectionHeading>SDK &amp; Developer Tools</SectionHeading>
-          <p className="text-dust mb-6 leading-relaxed">
-            The <span className="text-chalk">@fepvenancio/stela-sdk</span> TypeScript SDK provides
+          <p className="text-gray-400 mb-6 leading-relaxed">
+            The <span className="text-white">@fepvenancio/stela-sdk</span> TypeScript SDK provides
             everything needed to interact with the Stela protocol programmatically.
           </p>
 
-          <div className="bg-abyss/40 border border-edge/20 rounded-lg p-6 space-y-4">
+          <div className="bg-surface/40 border border-border/20 rounded-lg p-6 space-y-4">
             <div className="font-mono text-sm">
-              <span className="text-ash">$</span>{' '}
-              <span className="text-chalk">npm install @fepvenancio/stela-sdk</span>
+              <span className="text-gray-500">$</span>{' '}
+              <span className="text-white">npm install @fepvenancio/stela-sdk</span>
             </div>
-            <div className="text-dust text-sm space-y-2">
-              <p><span className="text-chalk font-mono">InscriptionClient</span> — Build transaction calldata for create, sign, repay, cancel, liquidate</p>
-              <p><span className="text-chalk font-mono">ShareClient</span> — Query ERC1155 share balances and build redeem calls</p>
-              <p><span className="text-chalk font-mono">LockerClient</span> — Query locker addresses and locked assets</p>
-              <p><span className="text-chalk font-mono">ApiClient</span> — Fetch indexed inscription data from the API</p>
-              <p><span className="text-chalk font-mono">computeStatus()</span> — Canonical status computation for any inscription</p>
+            <div className="text-gray-400 text-sm space-y-2">
+              <p><span className="text-white font-mono">InscriptionClient</span> — Build transaction calldata for create, sign, repay, cancel, liquidate</p>
+              <p><span className="text-white font-mono">ShareClient</span> — Query ERC1155 share balances and build redeem calls</p>
+              <p><span className="text-white font-mono">LockerClient</span> — Query locker addresses and locked assets</p>
+              <p><span className="text-white font-mono">ApiClient</span> — Fetch indexed inscription data from the API</p>
+              <p><span className="text-white font-mono">computeStatus()</span> — Canonical status computation for any inscription</p>
             </div>
           </div>
         </section>
@@ -1070,15 +1070,15 @@ export default function DocsPage() {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-abyss border border-edge/20 hover:border-star/30 rounded-lg p-5 transition-all"
+                className="group bg-surface border border-border/20 hover:border-accent/30 rounded-lg p-5 transition-all"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-ash group-hover:text-star transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-gray-500 group-hover:text-accent transition-colors" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                   </svg>
-                  <span className="text-chalk text-sm font-semibold group-hover:text-star transition-colors">{label}</span>
+                  <span className="text-white text-sm font-semibold group-hover:text-accent transition-colors">{label}</span>
                 </div>
-                <p className="text-dust text-xs">{desc}</p>
+                <p className="text-gray-400 text-xs">{desc}</p>
               </a>
             ))}
           </div>
@@ -1086,18 +1086,18 @@ export default function DocsPage() {
 
         {/* Final CTA */}
         <section className="text-center py-20 relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-star/10 rounded-full blur-[100px] -z-10" />
-          <h2 className="font-display text-4xl text-chalk mb-10">Start building</h2>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/10 rounded-full blur-[100px] -z-10" />
+          <h2 className="font-bold text-4xl text-white mb-10">Start building</h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link
               href="/markets"
-              className="bg-star hover:bg-star-bright text-void font-bold px-12 py-4 rounded-full text-lg transition-all hover:scale-105"
+              className="bg-accent hover:bg-accent-bright text-void font-bold px-12 py-4 rounded-full text-lg transition-all hover:scale-105"
             >
               Explore Markets
             </Link>
             <Link
               href="/trade?mode=lend"
-              className="border border-edge hover:bg-surface text-chalk px-12 py-4 rounded-full text-lg transition-all hover:border-star/30"
+              className="border border-border hover:bg-surface text-white px-12 py-4 rounded-full text-lg transition-all hover:border-accent/30"
             >
               Borrow Now
             </Link>

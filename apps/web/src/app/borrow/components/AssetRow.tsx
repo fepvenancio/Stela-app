@@ -21,15 +21,15 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
     label: 'You Lock',
     short: 'You Lock',
     color: 'star',
-    bgClass: 'bg-star/10',
-    borderClass: 'border-star/25',
-    textClass: 'text-star',
+    bgClass: 'bg-accent/10',
+    borderClass: 'border-accent/25',
+    textClass: 'text-accent',
   },
   interest: {
     label: 'You Pay Interest',
     short: 'You Pay Interest',
     color: 'aurora',
-    bgClass: 'bg-aurora/10',
+    bgClass: 'bg-green-500/10',
     borderClass: 'border-aurora/25',
     textClass: 'text-aurora',
   },
@@ -52,7 +52,7 @@ export function AssetRow({
   return (
     <div className="group flex items-center px-4 py-3 hover:bg-surface/20 transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center border border-edge/30">
+        <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center border border-border/30">
           {token ? (
             <TokenAvatar token={token} size={20} />
           ) : (
@@ -60,17 +60,17 @@ export function AssetRow({
           )}
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="text-sm text-chalk font-medium truncate">
+          <span className="text-sm text-white font-medium truncate">
             {token?.name || formatAddress(asset.asset)}
           </span>
-          <span className="text-[10px] text-dust font-mono uppercase">
+          <span className="text-[10px] text-gray-400 font-mono uppercase">
             {token?.symbol || 'Custom'}
           </span>
         </div>
       </div>
 
       <div className="w-32 text-center">
-        <span className="text-sm text-chalk font-mono">
+        <span className="text-sm text-white font-mono">
           {isNft ? (
             <>#{asset.token_id}</>
           ) : (
@@ -89,7 +89,7 @@ export function AssetRow({
         <button
           type="button"
           onClick={onRemove}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-ash hover:text-nova hover:bg-nova/10 transition-all opacity-0 group-hover:opacity-100"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-nova hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
           aria-label="Remove asset"
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">

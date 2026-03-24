@@ -75,9 +75,9 @@ function T1Section({ inscriptionId, title, endpoint, renderRow }: T1SectionProps
   if (loading || items.length === 0) return null
 
   return (
-    <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
-      <div className="px-4 sm:px-6 py-4 border-b border-edge/20 bg-surface/30">
-        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">{title}</h3>
+    <section className="bg-surface/10 border border-border/20 rounded-3xl overflow-hidden">
+      <div className="px-4 sm:px-6 py-4 border-b border-border/20 bg-surface/30">
+        <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">{title}</h3>
       </div>
       <div className="p-4 sm:p-6 space-y-3">
         {items.map((item, i) => renderRow(item, i))}
@@ -88,10 +88,10 @@ function T1Section({ inscriptionId, title, endpoint, renderRow }: T1SectionProps
 
 function T1Row({ label, detail, status }: { label: React.ReactNode; detail: string; status: string }) {
   return (
-    <div className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10">
+    <div className="flex items-start sm:items-center justify-between gap-2 p-3 bg-surface/40 rounded-xl border border-border/10">
       <div className="space-y-1 min-w-0">
-        <span className="text-xs text-chalk font-mono truncate block">{label}</span>
-        <span className="text-[10px] text-dust block truncate">{detail}</span>
+        <span className="text-xs text-white font-mono truncate block">{label}</span>
+        <span className="text-[10px] text-gray-400 block truncate">{detail}</span>
       </div>
       <Badge variant={status as 'pending'} className="rounded-full px-3 py-0.5 text-[10px] uppercase tracking-widest shrink-0">
         {status}
@@ -112,15 +112,15 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
   const canCreateOffer = isConnected && !isBorrower
 
   return (
-    <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
-      <div className="px-4 sm:px-6 py-4 border-b border-edge/20 bg-surface/30 flex items-center justify-between">
-        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Refinance Offers</h3>
+    <section className="bg-surface/10 border border-border/20 rounded-3xl overflow-hidden">
+      <div className="px-4 sm:px-6 py-4 border-b border-border/20 bg-surface/30 flex items-center justify-between">
+        <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Refinance Offers</h3>
         {canCreateOffer && !showForm && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowForm(true)}
-            className="text-[10px] uppercase tracking-widest border-star/30 text-star hover:bg-star/10"
+            className="text-[10px] uppercase tracking-widest border-accent/30 text-accent hover:bg-accent/10"
           >
             Make Offer
           </Button>
@@ -129,7 +129,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
       <div className="p-4 sm:p-6 space-y-4">
         {/* Inline refinance offer form */}
         {showForm && (
-          <div className="border border-star/20 rounded-2xl p-4 bg-star/[0.02]">
+          <div className="border border-accent/20 rounded-2xl p-4 bg-accent/[0.02]">
             <RefinanceOfferForm
               inscriptionId={inscriptionId}
               onClose={() => setShowForm(false)}
@@ -148,11 +148,11 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
               return (
                 <div
                   key={offerId || i}
-                  className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10"
+                  className="flex items-start sm:items-center justify-between gap-2 p-3 bg-surface/40 rounded-xl border border-border/10"
                 >
                   <div className="space-y-1 min-w-0">
                     <AddressDisplay address={String(offer.new_lender ?? '')} className="text-xs" />
-                    <span className="text-[10px] text-dust block truncate">
+                    <span className="text-[10px] text-gray-400 block truncate">
                       Nonce: {String(offer.nonce ?? '--')}
                     </span>
                   </div>
@@ -191,7 +191,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
 
         {/* Empty state */}
         {!loading && items.length === 0 && !showForm && (
-          <p className="text-xs text-dust italic text-center py-2">No refinance offers yet.</p>
+          <p className="text-xs text-gray-400 italic text-center py-2">No refinance offers yet.</p>
         )}
       </div>
     </section>
@@ -299,21 +299,21 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
     return null
   }, [assets])
 
-  if (!isValidId) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Invalid inscription ID</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
-  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/markets" className="text-star text-sm hover:underline">Back to Markets</Link></div>
+  if (!isValidId) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Invalid inscription ID</p><Link href="/markets" className="text-accent text-sm hover:underline">Back to Markets</Link></div>
+  if (error) return <div className="py-24 text-center"><p className="text-nova text-sm mb-4">Failed to load inscription</p><Link href="/markets" className="text-accent text-sm hover:underline">Back to Markets</Link></div>
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
-        <Link href="/markets" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
+        <Link href="/markets" className="text-gray-500 hover:text-accent transition-colors text-sm flex items-center gap-2 group">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back to Library
         </Link>
-        <div className="flex items-center gap-2 bg-surface/50 px-3 py-1.5 rounded-full border border-edge/30 self-start sm:self-auto">
-          <span className="text-[10px] font-mono text-dust uppercase tracking-widest">ID: {id.slice(0,10)}...</span>
+        <div className="flex items-center gap-2 bg-surface/50 px-3 py-1.5 rounded-full border border-border/30 self-start sm:self-auto">
+          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">ID: {id.slice(0,10)}...</span>
           <CopyButton value={id} />
         </div>
       </div>
@@ -322,7 +322,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
         {/* Main Column */}
         <div className="lg:col-span-2 space-y-8">
           {/* Hero Data */}
-          <section className="bg-surface/20 border border-edge/30 rounded-[32px] p-5 sm:p-8 relative overflow-hidden granite-noise">
+          <section className="bg-surface/20 border border-border/30 rounded-[32px] p-5 sm:p-8 relative overflow-hidden">
              <div className="absolute top-0 right-0 p-4 sm:p-8">
                 <Badge variant={status} className="rounded-full px-3 sm:px-4 py-1 uppercase tracking-widest text-[10px] font-bold">
                   {STATUS_LABELS[status]}
@@ -331,28 +331,28 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
 
              <div className="grid sm:grid-cols-2 gap-8 sm:gap-12 pt-8 sm:pt-0">
                 <div className="space-y-1">
-                   <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
+                   <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
                    {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl sm:text-4xl font-display text-star">
+                        <span className="text-2xl sm:text-4xl font-bold text-accent">
                           {roiInfo ? `+${roiInfo.yieldPct}%` : 'Variable'}
                         </span>
-                        {roiInfo && <span className="text-dust text-sm">in {roiInfo.symbol}</span>}
+                        {roiInfo && <span className="text-gray-400 text-sm">in {roiInfo.symbol}</span>}
                      </div>
                    )}
-                   <p className="text-xs text-dust leading-relaxed max-w-[200px] pt-2">
+                   <p className="text-xs text-gray-400 leading-relaxed max-w-[200px] pt-2">
                      Calculated based on the debt vs interest inscription.
                    </p>
                 </div>
 
                 <div className="space-y-1">
-                   <span className="text-[10px] text-dust uppercase tracking-[0.2em] font-bold">Time to Unlock</span>
+                   <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Time to Unlock</span>
                    {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
                      <div className="flex flex-col">
-                        <span className="text-2xl sm:text-4xl font-display text-chalk">
+                        <span className="text-2xl sm:text-4xl font-bold text-white">
                           {a?.duration ? formatDuration(BigInt(a.duration as string)) : '--'}
                         </span>
-                        <span className="text-[10px] text-dust uppercase tracking-widest mt-1">
+                        <span className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">
                           From moment of signing
                         </span>
                      </div>
@@ -374,17 +374,17 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                })() },
                { label: 'Issued Debt', value: a?.issued_debt_percentage ? `${Number(BigInt(a.issued_debt_percentage as string)) / 100}%` : '0%', mono: false },
              ].map((field, i) => (
-               <div key={i} className="bg-abyss/40 border border-edge/20 rounded-2xl p-5">
-                  <span className="text-[10px] text-dust uppercase tracking-widest block mb-2">{field.label}</span>
-                  <span className={`text-sm text-chalk ${field.mono ? 'font-mono' : 'font-display'}`}>{field.value}</span>
+               <div key={i} className="bg-surface/40 border border-border/20 rounded-2xl p-5">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest block mb-2">{field.label}</span>
+                  <span className={`text-sm text-white ${field.mono ? 'font-mono' : 'font-bold'}`}>{field.value}</span>
                </div>
              ))}
           </section>
 
           {/* Assets Table-style view */}
-          <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
-             <div className="px-4 sm:px-6 py-4 border-b border-edge/20 bg-surface/30">
-                <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Inscription Assets</h3>
+          <section className="bg-surface/10 border border-border/20 rounded-3xl overflow-hidden">
+             <div className="px-4 sm:px-6 py-4 border-b border-border/20 bg-surface/30">
+                <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Inscription Assets</h3>
              </div>
              <div className="p-4 sm:p-6 space-y-8">
                 {(['debt', 'interest', 'collateral'] as const).map((role) => {
@@ -392,8 +392,8 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                   return (
                     <div key={role} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3 shrink-0 w-32">
-                         <div className={`w-2 h-2 rounded-full ${role === 'debt' ? 'bg-nebula' : role === 'interest' ? 'bg-aurora' : 'bg-star'}`} />
-                         <span className="text-[10px] uppercase tracking-[0.2em] text-dust font-bold">{role}</span>
+                         <div className={`w-2 h-2 rounded-full ${role === 'debt' ? 'bg-nebula' : role === 'interest' ? 'bg-green-500' : 'bg-accent'}`} />
+                         <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">{role}</span>
                       </div>
                       <div className="flex flex-wrap gap-2 sm:justify-end flex-1">
                         {assetsLoading ? <Skeleton className="h-8 w-24 bg-edge/20" /> : roleAssets.length > 0 ? (
@@ -410,7 +410,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                               />
                             )
                           })
-                        ) : <span className="text-xs text-dust italic">None</span>}
+                        ) : <span className="text-xs text-gray-400 italic">None</span>}
                       </div>
                     </div>
                   )
@@ -429,8 +429,8 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
 
           {/* Auction / Grace Period Info */}
           {(enrichedStatusValue === 'grace_period' || enrichedStatusValue === 'auctioned' || enrichedStatusValue === 'overdue') && (
-            <section className="bg-surface/10 border border-edge/20 rounded-3xl p-4 sm:p-6 space-y-4">
-              <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Auction Status</h3>
+            <section className="bg-surface/10 border border-border/20 rounded-3xl p-4 sm:p-6 space-y-4">
+              <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Auction Status</h3>
               {enrichedStatusValue === 'grace_period' && signedAtNum > 0 ? (
                 <AuctionTimer
                   endTime={signedAtNum + durationNum + Number(GRACE_PERIOD)}
@@ -457,7 +457,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                 </>
               ) : null}
               {enrichedStatusValue === 'overdue' && !a?.auction_started ? (
-                <p className="text-sm text-dust">
+                <p className="text-sm text-gray-400">
                   Grace period expired. Anyone can start an auction on this inscription.
                 </p>
               ) : null}
@@ -512,16 +512,16 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
 
         {/* Sidebar Actions */}
         <aside className="space-y-6">
-          <Card className="border-star/20 bg-star/[0.02] rounded-[32px] overflow-hidden">
+          <Card className="border-accent/20 bg-accent/[0.02] rounded-[32px] overflow-hidden">
              <div className="p-5 sm:p-8 space-y-6">
                 <div className="space-y-2">
-                   <h3 className="font-display text-lg text-star uppercase tracking-widest">Vault Actions</h3>
-                   <p className="text-xs text-dust leading-relaxed">
+                   <h3 className="font-bold text-lg text-accent uppercase tracking-widest">Vault Actions</h3>
+                   <p className="text-xs text-gray-400 leading-relaxed">
                      Interact with this inscription. Lenders provide liquidity, Borrowers repay to reclaim collateral.
                    </p>
                 </div>
                 
-                <div className="pt-4 border-t border-star/10">
+                <div className="pt-4 border-t border-accent/10">
                    {isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
                      <InscriptionActions
                        inscriptionId={id}
@@ -551,23 +551,23 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
           </Card>
 
           {/* Detailed Timestamps */}
-          <section className="bg-surface/20 border border-edge/20 rounded-3xl p-4 sm:p-6 space-y-4">
-             <h4 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Timeline</h4>
+          <section className="bg-surface/20 border border-border/20 rounded-3xl p-4 sm:p-6 space-y-4">
+             <h4 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Timeline</h4>
              <div className="space-y-4">
                 <div className="flex justify-between items-center gap-2">
-                   <span className="text-[10px] text-dust uppercase shrink-0">Signed At</span>
-                   <span className="text-xs text-chalk font-mono truncate">{a?.signed_at && a.signed_at !== '0' ? formatTimestamp(BigInt(a.signed_at as string)) : 'Unsigned'}</span>
+                   <span className="text-[10px] text-gray-400 uppercase shrink-0">Signed At</span>
+                   <span className="text-xs text-white font-mono truncate">{a?.signed_at && a.signed_at !== '0' ? formatTimestamp(BigInt(a.signed_at as string)) : 'Unsigned'}</span>
                 </div>
                 <div className="flex justify-between items-center gap-2">
-                   <span className="text-[10px] text-dust uppercase shrink-0">Deadline</span>
-                   <span className="text-xs text-chalk font-mono truncate">{a?.deadline ? formatTimestamp(BigInt(a.deadline as string)) : '--'}</span>
+                   <span className="text-[10px] text-gray-400 uppercase shrink-0">Deadline</span>
+                   <span className="text-xs text-white font-mono truncate">{a?.deadline ? formatTimestamp(BigInt(a.deadline as string)) : '--'}</span>
                 </div>
                 {maturityTimestamp && (
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-dust uppercase">Time Remaining</span>
+                    <span className="text-[10px] text-gray-400 uppercase">Time Remaining</span>
                     <span
                       suppressHydrationWarning
-                      className={`text-xs font-mono ${countdown.isExpired ? 'text-nova' : countdown.isUrgent ? 'text-nova' : countdown.isAtRisk ? 'text-star' : 'text-aurora'}`}
+                      className={`text-xs font-mono ${countdown.isExpired ? 'text-nova' : countdown.isUrgent ? 'text-nova' : countdown.isAtRisk ? 'text-accent' : 'text-aurora'}`}
                     >
                       {countdown.formatted}
                     </span>
@@ -578,18 +578,18 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
 
           {/* Share Balance */}
           {shares > 0n && (
-            <section className="bg-surface/20 border border-edge/20 rounded-3xl p-4 sm:p-6 space-y-4">
-              <h4 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Your Shares</h4>
+            <section className="bg-surface/20 border border-border/20 rounded-3xl p-4 sm:p-6 space-y-4">
+              <h4 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Your Shares</h4>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-display text-chalk">{shares.toString()}</span>
-                <span className="text-xs text-dust">ERC1155</span>
+                <span className="text-3xl font-bold text-white">{shares.toString()}</span>
+                <span className="text-xs text-gray-400">ERC1155</span>
               </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setTransferModalOpen(true)}
-                  className="flex-1 rounded-xl border-edge/50 text-dust hover:text-star hover:border-star/30 text-[10px] uppercase tracking-widest"
+                  className="flex-1 rounded-xl border-border/50 text-gray-400 hover:text-accent hover:border-accent/30 text-[10px] uppercase tracking-widest"
                 >
                   Transfer
                 </Button>

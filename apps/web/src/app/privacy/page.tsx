@@ -7,8 +7,8 @@ export const metadata: Metadata = {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-lg text-chalk uppercase tracking-widest mb-4 flex items-center gap-3">
-      <div className="w-1.5 h-1.5 bg-star rotate-45" />
+    <h2 className="font-bold text-lg text-white uppercase tracking-widest mb-4 flex items-center gap-3">
+      <div className="w-1.5 h-1.5 bg-accent rotate-45" />
       {children}
     </h2>
   )
@@ -19,10 +19,10 @@ export default function Privacy() {
     <div className="max-w-3xl mx-auto space-y-12">
       {/* Page header */}
       <header className="space-y-3">
-        <h1 className="font-display text-3xl sm:text-4xl text-chalk tracking-tight">
+        <h1 className="font-bold text-3xl sm:text-4xl text-white tracking-tight">
           Privacy Policy
         </h1>
-        <p className="text-dust text-sm leading-relaxed max-w-2xl">
+        <p className="text-gray-400 text-sm leading-relaxed max-w-2xl">
           Last updated: March 2026
         </p>
       </header>
@@ -30,7 +30,7 @@ export default function Privacy() {
       {/* Sections */}
       <section className="space-y-4">
         <SectionHeading>Overview</SectionHeading>
-        <div className="text-dust text-sm leading-relaxed space-y-3">
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3">
           <p>
             Stela is a decentralized protocol. We do not collect personal
             information, require account creation, or store private data. Your
@@ -42,7 +42,7 @@ export default function Privacy() {
 
       <section className="space-y-4">
         <SectionHeading>Blockchain Data</SectionHeading>
-        <div className="text-dust text-sm leading-relaxed space-y-3">
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3">
           <p>
             All transactions, inscriptions, and settlements are recorded on the
             public StarkNet blockchain. Wallet addresses and transaction history
@@ -54,7 +54,7 @@ export default function Privacy() {
 
       <section className="space-y-4">
         <SectionHeading>Off-Chain Orders</SectionHeading>
-        <div className="text-dust text-sm leading-relaxed space-y-3">
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3">
           <p>
             When you create an off-chain order (signed but not yet settled), the
             order data and your signature are stored temporarily in our database
@@ -67,7 +67,7 @@ export default function Privacy() {
 
       <section className="space-y-4">
         <SectionHeading>Analytics</SectionHeading>
-        <div className="text-dust text-sm leading-relaxed space-y-3">
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3">
           <p>
             The interface may use basic analytics (page views, feature usage) to
             improve the user experience. No personally identifiable information
@@ -79,7 +79,7 @@ export default function Privacy() {
 
       <section className="space-y-4">
         <SectionHeading>Third-Party Services</SectionHeading>
-        <div className="text-dust text-sm leading-relaxed space-y-3">
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3">
           <p>
             The interface connects to StarkNet RPC providers and blockchain
             indexing services to function. These services may have their own
@@ -91,7 +91,7 @@ export default function Privacy() {
 
       <section className="space-y-4">
         <SectionHeading>Data Retention</SectionHeading>
-        <div className="text-dust text-sm leading-relaxed space-y-3">
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3">
           <p>
             On-chain data is permanent and immutable. Off-chain order data is
             retained as long as the order is active, then signatures are purged
@@ -103,7 +103,7 @@ export default function Privacy() {
 
       <section className="space-y-4">
         <SectionHeading>Contact</SectionHeading>
-        <div className="text-dust text-sm leading-relaxed space-y-3">
+        <div className="text-gray-400 text-sm leading-relaxed space-y-3">
           <p>
             For privacy-related inquiries, reach out via our Discord community
             or GitHub repository.

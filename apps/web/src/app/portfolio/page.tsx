@@ -23,19 +23,19 @@ import Link from 'next/link'
 function EmptyTab({ message, cta }: { message: string; cta?: { label: string; href: string } }) {
   return (
     <div className="flex flex-col items-center justify-center py-24 gap-5">
-      <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+      <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
           <rect x="3" y="3" width="14" height="14" rx="2" />
           <path d="M7 10h6M10 7v6" />
         </svg>
       </div>
-      <p className="text-dust text-sm text-center max-w-xs">{message}</p>
+      <p className="text-gray-400 text-sm text-center max-w-xs">{message}</p>
       {cta && (
         <Link
           href={cta.href}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent"><path d="M6 2v8M2 6h8" /></svg>
           {cta.label}
         </Link>
       )}
@@ -76,8 +76,8 @@ function matchesOrderSearch(q: string, order: OrderRow): boolean {
 /** Sub-section heading within a tab */
 function SectionHeading({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-surface/20 border-b border-edge/20">
-      <span className="text-[11px] font-mono uppercase tracking-wider text-dust">{label}</span>
+    <div className="flex items-center gap-3 px-4 py-2 bg-surface/20 border-b border-border/20">
+      <span className="text-[11px] font-mono uppercase tracking-wider text-gray-400">{label}</span>
       <div className="flex-1 h-px bg-edge/15" />
     </div>
   )
@@ -85,8 +85,8 @@ function SectionHeading({ label }: { label: string }) {
 
 /* Tab config — full static class strings so Tailwind doesn't purge them */
 const TAB_CONFIG = [
-  { value: 'active', label: 'Active', activeClass: 'data-[state=active]:text-star data-[state=active]:after:bg-star' },
-  { value: 'pending', label: 'Pending', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-aurora' },
+  { value: 'active', label: 'Active', activeClass: 'data-[state=active]:text-accent data-[state=active]:after:bg-accent' },
+  { value: 'pending', label: 'Pending', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-green-500' },
   { value: 'history', label: 'History', activeClass: 'data-[state=active]:text-cosmic data-[state=active]:after:bg-cosmic' },
 ] as const
 
@@ -189,9 +189,9 @@ export default function PortfolioPage() {
       <div className="flex justify-end mb-6">
         <Link
           href="/trade"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors shrink-0"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent"><path d="M6 2v8M2 6h8" /></svg>
           Trade
         </Link>
       </div>
@@ -221,12 +221,12 @@ export default function PortfolioPage() {
           <>
             {/* Search */}
             <div className="relative mb-5">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ash" aria-hidden="true" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" aria-hidden="true" />
               <Input
                 placeholder="Search by token, address, or ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-10 bg-surface/30 border-edge/40 focus:border-star/50 rounded-xl transition-colors"
+                className="pl-10 h-10 bg-surface/30 border-border/40 focus:border-accent/50 rounded-xl transition-colors"
                 aria-label="Search portfolio positions"
               />
             </div>
@@ -234,23 +234,23 @@ export default function PortfolioPage() {
             {totalPositions === 0 ? (
               /* Global empty state */
               <div className="flex flex-col items-center justify-center py-24 gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
-                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+                <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
                     <rect x="4" y="4" width="20" height="20" rx="4" />
                     <path d="M10 14h8M14 10v8" />
                   </svg>
                 </div>
                 <div className="text-center space-y-1.5">
-                  <p className="text-chalk text-sm font-medium">No positions yet</p>
-                  <p className="text-dust text-xs max-w-xs leading-relaxed">
+                  <p className="text-white text-sm font-medium">No positions yet</p>
+                  <p className="text-gray-400 text-xs max-w-xs leading-relaxed">
                     Inscribe a new agreement to begin your legacy on StarkNet.
                   </p>
                 </div>
                 <Link
                   href="/trade"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors"
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent"><path d="M6 2v8M2 6h8" /></svg>
                   Trade
                 </Link>
               </div>
@@ -263,12 +263,12 @@ export default function PortfolioPage() {
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className={`text-chalk ${tab.activeClass}`}
+                      className={`text-white ${tab.activeClass}`}
                     >
                       <span className="relative inline-flex items-center">
                         {tab.label}
                         {tab.value === 'history' && hasRedeemable && (
-                          <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-star animate-pulse" />
+                          <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-accent animate-pulse" />
                         )}
                       </span>
                       {tabCounts[tab.value] > 0 && (
@@ -288,7 +288,7 @@ export default function PortfolioPage() {
                       cta={!q ? { label: 'Browse Markets', href: '/markets' } : undefined}
                     />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-clip">
+                    <div className="rounded-xl border border-border/30 overflow-clip">
                       <ListingTableHeader />
 
                       {/* Lending sub-section */}
@@ -340,7 +340,7 @@ export default function PortfolioPage() {
                       cta={!q ? { label: 'Create Order', href: '/borrow' } : undefined}
                     />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-clip">
+                    <div className="rounded-xl border border-border/30 overflow-clip">
                       <ListingTableHeader />
                       <div className="flex flex-col">
                         {pendingOrders.map((order) => (
@@ -359,7 +359,7 @@ export default function PortfolioPage() {
                   {historyCount === 0 ? (
                     <EmptyTab message={q ? 'No history items match your search.' : 'No history yet.'} />
                   ) : (
-                    <div className="rounded-xl border border-edge/30 overflow-clip">
+                    <div className="rounded-xl border border-border/30 overflow-clip">
                       <ListingTableHeader />
 
                       {/* Redeemable positions first (most actionable) */}

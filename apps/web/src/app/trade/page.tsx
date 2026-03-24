@@ -100,14 +100,14 @@ function TokenBox({
         <span className={`text-[10px] uppercase tracking-widest font-bold ${accentClass}`}>{label}</span>
         {token && balance !== undefined && balance > 0n && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-dust font-mono">
+            <span className="text-[10px] text-gray-400 font-mono">
               {formatTokenValue(balance.toString(), token.decimals)}
             </span>
             {onMaxClick && (
               <button
                 type="button"
                 onClick={onMaxClick}
-                className="text-[10px] text-star hover:text-star-bright font-bold uppercase tracking-wider cursor-pointer transition-colors"
+                className="text-[10px] text-accent hover:text-accent/80 font-bold uppercase tracking-wider cursor-pointer transition-colors"
               >
                 Max
               </button>
@@ -119,17 +119,17 @@ function TokenBox({
         <button
           type="button"
           onClick={onTokenClick}
-          className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 sm:px-3 rounded-md bg-surface/60 border border-edge/40 text-sm transition-colors hover:bg-elevated hover:border-edge-bright cursor-pointer shrink-0"
+          className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 sm:px-3 rounded-md bg-surface/60 border border-border/40 text-sm transition-colors hover:bg-surface-hover hover:border-white/20 cursor-pointer shrink-0"
         >
           {token ? (
             <>
               <TokenAvatar token={token} size={20} />
-              <span className="text-chalk font-medium">{token.symbol}</span>
+              <span className="text-white font-medium">{token.symbol}</span>
             </>
           ) : (
-            <span className="text-dust">Select</span>
+            <span className="text-gray-400">Select</span>
           )}
-          <svg className="text-ash ml-1" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg className="text-gray-500 ml-1" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M4 6l4 4 4-4" />
           </svg>
         </button>
@@ -142,7 +142,7 @@ function TokenBox({
             const raw = e.target.value
             if (raw === '' || /^\d*\.?\d{0,18}$/.test(raw)) onAmountChange(raw)
           }}
-          className="flex-1 min-w-0 text-right text-lg sm:text-xl font-mono bg-transparent outline-none text-chalk placeholder:text-ash/40"
+          className="flex-1 min-w-0 text-right text-lg sm:text-xl font-mono bg-transparent outline-none text-white placeholder:text-gray-500/40"
         />
       </div>
     </div>
@@ -157,10 +157,10 @@ function DirectionArrow({ onClick }: { onClick?: () => void }) {
       <button
         type="button"
         onClick={onClick}
-        className="w-8 h-8 bg-abyss border border-edge/50 rounded-md flex items-center justify-center hover:border-star/50 transition-colors cursor-pointer"
+        className="w-8 h-8 bg-surface border border-border/50 rounded-md flex items-center justify-center hover:border-accent/50 transition-colors cursor-pointer"
         aria-label="Swap direction"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-dust">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
           <path d="M7 16V4m0 12l-3-3m3 3l3-3M17 8v12m0-12l3 3m-3-3l-3 3" />
         </svg>
       </button>
@@ -183,7 +183,7 @@ function OrderSettings({
     <div className="space-y-3">
       {/* Mode */}
       <div className="flex items-center gap-3">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Mode</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold shrink-0 w-16">Mode</span>
         <div className="flex gap-1">
           {(['offchain', 'onchain'] as const).map((m) => (
             <button
@@ -192,8 +192,8 @@ function OrderSettings({
               onClick={() => form.setMode(m)}
               className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
                 form.mode === m
-                  ? 'bg-star/10 text-star border border-star/25'
-                  : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  ? 'bg-accent/10 text-accent border border-accent/25'
+                  : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
               }`}
             >
               {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
@@ -205,7 +205,7 @@ function OrderSettings({
       {/* Duration (lend only) */}
       {isLend && (
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Duration</span>
+          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold shrink-0 w-16">Duration</span>
           <div className="flex flex-wrap gap-1">
             {DURATION_PRESETS.map((p) => (
               <button
@@ -213,7 +213,7 @@ function OrderSettings({
                 type="button"
                 onClick={() => form.setDurationPreset(p.seconds.toString())}
                 className={`py-1 px-2 rounded-sm text-[10px] border transition-colors cursor-pointer font-medium ${
-                  form.durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                  form.durationPreset === p.seconds.toString() ? 'border-accent/40 bg-accent/10 text-accent' : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
                 }`}
               >{p.label}</button>
             ))}
@@ -223,7 +223,7 @@ function OrderSettings({
 
       {/* Expiry */}
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Expiry</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold shrink-0 w-16">Expiry</span>
         <div className="flex flex-wrap gap-1">
           {deadlinePresets.map((p) => (
             <button
@@ -231,7 +231,7 @@ function OrderSettings({
               type="button"
               onClick={() => form.setDeadlinePreset(p.seconds.toString())}
               className={`py-1 px-2 rounded-sm text-[10px] border transition-colors cursor-pointer font-medium ${
-                form.deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                form.deadlinePreset === p.seconds.toString() ? 'border-accent/40 bg-accent/10 text-accent' : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
               }`}
             >{p.label}</button>
           ))}
@@ -241,7 +241,7 @@ function OrderSettings({
       {/* Funding (lend only) */}
       {isLend && (
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Funding</span>
+          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold shrink-0 w-16">Funding</span>
           <div className="flex gap-1">
             {([
               { value: 'single', label: 'Single' },
@@ -253,8 +253,8 @@ function OrderSettings({
                 onClick={() => form.setMultiLender(f.value === 'multi')}
                 className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
                   (form.multiLender ? 'multi' : 'single') === f.value
-                    ? 'bg-star/10 text-star border border-star/25'
-                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                    ? 'bg-accent/10 text-accent border border-accent/25'
+                    : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
                 }`}
               >
                 {f.label}
@@ -404,9 +404,9 @@ function TradeForm({
       <div className="space-y-1">
         <TokenBox
           label={isLend ? "I'll put up" : 'I give'}
-          accentClass="text-star"
-          borderClass="border-star/20"
-          bgClass="bg-star/5"
+          accentClass="text-accent"
+          borderClass="border-accent/20"
+          bgClass="bg-accent/5"
           asset={giveAsset}
           balance={giveBalance}
           onTokenClick={() => setOpenSelector('give')}
@@ -420,7 +420,7 @@ function TradeForm({
           label={isLend ? "I'll borrow" : 'I receive'}
           accentClass="text-aurora"
           borderClass="border-aurora/20"
-          bgClass="bg-aurora/5"
+          bgClass="bg-green-500/5"
           asset={receiveAsset}
           balance={receiveBalance}
           onTokenClick={() => setOpenSelector('receive')}
@@ -446,7 +446,7 @@ function TradeForm({
 
       {/* ── Validation Errors ─────────────────────────────── */}
       {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
-        <div className="mt-3 px-4 py-3 rounded-lg border border-nova/20 bg-nova/5">
+        <div className="mt-3 px-4 py-3 rounded-lg border border-nova/20 bg-red-500/5">
           <p className="text-xs text-nova font-medium">
             {!form.hasCollateral && `• Select a token to ${isLend ? 'put up' : 'give'}. `}
             {!form.hasDebt && `• Select a token to ${isLend ? 'borrow' : 'receive'}.`}
@@ -458,7 +458,7 @@ function TradeForm({
       <div className="mt-4 space-y-3">
         {/* Checking indicator */}
         {form.isChecking && hasTokens && (
-          <div className="flex items-center justify-center gap-2 py-3 text-dust text-xs">
+          <div className="flex items-center justify-center gap-2 py-3 text-gray-400 text-xs">
             <Spinner className="h-3.5 w-3.5" />
             Checking for matches...
           </div>
@@ -467,11 +467,11 @@ function TradeForm({
         {/* Match status bar */}
         {hasTokens && showMatches && !form.isChecking && (
           <div className="flex items-center gap-2 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-star animate-pulse" />
-            <span className="text-xs text-star font-bold uppercase tracking-wider">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="text-xs text-accent font-bold uppercase tracking-wider">
               {hasFullMatch ? 'Fully Matched' : hasPartialMatch ? `${coverage}% Matched` : 'Matches Available'}
             </span>
-            <span className="text-[10px] text-dust">
+            <span className="text-[10px] text-gray-400">
               {totalMatches} order{totalMatches !== 1 ? 's' : ''}
             </span>
           </div>
@@ -480,20 +480,20 @@ function TradeForm({
         {/* Creation / settings box — shown when no full match */}
         {hasTokens && !hasFullMatch && !form.isChecking && (
           <div className={`rounded-lg border p-4 space-y-3 ${
-            hasPartialMatch ? 'border-star/20 bg-star/5' : 'border-edge/30 bg-surface/5'
+            hasPartialMatch ? 'border-accent/20 bg-accent/5' : 'border-border/30 bg-surface/5'
           }`}>
             {hasPartialMatch ? (
-              <p className="text-xs text-dust">
+              <p className="text-xs text-gray-400">
                 Fill the matched {coverage}% and create an order for the remainder.
               </p>
             ) : showMatches ? (
-              <p className="text-xs text-dust">
+              <p className="text-xs text-gray-400">
                 Enter amounts to fill existing orders, or configure and create a new Stela.
               </p>
             ) : (
               <div>
-                <p className="text-xs text-chalk font-medium">No matches found</p>
-                <p className="text-[11px] text-dust mt-0.5">
+                <p className="text-xs text-white font-medium">No matches found</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">
                   Create a Stela to broadcast your order to the network.
                 </p>
               </div>
@@ -552,10 +552,10 @@ function TradeForm({
 
         {/* Info strip */}
         {hasTokens && !form.isChecking && (
-          <div className="flex items-center justify-center gap-3 text-[11px] text-ash">
+          <div className="flex items-center justify-center gap-3 text-[11px] text-gray-500">
             {!hasFullMatch && (
               <>
-                <span className={form.mode === 'offchain' ? 'text-aurora' : 'text-star'}>
+                <span className={form.mode === 'offchain' ? 'text-aurora' : 'text-accent'}>
                   {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
                 </span>
                 <span className="text-edge">·</span>
@@ -563,7 +563,7 @@ function TradeForm({
             )}
             <span className={feePreview.savingsBps > 0 ? 'text-aurora' : ''}>
               {feeText} fee
-              {feePreview.savingsBps > 0 && <span className="text-ash ml-0.5">(-{feePreview.discountPercent}%)</span>}
+              {feePreview.savingsBps > 0 && <span className="text-gray-500 ml-0.5">(-{feePreview.discountPercent}%)</span>}
             </span>
             {isLend && !hasFullMatch && (
               <>
@@ -707,7 +707,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
         <button
           type="button"
           onClick={form.resetForm}
-          className="text-ash hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
+          className="text-gray-500 hover:text-nova text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
         >
           Reset
         </button>
@@ -726,20 +726,20 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
       />
 
       {/* ── Terms & Duration ─────────────────────────────── */}
-      <section className="rounded-xl border border-edge/30 bg-surface/5 overflow-clip">
-        <div className="px-4 py-2.5 border-b border-edge/30 bg-surface/10">
-          <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Terms & Duration</span>
+      <section className="rounded-xl border border-border/30 bg-surface/5 overflow-clip">
+        <div className="px-4 py-2.5 border-b border-border/30 bg-surface/10">
+          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Terms & Duration</span>
         </div>
 
         <div className="p-4 flex flex-col md:flex-row md:items-start gap-6">
           {/* Duration */}
           <div className="space-y-3 flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Loan Duration</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Loan Duration</span>
               <button
                 type="button"
                 onClick={() => form.setUseCustomDuration(!form.useCustomDuration)}
-                className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer font-bold uppercase tracking-wider"
+                className="text-[10px] text-accent hover:text-accent/80 transition-colors cursor-pointer font-bold uppercase tracking-wider"
               >
                 {form.useCustomDuration ? 'Use Presets' : 'Custom'}
               </button>
@@ -752,7 +752,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                     type="number"
                     value={form.customDurationValue}
                     onChange={(e) => form.setCustomDurationValue(e.target.value)}
-                    className="flex-1 bg-surface/50 border-edge/50 font-mono h-9 text-sm"
+                    className="flex-1 bg-surface/50 border-border/50 font-mono h-9 text-sm"
                     placeholder="Amount"
                     min="1"
                   />
@@ -764,14 +764,14 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                         onClick={() => form.setCustomDurationUnit(u.multiplier)}
                         className={`px-3 py-1 rounded-lg text-[10px] border transition-all cursor-pointer font-medium ${
                           form.customDurationUnit === u.multiplier
-                            ? 'border-star/40 bg-star/10 text-star'
-                            : 'border-edge/50 text-dust hover:text-chalk'
+                            ? 'border-accent/40 bg-accent/10 text-accent'
+                            : 'border-border/50 text-gray-400 hover:text-white'
                         }`}
                       >{u.label}</button>
                     ))}
                   </div>
                 </div>
-                <p className="text-[10px] text-dust italic">
+                <p className="text-[10px] text-gray-400 italic">
                   Result: {formatDurationHuman(Number(form.duration))}
                 </p>
               </div>
@@ -784,8 +784,8 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                     onClick={() => form.setDurationPreset(p.seconds.toString())}
                     className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
                       form.durationPreset === p.seconds.toString()
-                        ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]'
-                        : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                        ? 'border-accent/40 bg-accent/10 text-accent shadow-[0_0_10px_rgba(232,168,37,0.1)]'
+                        : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
                     }`}
                   >{p.label}</button>
                 ))}
@@ -798,7 +798,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
 
           {/* Deadline / Expiry */}
           <div className="space-y-3 flex-1 min-w-0">
-            <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Order Expiry</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block">Order Expiry</span>
             <div className="flex flex-wrap gap-2">
               {LEND_DEADLINE_PRESETS.map((p) => (
                 <button
@@ -807,13 +807,13 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                   onClick={() => form.setDeadlinePreset(p.seconds.toString())}
                   className={`py-2 px-4 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
                     form.deadlinePreset === p.seconds.toString()
-                      ? 'border-star/40 bg-star/10 text-star shadow-[0_0_10px_rgba(232,168,37,0.1)]'
-                      : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                      ? 'border-accent/40 bg-accent/10 text-accent shadow-[0_0_10px_rgba(232,168,37,0.1)]'
+                      : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
                   }`}
                 >{p.label}</button>
               ))}
             </div>
-            <p className="text-[10px] text-dust" suppressHydrationWarning>
+            <p className="text-[10px] text-gray-400" suppressHydrationWarning>
               Expires {formatTimestamp(BigInt(form.deadline))}
             </p>
           </div>
@@ -825,10 +825,10 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
         <button
           type="button"
           onClick={() => setShowMultiAsset(!showMultiAsset)}
-          className="flex items-center gap-2 text-[11px] text-dust hover:text-chalk uppercase tracking-widest font-bold transition-colors cursor-pointer group"
+          className="flex items-center gap-2 text-[11px] text-gray-400 hover:text-white uppercase tracking-widest font-bold transition-colors cursor-pointer group"
         >
           <svg
-            className={`w-3 h-3 text-ash group-hover:text-chalk transition-transform ${showMultiAsset ? 'rotate-90' : ''}`}
+            className={`w-3 h-3 text-gray-500 group-hover:text-white transition-transform ${showMultiAsset ? 'rotate-90' : ''}`}
             viewBox="0 0 12 12"
             fill="none"
             stroke="currentColor"
@@ -837,7 +837,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
             <path d="M4 2l4 4-4 4" />
           </svg>
           Multi-Asset Options
-          {form.allAssets.length > 0 && <span className="text-star">({form.allAssets.length} assets)</span>}
+          {form.allAssets.length > 0 && <span className="text-accent">({form.allAssets.length} assets)</span>}
         </button>
 
         {showMultiAsset && (
@@ -846,7 +846,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
               {/* Mode */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold whitespace-nowrap">Mode</span>
                 <div className="flex gap-1">
                   {(['offchain', 'onchain'] as const).map((m) => (
                     <button
@@ -855,8 +855,8 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                       onClick={() => form.setMode(m)}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
                         form.mode === m
-                          ? 'bg-star/10 text-star border border-star/25'
-                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                          ? 'bg-accent/10 text-accent border border-accent/25'
+                          : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
                       }`}
                     >
                       {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
@@ -869,7 +869,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
 
               {/* Funding */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-ash uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold whitespace-nowrap">Funding</span>
                 <div className="flex gap-1">
                   {([
                     { value: 'single', label: 'Single' },
@@ -881,8 +881,8 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                       onClick={() => form.setMultiLender(f.value === 'multi')}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
                         (form.multiLender ? 'multi' : 'single') === f.value
-                          ? 'bg-star/10 text-star border border-star/25'
-                          : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                          ? 'bg-accent/10 text-accent border border-accent/25'
+                          : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
                       }`}
                     >
                       {f.label}
@@ -893,16 +893,16 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
             </div>
 
             {/* Asset Table */}
-            <section className="rounded-xl border border-edge/30 overflow-clip bg-surface/5">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-edge/30 bg-surface/10">
-                <span className="text-[11px] text-dust uppercase tracking-widest font-bold">
+            <section className="rounded-xl border border-border/30 overflow-clip bg-surface/5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-surface/10">
+                <span className="text-[11px] text-gray-400 uppercase tracking-widest font-bold">
                   Inscription Assets
-                  {form.allAssets.length > 0 && <span className="ml-2 text-star">({form.allAssets.length})</span>}
+                  {form.allAssets.length > 0 && <span className="ml-2 text-accent">({form.allAssets.length})</span>}
                 </span>
                 <button
                   type="button"
                   onClick={() => form.setAddModalOpen(true)}
-                  className="flex items-center gap-1.5 text-sm text-star hover:text-star-bright transition-colors font-medium cursor-pointer"
+                  className="flex items-center gap-1.5 text-sm text-accent hover:text-accent/80 transition-colors font-medium cursor-pointer"
                 >
                   <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M6 2v8M2 6h8" />
@@ -911,7 +911,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                 </button>
               </div>
 
-              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-dust uppercase tracking-widest font-bold border-b border-edge/20 bg-void/30">
+              <div className="hidden md:flex items-center px-4 py-2 text-[10px] text-gray-400 uppercase tracking-widest font-bold border-b border-border/20 bg-[#050505]/30">
                 <div className="flex-1">Asset</div>
                 <div className="w-32 text-center">Amount / ID</div>
                 <div className="w-32 text-center">Role</div>
@@ -923,12 +923,12 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                   onClick={() => form.setAddModalOpen(true)}
                   className="w-full min-h-[120px] hover:bg-surface/10 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-6"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-surface/30 border border-edge/50 flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+                  <div className="w-10 h-10 rounded-xl bg-surface/30 border border-border/50 flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
                       <path d="M8 3v10M3 8h10" />
                     </svg>
                   </div>
-                  <p className="text-xs text-dust">Add extra assets via the modal for multi-asset orders</p>
+                  <p className="text-xs text-gray-400">Add extra assets via the modal for multi-asset orders</p>
                 </div>
               ) : (
                 <div className="divide-y divide-edge/10">
@@ -949,7 +949,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
 
       {/* ── Validation Errors ──────────────────────────────── */}
       {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
-        <div className="px-4 py-3 rounded-xl border border-nova/20 bg-nova/5">
+        <div className="px-4 py-3 rounded-xl border border-nova/20 bg-red-500/5">
           <p className="text-xs text-nova font-medium">
             {!form.hasDebt && '• Add at least one borrow asset. '}
             {!form.hasCollateral && '• Add at least one collateral asset.'}
@@ -958,44 +958,44 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
       )}
 
       {/* ── Agreement Summary + Submit ─────────────────────── */}
-      <section className="rounded-xl border border-star/30 bg-star/5 p-5 max-w-md">
+      <section className="rounded-xl border border-accent/30 bg-accent/5 p-5 max-w-md">
         <div className="space-y-3">
-          <span className="text-[11px] text-star uppercase tracking-[0.2em] font-bold block border-b border-star/20 pb-2">
+          <span className="text-[11px] text-accent uppercase tracking-[0.2em] font-bold block border-b border-accent/20 pb-2">
             Agreement Summary
           </span>
           <div className="space-y-2.5">
             <div className="flex justify-between text-sm">
-              <span className="text-dust">Intent</span>
-              <span className="text-chalk font-medium uppercase tracking-wider">Lending</span>
+              <span className="text-gray-400">Intent</span>
+              <span className="text-white font-medium uppercase tracking-wider">Lending</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-dust">Network Mode</span>
-              <span className={`font-medium ${form.mode === 'onchain' ? 'text-star' : 'text-chalk'}`}>
+              <span className="text-gray-400">Network Mode</span>
+              <span className={`font-medium ${form.mode === 'onchain' ? 'text-accent' : 'text-white'}`}>
                 {form.mode === 'offchain' ? 'Gasless (Off-Chain)' : 'On-Chain'}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-dust">Duration</span>
-              <span className="text-chalk font-medium">{formatDurationHuman(Number(form.duration))}</span>
+              <span className="text-gray-400">Duration</span>
+              <span className="text-white font-medium">{formatDurationHuman(Number(form.duration))}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-dust">Expiry</span>
-              <span className="text-chalk font-medium" suppressHydrationWarning>{formatTimestamp(BigInt(form.deadline))}</span>
+              <span className="text-gray-400">Expiry</span>
+              <span className="text-white font-medium" suppressHydrationWarning>{formatTimestamp(BigInt(form.deadline))}</span>
             </div>
             {form.roiInfo && (
               <div className="flex justify-between text-sm">
-                <span className="text-dust">Est. Yield</span>
+                <span className="text-gray-400">Est. Yield</span>
                 <span className="text-aurora font-bold">+{form.roiInfo.yieldPct}%</span>
               </div>
             )}
             {form.matchesVisible && form.hasMatches && (
-              <div className="flex justify-between items-center text-sm pt-1 border-t border-star/10">
-                <span className="text-dust">Broadcast</span>
+              <div className="flex justify-between items-center text-sm pt-1 border-t border-accent/10">
+                <span className="text-gray-400">Broadcast</span>
                 <Switch
                   size="sm"
                   checked={form.broadcastMode}
                   onCheckedChange={form.setBroadcastMode}
-                  className="data-[state=checked]:bg-star"
+                  className="data-[state=checked]:bg-accent"
                 />
               </div>
             )}
@@ -1030,8 +1030,8 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
       {form.matchesVisible && form.hasMatches && !form.broadcastMode && (
         <div>
           <div className="mb-4 flex items-center gap-3 px-1">
-            <div className="w-2 h-2 rounded-full bg-star animate-ping" />
-            <span className="text-[10px] font-display tracking-[0.25em] text-star uppercase">
+            <div className="w-2 h-2 rounded-full bg-accent animate-ping" />
+            <span className="text-[10px] font-bold tracking-[0.25em] text-accent uppercase">
               Match Detected
             </span>
           </div>
@@ -1190,14 +1190,14 @@ function CollectionOfferForm() {
     <>
       {/* Collection Address */}
       <div className="space-y-1">
-        <div className="bg-star/5 border border-star/20 rounded-lg p-4">
+        <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-star">Collection</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-accent">Collection</span>
           </div>
           <button
             type="button"
             onClick={() => setCollectionSelectorOpen(true)}
-            className="w-full flex items-center gap-3 py-2 px-1 rounded-lg transition-colors text-left hover:bg-star/5"
+            className="w-full flex items-center gap-3 py-2 px-1 rounded-lg transition-colors text-left hover:bg-accent/5"
           >
             {selectedCollection ? (
               <>
@@ -1211,28 +1211,28 @@ function CollectionOfferForm() {
                       className="rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-dust text-sm font-semibold">
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-semibold">
                       {selectedCollection.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-chalk truncate">{selectedCollection.name}</div>
-                  <div className="text-[10px] text-dust font-mono truncate">{formatAddress(selectedCollection.address)}</div>
+                  <div className="text-sm font-medium text-white truncate">{selectedCollection.name}</div>
+                  <div className="text-[10px] text-gray-400 font-mono truncate">{formatAddress(selectedCollection.address)}</div>
                 </div>
               </>
             ) : (
               <>
-                <div className="shrink-0 w-10 h-10 rounded-lg border border-dashed border-edge flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+                <div className="shrink-0 w-10 h-10 rounded-lg border border-dashed border-border flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
                     <rect x="2" y="2" width="12" height="12" rx="2" />
                     <path d="M6 6h4M6 10h4" />
                   </svg>
                 </div>
-                <span className="text-sm text-ash/60">Select Collection</span>
+                <span className="text-sm text-gray-500/60">Select Collection</span>
               </>
             )}
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-dust ml-auto">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-gray-400 ml-auto">
               <path d="M3 5l3 3 3-3" />
             </svg>
           </button>
@@ -1246,7 +1246,7 @@ function CollectionOfferForm() {
           label="I'll lend"
           accentClass="text-aurora"
           borderClass="border-aurora/20"
-          bgClass="bg-aurora/5"
+          bgClass="bg-green-500/5"
           asset={debtAsset}
           balance={debtBalance}
           onTokenClick={() => setOpenSelector('debt')}
@@ -1272,7 +1272,7 @@ function CollectionOfferForm() {
 
       {/* Validation */}
       {showErrors && !isValid && (
-        <div className="mt-3 px-4 py-3 rounded-lg border border-nova/20 bg-nova/5">
+        <div className="mt-3 px-4 py-3 rounded-lg border border-nova/20 bg-red-500/5">
           <p className="text-xs text-nova font-medium">
             {!isValidAddress && '• Enter a valid collection address. '}
             {!hasDebt && '• Select a token and amount to lend.'}
@@ -1282,9 +1282,9 @@ function CollectionOfferForm() {
 
       {/* Settings */}
       <div className="mt-4 space-y-3">
-        <div className="rounded-lg border border-edge/30 bg-surface/5 p-4 space-y-3">
+        <div className="rounded-lg border border-border/30 bg-surface/5 p-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Duration</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold shrink-0 w-16">Duration</span>
             <div className="flex flex-wrap gap-1">
               {DURATION_PRESETS.map((p) => (
                 <button
@@ -1292,14 +1292,14 @@ function CollectionOfferForm() {
                   type="button"
                   onClick={() => setDurationPreset(p.seconds.toString())}
                   className={`py-1 px-2 rounded-sm text-[10px] border transition-colors cursor-pointer font-medium ${
-                    durationPreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                    durationPreset === p.seconds.toString() ? 'border-accent/40 bg-accent/10 text-accent' : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
                   }`}
                 >{p.label}</button>
               ))}
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">Expiry</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold shrink-0 w-16">Expiry</span>
             <div className="flex flex-wrap gap-1">
               {LEND_DEADLINE_PRESETS.map((p) => (
                 <button
@@ -1307,7 +1307,7 @@ function CollectionOfferForm() {
                   type="button"
                   onClick={() => setDeadlinePreset(p.seconds.toString())}
                   className={`py-1 px-2 rounded-sm text-[10px] border transition-colors cursor-pointer font-medium ${
-                    deadlinePreset === p.seconds.toString() ? 'border-star/40 bg-star/10 text-star' : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                    deadlinePreset === p.seconds.toString() ? 'border-accent/40 bg-accent/10 text-accent' : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
                   }`}
                 >{p.label}</button>
               ))}
@@ -1335,17 +1335,17 @@ function CollectionOfferForm() {
         </Web3ActionWrapper>
 
         {/* Info strip */}
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-ash">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
           <span className="text-aurora">Gasless</span>
           <span className="text-edge">·</span>
           <span className={feePreview.savingsBps > 0 ? 'text-aurora' : ''}>
             {feeText} fee
-            {feePreview.savingsBps > 0 && <span className="text-ash ml-0.5">(-{feePreview.discountPercent}%)</span>}
+            {feePreview.savingsBps > 0 && <span className="text-gray-500 ml-0.5">(-{feePreview.discountPercent}%)</span>}
           </span>
           <span className="text-edge">·</span>
           <span>{formatDurationHuman(Number(durationPreset))}</span>
           <span className="text-edge">·</span>
-          <span className="text-dust">Any NFT in collection</span>
+          <span className="text-gray-400">Any NFT in collection</span>
         </div>
       </div>
 
@@ -1448,7 +1448,7 @@ function CollectionOfferBrowser() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-8 text-dust text-xs">
+      <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-xs">
         <Spinner className="h-3.5 w-3.5" />
         Loading collection offers...
       </div>
@@ -1458,8 +1458,8 @@ function CollectionOfferBrowser() {
   if (offers.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-dust">No open collection offers</p>
-        <p className="text-[11px] text-ash mt-1">Collection offers from lenders will appear here.</p>
+        <p className="text-sm text-gray-400">No open collection offers</p>
+        <p className="text-[11px] text-gray-500 mt-1">Collection offers from lenders will appear here.</p>
       </div>
     )
   }
@@ -1484,7 +1484,7 @@ function CollectionOfferBrowser() {
           <div
             key={offer.id}
             className={`rounded-lg border p-4 transition-colors ${
-              isExpanded ? 'border-star/30 bg-star/5' : 'border-edge/20 bg-surface/5 hover:border-edge/40'
+              isExpanded ? 'border-accent/30 bg-accent/5' : 'border-border/20 bg-surface/5 hover:border-border/40'
             }`}
           >
             {/* Summary row */}
@@ -1496,15 +1496,15 @@ function CollectionOfferBrowser() {
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center gap-1.5">
                   {collectionToken ? (
-                    <span className="text-xs text-star font-medium">{collectionToken.symbol}</span>
+                    <span className="text-xs text-accent font-medium">{collectionToken.symbol}</span>
                   ) : (
-                    <span className="text-xs text-dust font-mono">{formatAddress(offer.collection_address)}</span>
+                    <span className="text-xs text-gray-400 font-mono">{formatAddress(offer.collection_address)}</span>
                   )}
                 </div>
                 <span className="text-edge text-xs">|</span>
                 <div className="flex items-center gap-1">
                   {debtToken && <TokenAvatar token={debtToken} size={14} />}
-                  <span className="text-xs text-chalk">
+                  <span className="text-xs text-white">
                     {debtToken && debtValue ? formatTokenValue(debtValue, debtToken.decimals) : '?'}{' '}
                     {debtToken?.symbol ?? ''}
                   </span>
@@ -1523,10 +1523,10 @@ function CollectionOfferBrowser() {
               </div>
               <div className="flex items-center gap-2 shrink-0 ml-2">
                 {durationSec > 0 && (
-                  <span className="text-[10px] text-dust">{formatDurationHuman(durationSec)}</span>
+                  <span className="text-[10px] text-gray-400">{formatDurationHuman(durationSec)}</span>
                 )}
                 <svg
-                  className={`w-3.5 h-3.5 text-dust transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -1536,25 +1536,25 @@ function CollectionOfferBrowser() {
 
             {/* Expanded detail + accept */}
             {isExpanded && (
-              <div className="mt-3 pt-3 border-t border-edge/15 space-y-3">
+              <div className="mt-3 pt-3 border-t border-border/15 space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                   <div>
-                    <span className="text-dust">Lender</span>
-                    <p className="text-chalk font-mono mt-0.5">{formatAddress(offer.lender)}</p>
+                    <span className="text-gray-400">Lender</span>
+                    <p className="text-white font-mono mt-0.5">{formatAddress(offer.lender)}</p>
                   </div>
                   <div>
-                    <span className="text-dust">Collection</span>
-                    <p className="text-chalk font-mono mt-0.5">
+                    <span className="text-gray-400">Collection</span>
+                    <p className="text-white font-mono mt-0.5">
                       {collectionToken?.name ?? formatAddress(offer.collection_address)}
                     </p>
                   </div>
                   <div>
-                    <span className="text-dust">Duration</span>
-                    <p className="text-chalk mt-0.5">{durationSec > 0 ? formatDurationHuman(durationSec) : '--'}</p>
+                    <span className="text-gray-400">Duration</span>
+                    <p className="text-white mt-0.5">{durationSec > 0 ? formatDurationHuman(durationSec) : '--'}</p>
                   </div>
                   <div>
-                    <span className="text-dust">Expires</span>
-                    <p className={`mt-0.5 ${isExpired ? 'text-nova' : 'text-chalk'}`}>
+                    <span className="text-gray-400">Expires</span>
+                    <p className={`mt-0.5 ${isExpired ? 'text-nova' : 'text-white'}`}>
                       {deadlineDate ? deadlineDate.toLocaleDateString() : '--'}
                       {isExpired && ' (expired)'}
                     </p>
@@ -1565,7 +1565,7 @@ function CollectionOfferBrowser() {
                   <div className="space-y-3">
                     {/* NFT Picker grid */}
                     <div>
-                      <label className="text-[10px] text-dust uppercase tracking-widest font-bold mb-2 block">
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2 block">
                         Select Your NFT
                       </label>
                       <NFTTokenPicker
@@ -1578,7 +1578,7 @@ function CollectionOfferBrowser() {
 
                     {/* Manual fallback input */}
                     <div>
-                      <label className="text-[10px] text-dust uppercase tracking-widest font-bold">
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
                         Or enter Token ID manually
                       </label>
                       <input
@@ -1586,7 +1586,7 @@ function CollectionOfferBrowser() {
                         placeholder="Token ID (e.g. 1, 42)"
                         value={tokenId}
                         onChange={(e) => setTokenId(e.target.value.trim())}
-                        className="w-full mt-1 text-sm font-mono bg-abyss/50 border border-edge/30 rounded-md px-3 py-2 outline-none text-chalk placeholder:text-ash/40 focus:border-star/40"
+                        className="w-full mt-1 text-sm font-mono bg-surface/50 border border-border/30 rounded-md px-3 py-2 outline-none text-white placeholder:text-gray-500/40 focus:border-accent/40"
                       />
                     </div>
 
@@ -1609,7 +1609,7 @@ function CollectionOfferBrowser() {
                 )}
 
                 {!isExpired && !address && (
-                  <p className="text-[11px] text-dust text-center py-2">Connect wallet to accept this offer</p>
+                  <p className="text-[11px] text-gray-400 text-center py-2">Connect wallet to accept this offer</p>
                 )}
 
                 {isExpired && (
@@ -1718,15 +1718,15 @@ const ADVANCED_FAQ = [
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-edge/15">
+    <div className="border-b border-border/15">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-4 text-left cursor-pointer group"
       >
-        <span className="text-sm text-chalk group-hover:text-star transition-colors pr-4">{q}</span>
+        <span className="text-sm text-white group-hover:text-accent transition-colors pr-4">{q}</span>
         <svg
-          className={`w-4 h-4 text-dust shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -1736,7 +1736,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         </svg>
       </button>
       {open && (
-        <p className="text-sm text-dust leading-relaxed pb-4 pr-8">{a}</p>
+        <p className="text-sm text-gray-400 leading-relaxed pb-4 pr-8">{a}</p>
       )}
     </div>
   )
@@ -1751,19 +1751,19 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' | 'advanced' }
     <div className="mt-16 max-w-lg mx-auto">
       {/* Hero statement */}
       <section className="text-center mb-10">
-        <p className="text-star font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
+        <p className="text-accent font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
           {isSwap ? 'P2P Swaps on StarkNet' : isAdvanced ? 'Multi-Asset Inscriptions' : 'P2P Lending on StarkNet'}
         </p>
-        <h2 className="font-display text-2xl sm:text-3xl tracking-tight text-chalk leading-[1.15] mb-4">
+        <h2 className="font-bold text-2xl sm:text-3xl tracking-tight text-white leading-[1.15] mb-4">
           {isSwap ? (
-            <>Swap anything, <span className="text-star">peer-to-peer.</span></>
+            <>Swap anything, <span className="text-accent">peer-to-peer.</span></>
           ) : isAdvanced ? (
-            <>If it exists, you can <span className="text-star">inscribe it.</span></>
+            <>If it exists, you can <span className="text-accent">inscribe it.</span></>
           ) : (
-            <>If it exists, you can <span className="text-star">lend it.</span></>
+            <>If it exists, you can <span className="text-accent">lend it.</span></>
           )}
         </h2>
-        <p className="text-dust text-sm leading-relaxed max-w-md mx-auto">
+        <p className="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
           {isSwap
             ? 'Any ERC20, any amount. No pools, no slippage, no oracles. Gasless to create, settled on-chain when matched.'
             : isAdvanced
@@ -1773,25 +1773,25 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' | 'advanced' }
       </section>
 
       {/* Stats bar */}
-      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-border/15">
         <div className="text-center">
-          <div className="font-display text-xl text-chalk">{isSwap ? '0.15%' : '0.25%'}</div>
-          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">{isSwap ? 'Swap Fee' : 'Lending Fee'}</div>
+          <div className="font-bold text-xl text-white">{isSwap ? '0.15%' : '0.25%'}</div>
+          <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">{isSwap ? 'Swap Fee' : 'Lending Fee'}</div>
         </div>
         <div className="text-center">
-          <div className="font-display text-xl text-chalk">0%</div>
-          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Redeem Fee</div>
+          <div className="font-bold text-xl text-white">0%</div>
+          <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Redeem Fee</div>
         </div>
         <div className="text-center">
-          <div className="font-display text-xl text-chalk">50%</div>
-          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Max NFT Discount</div>
+          <div className="font-bold text-xl text-white">50%</div>
+          <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Max NFT Discount</div>
         </div>
       </div>
 
       {/* FAQ */}
       <div>
-        <h2 className="font-display text-lg text-chalk uppercase tracking-wider mb-1">Questions?</h2>
-        <p className="text-dust text-sm mb-6">Answers.</p>
+        <h2 className="font-bold text-lg text-white uppercase tracking-wider mb-1">Questions?</h2>
+        <p className="text-gray-400 text-sm mb-6">Answers.</p>
         <div>
           {faq.map((item) => (
             <FaqItem key={item.q} q={item.q} a={item.a} />
@@ -1800,7 +1800,7 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' | 'advanced' }
       </div>
 
       {/* Trust signals */}
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-dust/60 uppercase tracking-widest">
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-gray-400/60 uppercase tracking-widest">
         <span>Open Source</span>
         <span className="text-edge/40">|</span>
         <span>Immutable</span>
@@ -1848,10 +1848,10 @@ function TradeContent() {
                 key={tab}
                 type="button"
                 onClick={() => { setMode(tab); setOfferMode('standard'); setCollectionView('create') }}
-                className={`px-4 sm:px-5 py-2 font-display text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
+                className={`px-4 sm:px-5 py-2 font-bold text-[13px] uppercase tracking-[0.15em] transition-colors cursor-pointer border-b-2 ${
                   mode === tab
-                    ? 'text-star border-star'
-                    : 'text-dust hover:text-chalk border-transparent'
+                    ? 'text-accent border-accent'
+                    : 'text-gray-400 hover:text-white border-transparent'
                 }`}
               >
                 {TAB_LABELS[tab]}
@@ -1870,15 +1870,15 @@ function TradeContent() {
                     onClick={() => { setOfferMode(m); setCollectionView('create') }}
                     className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
                       offerMode === m
-                        ? 'bg-star/10 text-star border border-star/25'
-                        : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                        ? 'bg-accent/10 text-accent border border-accent/25'
+                        : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
                     }`}
                   >
                     {m === 'standard' ? 'Token' : 'Collection'}
                   </button>
                 ))}
               </div>
-              <span className="text-[10px] text-dust">
+              <span className="text-[10px] text-gray-400">
                 {offerMode === 'standard'
                   ? 'Lend against a specific token'
                   : 'Lend against any NFT in a collection'}
@@ -1897,8 +1897,8 @@ function TradeContent() {
                 onClick={() => setCollectionView(v)}
                 className={`py-1.5 px-3 rounded-sm text-[11px] font-medium transition-colors cursor-pointer ${
                   collectionView === v
-                    ? 'bg-aurora/10 text-aurora border border-aurora/25'
-                    : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                    ? 'bg-green-500/10 text-aurora border border-aurora/25'
+                    : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
                 }`}
               >
                 {v === 'create' ? 'Create Offer' : 'Browse Offers'}
@@ -1909,7 +1909,7 @@ function TradeContent() {
 
         {/* Advanced tab description */}
         {mode === 'advanced' && (
-          <p className="text-[11px] text-dust mb-5 leading-relaxed">
+          <p className="text-[11px] text-gray-400 mb-5 leading-relaxed">
             Full multi-asset inscription builder — add multiple debt, collateral, and interest assets in one order.
           </p>
         )}

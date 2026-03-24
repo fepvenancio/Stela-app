@@ -38,7 +38,7 @@ export default function GenesisClaimPage() {
     <div className="animate-fade-up max-w-2xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6">
-        <Link href="/nft" className="text-ash hover:text-star transition-colors text-sm flex items-center gap-2 group">
+        <Link href="/nft" className="text-gray-500 hover:text-accent transition-colors text-sm flex items-center gap-2 group">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
@@ -48,10 +48,10 @@ export default function GenesisClaimPage() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-display text-3xl tracking-widest text-chalk mb-2 uppercase">
+        <h1 className="font-bold text-3xl tracking-widest text-white mb-2 uppercase">
           Your NFTs
         </h1>
-        <p className="text-dust text-sm leading-relaxed">
+        <p className="text-gray-400 text-sm leading-relaxed">
           View your Genesis NFTs and current fee discount tier.
         </p>
       </div>
@@ -59,13 +59,13 @@ export default function GenesisClaimPage() {
       <Web3ActionWrapper message="Connect your wallet to view your Genesis position">
         {pos.balance === 0n && !pos.isLoading ? (
           /* No NFTs */
-          <div className="bg-surface/15 border border-edge/25 rounded-2xl p-10 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-star/5 border border-star/15 flex items-center justify-center mx-auto mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star/50">
+          <div className="bg-surface/15 border border-border/25 rounded-2xl p-10 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-accent/5 border border-accent/15 flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent/50">
                 <path d="M12 2l8 4.5v7L12 22l-8-8.5v-7L12 2z" />
               </svg>
             </div>
-            <p className="text-dust text-sm mb-4">You don&apos;t own any Genesis NFTs yet.</p>
+            <p className="text-gray-400 text-sm mb-4">You don&apos;t own any Genesis NFTs yet.</p>
             <Button asChild variant="default" className="rounded-full px-8">
               <Link href="/nft">Mint Genesis NFT</Link>
             </Button>
@@ -74,25 +74,25 @@ export default function GenesisClaimPage() {
           <div className="space-y-5">
             {/* ── Position Summary ──────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">NFTs Held</span>
-                <span className="text-xl font-display text-chalk">{pos.balance.toString()}</span>
+              <div className="p-4 bg-surface/15 border border-border/25 rounded-xl">
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest block mb-1.5">NFTs Held</span>
+                <span className="text-xl font-bold text-white">{pos.balance.toString()}</span>
               </div>
-              <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">NFT Discount</span>
-                <span className="text-xl font-display text-star">{discount}%+</span>
+              <div className="p-4 bg-surface/15 border border-border/25 rounded-xl">
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest block mb-1.5">NFT Discount</span>
+                <span className="text-xl font-bold text-accent">{discount}%+</span>
               </div>
-              <div className="p-4 bg-surface/15 border border-edge/25 rounded-xl">
-                <span className="text-[9px] text-dust uppercase tracking-widest block mb-1.5">Tier</span>
-                <span className="text-xl font-display text-chalk">{tier}</span>
+              <div className="p-4 bg-surface/15 border border-border/25 rounded-xl">
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest block mb-1.5">Tier</span>
+                <span className="text-xl font-bold text-white">{tier}</span>
               </div>
             </div>
 
             {/* ── Discount Tiers ────────────────────────── */}
-            <section className="bg-star/[0.03] border border-star/20 rounded-2xl overflow-hidden">
+            <section className="bg-accent/[0.03] border border-accent/20 rounded-2xl overflow-hidden">
               <div className="px-6 py-5">
-                <h2 className="font-display text-lg text-star uppercase tracking-[0.15em]">Discount Tiers</h2>
-                <p className="text-[10px] text-dust mt-0.5">
+                <h2 className="font-bold text-lg text-accent uppercase tracking-[0.15em]">Discount Tiers</h2>
+                <p className="text-[10px] text-gray-400 mt-0.5">
                   15% base + 2% per extra NFT (shown below) + 5% per volume tier (on-chain). 50% cap.
                 </p>
               </div>
@@ -110,21 +110,21 @@ export default function GenesisClaimPage() {
                     <div
                       key={t.nfts}
                       className={`flex items-center justify-between p-3 rounded-xl border ${
-                        isActive ? 'bg-star/5 border-star/20' : 'bg-abyss/30 border-edge/15'
+                        isActive ? 'bg-accent/5 border-accent/20' : 'bg-surface/30 border-border/15'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          isActive ? 'bg-star/15 text-star' : 'bg-surface/40 text-ash'
+                          isActive ? 'bg-accent/15 text-accent' : 'bg-surface/40 text-gray-500'
                         }`}>
-                          <span className="text-[10px] font-display">{t.nfts}</span>
+                          <span className="text-[10px] font-bold">{t.nfts}</span>
                         </div>
                         <div>
-                          <span className={`text-sm font-medium ${isActive ? 'text-chalk' : 'text-dust'}`}>{t.label} Tier</span>
-                          <span className="text-[10px] text-dust block">{t.nfts} NFT{t.nfts > 1 ? 's' : ''}</span>
+                          <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-400'}`}>{t.label} Tier</span>
+                          <span className="text-[10px] text-gray-400 block">{t.nfts} NFT{t.nfts > 1 ? 's' : ''}</span>
                         </div>
                       </div>
-                      <span className={`text-base font-display ${isActive ? 'text-star' : 'text-dust'}`}>{t.pct}% off</span>
+                      <span className={`text-base font-bold ${isActive ? 'text-accent' : 'text-gray-400'}`}>{t.pct}% off</span>
                     </div>
                   )
                 })}
@@ -133,14 +133,14 @@ export default function GenesisClaimPage() {
 
             {/* ── Your NFT IDs ──────────────────────────── */}
             {pos.tokenIds.length > 0 && (
-              <section className="bg-surface/10 border border-edge/20 rounded-2xl overflow-hidden">
-                <div className="px-6 py-3 border-b border-edge/15">
-                  <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Your Token IDs</h3>
+              <section className="bg-surface/10 border border-border/20 rounded-2xl overflow-hidden">
+                <div className="px-6 py-3 border-b border-border/15">
+                  <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Your Token IDs</h3>
                 </div>
                 <div className="px-6 py-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     {pos.tokenIds.map((id) => (
-                      <span key={id.toString()} className="text-[10px] font-mono text-chalk bg-surface/50 px-2 py-0.5 rounded-md border border-edge/20">
+                      <span key={id.toString()} className="text-[10px] font-mono text-white bg-surface/50 px-2 py-0.5 rounded-md border border-border/20">
                         #{id.toString()}
                       </span>
                     ))}
@@ -157,11 +157,11 @@ export default function GenesisClaimPage() {
 
             {/* ── Info footer ──────────────────────────── */}
             <div className="flex items-center gap-3 px-1">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500 shrink-0">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
-              <p className="text-[10px] text-dust leading-relaxed">
+              <p className="text-[10px] text-gray-400 leading-relaxed">
                 Fee discounts are applied automatically when you settle or redeem inscriptions.
                 The contract reads your NFT balance on-chain — no claiming needed.
               </p>

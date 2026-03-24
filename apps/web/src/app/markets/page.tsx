@@ -91,8 +91,8 @@ export default function MarketsPage() {
     <div className="animate-fade-up pb-24">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-lg font-semibold text-chalk mb-1">Markets</h1>
-        <p className="text-xs text-dust">
+        <h1 className="text-lg font-semibold text-white mb-1">Markets</h1>
+        <p className="text-xs text-gray-400">
           Browse lending pairs and NFT collections. Toggle to Owned to see your positions.
         </p>
       </div>
@@ -110,8 +110,8 @@ export default function MarketsPage() {
               onClick={() => setActiveTab(key)}
               className={`py-1.5 px-3 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                 activeTab === key
-                  ? 'bg-star/10 text-star border border-star/25'
-                  : 'text-dust hover:text-chalk border border-edge/40 hover:border-edge-bright'
+                  ? 'bg-accent/10 text-accent border border-accent/25'
+                  : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
               }`}
             >
               {label}
@@ -120,7 +120,7 @@ export default function MarketsPage() {
         </div>
 
         {/* ALL / OWNED toggle */}
-        <div className="flex gap-1 p-0.5 rounded-lg bg-surface/20 border border-edge/20">
+        <div className="flex gap-1 p-0.5 rounded-lg bg-surface/20 border border-border/20">
           {(['all', 'owned'] as const).map((mode) => (
             <button
               key={mode}
@@ -128,8 +128,8 @@ export default function MarketsPage() {
               onClick={() => setOwnerFilter(mode)}
               className={`px-3 py-1 rounded-md text-[11px] font-medium uppercase tracking-wider transition-all cursor-pointer ${
                 ownerFilter === mode
-                  ? 'bg-star/15 text-star border border-star/25'
-                  : 'text-dust hover:text-chalk border border-transparent'
+                  ? 'bg-accent/15 text-accent border border-accent/25'
+                  : 'text-gray-400 hover:text-white border border-transparent'
               }`}
             >
               {mode}
@@ -237,14 +237,14 @@ function TokenPairsSection({ ownerFilter }: { ownerFilter: OwnerFilter }) {
           placeholder="Search by token..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-surface/30 border-edge/40 text-sm h-9 sm:max-w-[240px]"
+          className="bg-surface/30 border-border/40 text-sm h-9 sm:max-w-[240px]"
           aria-label="Search pairs"
         />
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-          <SelectTrigger className="h-9 w-full sm:w-[150px] bg-surface/30 border-edge/40 text-xs text-dust hover:text-chalk rounded-lg" aria-label="Sort pairs">
+          <SelectTrigger className="h-9 w-full sm:w-[150px] bg-surface/30 border-border/40 text-xs text-gray-400 hover:text-white rounded-lg" aria-label="Sort pairs">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
-          <SelectContent className="bg-void border-edge">
+          <SelectContent className="bg-[#050505] border-border">
             <SelectItem value="active">Most Active</SelectItem>
             <SelectItem value="volume">Highest Volume</SelectItem>
             <SelectItem value="total">Most Stelas</SelectItem>
@@ -278,9 +278,9 @@ function TokenPairsSection({ ownerFilter }: { ownerFilter: OwnerFilter }) {
 
       {/* Owned positions */}
       {!loading && !error && showPositions && allPositions.length > 0 && (
-        <div className="mt-6 rounded-xl border border-edge/30 overflow-clip">
-          <div className="flex items-center gap-3 px-4 py-2 bg-surface/20 border-b border-edge/20">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-dust">Your Positions</span>
+        <div className="mt-6 rounded-xl border border-border/30 overflow-clip">
+          <div className="flex items-center gap-3 px-4 py-2 bg-surface/20 border-b border-border/20">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-gray-400">Your Positions</span>
             <div className="flex-1 h-px bg-edge/15" />
           </div>
           <ListingTableHeader />
@@ -301,16 +301,16 @@ function TokenPairsSection({ ownerFilter }: { ownerFilter: OwnerFilter }) {
 
       {!loading && !error && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
+          <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500" aria-hidden="true">
               <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
             </svg>
           </div>
           <div className="text-center space-y-1.5">
-            <p className="text-chalk text-sm font-medium">
+            <p className="text-white text-sm font-medium">
               {ownerFilter === 'owned' ? 'No positions yet' : pairs.length === 0 ? 'No markets yet' : 'No matching pairs'}
             </p>
-            <p className="text-dust text-xs">
+            <p className="text-gray-400 text-xs">
               {ownerFilter === 'owned'
                 ? 'Create an order on the trade page to start lending or borrowing.'
                 : pairs.length === 0
@@ -320,7 +320,7 @@ function TokenPairsSection({ ownerFilter }: { ownerFilter: OwnerFilter }) {
           </div>
           <Link
             href="/trade"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
             Trade
@@ -357,9 +357,9 @@ function PositionRow({ ins, userAddress }: { ins: EnrichedInscription & { shareB
   }
 
   const variantStyles = {
-    repay: 'bg-aurora/10 text-aurora border-aurora/25 hover:bg-aurora/20 hover:border-aurora/40',
-    claim: 'bg-star/10 text-star border-star/25 hover:bg-star/20 hover:border-star/40',
-    redeem: 'bg-star/10 text-star border-star/25 hover:bg-star/20 hover:border-star/40',
+    repay: 'bg-green-500/10 text-aurora border-aurora/25 hover:bg-green-500/20 hover:border-aurora/40',
+    claim: 'bg-accent/10 text-accent border-accent/25 hover:bg-accent/20 hover:border-accent/40',
+    redeem: 'bg-accent/10 text-accent border-accent/25 hover:bg-accent/20 hover:border-accent/40',
   }
 
   return (
@@ -487,8 +487,8 @@ function OwnedNFTsSection({ owner }: { owner: string }) {
   if (groups.length === 0) {
     return (
       <div className="text-center py-24">
-        <p className="text-dust text-sm">No NFTs found in your wallet</p>
-        <Link href="/trade" className="inline-flex items-center gap-1.5 px-4 py-2 mt-4 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors">
+        <p className="text-gray-400 text-sm">No NFTs found in your wallet</p>
+        <Link href="/trade" className="inline-flex items-center gap-1.5 px-4 py-2 mt-4 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors">
           Browse Trade
         </Link>
       </div>
@@ -502,8 +502,8 @@ function OwnedNFTsSection({ owner }: { owner: string }) {
           key={group.collectionAddress}
           className={`rounded-xl border transition-all ${
             expandedCollection === group.collectionAddress
-              ? 'border-star/30 bg-star/5'
-              : 'border-edge/30 bg-surface/10 hover:bg-surface/30'
+              ? 'border-accent/30 bg-accent/5'
+              : 'border-border/30 bg-surface/10 hover:bg-surface/30'
           }`}
         >
           <button
@@ -512,29 +512,29 @@ function OwnedNFTsSection({ owner }: { owner: string }) {
             className="w-full flex items-center gap-4 p-4 text-left cursor-pointer"
           >
             {group.collectionImage ? (
-              <img src={group.collectionImage} alt={group.collectionName} className="w-12 h-12 rounded-lg object-cover bg-abyss shrink-0" />
+              <img src={group.collectionImage} alt={group.collectionName} className="w-12 h-12 rounded-lg object-cover bg-surface shrink-0" />
             ) : (
-              <div className="w-12 h-12 rounded-lg bg-abyss border border-edge/20 flex items-center justify-center shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+              <div className="w-12 h-12 rounded-lg bg-surface border border-border/20 flex items-center justify-center shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
                   <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
                   <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
                 </svg>
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-chalk block truncate">
+              <span className="text-sm font-medium text-white block truncate">
                 {group.collectionName || formatAddress(group.collectionAddress)}
               </span>
-              {group.collectionSymbol && <span className="text-[10px] text-dust font-mono">{group.collectionSymbol}</span>}
-              <p className="text-[10px] text-ash mt-0.5">{group.nfts.length} owned</p>
+              {group.collectionSymbol && <span className="text-[10px] text-gray-400 font-mono">{group.collectionSymbol}</span>}
+              <p className="text-[10px] text-gray-500 mt-0.5">{group.nfts.length} owned</p>
             </div>
-            <svg className={`w-4 h-4 text-dust shrink-0 transition-transform ${expandedCollection === group.collectionAddress ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${expandedCollection === group.collectionAddress ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
           {expandedCollection === group.collectionAddress && (
-            <div className="px-4 pb-4 border-t border-edge/15 pt-3">
+            <div className="px-4 pb-4 border-t border-border/15 pt-3">
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
                 {group.nfts.map((nft) => (
                   <CollectionNFTCard key={nft.tokenId} nft={nft} />
@@ -682,7 +682,7 @@ function AllCollectionsSection() {
         <button
           type="button"
           onClick={fetchCollections}
-          className="text-xs text-star hover:text-star-bright mt-2 cursor-pointer transition-colors"
+          className="text-xs text-accent hover:text-accent/80 mt-2 cursor-pointer transition-colors"
         >
           Retry
         </button>
@@ -694,8 +694,8 @@ function AllCollectionsSection() {
   if (groups.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
+        <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500" aria-hidden="true">
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -703,12 +703,12 @@ function AllCollectionsSection() {
           </svg>
         </div>
         <div className="text-center space-y-1.5">
-          <p className="text-chalk text-sm font-medium">No NFT collection offers</p>
-          <p className="text-dust text-xs">Lenders can create collection offers on the trade page.</p>
+          <p className="text-white text-sm font-medium">No NFT collection offers</p>
+          <p className="text-gray-400 text-xs">Lenders can create collection offers on the trade page.</p>
         </div>
         <Link
           href="/trade"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
           Create Offer
@@ -776,8 +776,8 @@ function NFTCollectionCard({
     <div
       className={`rounded-xl border transition-all duration-200 ${
         isExpanded
-          ? 'border-star/30 bg-star/5'
-          : 'border-edge/30 bg-surface/10 hover:bg-surface/30 hover:border-edge/50'
+          ? 'border-accent/30 bg-accent/5'
+          : 'border-border/30 bg-surface/10 hover:bg-surface/30 hover:border-border/50'
       }`}
     >
       {/* Summary row */}
@@ -792,12 +792,12 @@ function NFTCollectionCard({
             <img
               src={collectionImage}
               alt={collectionName}
-              className="w-12 h-12 rounded-lg object-cover bg-abyss"
+              className="w-12 h-12 rounded-lg object-cover bg-surface"
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="w-12 h-12 rounded-lg bg-abyss border border-edge/20 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+            <div className="w-12 h-12 rounded-lg bg-surface border border-border/20 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
                 <rect x="3" y="3" width="7" height="7" rx="1" />
                 <rect x="14" y="3" width="7" height="7" rx="1" />
                 <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -813,18 +813,18 @@ function NFTCollectionCard({
             <span className="inline-block w-24 h-3.5 bg-surface/20 rounded animate-pulse" />
           ) : (
             <>
-              <span className="text-sm font-medium text-chalk block truncate">
+              <span className="text-sm font-medium text-white block truncate">
                 {hasName ? collectionName : formatAddress(group.collectionAddress)}
               </span>
               {collectionSymbol && (
-                <span className="text-[10px] text-dust font-mono">{collectionSymbol}</span>
+                <span className="text-[10px] text-gray-400 font-mono">{collectionSymbol}</span>
               )}
               {!collectionSymbol && hasName && (
-                <span className="text-[10px] text-dust font-mono">{formatAddress(group.collectionAddress)}</span>
+                <span className="text-[10px] text-gray-400 font-mono">{formatAddress(group.collectionAddress)}</span>
               )}
             </>
           )}
-          <p className="text-[10px] text-ash mt-0.5">
+          <p className="text-[10px] text-gray-500 mt-0.5">
             {group.offers.length} active offer{group.offers.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -833,23 +833,23 @@ function NFTCollectionCard({
         <div className="hidden sm:flex items-center gap-6 text-right">
           {group.bestDebtAmount && (
             <div className="min-w-[80px]">
-              <p className="text-xs text-chalk font-medium truncate">
+              <p className="text-xs text-white font-medium truncate">
                 {group.bestDebtAmount} {group.bestDebtSymbol ?? ''}
               </p>
-              <p className="text-[9px] text-ash uppercase tracking-wider">Best Loan</p>
+              <p className="text-[9px] text-gray-500 uppercase tracking-wider">Best Loan</p>
             </div>
           )}
           {group.bestInterestRate && (
             <div className="min-w-[60px]">
               <p className="text-xs text-aurora font-medium">{group.bestInterestRate}%</p>
-              <p className="text-[9px] text-ash uppercase tracking-wider">Lowest Rate</p>
+              <p className="text-[9px] text-gray-500 uppercase tracking-wider">Lowest Rate</p>
             </div>
           )}
         </div>
 
         {/* Arrow */}
         <svg
-          className={`w-4 h-4 text-dust transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -862,7 +862,7 @@ function NFTCollectionCard({
       {/* Expanded: NFT grid + offer summary */}
       {isExpanded && (
         <div className="px-4 pb-4">
-          <div className="border-t border-edge/15 pt-3">
+          <div className="border-t border-border/15 pt-3">
             {/* NFT Grid */}
             {nftsLoading ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
@@ -877,12 +877,12 @@ function NFTCollectionCard({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-dust text-center py-3 mb-3">No NFTs found in this collection</p>
+              <p className="text-xs text-gray-400 text-center py-3 mb-3">No NFTs found in this collection</p>
             )}
 
             {/* Offer summary */}
             <div className="space-y-1">
-              <span className="text-[10px] text-dust uppercase tracking-widest font-bold">Active Offers</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Active Offers</span>
               {group.offers.map((offer) => {
                 const data = parseOfferData(offer.order_data)
                 const debtAsset = data.debtAssets?.[0]
@@ -891,14 +891,14 @@ function NFTCollectionCard({
                 return (
                   <div key={offer.id} className="flex items-center justify-between py-1.5 text-[11px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-dust font-mono">{formatAddress(offer.lender)}</span>
-                      <span className="text-chalk">
+                      <span className="text-gray-400 font-mono">{formatAddress(offer.lender)}</span>
+                      <span className="text-white">
                         {debtToken && debtAsset
                           ? `${formatTokenValue(debtAsset.value, debtToken.decimals)} ${debtToken.symbol}`
                           : '--'}
                       </span>
                     </div>
-                    <span className="text-dust shrink-0 ml-2">
+                    <span className="text-gray-400 shrink-0 ml-2">
                       {durationSec > 0 ? formatDurationHuman(durationSec) : '--'}
                     </span>
                   </div>
@@ -908,7 +908,7 @@ function NFTCollectionCard({
           </div>
           <Link
             href={`/trade?tab=lend&mode=collection&view=browse`}
-            className="inline-flex items-center gap-1.5 text-xs text-star hover:text-star-bright transition-colors mt-3"
+            className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 transition-colors mt-3"
           >
             View all offers
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -927,24 +927,24 @@ function CollectionNFTCard({ nft }: { nft: NFTItem }) {
   const [imgError, setImgError] = useState(false)
 
   return (
-    <div className="rounded-lg border border-edge/20 bg-surface/5 overflow-hidden">
+    <div className="rounded-lg border border-border/20 bg-surface/5 overflow-hidden">
       {nft.image && !imgError ? (
         <img
           src={nft.image}
           alt={nft.name || 'NFT'}
-          className="aspect-square w-full object-cover bg-abyss"
+          className="aspect-square w-full object-cover bg-surface"
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="aspect-square w-full bg-abyss flex items-center justify-center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash">
+        <div className="aspect-square w-full bg-surface flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
             <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
           </svg>
         </div>
       )}
       <div className="px-1.5 py-1">
         {nft.name && (
-          <p className="text-[10px] text-chalk truncate">{nft.name}</p>
+          <p className="text-[10px] text-white truncate">{nft.name}</p>
         )}
       </div>
     </div>
@@ -979,15 +979,15 @@ const MARKETS_FAQ = [
 function MarketsFaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-edge/15">
+    <div className="border-b border-border/15">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-4 text-left cursor-pointer group"
       >
-        <span className="text-sm text-chalk group-hover:text-star transition-colors pr-4">{q}</span>
+        <span className="text-sm text-white group-hover:text-accent transition-colors pr-4">{q}</span>
         <svg
-          className={`w-4 h-4 text-dust shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -997,7 +997,7 @@ function MarketsFaqItem({ q, a }: { q: string; a: string }) {
         </svg>
       </button>
       {open && (
-        <p className="text-sm text-dust leading-relaxed pb-4 pr-8">{a}</p>
+        <p className="text-sm text-gray-400 leading-relaxed pb-4 pr-8">{a}</p>
       )}
     </div>
   )
@@ -1008,37 +1008,37 @@ function MarketsInfoSection() {
     <div className="mt-16 max-w-lg mx-auto">
       {/* Hero statement */}
       <section className="text-center mb-10">
-        <p className="text-star font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
+        <p className="text-accent font-mono text-[10px] uppercase tracking-[0.3em] mb-3">
           Permissionless Markets
         </p>
-        <h2 className="font-display text-2xl sm:text-3xl tracking-tight text-chalk leading-[1.15] mb-4">
-          Any pair, <span className="text-star">no listing required.</span>
+        <h2 className="font-bold text-2xl sm:text-3xl tracking-tight text-white leading-[1.15] mb-4">
+          Any pair, <span className="text-accent">no listing required.</span>
         </h2>
-        <p className="text-dust text-sm leading-relaxed max-w-md mx-auto">
+        <p className="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
           Markets appear automatically when the first order is placed. Any ERC20 pair on StarkNet. No governance, no approval process.
         </p>
       </section>
 
       {/* Stats bar */}
-      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-edge/15">
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-12 py-6 border-t border-b border-border/15">
         <div className="text-center">
-          <div className="font-display text-xl text-chalk">Any ERC20</div>
-          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Token Support</div>
+          <div className="font-bold text-xl text-white">Any ERC20</div>
+          <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Token Support</div>
         </div>
         <div className="text-center">
-          <div className="font-display text-xl text-chalk">Auto</div>
-          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Market Creation</div>
+          <div className="font-bold text-xl text-white">Auto</div>
+          <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Market Creation</div>
         </div>
         <div className="text-center">
-          <div className="font-display text-xl text-chalk">0</div>
-          <div className="text-[10px] text-dust uppercase tracking-widest mt-0.5">Listing Fee</div>
+          <div className="font-bold text-xl text-white">0</div>
+          <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Listing Fee</div>
         </div>
       </div>
 
       {/* FAQ */}
       <div>
-        <h2 className="font-display text-lg text-chalk uppercase tracking-wider mb-1">Questions?</h2>
-        <p className="text-dust text-sm mb-6">Answers.</p>
+        <h2 className="font-bold text-lg text-white uppercase tracking-wider mb-1">Questions?</h2>
+        <p className="text-gray-400 text-sm mb-6">Answers.</p>
         <div>
           {MARKETS_FAQ.map((item) => (
             <MarketsFaqItem key={item.q} q={item.q} a={item.a} />
@@ -1047,7 +1047,7 @@ function MarketsInfoSection() {
       </div>
 
       {/* Trust signals */}
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-dust/60 uppercase tracking-widest">
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-gray-400/60 uppercase tracking-widest">
         <span>Open Source</span>
         <span className="text-edge/40">|</span>
         <span>Immutable</span>

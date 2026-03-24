@@ -90,30 +90,30 @@ function MintCard({
   }
 
   return (
-    <div className="bg-surface/5 border border-edge/30 rounded-lg overflow-hidden hover:border-edge-bright transition-all group">
-      <div className="px-5 py-4 border-b border-edge/20 bg-surface/10 flex items-center justify-between">
+    <div className="bg-surface/5 border border-border/30 rounded-lg overflow-hidden hover:border-white/20 transition-all group">
+      <div className="px-5 py-4 border-b border-border/20 bg-surface/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <TokenAvatarByAddress address={token.address} size={28} />
           <div>
-            <h3 className="text-sm font-display text-chalk uppercase tracking-wider">{token.symbol}</h3>
-            <p className="text-[10px] text-dust">{token.name}</p>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">{token.symbol}</h3>
+            <p className="text-[10px] text-gray-400">{token.name}</p>
           </div>
         </div>
-        <span className="text-[9px] font-mono font-bold text-star bg-star/10 px-2 py-0.5 rounded border border-star/20">
+        <span className="text-[9px] font-mono font-bold text-accent bg-accent/10 px-2 py-0.5 rounded border border-accent/20">
           {token.type}
         </span>
       </div>
       
       <div className="p-5 space-y-4">
         <div className="space-y-1">
-          <span className="text-[9px] text-dust uppercase tracking-widest font-bold">Contract Address</span>
+          <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Contract Address</span>
           <button
             type="button"
             onClick={() => {
               navigator.clipboard.writeText(token.address)
               toast.success('Address copied', { description: formatAddress(token.address) })
             }}
-            className="w-full text-left text-[10px] font-mono text-dust bg-void/30 px-2 py-1.5 rounded border border-edge/10 hover:border-star/30 hover:text-chalk transition-colors cursor-pointer truncate"
+            className="w-full text-left text-[10px] font-mono text-gray-400 bg-[#050505]/30 px-2 py-1.5 rounded border border-border/10 hover:border-accent/30 hover:text-white transition-colors cursor-pointer truncate"
             title={token.address}
           >
             {formatAddress(token.address)}
@@ -123,24 +123,24 @@ function MintCard({
         <div className="flex gap-3 items-end">
           {token.type === 'ERC20' ? (
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor={`amount-${token.symbol}`} className="text-[10px] text-dust uppercase tracking-widest font-bold">Amount</Label>
+              <Label htmlFor={`amount-${token.symbol}`} className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Amount</Label>
               <Input
                 id={`amount-${token.symbol}`}
                 type="text"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="bg-surface/50 border-edge/50 h-9 font-mono text-sm"
+                className="bg-surface/50 border-border/50 h-9 font-mono text-sm"
               />
             </div>
           ) : (
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor={`tokenid-${token.symbol}`} className="text-[10px] text-dust uppercase tracking-widest font-bold">Token ID</Label>
+              <Label htmlFor={`tokenid-${token.symbol}`} className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Token ID</Label>
               <Input
                 id={`tokenid-${token.symbol}`}
                 type="text"
                 value={tokenId}
                 onChange={(e) => setTokenId(e.target.value)}
-                className="bg-surface/50 border-edge/50 h-9 font-mono text-sm"
+                className="bg-surface/50 border-border/50 h-9 font-mono text-sm"
               />
             </div>
           )}
@@ -176,23 +176,23 @@ export default function FaucetPage() {
 
         {/* Right Column: Info & Resources */}
         <div className="space-y-6">
-          <section className="bg-surface/5 border border-edge/30 rounded-lg p-6 space-y-6">
+          <section className="bg-surface/5 border border-border/30 rounded-lg p-6 space-y-6">
             <div className="space-y-4">
-              <h3 className="text-[11px] text-dust uppercase tracking-widest font-bold border-b border-edge/10 pb-3">
+              <h3 className="text-[11px] text-gray-400 uppercase tracking-widest font-bold border-b border-border/10 pb-3">
                 Gas & Support
               </h3>
               
               <div className="space-y-4">
-                <div className="p-4 rounded-md bg-star/5 border border-star/20 space-y-2">
-                  <span className="text-[10px] text-star uppercase tracking-widest font-bold block">Sepolia ETH</span>
-                  <p className="text-xs text-dust leading-relaxed">
+                <div className="p-4 rounded-md bg-accent/5 border border-accent/20 space-y-2">
+                  <span className="text-[10px] text-accent uppercase tracking-widest font-bold block">Sepolia ETH</span>
+                  <p className="text-xs text-gray-400 leading-relaxed">
                     You need Sepolia ETH to pay for gas on StarkNet Sepolia. 
                   </p>
                   <a
                     href="https://faucet.starknet.io/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-star hover:text-star-bright transition-colors text-xs font-bold uppercase tracking-wider mt-1 group"
+                    className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors text-xs font-bold uppercase tracking-wider mt-1 group"
                   >
                     Official Faucet
                     <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -201,14 +201,14 @@ export default function FaucetPage() {
                   </a>
                 </div>
 
-                <div className="p-4 rounded-md bg-surface/10 border border-edge/20 space-y-2">
-                  <span className="text-[10px] text-dust uppercase tracking-widest font-bold block">Documentation</span>
-                  <p className="text-xs text-dust leading-relaxed">
+                <div className="p-4 rounded-md bg-surface/10 border border-border/20 space-y-2">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block">Documentation</span>
+                  <p className="text-xs text-gray-400 leading-relaxed">
                     Learn more about using mock assets for testing inscriptions and lending.
                   </p>
                   <a
                     href="/docs"
-                    className="inline-flex items-center gap-2 text-chalk hover:text-star transition-colors text-xs font-bold uppercase tracking-wider mt-1 group"
+                    className="inline-flex items-center gap-2 text-white hover:text-accent transition-colors text-xs font-bold uppercase tracking-wider mt-1 group"
                   >
                     View Docs
                     <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -220,9 +220,9 @@ export default function FaucetPage() {
             </div>
           </section>
 
-          <div className="p-5 rounded-lg border border-edge/20 bg-surface/5">
-            <h4 className="text-[10px] text-dust uppercase tracking-widest font-bold mb-2">Usage Notice</h4>
-            <p className="text-[11px] text-dust leading-relaxed italic">
+          <div className="p-5 rounded-lg border border-border/20 bg-surface/5">
+            <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2">Usage Notice</h4>
+            <p className="text-[11px] text-gray-400 leading-relaxed italic">
               Mock tokens have no real-world value and are intended for testing on StarkNet Sepolia only. 
               The Stela team does not provide mainnet assets.
             </p>

@@ -374,7 +374,7 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
       <div className="mb-6">
         <Link
           href="/markets"
-          className="inline-flex items-center gap-1.5 text-xs text-dust hover:text-chalk transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors mb-4"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M8 2L4 6l4 4" />
@@ -394,34 +394,34 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
           </div>
 
           <div>
-            <h1 className="text-lg font-semibold text-chalk">
+            <h1 className="text-lg font-semibold text-white">
               {debtSymbol} / {collSymbol}
             </h1>
-            <p className="text-xs text-dust">P2P Lending Market</p>
+            <p className="text-xs text-gray-400">P2P Lending Market</p>
           </div>
         </div>
 
         {/* Stats bar */}
-        <div className="flex items-center gap-4 sm:gap-6 mt-4 p-3 rounded-xl bg-surface/20 border border-edge/30">
+        <div className="flex items-center gap-4 sm:gap-6 mt-4 p-3 rounded-xl bg-surface/20 border border-border/30">
           <div>
-            <p className={cn('text-xs font-medium font-mono tabular-nums', stats.bestYield !== null ? 'text-aurora' : 'text-dust')}>
+            <p className={cn('text-xs font-medium font-mono tabular-nums', stats.bestYield !== null ? 'text-aurora' : 'text-gray-400')}>
               {stats.bestYield !== null ? `${stats.bestYield.toFixed(1)}%` : '--'}
             </p>
-            <p className="text-[9px] text-ash uppercase tracking-wider">
+            <p className="text-[9px] text-gray-500 uppercase tracking-wider">
               {mode === 'lending' ? 'Best APR' : 'Best Rate'}
             </p>
           </div>
           <div className="w-px h-6 bg-edge/30" />
           <div>
-            <p className="text-xs text-chalk font-medium font-mono tabular-nums">
+            <p className="text-xs text-white font-medium font-mono tabular-nums">
               {stelaCount}
             </p>
-            <p className="text-[9px] text-ash uppercase tracking-wider">Orders</p>
+            <p className="text-[9px] text-gray-500 uppercase tracking-wider">Orders</p>
           </div>
           <div className="w-px h-6 bg-edge/30" />
           <div>
-            <p className="text-xs text-chalk font-medium font-mono tabular-nums">{stats.totalActive}</p>
-            <p className="text-[9px] text-ash uppercase tracking-wider">Active</p>
+            <p className="text-xs text-white font-medium font-mono tabular-nums">{stats.totalActive}</p>
+            <p className="text-[9px] text-gray-500 uppercase tracking-wider">Active</p>
           </div>
         </div>
       </div>
@@ -466,7 +466,7 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
               <button
                 type="button"
                 onClick={() => setShowStelas(!showStelas)}
-                className="flex items-center gap-2 w-full py-2.5 px-3 rounded-lg border border-edge/20 bg-surface/10 hover:bg-surface/20 transition-colors cursor-pointer"
+                className="flex items-center gap-2 w-full py-2.5 px-3 rounded-lg border border-border/20 bg-surface/10 hover:bg-surface/20 transition-colors cursor-pointer"
               >
                 <svg
                   width="14"
@@ -475,17 +475,17 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="1.5"
-                  className={cn('text-dust transition-transform', showStelas && 'rotate-90')}
+                  className={cn('text-gray-400 transition-transform', showStelas && 'rotate-90')}
                 >
                   <path d="M5 3l4 4-4 4" />
                 </svg>
-                <span className="text-xs font-medium text-chalk">
+                <span className="text-xs font-medium text-white">
                   Individual Stelas
                 </span>
                 <Badge variant="open" className="h-[18px] text-[9px] px-1.5 py-0 font-bold">
                   {stelaCount}
                 </Badge>
-                <span className="text-[10px] text-dust ml-auto">
+                <span className="text-[10px] text-gray-400 ml-auto">
                   {showStelas ? 'Hide' : 'Show'} individual orders
                 </span>
               </button>
@@ -497,7 +497,7 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
             <>
               {stelaCount > 0 && (
                 <div className="mt-2">
-                  <div className="rounded-xl border border-edge/30 overflow-clip">
+                  <div className="rounded-xl border border-border/30 overflow-clip">
                     <ListingTableHeader />
                     <div className="flex flex-col">
                       {visibleListings.map((a) => {
@@ -593,14 +593,14 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
               {activeListings.length > 0 && (
                 <div className="mt-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-xs font-semibold text-chalk uppercase tracking-wider">
+                    <h2 className="text-xs font-semibold text-white uppercase tracking-wider">
                       Active Loans
                     </h2>
                     <Badge variant="filled" className="h-[18px] text-[9px] px-1.5 py-0 font-bold">
                       {activeListings.length}
                     </Badge>
                   </div>
-                  <div className="rounded-xl border border-edge/30 overflow-clip">
+                  <div className="rounded-xl border border-border/30 overflow-clip">
                     <ListingTableHeader />
                     <div className="flex flex-col">
                       {activeListings.map((a) => (
@@ -636,7 +636,7 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
 
           {/* Loading state for individual listings */}
           {isLoading && (
-            <div className="mt-4 space-y-px rounded-xl border border-edge/30 overflow-clip" role="status" aria-busy="true">
+            <div className="mt-4 space-y-px rounded-xl border border-border/30 overflow-clip" role="status" aria-busy="true">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="h-[60px] w-full bg-surface/10 animate-pulse" />
               ))}
@@ -654,20 +654,20 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
           {/* Empty state */}
           {!isLoading && !error && stelaCount === 0 && activeListings.length === 0 && !orderBookData && (
             <div className="mt-6 flex flex-col items-center justify-center py-16 gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-surface border border-edge flex items-center justify-center">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash" aria-hidden="true">
+              <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500" aria-hidden="true">
                   <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74z" />
                 </svg>
               </div>
               <div className="text-center space-y-1.5">
-                <p className="text-chalk text-sm font-medium">
+                <p className="text-white text-sm font-medium">
                   No {mode === 'lending' ? 'lending' : 'swap'} orders for this pair
                 </p>
-                <p className="text-dust text-xs">Be the first to create an order</p>
+                <p className="text-gray-400 text-xs">Be the first to create an order</p>
               </div>
               <Link
                 href="/trade"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v8M2 6h8" /></svg>
                 Trade
@@ -710,7 +710,7 @@ export default function PairPage({ params }: { params: Promise<{ pair: string }>
     return (
       <div className="text-center py-24">
         <p className="text-nova text-sm">Invalid pair format</p>
-        <Link href="/markets" className="text-xs text-dust hover:text-chalk mt-2 inline-block">
+        <Link href="/markets" className="text-xs text-gray-400 hover:text-white mt-2 inline-block">
           Back to Markets
         </Link>
       </div>

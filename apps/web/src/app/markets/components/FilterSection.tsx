@@ -5,7 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 
-const TAB_STYLE = "px-3 py-1.5 rounded-lg text-xs font-medium data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/30 text-dust border border-transparent hover:text-chalk hover:bg-surface/50 transition-colors"
+const TAB_STYLE = "px-3 py-1.5 rounded-lg text-xs font-medium data-[state=on]:bg-accent/15 data-[state=on]:text-accent data-[state=on]:border-accent/30 text-gray-400 border border-transparent hover:text-white hover:bg-surface/50 transition-colors"
 
 const STATUS_FILTERS = [
   { key: 'open', label: 'Open' },
@@ -37,14 +37,14 @@ export function FilterSection({
       {/* Title row */}
       <div className="flex items-center justify-between">
         <div className="flex items-baseline gap-3">
-          <h1 className="font-display text-lg text-chalk tracking-wide">Markets</h1>
-          <span className="text-xs text-dust tabular-nums">{resultCount} results</span>
+          <h1 className="font-bold text-lg text-white tracking-wide">Markets</h1>
+          <span className="text-xs text-gray-400 tabular-nums">{resultCount} results</span>
         </div>
         <Link
           href="/trade"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-chalk border border-star/30 bg-star/5 hover:bg-star/10 hover:border-star/50 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-colors shrink-0"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-star"><path d="M6 2v8M2 6h8" /></svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent"><path d="M6 2v8M2 6h8" /></svg>
           Trade
         </Link>
       </div>
@@ -53,12 +53,12 @@ export function FilterSection({
       <div className="flex flex-col gap-3">
         {/* Search */}
         <div className="relative w-full sm:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ash" aria-hidden="true" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" aria-hidden="true" />
           <Input
             placeholder="Search tokens or addresses..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 h-9 bg-surface/30 border-edge/40 focus:border-star/50 text-sm placeholder:text-ash/60 rounded-lg"
+            className="pl-9 h-9 bg-surface/30 border-border/40 focus:border-accent/50 text-sm placeholder:text-gray-500/60 rounded-lg"
             aria-label="Search inscriptions"
           />
         </div>
