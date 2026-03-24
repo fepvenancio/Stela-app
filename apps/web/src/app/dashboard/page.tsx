@@ -14,7 +14,7 @@ import { Layers, Activity, Clock, CheckCircle } from 'lucide-react'
 interface InscriptionAsset {
   asset_address: string
   asset_type: string
-  role: 'debt' | 'interest' | 'collateral'
+  asset_role: 'debt' | 'interest' | 'collateral'
 }
 
 interface Inscription {
@@ -137,9 +137,9 @@ export default function DashboardPage() {
         })
       }
       const entry = tokenUsageMap.get(addr)!
-      if (asset.role === 'debt') entry.debtCount++
-      else if (asset.role === 'collateral') entry.collateralCount++
-      else if (asset.role === 'interest') entry.interestCount++
+      if (asset.asset_role === 'debt') entry.debtCount++
+      else if (asset.asset_role === 'collateral') entry.collateralCount++
+      else if (asset.asset_role === 'interest') entry.interestCount++
     }
   }
 
