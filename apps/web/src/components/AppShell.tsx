@@ -95,20 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <GlobalSearch />
 
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center gap-2.5 bg-white/[0.02] px-4 py-2 rounded-xl border border-border">
-              {/* StarkNet logo */}
-              <svg className="w-4 h-4" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21.21 10.803c-.353-.77-1.079-2.403-2.18-2.653-.39-.089-.828.017-1.318.314a8.675 8.675 0 0 0-1.049.722c-.57.451-1.22.963-2.024 1.153-.833.197-1.636-.023-2.362-.223-.53-.147-1.032-.285-1.453-.238-1.16.13-1.759 1.662-2.073 2.414l-.076.178c-.666 1.56-1.36 3.34-1.21 5.204.09 1.122.431 2.116.81 3.1l.028.073c.27.7.573 1.421 1.041 2.02.515.66 1.196 1.126 2.027 1.389.567.179 1.16.253 1.762.175.495-.064.97-.211 1.43-.353l.14-.044c.703-.218 1.43-.443 2.19-.443.76 0 1.487.225 2.19.443l.14.044c.46.143.935.29 1.43.353.601.078 1.195.004 1.762-.175.831-.263 1.512-.73 2.027-1.388.468-.6.77-1.32 1.041-2.021l.028-.073c.379-.984.72-1.978.81-3.1.15-1.863-.544-3.643-1.21-5.204l-.076-.178-.003-.006Z" fill="currentColor"/>
-                <path d="M18.048 5.682a2.77 2.77 0 0 0 1.839-1.41A2.814 2.814 0 0 0 20.2 2.55a2.77 2.77 0 0 0-1.84 1.41 2.814 2.814 0 0 0-.312 1.722Z" fill="currentColor"/>
-              </svg>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  {NETWORK === 'sepolia' ? 'Sepolia' : 'Mainnet'}
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center">
             <WalletButton />
           </div>
         </header>
