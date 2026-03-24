@@ -13,11 +13,11 @@ export function PageHeader({ title, description, cta }: PageHeaderProps) {
   return (
     <div className={`mb-10${cta ? ' flex items-end justify-between gap-4' : ''}`}>
       <div>
-        <h1 className="font-display text-3xl sm:text-4xl tracking-widest text-chalk mb-3 uppercase">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tighter text-white mb-3">
           {title}
         </h1>
         {description && (
-          <p className="text-dust max-w-lg leading-relaxed">{description}</p>
+          <p className="text-gray-500 mt-3 font-medium text-sm max-w-lg">{description}</p>
         )}
       </div>
       {cta && (

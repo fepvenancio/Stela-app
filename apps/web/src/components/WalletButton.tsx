@@ -60,7 +60,7 @@ function NetworkIndicator() {
               height="18"
               viewBox="0 0 24 24"
               fill="none"
-              className={`${isTestnet ? 'text-star/60' : 'text-star'} transition-all group-hover:scale-110`}
+              className={`${isTestnet ? 'text-accent/60' : 'text-accent'} transition-all group-hover:scale-110`}
               aria-hidden="true"
             >
               <path
@@ -69,11 +69,11 @@ function NetworkIndicator() {
                 className={!isTestnet ? 'drop-shadow-[0_0_8px_rgba(232,168,37,0.5)]' : ''}
               />
             </svg>
-            <div className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${isTestnet ? 'bg-amber-600' : 'bg-aurora'} border border-void`} />
+            <div className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${isTestnet ? 'bg-amber-600' : 'bg-green-500'} border border-[#050505]`} />
           </div>
         </div>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="bg-abyss border-edge text-chalk">
+      <TooltipContent side="bottom" className="bg-surface border-border text-white">
         {name}
       </TooltipContent>
     </Tooltip>
@@ -125,12 +125,12 @@ function ConnectWalletModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-void border-edge/30 sm:max-w-sm" showCloseButton={false}>
+      <DialogContent className="bg-[#050505] border-border sm:max-w-sm" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="text-chalk font-display tracking-wide text-lg">
+          <DialogTitle className="text-white tracking-wide text-lg">
             Connect Wallet
           </DialogTitle>
-          <DialogDescription className="text-dust text-xs">
+          <DialogDescription className="text-gray-400 text-xs">
             Choose a StarkNet wallet to connect
           </DialogDescription>
         </DialogHeader>
@@ -145,13 +145,13 @@ function ConnectWalletModal({
               <button
                 key={connector.id}
                 onClick={() => handleConnect(connector)}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-edge/30 bg-surface/10 hover:bg-surface/30 hover:border-star/20 transition-all text-left group"
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-border bg-surface/10 hover:bg-surface/30 hover:border-accent/20 transition-all text-left group"
               >
                 {icon ? (
                   <img src={icon} alt={name} width={28} height={28} className="rounded-lg shrink-0" />
                 ) : (
-                  <div className="w-7 h-7 rounded-lg bg-surface/50 border border-edge/30 flex items-center justify-center shrink-0">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-dust">
+                  <div className="w-7 h-7 rounded-lg bg-surface/50 border border-border flex items-center justify-center shrink-0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
                       <path d="M21 12V7H5a2 2 0 010-4h14v4" />
                       <path d="M3 5v14a2 2 0 002 2h16v-5" />
                       <path d="M18 12a2 2 0 100 4 2 2 0 000-4z" />
@@ -159,14 +159,14 @@ function ConnectWalletModal({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <span className="text-chalk text-sm font-medium group-hover:text-star transition-colors">
+                  <span className="text-white text-sm font-medium group-hover:text-accent transition-colors">
                     {name}
                   </span>
                   {!isChecking && !isAvailable && connector.id !== 'controller' && (
-                    <span className="block text-[10px] text-star/60 mt-0.5">Install →</span>
+                    <span className="block text-[10px] text-accent/60 mt-0.5">Install →</span>
                   )}
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-dust group-hover:text-star transition-colors shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 group-hover:text-accent transition-colors shrink-0">
                   <path d="M9 18l6-6-6-6" />
                 </svg>
               </button>
@@ -202,9 +202,9 @@ function AccountModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-void border-edge/30 sm:max-w-sm" showCloseButton={false}>
+      <DialogContent className="bg-[#050505] border-border sm:max-w-sm" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="text-chalk font-display tracking-wide text-lg">
+          <DialogTitle className="text-white tracking-wide text-lg">
             Connected
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -214,24 +214,24 @@ function AccountModal({
 
         <div className="space-y-4 mt-2">
           {/* Wallet info */}
-          <div className="flex items-center gap-3 p-3 rounded-xl border border-edge/20 bg-surface/10">
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface/10">
             {wallet?.icon ? (
               <img src={wallet.icon} alt={wallet.name} width={32} height={32} className="rounded-lg shrink-0" />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-surface/50 border border-edge/30 shrink-0" />
+              <div className="w-8 h-8 rounded-lg bg-surface/50 border border-border shrink-0" />
             )}
             <div className="flex-1 min-w-0">
-              <span className="text-chalk text-sm font-medium block">{wallet?.name ?? 'Wallet'}</span>
-              <AddressDisplay address={address} className="text-xs text-dust" />
+              <span className="text-white text-sm font-medium block">{wallet?.name ?? 'Wallet'}</span>
+              <AddressDisplay address={address} className="text-xs text-gray-400" />
             </div>
           </div>
 
           {/* Network */}
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-edge/20 bg-surface/10">
-            <span className="text-dust text-xs">Network</span>
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface/10">
+            <span className="text-gray-400 text-xs">Network</span>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isTestnet ? 'bg-amber-600' : 'bg-aurora'}`} />
-              <span className="text-chalk text-xs font-medium">{networkName}</span>
+              <div className={`w-2 h-2 rounded-full ${isTestnet ? 'bg-amber-600' : 'bg-green-500'}`} />
+              <span className="text-white text-xs font-medium">{networkName}</span>
             </div>
           </div>
 
@@ -240,7 +240,7 @@ function AccountModal({
             <Button
               variant="outline"
               onClick={handleDisconnect}
-              className="w-full border-edge/30 text-dust hover:text-nova hover:border-nova/30 rounded-xl"
+              className="w-full border-border text-gray-400 hover:text-red-500 hover:border-red-500/30 rounded-xl"
             >
               Disconnect
             </Button>
@@ -276,7 +276,7 @@ export function WalletButton() {
           <Button
             variant="outline"
             onClick={() => setAccountOpen(true)}
-            className="group gap-2.5 h-10 border-edge/50 hover:border-star/30 rounded-lg bg-surface/20"
+            className="group gap-2.5 h-10 border-border hover:border-accent/30 rounded-lg bg-surface/20"
             aria-label="Wallet account"
           >
             {wallet?.icon && (
@@ -284,12 +284,12 @@ export function WalletButton() {
             )}
             <div className="relative flex items-center justify-center">
               <span
-                className="w-2 h-2 rounded-full bg-aurora shrink-0"
+                className="w-2 h-2 rounded-full bg-green-500 shrink-0"
                 style={{ animation: 'pulse-dot 3s ease-in-out infinite' }}
               />
-              <span className="absolute inset-0 rounded-full bg-aurora/40 animate-ping opacity-20" />
+              <span className="absolute inset-0 rounded-full bg-green-500/40 animate-ping opacity-20" />
             </div>
-            <AddressDisplay address={address} className="text-sm font-mono text-dust group-hover:text-star transition-colors" />
+            <AddressDisplay address={address} className="text-sm font-mono text-gray-400 group-hover:text-accent transition-colors" />
           </Button>
         </div>
         <AccountModal open={accountOpen} onOpenChange={setAccountOpen} />
@@ -299,13 +299,18 @@ export function WalletButton() {
 
   if (status === 'reconnecting' && !showConnect) {
     return (
-      <div className="h-10 w-36 rounded-full bg-surface/20 border border-edge/30 animate-pulse" aria-label="Reconnecting wallet" />
+      <div className="h-10 w-36 rounded-full bg-surface/20 border border-border animate-pulse" aria-label="Reconnecting wallet" />
     )
   }
 
   return (
     <>
-      <Button variant="default" size="lg" className="rounded-full px-8 shadow-lg shadow-star/10 hover:shadow-star/20" onClick={() => setConnectOpen(true)}>
+      <Button
+        variant="default"
+        size="lg"
+        className="bg-white text-black hover:bg-gray-200 font-bold text-xs uppercase tracking-[0.15em] rounded-xl shadow-xl shadow-white/5"
+        onClick={() => setConnectOpen(true)}
+      >
         Connect Wallet
       </Button>
       <ConnectWalletModal open={connectOpen} onOpenChange={setConnectOpen} />
