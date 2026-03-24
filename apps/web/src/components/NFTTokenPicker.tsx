@@ -74,7 +74,7 @@ export function NFTTokenPicker({
         aria-label="Loading NFTs"
       >
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg border border-edge/20 bg-surface/5 p-2">
+          <div key={i} className="rounded-lg border border-border/20 bg-surface/5 p-2">
             <Skeleton className="aspect-square w-full rounded-lg bg-surface/10" />
             <Skeleton className="h-3 w-16 mt-2 bg-surface/10" />
           </div>
@@ -88,11 +88,11 @@ export function NFTTokenPicker({
   if (error) {
     return (
       <div className="text-center py-6">
-        <p className="text-nova text-xs">{error}</p>
+        <p className="text-red-500 text-xs">{error}</p>
         <button
           type="button"
           onClick={fetchNFTs}
-          className="text-[10px] text-star hover:text-star-bright mt-1 cursor-pointer transition-colors"
+          className="text-[10px] text-accent hover:text-accent/80 mt-1 cursor-pointer transition-colors"
         >
           Retry
         </button>
@@ -104,7 +104,7 @@ export function NFTTokenPicker({
   if (nfts.length === 0) {
     return (
       <div className="text-center py-6">
-        <p className="text-sm text-dust">No NFTs found in this collection</p>
+        <p className="text-sm text-gray-400">No NFTs found in this collection</p>
       </div>
     )
   }
@@ -146,8 +146,8 @@ function NFTCard({
       onClick={() => onSelect(nft.tokenId)}
       className={`rounded-lg border p-2 text-left transition-all cursor-pointer ${
         isSelected
-          ? 'border-star/60 bg-star/5 ring-1 ring-star/30'
-          : 'border-edge/20 bg-surface/5 hover:border-edge/40 hover:bg-surface/10'
+          ? 'border-accent/60 bg-accent/5 ring-1 ring-accent/30'
+          : 'border-border/20 bg-surface/5 hover:border-border/40 hover:bg-surface/10'
       }`}
     >
       {/* Image or fallback */}
@@ -155,30 +155,30 @@ function NFTCard({
         <img
           src={nft.image}
           alt={nft.name || `Token #${nft.tokenId}`}
-          className="aspect-square w-full rounded-lg object-cover bg-abyss"
+          className="aspect-square w-full rounded-lg object-cover bg-surface"
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="aspect-square w-full rounded-lg bg-abyss border border-edge/10 flex items-center justify-center">
-          <span className="text-dust font-mono text-xs">#{nft.tokenId}</span>
+        <div className="aspect-square w-full rounded-lg bg-surface border border-border/10 flex items-center justify-center">
+          <span className="text-gray-400 font-mono text-xs">#{nft.tokenId}</span>
         </div>
       )}
 
       {/* Label */}
       <div className="mt-1.5 px-0.5">
-        <p className="text-[11px] text-chalk font-mono truncate">
+        <p className="text-[11px] text-white font-mono truncate">
           #{nft.tokenId}
         </p>
         {nft.name && (
-          <p className="text-[10px] text-dust truncate">{nft.name}</p>
+          <p className="text-[10px] text-gray-400 truncate">{nft.name}</p>
         )}
       </div>
 
       {/* Selected indicator */}
       {isSelected && (
         <div className="flex items-center gap-1 mt-1 px-0.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-star" />
-          <span className="text-[9px] text-star uppercase tracking-wider font-bold">Selected</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+          <span className="text-[9px] text-accent uppercase tracking-wider font-bold">Selected</span>
         </div>
       )}
     </button>

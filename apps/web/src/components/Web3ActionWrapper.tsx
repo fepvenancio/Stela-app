@@ -23,7 +23,7 @@ export function Web3ActionWrapper({ children, message, centered = true }: Web3Ac
     return (
       <div className={`flex flex-col items-center gap-3 ${centered ? 'justify-center min-h-[60vh]' : 'py-4'}`}>
         <WalletButton />
-        {message && <p className="text-xs text-dust">{message}</p>}
+        {message && <p className="text-xs text-gray-400">{message}</p>}
       </div>
     )
   }

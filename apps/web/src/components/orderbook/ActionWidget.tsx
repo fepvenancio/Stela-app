@@ -68,9 +68,9 @@ function AmountInput({
   placeholder?: string
 }) {
   return (
-    <div className="rounded-lg bg-void border border-edge/20 p-3 transition-colors focus-within:border-star/40">
+    <div className="rounded-lg bg-[#050505] border border-border/20 p-3 transition-colors focus-within:border-accent/40">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] text-dust uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{label}</span>
       </div>
       <div className="flex items-center gap-3">
         <input
@@ -81,13 +81,13 @@ function AmountInput({
           readOnly={readOnly}
           placeholder={placeholder ?? '0.00'}
           className={cn(
-            'flex-1 bg-transparent text-lg font-mono text-chalk placeholder:text-ash/40 outline-none min-w-0',
+            'flex-1 bg-transparent text-lg font-mono text-white placeholder:text-gray-500/40 outline-none min-w-0',
             readOnly && 'cursor-default',
           )}
         />
-        <div className="flex items-center gap-2 shrink-0 px-2.5 py-1.5 rounded-lg bg-surface/60 border border-edge/20">
+        <div className="flex items-center gap-2 shrink-0 px-2.5 py-1.5 rounded-lg bg-surface/60 border border-border/20">
           <TokenIcon token={token} size={20} />
-          <span className="text-sm font-medium text-chalk">{token.symbol}</span>
+          <span className="text-sm font-medium text-white">{token.symbol}</span>
         </div>
       </div>
     </div>
@@ -133,7 +133,7 @@ function LendTab({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[10px] text-dust leading-relaxed">
+      <p className="text-[10px] text-gray-400 leading-relaxed">
         Fill a borrow order from the book to earn interest. You lend {pair.base.symbol}, borrower locks {pair.quote.symbol} as collateral.
       </p>
 
@@ -148,29 +148,29 @@ function LendTab({
       {/* Market info */}
       <div className="space-y-2.5 px-1">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-dust">Best available APR</span>
-          <span className={cn('text-sm font-mono tabular-nums', bestApr !== null ? 'text-emerald-500' : 'text-ash')}>
+          <span className="text-[11px] text-gray-400">Best available APR</span>
+          <span className={cn('text-sm font-mono tabular-nums', bestApr !== null ? 'text-emerald-500' : 'text-gray-500')}>
             {bestApr !== null ? `${bestApr.toFixed(2)}%` : '--'}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-dust">Duration</span>
-          <span className="text-sm font-mono tabular-nums text-chalk">
+          <span className="text-[11px] text-gray-400">Duration</span>
+          <span className="text-sm font-mono tabular-nums text-white">
             {formatDurationLabel(selectedDuration)}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-dust">Backed by</span>
+          <span className="text-[11px] text-gray-400">Backed by</span>
           <div className="flex items-center gap-1.5">
             <TokenIcon token={pair.quote} size={16} />
-            <span className="text-sm text-chalk">{pair.quote.symbol}</span>
-            <span className="text-[10px] text-ash">150%+</span>
+            <span className="text-sm text-white">{pair.quote.symbol}</span>
+            <span className="text-[10px] text-gray-500">150%+</span>
           </div>
         </div>
         {estimatedYield && (
-          <div className="flex items-center justify-between pt-1 border-t border-edge/15">
-            <span className="text-[11px] text-dust">Est. return</span>
-            <span className="text-sm font-mono tabular-nums text-aurora">
+          <div className="flex items-center justify-between pt-1 border-t border-border/15">
+            <span className="text-[11px] text-gray-400">Est. return</span>
+            <span className="text-sm font-mono tabular-nums text-green-500">
               +{estimatedYield} {pair.base.symbol}
             </span>
           </div>
@@ -197,10 +197,10 @@ function LendTab({
           </Button>
         ) : (
           <div className="text-center py-3">
-            <p className="text-xs text-dust mb-2">No orders available</p>
+            <p className="text-xs text-gray-400 mb-2">No orders available</p>
             <Link
               href={`/trade?pair=${pairParam}&action=borrow`}
-              className="text-xs text-star hover:text-star-bright transition-colors"
+              className="text-xs text-accent hover:text-accent/80 transition-colors"
             >
               Be the first — create a borrow order
             </Link>
@@ -215,14 +215,14 @@ function LendTab({
       {bestOrder && (
         <Link
           href={bestOrder.source === 'onchain' ? `/stela/${bestOrder.id}` : `/order/${bestOrder.id}`}
-          className="text-[11px] text-center text-dust hover:text-chalk transition-colors block"
+          className="text-[11px] text-center text-gray-400 hover:text-white transition-colors block"
         >
           View order details
         </Link>
       )}
       <Link
         href={`/trade?pair=${pairParam}&action=lend`}
-        className="text-[11px] text-center text-dust hover:text-chalk transition-colors"
+        className="text-[11px] text-center text-gray-400 hover:text-white transition-colors"
       >
         Advanced options on Trade page
       </Link>
@@ -259,7 +259,7 @@ function BorrowTab({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[10px] text-dust leading-relaxed">
+      <p className="text-[10px] text-gray-400 leading-relaxed">
         Create a borrow order offering interest to lenders. You lock {pair.quote.symbol} as collateral and receive {pair.base.symbol}.
       </p>
 
@@ -272,14 +272,14 @@ function BorrowTab({
       />
 
       {/* Interest APR input */}
-      <div className="rounded-lg bg-void border border-edge/20 p-3 transition-colors focus-within:border-star/40">
+      <div className="rounded-lg bg-[#050505] border border-border/20 p-3 transition-colors focus-within:border-accent/40">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] text-dust uppercase tracking-wider font-medium">Interest APR you offer</span>
+          <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Interest APR you offer</span>
           {suggestedApr && (
             <button
               type="button"
               onClick={() => setInterestApr(suggestedApr)}
-              className="text-[10px] text-star hover:text-star-bright transition-colors cursor-pointer"
+              className="text-[10px] text-accent hover:text-accent/80 transition-colors cursor-pointer"
             >
               Market: {suggestedApr}%
             </button>
@@ -292,27 +292,27 @@ function BorrowTab({
             value={interestApr}
             onChange={(e) => setInterestApr(e.target.value)}
             placeholder={suggestedApr || '0.00'}
-            className="flex-1 bg-transparent text-lg font-mono text-chalk placeholder:text-ash/40 outline-none min-w-0"
+            className="flex-1 bg-transparent text-lg font-mono text-white placeholder:text-gray-500/40 outline-none min-w-0"
           />
-          <span className="text-sm text-dust shrink-0">% APR</span>
+          <span className="text-sm text-gray-400 shrink-0">% APR</span>
         </div>
       </div>
 
       {/* Info rows */}
       <div className="space-y-2.5 px-1">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-dust">Duration</span>
-          <span className="text-sm font-mono tabular-nums text-chalk">
+          <span className="text-[11px] text-gray-400">Duration</span>
+          <span className="text-sm font-mono tabular-nums text-white">
             {formatDurationLabel(selectedDuration)}
           </span>
         </div>
         {collateralEstimate && (
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-dust">Est. collateral needed</span>
+            <span className="text-[11px] text-gray-400">Est. collateral needed</span>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-mono tabular-nums text-chalk">~{collateralEstimate}</span>
+              <span className="text-sm font-mono tabular-nums text-white">~{collateralEstimate}</span>
               <TokenIcon token={pair.quote} size={14} />
-              <span className="text-[11px] text-dust">{pair.quote.symbol}</span>
+              <span className="text-[11px] text-gray-400">{pair.quote.symbol}</span>
             </div>
           </div>
         )}
@@ -333,7 +333,7 @@ function BorrowTab({
 
       <Link
         href={`/trade?pair=${pairParam}&action=borrow`}
-        className="text-[11px] text-center text-dust hover:text-chalk transition-colors"
+        className="text-[11px] text-center text-gray-400 hover:text-white transition-colors"
       >
         Advanced options on Trade page
       </Link>
@@ -363,7 +363,7 @@ function SwapTab({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[10px] text-dust leading-relaxed">
+      <p className="text-[10px] text-gray-400 leading-relaxed">
         Instant swap with no duration. Trade {pair.base.symbol} for {pair.quote.symbol} peer-to-peer.
       </p>
 
@@ -378,8 +378,8 @@ function SwapTab({
 
       {/* Arrow divider */}
       <div className="flex items-center justify-center -my-1">
-        <div className="w-8 h-8 rounded-lg bg-surface border border-edge/30 flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dust">
+        <div className="w-8 h-8 rounded-lg bg-surface border border-border/30 flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-400">
             <path d="M7 3v8M4 8l3 3 3-3" />
           </svg>
         </div>
@@ -397,14 +397,14 @@ function SwapTab({
       {/* Info rows */}
       <div className="space-y-2.5 px-1">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-dust">Best rate</span>
-          <span className={cn('text-sm font-mono tabular-nums', bestRate !== null ? 'text-chalk' : 'text-ash')}>
+          <span className="text-[11px] text-gray-400">Best rate</span>
+          <span className={cn('text-sm font-mono tabular-nums', bestRate !== null ? 'text-white' : 'text-gray-500')}>
             {bestRate !== null ? `1 ${pair.base.symbol} = ${bestRate.toFixed(6)} ${pair.quote.symbol}` : '--'}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-dust">Fee</span>
-          <span className="text-sm font-mono tabular-nums text-dust">
+          <span className="text-[11px] text-gray-400">Fee</span>
+          <span className="text-sm font-mono tabular-nums text-gray-400">
             15 BPS (0.15%)
           </span>
         </div>
@@ -420,10 +420,10 @@ function SwapTab({
           </Button>
         ) : (
           <div className="text-center py-3">
-            <p className="text-xs text-dust mb-2">No swap orders available</p>
+            <p className="text-xs text-gray-400 mb-2">No swap orders available</p>
             <Link
               href={`/trade?pair=${pairParam}&action=swap`}
-              className="text-xs text-star hover:text-star-bright transition-colors"
+              className="text-xs text-accent hover:text-accent/80 transition-colors"
             >
               Create one on the Trade page
             </Link>
@@ -437,7 +437,7 @@ function SwapTab({
 
       <Link
         href={`/trade?pair=${pairParam}&action=swap`}
-        className="text-[11px] text-center text-dust hover:text-chalk transition-colors"
+        className="text-[11px] text-center text-gray-400 hover:text-white transition-colors"
       >
         Advanced options on Trade page
       </Link>
@@ -462,9 +462,9 @@ export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selecte
   ]
 
   return (
-    <div className="bg-abyss border border-edge/30 rounded-xl overflow-hidden">
+    <div className="bg-surface border border-border/30 rounded-xl overflow-hidden">
       {/* Tab bar */}
-      <div className="flex border-b border-edge/20">
+      <div className="flex border-b border-border/20">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key
           return (
@@ -474,7 +474,7 @@ export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selecte
               onClick={() => setActiveTab(tab.key)}
               className={cn(
                 'flex-1 py-3 text-sm font-medium tracking-wide transition-colors duration-100 cursor-pointer relative',
-                isActive ? 'text-chalk' : 'text-ash hover:text-dust',
+                isActive ? 'text-white' : 'text-gray-500 hover:text-gray-400',
               )}
             >
               {tab.label}
@@ -485,7 +485,7 @@ export function ActionWidget({ pair, bestLendingApr, bestSwapRate, mode, selecte
                     'absolute bottom-0 left-1/4 right-1/4 h-0.5 rounded-full',
                     tab.color === 'emerald' && 'bg-emerald-500',
                     tab.color === 'rose' && 'bg-rose-500',
-                    tab.color === 'cosmic' && 'bg-cosmic',
+                    tab.color === 'cosmic' && 'bg-sky-500',
                   )}
                 />
               )}

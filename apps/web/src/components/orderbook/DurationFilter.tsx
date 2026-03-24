@@ -40,8 +40,8 @@ export function DurationFilter({ value, onChange, available }: DurationFilterPro
             className={cn(
               'shrink-0 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide border transition-colors duration-100 cursor-pointer',
               isActive
-                ? 'bg-star/20 text-star border-star/40'
-                : 'bg-abyss text-dust border-edge/20 hover:text-chalk hover:border-edge/40',
+                ? 'bg-accent/20 text-accent border-accent/40'
+                : 'bg-surface text-gray-400 border-border/20 hover:text-white hover:border-border/40',
             )}
           >
             {tab.label}

@@ -50,12 +50,12 @@ export function BrowseControls({
       {/* Top row: search + sort + filter toggle */}
       <div className="flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ash" aria-hidden="true" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" aria-hidden="true" />
           <Input
             placeholder="Search by token, address, or ID..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 bg-surface/40 border-edge/50 focus:border-star/50 transition-colors"
+            className="pl-10 bg-surface/40 border-border/50 focus:border-accent/50 transition-colors"
             aria-label="Search inscriptions"
           />
         </div>
@@ -66,8 +66,8 @@ export function BrowseControls({
             onClick={onToggleFilters}
             className={`flex items-center gap-1.5 px-4 h-12 rounded-2xl border text-sm transition-colors ${
               showFilters || filtersActive
-                ? 'bg-star/10 border-star/30 text-star'
-                : 'bg-abyss/50 border-edge text-dust hover:text-chalk hover:bg-surface/60'
+                ? 'bg-accent/10 border-accent/30 text-accent'
+                : 'bg-surface/50 border-border text-gray-400 hover:text-white hover:bg-surface/60'
             }`}
             aria-label="Toggle advanced filters"
             aria-expanded={showFilters}
@@ -75,17 +75,17 @@ export function BrowseControls({
             <SlidersHorizontal className="w-4 h-4" />
             Filters
             {filtersActive && (
-              <span className="w-1.5 h-1.5 rounded-full bg-star" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             )}
           </button>
 
-          <div className="flex items-center gap-2 bg-abyss/50 border border-edge rounded-2xl px-3 h-12">
-            <ArrowUpDown className="w-4 h-4 text-ash ml-1" aria-hidden="true" />
+          <div className="flex items-center gap-2 bg-surface/50 border border-border rounded-2xl px-3 h-12">
+            <ArrowUpDown className="w-4 h-4 text-gray-500 ml-1" aria-hidden="true" />
             <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
-              <SelectTrigger className="border-0 bg-transparent focus:ring-0 w-[180px] text-sm text-dust hover:text-chalk" aria-label="Sort inscriptions">
+              <SelectTrigger className="border-0 bg-transparent focus:ring-0 w-[180px] text-sm text-gray-400 hover:text-white" aria-label="Sort inscriptions">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent className="bg-void border-edge">
+              <SelectContent className="bg-[#050505] border-border">
                 <SelectItem value="newest">Newest First</SelectItem>
                 <SelectItem value="apy">Highest APY</SelectItem>
                 <SelectItem value="interest_desc">Best Interest</SelectItem>
@@ -101,18 +101,18 @@ export function BrowseControls({
 
       {/* Advanced filter panel */}
       {showFilters && (
-        <div className="flex flex-wrap items-end gap-3 p-4 rounded-xl bg-surface/20 border border-edge/30 animate-fade-up">
+        <div className="flex flex-wrap items-end gap-3 p-4 rounded-xl bg-surface/20 border border-border/30 animate-fade-up">
           {/* Debt Token */}
           <div className="flex flex-col gap-1 min-w-[140px]">
-            <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
+            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold flex items-center gap-1">
               Debt Token
               <InfoTooltip content="Filter by the token being borrowed." side="bottom" />
             </label>
             <Select value={filters.debtToken} onValueChange={(v) => updateFilter('debtToken', v === '__all__' ? '' : v)}>
-              <SelectTrigger className="bg-surface/40 border-edge/50 text-sm h-9">
+              <SelectTrigger className="bg-surface/40 border-border/50 text-sm h-9">
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
-              <SelectContent className="bg-void border-edge">
+              <SelectContent className="bg-[#050505] border-border">
                 <SelectItem value="__all__">Any</SelectItem>
                 {tokens.map((t) => (
                   <SelectItem key={t.symbol} value={t.symbol}>{t.symbol}</SelectItem>
@@ -123,7 +123,7 @@ export function BrowseControls({
 
           {/* Debt Amount */}
           <div className="flex flex-col gap-1 min-w-[120px]">
-            <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
+            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold flex items-center gap-1">
               Debt Amount
               <InfoTooltip content="Find exact or closest match to this amount." side="bottom" />
             </label>
@@ -134,14 +134,14 @@ export function BrowseControls({
               placeholder="e.g. 100"
               value={filters.debtAmount}
               onChange={(e) => updateFilter('debtAmount', e.target.value)}
-              className="bg-surface/40 border-edge/50 text-sm h-9"
+              className="bg-surface/40 border-border/50 text-sm h-9"
               aria-label="Target debt amount"
             />
           </div>
 
           {/* Min Interest % */}
           <div className="flex flex-col gap-1 min-w-[120px]">
-            <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
+            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold flex items-center gap-1">
               Min Interest %
               <InfoTooltip content="Only show inscriptions with yield at or above this percentage." side="bottom" />
             </label>
@@ -152,22 +152,22 @@ export function BrowseControls({
               placeholder="e.g. 5"
               value={filters.interestMin}
               onChange={(e) => updateFilter('interestMin', e.target.value)}
-              className="bg-surface/40 border-edge/50 text-sm h-9"
+              className="bg-surface/40 border-border/50 text-sm h-9"
               aria-label="Minimum interest percentage"
             />
           </div>
 
           {/* Collateral Token */}
           <div className="flex flex-col gap-1 min-w-[140px]">
-            <label className="text-[9px] text-dust uppercase tracking-widest font-semibold flex items-center gap-1">
+            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold flex items-center gap-1">
               Collateral Token
               <InfoTooltip content="Filter by the collateral token securing the loan." side="bottom" />
             </label>
             <Select value={filters.collateralToken} onValueChange={(v) => updateFilter('collateralToken', v === '__all__' ? '' : v)}>
-              <SelectTrigger className="bg-surface/40 border-edge/50 text-sm h-9">
+              <SelectTrigger className="bg-surface/40 border-border/50 text-sm h-9">
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
-              <SelectContent className="bg-void border-edge">
+              <SelectContent className="bg-[#050505] border-border">
                 <SelectItem value="__all__">Any</SelectItem>
                 {tokens.map((t) => (
                   <SelectItem key={t.symbol} value={t.symbol}>{t.symbol}</SelectItem>
@@ -178,7 +178,7 @@ export function BrowseControls({
 
           {/* Clear */}
           {filtersActive && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-ash hover:text-chalk h-9">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-gray-500 hover:text-white h-9">
               <X className="w-3.5 h-3.5 mr-1" />
               Clear
             </Button>

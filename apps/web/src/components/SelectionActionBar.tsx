@@ -30,10 +30,10 @@ export function SelectionActionBar({ onReview }: SelectionActionBarProps) {
   if (count === 0) return null
 
   return (
-    <div role="status" aria-live="polite" aria-label={`${count} inscription${count !== 1 ? 's' : ''} selected`} className="sticky top-16 z-30 -mx-4 px-4 py-3 mb-4 bg-void/90 border-b border-star/20">
+    <div role="status" aria-live="polite" aria-label={`${count} inscription${count !== 1 ? 's' : ''} selected`} className="sticky top-16 z-30 -mx-4 px-4 py-3 mb-4 bg-[#050505]/90 border-b border-accent/20">
       <div className="flex items-center gap-4 flex-wrap">
         {/* Count badge */}
-        <div className="w-8 h-8 rounded-full bg-star/20 flex items-center justify-center text-star font-bold text-xs shrink-0">
+        <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-xs shrink-0">
           {count}
         </div>
 
@@ -44,7 +44,7 @@ export function SelectionActionBar({ onReview }: SelectionActionBarProps) {
             return (
               <div key={addr} className="flex items-center gap-1.5 shrink-0">
                 <TokenAvatarByAddress address={addr} size={16} />
-                <span className="text-xs font-medium text-chalk whitespace-nowrap">
+                <span className="text-xs font-medium text-white whitespace-nowrap">
                   {formatTokenValue(total.toString(), token?.decimals ?? 18)} {token?.symbol}
                 </span>
               </div>
@@ -54,7 +54,7 @@ export function SelectionActionBar({ onReview }: SelectionActionBarProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="sm" onClick={clearAll} className="text-ash hover:text-chalk h-8 px-3 gap-1.5" aria-label="Clear all selections">
+          <Button variant="ghost" size="sm" onClick={clearAll} className="text-gray-500 hover:text-white h-8 px-3 gap-1.5" aria-label="Clear all selections">
             <X className="w-3.5 h-3.5" aria-hidden="true" />
             Clear
           </Button>
@@ -62,7 +62,7 @@ export function SelectionActionBar({ onReview }: SelectionActionBarProps) {
             variant="default"
             size="sm"
             onClick={onReview}
-            className="h-8 px-5 rounded-xl font-bold shadow-lg shadow-star/20"
+            className="h-8 px-5 rounded-xl font-bold shadow-lg shadow-accent/20"
           >
             Review & Sign
           </Button>

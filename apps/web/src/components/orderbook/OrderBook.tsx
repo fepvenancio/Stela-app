@@ -19,10 +19,10 @@ export function OrderBook({ data, isLoading, mode, duration, onDurationChange }:
   const hasData = data !== null
 
   return (
-    <div className="flex flex-col w-full rounded-lg border border-edge/30 bg-abyss overflow-hidden">
+    <div className="flex flex-col w-full rounded-lg border border-border/30 bg-surface overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-edge/20 gap-2 min-w-0">
-        <h3 className="text-xs font-display uppercase tracking-wider text-chalk shrink-0">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/20 gap-2 min-w-0">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-white shrink-0">
           Order Book
         </h3>
 
@@ -71,12 +71,12 @@ function EmptyState() {
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
-        className="text-ash mb-3"
+        className="text-gray-500 mb-3"
       >
         <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" />
       </svg>
-      <p className="text-sm text-dust">No orders for this pair yet</p>
-      <p className="text-[10px] text-ash mt-1">Be the first to create an order</p>
+      <p className="text-sm text-gray-400">No orders for this pair yet</p>
+      <p className="text-[10px] text-gray-500 mt-1">Be the first to create an order</p>
     </div>
   )
 }

@@ -27,25 +27,25 @@ const ROW_CONFIGS: RowConfig[] = [
     key: 'debt',
     loanLabel: 'I want to borrow',
     swapLabel: 'I receive',
-    accentClass: 'text-aurora',
-    borderClass: 'border-aurora/20',
-    bgClass: 'bg-aurora/5',
+    accentClass: 'text-green-500',
+    borderClass: 'border-green-500/20',
+    bgClass: 'bg-green-500/5',
   },
   {
     key: 'collateral',
     loanLabel: "I'll put up",
     swapLabel: 'I give',
-    accentClass: 'text-star',
-    borderClass: 'border-star/20',
-    bgClass: 'bg-star/5',
+    accentClass: 'text-accent',
+    borderClass: 'border-accent/20',
+    bgClass: 'bg-accent/5',
   },
   {
     key: 'interest',
     loanLabel: "I'll pay interest",
     swapLabel: '',
-    accentClass: 'text-nebula',
-    borderClass: 'border-nebula/20',
-    bgClass: 'bg-nebula/5',
+    accentClass: 'text-sky-400',
+    borderClass: 'border-sky-400/20',
+    bgClass: 'bg-sky-400/5',
   },
 ]
 
@@ -100,18 +100,18 @@ function AssetInputRow({
         <button
           type="button"
           onClick={onTokenClick}
-          className="flex items-center gap-2 h-11 px-4 rounded-xl bg-surface/60 border border-edge/40 text-sm transition-colors hover:bg-elevated hover:border-edge-bright focus-visible:border-star focus-visible:ring-1 focus-visible:ring-star/30 outline-none cursor-pointer shrink-0 sm:min-w-[160px]"
+          className="flex items-center gap-2 h-11 px-4 rounded-xl bg-surface/60 border border-border/40 text-sm transition-colors hover:bg-surface-hover hover:border-white/20 focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent/30 outline-none cursor-pointer shrink-0 sm:min-w-[160px]"
         >
           {token ? (
             <>
               <TokenAvatar token={token} size={22} />
-              <span className="text-chalk font-medium">{token.symbol}</span>
+              <span className="text-white font-medium">{token.symbol}</span>
             </>
           ) : (
-            <span className="text-dust">Select Token</span>
+            <span className="text-gray-400">Select Token</span>
           )}
           <svg
-            className="ml-auto shrink-0 text-ash"
+            className="ml-auto shrink-0 text-gray-500"
             width="14"
             height="14"
             viewBox="0 0 16 16"
@@ -131,12 +131,12 @@ function AssetInputRow({
             placeholder="0.00"
             value={asset.value}
             onChange={(e) => onAmountChange(e.target.value)}
-            className={`w-full h-11 px-4 rounded-xl bg-surface/60 border border-edge/40 text-chalk text-lg font-mono placeholder:text-ash/40 outline-none focus:border-star focus:ring-1 focus:ring-star/30 transition-colors ${
+            className={`w-full h-11 px-4 rounded-xl bg-surface/60 border border-border/40 text-white text-lg font-mono placeholder:text-gray-500/40 outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors ${
               token ? 'pr-16' : ''
             }`}
           />
           {token && (
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-dust font-mono pointer-events-none">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono pointer-events-none">
               {token.symbol}
             </span>
           )}
@@ -147,7 +147,7 @@ function AssetInputRow({
           <button
             type="button"
             onClick={onRemove}
-            className="flex items-center justify-center w-11 h-11 rounded-xl text-ash hover:text-nova hover:bg-nova/10 transition-colors cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="flex items-center justify-center w-11 h-11 rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
             aria-label="Remove asset"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -160,7 +160,7 @@ function AssetInputRow({
       {/* Balance display */}
       {token && balance !== undefined && balance > 0n && (
         <div className="mt-1 text-right pr-1">
-          <span className="text-[10px] text-dust font-mono">
+          <span className="text-[10px] text-gray-400 font-mono">
             Balance: {formatTokenValue(balance.toString(), token.decimals)}
           </span>
           <button
@@ -169,7 +169,7 @@ function AssetInputRow({
               const formatted = formatTokenValue(balance.toString(), token.decimals)
               onAmountChange(formatted)
             }}
-            className="ml-1.5 text-[10px] text-star hover:text-star-bright font-bold uppercase tracking-wider cursor-pointer transition-colors"
+            className="ml-1.5 text-[10px] text-accent hover:text-accent/80 font-bold uppercase tracking-wider cursor-pointer transition-colors"
           >
             Max
           </button>
@@ -276,7 +276,7 @@ export function InlineBorrowForm({
                 {label}
               </span>
               {assets.length > 0 && (
-                <span className="text-[10px] text-dust font-mono">
+                <span className="text-[10px] text-gray-400 font-mono">
                   {assets.filter(a => a.asset).length} asset{assets.filter(a => a.asset).length !== 1 ? 's' : ''}
                 </span>
               )}

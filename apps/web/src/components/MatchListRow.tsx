@@ -41,14 +41,14 @@ function parseAssets(raw: unknown): AssetDisplay[] {
 }
 
 function AssetCell({ assets }: { assets: AssetDisplay[] }) {
-  if (assets.length === 0) return <span className="text-ash/50 text-[10px]">None</span>
+  if (assets.length === 0) return <span className="text-gray-500/50 text-[10px]">None</span>
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1">
       {assets.map((a, i) => (
         <div key={i} className="flex items-center gap-1.5">
           <TokenAvatarByAddress address={a.address} size={14} />
-          <span className="text-xs font-medium text-chalk">
-            {a.formatted} <span className="text-dust">{a.symbol}</span>
+          <span className="text-xs font-medium text-white">
+            {a.formatted} <span className="text-gray-400">{a.symbol}</span>
           </span>
         </div>
       ))}
@@ -85,7 +85,7 @@ export function OffchainMatchListRow({
   const duration = Number(orderData.duration ?? '0')
 
   return (
-    <div className="group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 border-edge/20 hover:bg-surface/30">
+    <div className="group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 border-border/20 hover:bg-surface/30">
       {/* Desktop: grid matching ListingTableHeader */}
       <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
         {/* Status + source */}
@@ -93,8 +93,8 @@ export function OffchainMatchListRow({
           <Badge variant="pending" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
-          <span className="text-[7px] text-ash/40 uppercase tracking-wider shrink-0">oc</span>
-          <span className="font-mono text-[10px] text-dust tracking-wider truncate">
+          <span className="text-[7px] text-gray-500/40 uppercase tracking-wider shrink-0">oc</span>
+          <span className="font-mono text-[10px] text-gray-400 tracking-wider truncate">
             {formatAddress(match.borrower)}
           </span>
         </div>
@@ -120,7 +120,7 @@ export function OffchainMatchListRow({
             type="button"
             onClick={(e) => { e.stopPropagation(); onSettle() }}
             disabled={isSettling}
-            className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="h-7 px-3 bg-accent hover:bg-accent-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             {isSettling ? (
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -138,20 +138,20 @@ export function OffchainMatchListRow({
             <Badge variant="pending" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
               {isSwap ? 'Swap' : 'Loan'}
             </Badge>
-            <span className="text-[7px] text-ash/40 uppercase tracking-wider">oc</span>
-            <span className="font-mono text-[10px] text-dust">{formatAddress(match.borrower)}</span>
+            <span className="text-[7px] text-gray-500/40 uppercase tracking-wider">oc</span>
+            <span className="font-mono text-[10px] text-gray-400">{formatAddress(match.borrower)}</span>
           </div>
-          <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(duration)}</span>
+          <span className="text-white text-[11px] font-medium shrink-0">{formatDuration(duration)}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 overflow-x-auto min-w-0">
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[8px] text-dust uppercase">D</span>
+              <span className="text-[8px] text-gray-400 uppercase">D</span>
               <AssetCell assets={debtAssets} />
             </div>
             <div className="text-edge/40">|</div>
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[8px] text-dust uppercase">C</span>
+              <span className="text-[8px] text-gray-400 uppercase">C</span>
               <AssetCell assets={collateralAssets} />
             </div>
           </div>
@@ -159,7 +159,7 @@ export function OffchainMatchListRow({
             type="button"
             onClick={(e) => { e.stopPropagation(); onSettle() }}
             disabled={isSettling}
-            className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="h-7 px-3 bg-accent hover:bg-accent-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Fill'}
           </button>
@@ -188,14 +188,14 @@ export function OnchainMatchListRow({
   const duration = Number(match.duration ?? '0')
 
   return (
-    <div className="group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 border-edge/20 hover:bg-surface/30">
+    <div className="group flex items-center gap-3 px-3 py-3 border-b transition-colors duration-100 border-border/20 hover:bg-surface/30">
       {/* Desktop */}
       <div className="hidden md:grid grid-cols-12 gap-3 flex-1 items-center min-h-[28px]">
         <div className="col-span-2 flex items-center gap-1.5 min-w-0">
           <Badge variant="open" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
-          <span className="font-mono text-[10px] text-dust tracking-wider truncate">
+          <span className="font-mono text-[10px] text-gray-400 tracking-wider truncate">
             {formatAddress(match.creator || match.borrower)}
           </span>
         </div>
@@ -217,7 +217,7 @@ export function OnchainMatchListRow({
             type="button"
             onClick={(e) => { e.stopPropagation(); onSettle() }}
             disabled={isSettling}
-            className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="h-7 px-3 bg-accent hover:bg-accent-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Fill'}
           </button>
@@ -231,19 +231,19 @@ export function OnchainMatchListRow({
             <Badge variant="open" className="w-fit h-[22px] text-[10px] px-2 py-0 uppercase font-bold shrink-0">
               {isSwap ? 'Swap' : 'Loan'}
             </Badge>
-            <span className="font-mono text-[10px] text-dust">{formatAddress(match.creator || match.borrower)}</span>
+            <span className="font-mono text-[10px] text-gray-400">{formatAddress(match.creator || match.borrower)}</span>
           </div>
-          <span className="text-chalk text-[11px] font-medium shrink-0">{formatDuration(duration)}</span>
+          <span className="text-white text-[11px] font-medium shrink-0">{formatDuration(duration)}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 overflow-x-auto min-w-0">
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[8px] text-dust uppercase">D</span>
+              <span className="text-[8px] text-gray-400 uppercase">D</span>
               <AssetCell assets={debtAssets} />
             </div>
             <div className="text-edge/40">|</div>
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[8px] text-dust uppercase">C</span>
+              <span className="text-[8px] text-gray-400 uppercase">C</span>
               <AssetCell assets={collateralAssets} />
             </div>
           </div>
@@ -251,7 +251,7 @@ export function OnchainMatchListRow({
             type="button"
             onClick={(e) => { e.stopPropagation(); onSettle() }}
             disabled={isSettling}
-            className="h-7 px-3 bg-star hover:bg-star-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="h-7 px-3 bg-accent hover:bg-accent-bright text-void text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             {isSettling ? <Loader2 className="w-3 h-3 animate-spin" /> : isSwap ? 'Swap' : 'Fill'}
           </button>

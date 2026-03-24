@@ -119,43 +119,43 @@ export function BuyShareModal({ open, onOpenChange, listing }: BuyShareModalProp
   return (
     <>
       <Dialog open={open && !progress.open} onOpenChange={onOpenChange}>
-        <DialogContent className="bg-void border-edge/50 sm:max-w-md">
+        <DialogContent className="bg-[#050505] border-border/50 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
+            <DialogTitle className="font-bold text-sm tracking-widest text-accent uppercase">
               Buy Shares
             </DialogTitle>
-            <DialogDescription className="text-dust text-xs">
+            <DialogDescription className="text-gray-400 text-xs">
               Purchase lending shares from this listing.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <div className="flex items-center justify-between p-3 bg-surface/20 border border-edge/20 rounded-xl">
-              <span className="text-[10px] text-dust uppercase tracking-widest">Shares</span>
-              <span className="text-sm text-chalk font-mono">{listing.shares}</span>
+            <div className="flex items-center justify-between p-3 bg-surface/20 border border-border/20 rounded-xl">
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest">Shares</span>
+              <span className="text-sm text-white font-mono">{listing.shares}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-surface/20 border border-edge/20 rounded-xl">
-              <span className="text-[10px] text-dust uppercase tracking-widest">Price</span>
-              <span className="text-sm text-chalk font-mono">{formattedPrice} {paymentSymbol}</span>
+            <div className="flex items-center justify-between p-3 bg-surface/20 border border-border/20 rounded-xl">
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest">Price</span>
+              <span className="text-sm text-white font-mono">{formattedPrice} {paymentSymbol}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-surface/20 border border-edge/20 rounded-xl">
-              <span className="text-[10px] text-dust uppercase tracking-widest">Seller</span>
-              <span className="text-xs text-chalk font-mono">
+            <div className="flex items-center justify-between p-3 bg-surface/20 border border-border/20 rounded-xl">
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest">Seller</span>
+              <span className="text-xs text-white font-mono">
                 {listing.seller.slice(0, 8)}...{listing.seller.slice(-4)}
               </span>
             </div>
 
             {expired && (
-              <div className="p-3 bg-nova/5 border border-nova/20 rounded-xl">
-                <span className="text-xs text-nova">This listing has expired.</span>
+              <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-xl">
+                <span className="text-xs text-red-500">This listing has expired.</span>
               </div>
             )}
 
-            <div className="p-3 bg-star/5 border border-star/10 rounded-xl">
-              <p className="text-[10px] text-dust">
-                You will send <span className="text-star font-mono">{formattedPrice} {paymentSymbol}</span> to
+            <div className="p-3 bg-accent/5 border border-accent/10 rounded-xl">
+              <p className="text-[10px] text-gray-400">
+                You will send <span className="text-accent font-mono">{formattedPrice} {paymentSymbol}</span> to
                 the seller. Once confirmed, the seller will transfer shares to your wallet.
               </p>
             </div>
@@ -166,7 +166,7 @@ export function BuyShareModal({ open, onOpenChange, listing }: BuyShareModalProp
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="rounded-xl border-edge/50 text-dust hover:text-chalk hover:border-edge"
+              className="rounded-xl border-border/50 text-gray-400 hover:text-white hover:border-border"
             >
               Cancel
             </Button>
@@ -174,7 +174,7 @@ export function BuyShareModal({ open, onOpenChange, listing }: BuyShareModalProp
               variant="default"
               onClick={handleBuy}
               disabled={isPending || expired || progress.open}
-              className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"
+              className="px-6 rounded-xl font-bold shadow-lg shadow-accent/20"
             >
               {isPending ? 'Processing...' : `Pay ${formattedPrice} ${paymentSymbol}`}
             </Button>

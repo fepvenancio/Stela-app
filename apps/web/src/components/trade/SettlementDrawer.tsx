@@ -60,11 +60,11 @@ function StepIcon({ status }: { status: StepStatus }) {
     case 'idle':
       return <Circle className="w-4 h-4 text-edge shrink-0" />
     case 'active':
-      return <Loader2 className="w-4 h-4 text-star animate-spin shrink-0" />
+      return <Loader2 className="w-4 h-4 text-accent animate-spin shrink-0" />
     case 'success':
-      return <CheckCircle2 className="w-4 h-4 text-aurora shrink-0" />
+      return <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
     case 'error':
-      return <XCircle className="w-4 h-4 text-nova shrink-0" />
+      return <XCircle className="w-4 h-4 text-red-500 shrink-0" />
   }
 }
 
@@ -97,11 +97,11 @@ function SummaryRow({
 }) {
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <span className="flex items-center gap-1.5 text-xs text-dust uppercase tracking-widest">
+      <span className="flex items-center gap-1.5 text-xs text-gray-400 uppercase tracking-widest">
         {Icon && <Icon className="w-3 h-3" />}
         {label}
       </span>
-      <span className={cn('text-sm font-mono', valueClassName ?? 'text-chalk')}>
+      <span className={cn('text-sm font-mono', valueClassName ?? 'text-white')}>
         {value}
       </span>
     </div>
@@ -300,7 +300,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
         {/* Backdrop */}
         <DialogPrimitive.Overlay
           className={cn(
-            'fixed inset-0 z-40 bg-void/70 backdrop-blur-sm',
+            'fixed inset-0 z-40 bg-[#050505]/70 backdrop-blur-sm',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
             'duration-300',
@@ -313,9 +313,9 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
           onInteractOutside={(e) => { if (isActive) e.preventDefault() }}
           className={cn(
             // Base
-            'fixed z-50 flex flex-col bg-void outline-none focus:outline-none',
+            'fixed z-50 flex flex-col bg-[#050505] outline-none focus:outline-none',
             // Border
-            'border-edge/50',
+            'border-border/50',
             // Mobile: bottom sheet (full width, slide up from bottom)
             'inset-x-0 bottom-0 max-h-[90dvh]',
             'rounded-t-2xl border-t border-l border-r',
@@ -337,7 +337,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
         >
           {/* ── Header ─────────────────────────────────────────────────── */}
           <div className="flex items-center justify-between px-5 pt-5 pb-4 shrink-0">
-            <DialogPrimitive.Title className="font-display text-sm tracking-widest text-star uppercase">
+            <DialogPrimitive.Title className="font-bold text-sm tracking-widest text-accent uppercase">
               {isDone
                 ? 'Settlement Complete'
                 : hasError
@@ -354,7 +354,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
               aria-label="Close settlement drawer"
               className={cn(
                 'flex items-center justify-center w-7 h-7 rounded-full',
-                'text-dust hover:text-chalk hover:bg-surface/30 transition-colors',
+                'text-gray-400 hover:text-white hover:bg-surface/30 transition-colors',
                 'disabled:opacity-40 disabled:cursor-not-allowed',
               )}
             >
@@ -366,7 +366,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
           <div className="flex-1 overflow-y-auto px-5 pb-3 space-y-3 min-h-0">
 
             {/* Order summary card */}
-            <div className="rounded-xl border border-edge/30 bg-surface/10 divide-y divide-edge/20">
+            <div className="rounded-xl border border-border/30 bg-surface/10 divide-y divide-edge/20">
               <SummaryRow
                 label={isBatch ? 'Orders' : 'Counterparty'}
                 value={counterpartyLabel}
@@ -385,7 +385,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
                 <SummaryRow
                   label="You receive"
                   value={summary.interestLabel}
-                  valueClassName="text-aurora font-mono"
+                  valueClassName="text-green-500 font-mono"
                 />
               )}
 
@@ -393,7 +393,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
                 <SummaryRow
                   label="APR"
                   value={summary.apr}
-                  valueClassName="text-star font-mono"
+                  valueClassName="text-accent font-mono"
                 />
               )}
 
@@ -401,34 +401,34 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
                 <SummaryRow
                   label="Expires"
                   value={deadlineLabel}
-                  valueClassName="text-dust font-mono"
+                  valueClassName="text-gray-400 font-mono"
                 />
               )}
             </div>
 
             {/* Fee breakdown card */}
-            <div className="rounded-xl border border-edge/30 bg-surface/10 divide-y divide-edge/20">
+            <div className="rounded-xl border border-border/30 bg-surface/10 divide-y divide-edge/20">
               <div className="px-4 py-2.5">
-                <span className="text-xs text-dust uppercase tracking-widest">Protocol fees</span>
+                <span className="text-xs text-gray-400 uppercase tracking-widest">Protocol fees</span>
               </div>
 
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-dust">Relayer</span>
-                <span className="text-xs text-chalk">{fees.relayerBps / 100}%</span>
+                <span className="text-xs text-gray-400">Relayer</span>
+                <span className="text-xs text-white">{fees.relayerBps / 100}%</span>
               </div>
 
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-dust">Treasury</span>
+                <span className="text-xs text-gray-400">Treasury</span>
                 <div className="flex items-center gap-2">
                   {fees.discountPercent > 0 && (
-                    <span className="text-[10px] text-dust line-through">
+                    <span className="text-[10px] text-gray-400 line-through">
                       {fees.treasuryBps / 100}%
                     </span>
                   )}
                   <span
                     className={cn(
                       'text-xs',
-                      fees.discountPercent > 0 ? 'text-aurora' : 'text-chalk',
+                      fees.discountPercent > 0 ? 'text-green-500' : 'text-white',
                     )}
                   >
                     {fees.effectiveTreasuryBps / 100}%
@@ -437,14 +437,14 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
               </div>
 
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-dust font-medium">Total</span>
+                <span className="text-xs text-gray-400 font-medium">Total</span>
                 <div className="flex items-center gap-2">
                   {fees.savingsBps > 0 && (
-                    <span className="text-[10px] text-aurora">
+                    <span className="text-[10px] text-green-500">
                       -{fees.savingsBps / 100}%
                     </span>
                   )}
-                  <span className="text-xs text-chalk font-medium">
+                  <span className="text-xs text-white font-medium">
                     {fees.effectiveTotalBps / 100}%
                   </span>
                 </div>
@@ -452,7 +452,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
 
               {fees.discountPercent > 0 && (
                 <div className="px-4 py-2">
-                  <span className="text-[10px] text-aurora">
+                  <span className="text-[10px] text-green-500">
                     {fees.discountPercent}% Genesis NFT discount
                     {fees.volumeTier > 0 ? ` (volume tier ${fees.volumeTier})` : ''}
                   </span>
@@ -469,9 +469,9 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
                     className={cn(
                       'flex items-start gap-3 p-3 rounded-xl transition-colors border',
                       step.status === 'active'
-                        ? 'bg-star/5 border-star/10'
+                        ? 'bg-accent/5 border-accent/10'
                         : step.status === 'error'
-                          ? 'bg-nova/5 border-nova/10'
+                          ? 'bg-red-500/5 border-red-500/10'
                           : step.status === 'success'
                             ? 'opacity-60 border-transparent'
                             : 'opacity-40 border-transparent',
@@ -483,27 +483,27 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
                     <div className="min-w-0 flex-1">
                       <span
                         className={cn(
-                          'text-sm font-display block',
+                          'text-sm font-bold block',
                           step.status === 'active'
-                            ? 'text-star'
+                            ? 'text-accent'
                             : step.status === 'error'
-                              ? 'text-nova'
+                              ? 'text-red-500'
                               : step.status === 'success'
-                                ? 'text-chalk'
-                                : 'text-dust',
+                                ? 'text-white'
+                                : 'text-gray-400',
                         )}
                       >
                         {step.label}
                       </span>
 
                       {step.description && step.status !== 'error' && (
-                        <span className="text-[10px] text-dust block mt-0.5">
+                        <span className="text-[10px] text-gray-400 block mt-0.5">
                           {step.description}
                         </span>
                       )}
 
                       {step.status === 'error' && step.errorMessage && (
-                        <span className="text-[10px] text-nova/80 block mt-0.5 break-words">
+                        <span className="text-[10px] text-red-500/80 block mt-0.5 break-words">
                           {step.errorMessage}
                         </span>
                       )}
@@ -513,12 +513,12 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
 
                 {/* Transaction hash link */}
                 {txHash && (
-                  <div className="flex items-center justify-between p-3 bg-surface/20 border border-edge/20 rounded-xl mt-2">
+                  <div className="flex items-center justify-between p-3 bg-surface/20 border border-border/20 rounded-xl mt-2">
                     <div className="min-w-0">
-                      <span className="text-[10px] text-dust uppercase tracking-widest block">
+                      <span className="text-[10px] text-gray-400 uppercase tracking-widest block">
                         Transaction
                       </span>
-                      <span className="text-xs text-chalk font-mono truncate block">
+                      <span className="text-xs text-white font-mono truncate block">
                         {txHash.slice(0, 20)}…
                       </span>
                     </div>
@@ -526,7 +526,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
                       href={`${VOYAGER_TX_URL}/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[10px] text-star hover:text-star-bright transition-colors shrink-0 ml-2"
+                      className="flex items-center gap-1 text-[10px] text-accent hover:text-accent/80 transition-colors shrink-0 ml-2"
                     >
                       Voyager <ExternalLink className="w-3 h-3" />
                     </a>
@@ -537,7 +537,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
           </div>
 
           {/* ── Footer (CTA) ────────────────────────────────────────────── */}
-          <div className="px-5 pb-6 pt-3 shrink-0 border-t border-edge/20">
+          <div className="px-5 pb-6 pt-3 shrink-0 border-t border-border/20">
 
             {/* Pre-confirm: primary CTA */}
             {!showProgress && (
@@ -554,8 +554,8 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
 
             {/* In-progress: spinner indicator */}
             {showProgress && !isDone && !hasError && (
-              <div className="flex items-center justify-center gap-2 h-11 text-dust">
-                <Loader2 className="w-4 h-4 text-star animate-spin" />
+              <div className="flex items-center justify-center gap-2 h-11 text-gray-400">
+                <Loader2 className="w-4 h-4 text-accent animate-spin" />
                 <span className="text-sm">Processing…</span>
               </div>
             )}

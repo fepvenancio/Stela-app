@@ -106,26 +106,26 @@ export function TransferSharesModal({ open, onOpenChange, inscriptionId, maxShar
   return (
     <>
       <Dialog open={open && !progress.open} onOpenChange={onOpenChange}>
-        <DialogContent className="bg-void border-edge/50 sm:max-w-md">
+        <DialogContent className="bg-[#050505] border-border/50 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
+            <DialogTitle className="font-bold text-sm tracking-widest text-accent uppercase">
               Transfer Shares
             </DialogTitle>
-            <DialogDescription className="text-dust text-xs">
+            <DialogDescription className="text-gray-400 text-xs">
               Send ERC1155 shares to another address.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             {/* Current Balance */}
-            <div className="flex items-center justify-between p-3 bg-surface/20 border border-edge/20 rounded-xl">
-              <span className="text-[10px] text-dust uppercase tracking-widest">Your Balance</span>
-              <span className="text-sm text-chalk font-mono">{maxShares.toString()} shares</span>
+            <div className="flex items-center justify-between p-3 bg-surface/20 border border-border/20 rounded-xl">
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest">Your Balance</span>
+              <span className="text-sm text-white font-mono">{maxShares.toString()} shares</span>
             </div>
 
             {/* Recipient */}
             <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest">Recipient Address</Label>
+              <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Recipient Address</Label>
               <Input
                 placeholder="0x..."
                 value={recipient}
@@ -134,16 +134,16 @@ export function TransferSharesModal({ open, onOpenChange, inscriptionId, maxShar
                 aria-invalid={recipient.length > 0 && !recipientValid}
               />
               {recipient.length > 0 && !recipientValid && (
-                <span className="text-[10px] text-nova">Invalid StarkNet address</span>
+                <span className="text-[10px] text-red-500">Invalid StarkNet address</span>
               )}
               {isSelfTransfer && (
-                <span className="text-[10px] text-nova">Cannot transfer to yourself</span>
+                <span className="text-[10px] text-red-500">Cannot transfer to yourself</span>
               )}
             </div>
 
             {/* Amount */}
             <div className="space-y-2">
-              <Label className="text-[10px] text-dust uppercase tracking-widest">Amount</Label>
+              <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Amount</Label>
               <div className="flex gap-2">
                 <Input
                   type="number"
@@ -158,13 +158,13 @@ export function TransferSharesModal({ open, onOpenChange, inscriptionId, maxShar
                   variant="outline"
                   size="sm"
                   onClick={handleMax}
-                  className="shrink-0 rounded-lg border-edge/50 text-dust hover:text-star hover:border-star/30 text-[10px] uppercase tracking-widest"
+                  className="shrink-0 rounded-lg border-border/50 text-gray-400 hover:text-accent hover:border-accent/30 text-[10px] uppercase tracking-widest"
                 >
                   Max
                 </Button>
               </div>
               {amount && parsedAmount === 0n && (
-                <span className="text-[10px] text-nova">
+                <span className="text-[10px] text-red-500">
                   Enter a value between 1 and {maxShares.toString()}
                 </span>
               )}
@@ -176,7 +176,7 @@ export function TransferSharesModal({ open, onOpenChange, inscriptionId, maxShar
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="rounded-xl border-edge/50 text-dust hover:text-chalk hover:border-edge"
+              className="rounded-xl border-border/50 text-gray-400 hover:text-white hover:border-border"
             >
               Cancel
             </Button>
@@ -184,7 +184,7 @@ export function TransferSharesModal({ open, onOpenChange, inscriptionId, maxShar
               variant="default"
               onClick={handleTransfer}
               disabled={!canSubmit}
-              className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"
+              className="px-6 rounded-xl font-bold shadow-lg shadow-accent/20"
             >
               {isPending ? 'Processing...' : 'Transfer'}
             </Button>

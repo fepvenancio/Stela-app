@@ -54,11 +54,11 @@ export function AuctionPrice({
   const decimals = token?.decimals ?? 18
 
   if (loading) {
-    return <div className="text-xs text-dust">Loading auction price...</div>
+    return <div className="text-xs text-gray-400">Loading auction price...</div>
   }
 
   if (price === null) {
-    return <div className="text-xs text-dust">Auction price unavailable</div>
+    return <div className="text-xs text-gray-400">Auction price unavailable</div>
   }
 
   const pctOfDebt = originalDebt > 0n ? Number((price * 10000n) / originalDebt) / 100 : 0
@@ -67,18 +67,18 @@ export function AuctionPrice({
   return (
     <div className="space-y-2">
       <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
-        <span className="text-[10px] text-dust uppercase tracking-widest">Current Price</span>
-        <span className="text-lg font-display text-chalk truncate">
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest">Current Price</span>
+        <span className="text-lg font-bold text-white truncate">
           {formattedPrice} {symbol}
         </span>
       </div>
-      <div className="text-xs text-dust">
+      <div className="text-xs text-gray-400">
         {pctOfDebt.toFixed(1)}% of original debt
       </div>
       {/* Declining price bar */}
       <div className="h-2 w-full rounded-full bg-edge/20 overflow-hidden">
         <div
-          className="h-full rounded-full bg-star transition-all duration-1000"
+          className="h-full rounded-full bg-accent transition-all duration-1000"
           style={{ width: `${Math.min(100, pctOfDebt)}%` }}
         />
       </div>

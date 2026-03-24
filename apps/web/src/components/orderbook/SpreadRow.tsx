@@ -20,8 +20,8 @@ export function SpreadRow({ bestAsk, bestBid, symbol }: SpreadRowProps) {
 
   if (!spread) {
     return (
-      <div className="flex items-center justify-center h-9 px-3 border-y border-edge/20">
-        <span className="text-xs text-dust">No spread data</span>
+      <div className="flex items-center justify-center h-9 px-3 border-y border-border/20">
+        <span className="text-xs text-gray-400">No spread data</span>
       </div>
     )
   }
@@ -29,7 +29,7 @@ export function SpreadRow({ bestAsk, bestBid, symbol }: SpreadRowProps) {
   const direction = spread.value > 0 ? 'up' : spread.value < 0 ? 'down' : 'neutral'
 
   return (
-    <div className="flex items-center justify-center h-9 px-3 border-y border-edge/20 gap-2">
+    <div className="flex items-center justify-center h-9 px-3 border-y border-border/20 gap-2">
       {/* Direction arrow */}
       <svg
         width="12"
@@ -40,7 +40,7 @@ export function SpreadRow({ bestAsk, bestBid, symbol }: SpreadRowProps) {
           'shrink-0',
           direction === 'up' && 'text-emerald-500',
           direction === 'down' && 'text-rose-500',
-          direction === 'neutral' && 'text-dust',
+          direction === 'neutral' && 'text-gray-400',
         )}
       >
         {direction === 'up' && (
@@ -55,17 +55,17 @@ export function SpreadRow({ bestAsk, bestBid, symbol }: SpreadRowProps) {
       </svg>
 
       {/* Spread value */}
-      <span className="font-mono text-xs tabular-nums text-star">
+      <span className="font-mono text-xs tabular-nums text-accent">
         {spread.value.toFixed(6)}
       </span>
 
       {/* Spread percentage */}
-      <span className="text-[10px] text-dust">
+      <span className="text-[10px] text-gray-400">
         ({spread.pct.toFixed(2)}%)
       </span>
 
       {/* Symbol */}
-      <span className="text-[10px] text-ash hidden sm:inline">
+      <span className="text-[10px] text-gray-500 hidden sm:inline">
         {symbol}
       </span>
     </div>

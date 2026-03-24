@@ -57,7 +57,7 @@ export function OrderActions({
       <Web3ActionWrapper message="Connect your wallet to make an offer">
         {isPending && !isOwner ? (
           <>
-            <p className="text-xs text-dust leading-relaxed pb-4">
+            <p className="text-xs text-gray-400 leading-relaxed pb-4">
               Sign and settle on-chain in one step. You approve tokens and execute the settlement.
             </p>
 
@@ -93,7 +93,7 @@ export function OrderActions({
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <label htmlFor="order-lend-amount" className="text-[10px] text-dust uppercase tracking-widest px-2">Your Contribution</label>
+                  <label htmlFor="order-lend-amount" className="text-[10px] text-gray-400 uppercase tracking-widest px-2">Your Contribution</label>
                   <Input
                     id="order-lend-amount"
                     type="text"
@@ -108,7 +108,7 @@ export function OrderActions({
                       if (!/^\d*\.?\d{0,3}$/.test(text)) e.preventDefault()
                     }}
                     placeholder="0.000"
-                    className="h-14 text-lg bg-void/50 font-mono"
+                    className="h-14 text-lg bg-[#050505]/50 font-mono"
                   />
                 </div>
                 <Button type="submit" variant="default" size="xl" className="w-full text-lg" disabled={signPending || !lendAmount}>
@@ -117,9 +117,9 @@ export function OrderActions({
               </form>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
-                  <span className="text-[10px] text-star uppercase tracking-widest font-bold">Rewards for Lender</span>
-                  <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
+                <div className="p-4 rounded-md bg-accent/5 border border-accent/10 text-center">
+                  <span className="text-[10px] text-accent uppercase tracking-widest font-bold">Rewards for Lender</span>
+                  <p className="text-xs text-gray-400 mt-1">Full 100% of interest assets will be claimed upon completion.</p>
                 </div>
                 <Button
                   variant="default"
@@ -141,11 +141,11 @@ export function OrderActions({
           </>
         ) : isPending && isOwner ? (
           <div className="space-y-3 text-center">
-            <p className="text-xs text-dust italic uppercase tracking-widest">Your Order</p>
-            <p className="text-xs text-dust">Waiting for a lender to submit an offer.</p>
+            <p className="text-xs text-gray-400 italic uppercase tracking-widest">Your Order</p>
+            <p className="text-xs text-gray-400">Waiting for a lender to submit an offer.</p>
             <Button
               variant="outline"
-              className="hover:text-nova hover:border-nova/30"
+              className="hover:text-red-500 hover:border-red-500/30"
               disabled={signPending}
               onClick={async () => {
                 if (!account || !address) return
@@ -177,18 +177,18 @@ export function OrderActions({
           </div>
         ) : status === 'settled' ? (
           <div className="text-center py-4 space-y-3">
-            <div className="p-4 rounded-md bg-aurora/5 border border-aurora/10">
-              <p className="text-[10px] text-aurora uppercase tracking-widest font-bold">Settled On-Chain</p>
-              <p className="text-xs text-dust mt-1">This order was settled and is now an active inscription.</p>
+            <div className="p-4 rounded-md bg-green-500/5 border border-green-500/10">
+              <p className="text-[10px] text-green-500 uppercase tracking-widest font-bold">Settled On-Chain</p>
+              <p className="text-xs text-gray-400 mt-1">This order was settled and is now an active inscription.</p>
             </div>
             <Button asChild variant="accent" size="xl" className="w-full text-lg">
               <Link href="/markets">View in Markets to Repay</Link>
             </Button>
           </div>
         ) : (
-          <div className="text-center py-4 bg-void/30 rounded-md border border-edge/20">
-            <p className="text-xs text-dust uppercase tracking-widest">Order {status ?? 'Closed'}</p>
-            <p className="text-[10px] text-ash/60 mt-1">This order is no longer accepting offers.</p>
+          <div className="text-center py-4 bg-[#050505]/30 rounded-md border border-border/20">
+            <p className="text-xs text-gray-400 uppercase tracking-widest">Order {status ?? 'Closed'}</p>
+            <p className="text-[10px] text-gray-500/60 mt-1">This order is no longer accepting offers.</p>
           </div>
         )}
       </Web3ActionWrapper>

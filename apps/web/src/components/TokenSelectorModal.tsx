@@ -26,7 +26,7 @@ const POPULAR_SYMBOLS = ['ETH', 'STRK', 'USDC', 'USDT', 'WBTC']
 function CustomTokenAvatar({ size = 36 }: { size?: number }) {
   return (
     <div
-      className="relative shrink-0 rounded-full flex items-center justify-center bg-edge-bright text-dust"
+      className="relative shrink-0 rounded-full flex items-center justify-center bg-edge-bright text-gray-400"
       style={{ width: size, height: size, fontSize: size * 0.45 }}
     >
       <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -51,13 +51,13 @@ function QuickChip({
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-edge bg-surface hover:bg-elevated hover:border-edge-bright transition-colors text-sm text-chalk"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-surface hover:bg-surface-hover hover:border-white/20 transition-colors text-sm text-white"
       aria-label={`Select ${token.symbol}`}
     >
       <TokenAvatar token={token} size={20} />
       <span className="font-medium">{token.symbol}</span>
       {balance !== undefined && balance > 0n && (
-        <span className="text-[10px] text-star font-mono">
+        <span className="text-[10px] text-accent font-mono">
           {formatTokenValue(balance.toString(), token.decimals)}
         </span>
       )}
@@ -89,32 +89,32 @@ function TokenRow({
       className={`
         w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left
         ${isSelected
-          ? 'bg-star/10 border border-star/30'
-          : 'hover:bg-elevated/70 border border-transparent'
+          ? 'bg-accent/10 border border-accent/30'
+          : 'hover:bg-surface-hover/70 border border-transparent'
         }
       `}
     >
       <TokenAvatar token={token} size={36} />
 
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-chalk truncate">{token.name}</div>
-        <div className="text-xs text-dust">{token.symbol}</div>
+        <div className="text-sm font-medium text-white truncate">{token.name}</div>
+        <div className="text-xs text-gray-400">{token.symbol}</div>
       </div>
 
       <div className="text-right shrink-0">
         {balance !== undefined && balance > 0n ? (
           <>
-            <div className="text-sm text-chalk font-mono">
+            <div className="text-sm text-white font-mono">
               {formatTokenValue(balance.toString(), token.decimals)}
             </div>
-            <div className="text-[10px] text-dust font-mono">
+            <div className="text-[10px] text-gray-400 font-mono">
               {formatAddress(address)}
             </div>
           </>
         ) : (
-          <div className="text-xs text-dust font-mono">
+          <div className="text-xs text-gray-400 font-mono">
             {balance !== undefined && balance === 0n ? (
-              <span className="text-ash/50">0</span>
+              <span className="text-gray-500/50">0</span>
             ) : (
               formatAddress(address)
             )}
@@ -241,12 +241,12 @@ export function TokenSelectorModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-void border-edge/50 text-chalk p-0 gap-0 sm:max-w-md overflow-hidden"
+        className="bg-[#050505] border-border/50 text-white p-0 gap-0 sm:max-w-md overflow-hidden"
         showCloseButton={true}
       >
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-0">
-          <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
+          <DialogTitle className="font-bold text-sm tracking-widest text-accent uppercase">
             {walletConnected ? 'Your Tokens' : 'Select a Token'}
           </DialogTitle>
         </DialogHeader>
@@ -255,7 +255,7 @@ export function TokenSelectorModal({
         <div className="px-5 pt-3">
           <div className="relative">
             <svg
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ash"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"
               width="16"
               height="16"
               viewBox="0 0 16 16"
@@ -272,7 +272,7 @@ export function TokenSelectorModal({
               placeholder="Search tokens"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 rounded-xl bg-surface border border-edge text-chalk text-sm placeholder:text-ash outline-none focus:border-star focus:ring-1 focus:ring-star/30 transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-xl bg-surface border border-border text-white text-sm placeholder:text-gray-500 outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
               aria-label="Search tokens"
             />
           </div>
@@ -293,12 +293,12 @@ export function TokenSelectorModal({
         )}
 
         {/* Divider */}
-        <div className="mx-5 mt-3 border-t border-edge" />
+        <div className="mx-5 mt-3 border-t border-border" />
 
         {/* Token List */}
         <div className="overflow-y-auto max-h-[340px] px-2 py-2 space-y-0.5">
           {filteredTokens.length === 0 && (
-            <div className="text-center py-8 text-dust text-sm">
+            <div className="text-center py-8 text-gray-400 text-sm">
               {search.trim()
                 ? <>No tokens found for &ldquo;{search}&rdquo;</>
                 : walletConnected
@@ -325,17 +325,17 @@ export function TokenSelectorModal({
           {showCustomOption && (
             <>
               {filteredTokens.length > 0 && (
-                <div className="mx-3 my-1 border-t border-edge/50" />
+                <div className="mx-3 my-1 border-t border-border/50" />
               )}
               <button
                 type="button"
                 onClick={handleCustom}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-elevated/70 transition-colors text-left border border-transparent"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-hover/70 transition-colors text-left border border-transparent"
               >
                 <CustomTokenAvatar size={36} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-chalk">Custom token</div>
-                  <div className="text-xs text-dust">Enter a contract address</div>
+                  <div className="text-sm font-medium text-white">Custom token</div>
+                  <div className="text-xs text-gray-400">Enter a contract address</div>
                 </div>
               </button>
             </>

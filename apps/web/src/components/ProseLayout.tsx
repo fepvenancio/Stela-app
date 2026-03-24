@@ -12,7 +12,7 @@ export function ProseLayout({ title, description, lastUpdated, children }: Prose
     <div className="max-w-3xl mx-auto animate-fade-up">
       <PageHeader title={title} description={description} />
       {lastUpdated && (
-        <p className="text-[10px] text-ash uppercase tracking-widest mb-8">
+        <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-8">
           Last updated: {lastUpdated}
         </p>
       )}
@@ -31,11 +31,11 @@ interface ProseSectionProps {
 export function ProseSection({ title, children }: ProseSectionProps) {
   return (
     <section>
-      <h3 className="font-display text-lg text-chalk uppercase tracking-widest mb-4 flex items-center gap-3">
-        <div className="w-1.5 h-1.5 bg-star rotate-45" />
+      <h3 className="font-bold text-lg text-white uppercase tracking-widest mb-4 flex items-center gap-3">
+        <div className="w-1.5 h-1.5 bg-accent rotate-45" />
         {title}
       </h3>
-      <div className="text-dust text-sm leading-relaxed space-y-3">
+      <div className="text-gray-400 text-sm leading-relaxed space-y-3">
         {children}
       </div>
     </section>

@@ -55,7 +55,7 @@ export function OrderBookRow({
     <div
       className={cn(
         'relative flex items-center h-8 md:h-[32px] px-3 transition-colors duration-75 cursor-default group',
-        highlighted ? 'bg-elevated/60' : 'hover:bg-surface/40',
+        highlighted ? 'bg-surface-hover/60' : 'hover:bg-surface/40',
       )}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
@@ -74,23 +74,23 @@ export function OrderBookRow({
         </span>
 
         {/* Amount */}
-        <span className="font-mono text-xs tabular-nums text-chalk flex-1 text-right truncate">
+        <span className="font-mono text-xs tabular-nums text-white flex-1 text-right truncate">
           {amountDisplay}
         </span>
 
         {/* Cumulative — hidden on mobile */}
-        <span className="hidden md:block font-mono text-xs tabular-nums text-dust w-[100px] text-right truncate">
+        <span className="hidden md:block font-mono text-xs tabular-nums text-gray-400 w-[100px] text-right truncate">
           {cumulativeDisplay}
         </span>
       </div>
 
       {/* Tooltip */}
       {showTooltip && orderCount > 0 && (
-        <div className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-3 py-2 bg-abyss border border-edge rounded-md shadow-lg pointer-events-none whitespace-nowrap">
-          <p className="text-[10px] text-dust">
+        <div className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-3 py-2 bg-surface border border-border rounded-md shadow-lg pointer-events-none whitespace-nowrap">
+          <p className="text-[10px] text-gray-400">
             {orderCount} order{orderCount !== 1 ? 's' : ''} at this level
           </p>
-          <p className="text-[10px] text-chalk mt-0.5">
+          <p className="text-[10px] text-white mt-0.5">
             {amountDisplay} {symbol}
           </p>
         </div>

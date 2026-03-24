@@ -28,8 +28,8 @@ export function LendingBook({ asks, totalAskVolume, baseSymbol, baseDecimals }: 
   if (asks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm text-dust">No borrow requests yet</p>
-        <p className="text-[10px] text-ash mt-1">Orders will appear here when borrowers create requests</p>
+        <p className="text-sm text-gray-400">No borrow requests yet</p>
+        <p className="text-[10px] text-gray-500 mt-1">Orders will appear here when borrowers create requests</p>
       </div>
     )
   }
@@ -37,7 +37,7 @@ export function LendingBook({ asks, totalAskVolume, baseSymbol, baseDecimals }: 
   return (
     <div className="flex flex-col w-full">
       {/* Column headers */}
-      <div className="flex items-center h-7 px-3 border-b border-edge/15 text-[10px] text-ash uppercase tracking-wider">
+      <div className="flex items-center h-7 px-3 border-b border-border/15 text-[10px] text-gray-500 uppercase tracking-wider">
         <span className="w-[72px] shrink-0 text-left">APR</span>
         <span className="flex-1 text-right">Amount</span>
         <span className="hidden md:block w-[100px] text-right">Total</span>
@@ -63,27 +63,27 @@ export function LendingBook({ asks, totalAskVolume, baseSymbol, baseDecimals }: 
 
       {/* Overflow indicator */}
       {asks.length > MAX_VISIBLE_ROWS && (
-        <div className="flex items-center justify-center h-6 text-[10px] text-ash border-t border-edge/10">
+        <div className="flex items-center justify-center h-6 text-[10px] text-gray-500 border-t border-border/10">
           +{asks.length - MAX_VISIBLE_ROWS} more level{asks.length - MAX_VISIBLE_ROWS !== 1 ? 's' : ''}
         </div>
       )}
 
       {/* Summary stats */}
-      <div className="flex items-center justify-between px-3 py-2 border-t border-edge/20 text-[10px] gap-2 flex-wrap">
+      <div className="flex items-center justify-between px-3 py-2 border-t border-border/20 text-[10px] gap-2 flex-wrap">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <span className="text-ash">
+          <span className="text-gray-500">
             Volume:{' '}
-            <span className="text-chalk font-mono tabular-nums">
+            <span className="text-white font-mono tabular-nums">
               {formatTokenValue(totalAskVolume, baseDecimals)} {baseSymbol}
             </span>
           </span>
-          <span className="text-ash">
+          <span className="text-gray-500">
             Orders:{' '}
-            <span className="text-chalk font-mono tabular-nums">{totalOrders}</span>
+            <span className="text-white font-mono tabular-nums">{totalOrders}</span>
           </span>
         </div>
         {bestApr !== null && (
-          <span className="text-ash">
+          <span className="text-gray-500">
             Best APR:{' '}
             <span className="text-rose-500 font-mono tabular-nums">{bestApr.toFixed(2)}%</span>
           </span>

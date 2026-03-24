@@ -148,9 +148,9 @@ export function QuickLendModal({ open, onClose, debtToken, collateralToken }: Qu
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="max-w-md bg-abyss border-edge/30 overflow-hidden">
+      <DialogContent className="max-w-md bg-surface border-border/30 overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-chalk font-display text-xs uppercase tracking-wider">
+          <DialogTitle className="text-white font-bold text-xs uppercase tracking-wider">
             {title}
           </DialogTitle>
         </DialogHeader>
@@ -158,7 +158,7 @@ export function QuickLendModal({ open, onClose, debtToken, collateralToken }: Qu
         <div className="space-y-4 pt-2">
           {/* Amount input */}
           <div>
-            <label className="text-[10px] uppercase tracking-widest font-bold text-dust mb-1.5 block">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1.5 block">
               Amount
             </label>
             <Input
@@ -167,13 +167,13 @@ export function QuickLendModal({ open, onClose, debtToken, collateralToken }: Qu
               placeholder={`0.00 ${debtSymbol}`}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="font-mono text-sm bg-surface/30 border-edge/30"
+              className="font-mono text-sm bg-surface/30 border-border/30"
             />
           </div>
 
           {/* Duration selector (per UI-SPEC NAV-03: modal contents include "duration selector") */}
           <div>
-            <label className="text-[10px] uppercase tracking-widest font-bold text-dust mb-1.5 block">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1.5 block">
               Duration
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -184,8 +184,8 @@ export function QuickLendModal({ open, onClose, debtToken, collateralToken }: Qu
                   onClick={() => setDurationPreset(preset.value)}
                   className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     durationPreset === preset.value
-                      ? 'bg-star/20 text-star border border-star/40'
-                      : 'bg-surface/30 text-dust border border-edge/20 hover:border-edge/40'
+                      ? 'bg-accent/20 text-accent border border-accent/40'
+                      : 'bg-surface/30 text-gray-400 border border-border/20 hover:border-border/40'
                   }`}
                 >
                   {preset.label}
@@ -202,7 +202,7 @@ export function QuickLendModal({ open, onClose, debtToken, collateralToken }: Qu
             <Button
               onClick={handleSign}
               disabled={!amount || isPending}
-              className="w-full min-h-[36px] bg-star hover:bg-star/90 text-void font-medium"
+              className="w-full min-h-[36px] bg-accent hover:bg-accent/90 text-void font-medium"
             >
               {isPending ? (
                 <>

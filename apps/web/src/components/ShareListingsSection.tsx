@@ -57,9 +57,9 @@ export function ShareListingsSection({ inscriptionId }: ShareListingsSectionProp
   const now = Math.floor(Date.now() / 1000)
 
   return (
-    <section className="bg-surface/10 border border-edge/20 rounded-3xl overflow-hidden">
-      <div className="px-4 sm:px-6 py-4 border-b border-edge/20 bg-surface/30">
-        <h3 className="text-star font-mono text-xs uppercase tracking-[0.3em]">Share Listings</h3>
+    <section className="bg-surface/10 border border-border/20 rounded-3xl overflow-hidden">
+      <div className="px-4 sm:px-6 py-4 border-b border-border/20 bg-surface/30">
+        <h3 className="text-accent font-mono text-xs uppercase tracking-[0.3em]">Share Listings</h3>
       </div>
       <div className="p-4 sm:p-6 space-y-3">
         {listings.map((listing: ShareListing) => {
@@ -72,17 +72,17 @@ export function ShareListingsSection({ inscriptionId }: ShareListingsSectionProp
           return (
             <div
               key={listing.id}
-              className="flex items-start sm:items-center justify-between gap-2 p-3 bg-abyss/40 rounded-xl border border-edge/10"
+              className="flex items-start sm:items-center justify-between gap-2 p-3 bg-surface/40 rounded-xl border border-border/10"
             >
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-chalk font-mono">{listing.shares} shares</span>
-                  <span className="text-[10px] text-dust">@</span>
-                  <span className="text-xs text-star font-mono">
+                  <span className="text-xs text-white font-mono">{listing.shares} shares</span>
+                  <span className="text-[10px] text-gray-400">@</span>
+                  <span className="text-xs text-accent font-mono">
                     {formatTokenValue(listing.price, decimals)} {symbol}
                   </span>
                 </div>
-                <span className="text-[10px] text-dust block">
+                <span className="text-[10px] text-gray-400 block">
                   Seller: {formatAddress(listing.seller)}
                   {expired ? ' · Expired' : ''}
                 </span>
@@ -95,7 +95,7 @@ export function ShareListingsSection({ inscriptionId }: ShareListingsSectionProp
                     size="sm"
                     onClick={() => handleCancel(listing.id)}
                     disabled={cancelling === listing.id}
-                    className="text-[10px] uppercase tracking-widest text-nova hover:text-nova border-nova/30 hover:border-nova/50"
+                    className="text-[10px] uppercase tracking-widest text-red-500 hover:text-red-500 border-red-500/30 hover:border-red-500/50"
                   >
                     {cancelling === listing.id ? 'Cancelling...' : 'Cancel'}
                   </Button>

@@ -59,7 +59,7 @@ export function NetworkMismatchBanner() {
   return (
     <div
       role="alert"
-      className="sticky top-0 z-50 bg-nova/15 border-b border-nova/30 text-sm text-nova"
+      className="sticky top-0 z-50 bg-red-500/15 border-b border-red-500/30 text-sm text-red-500"
     >
       <div className="flex items-center justify-center gap-3 px-4 py-2.5">
         <svg
@@ -82,14 +82,14 @@ export function NetworkMismatchBanner() {
         <button
           onClick={handleSwitch}
           disabled={switching}
-          className="ml-1 px-3 py-1 rounded-lg text-xs font-medium bg-nova/20 hover:bg-nova/30 border border-nova/40 hover:border-nova/60 text-nova transition-colors disabled:opacity-50"
+          className="ml-1 px-3 py-1 rounded-lg text-xs font-medium bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 hover:border-red-500/60 text-red-500 transition-colors disabled:opacity-50"
           aria-label={`Switch to ${EXPECTED_NETWORK_NAME}`}
         >
           {switching ? 'Switching...' : 'Switch Network'}
         </button>
         <button
           onClick={() => setShowInstructions((prev) => !prev)}
-          className="px-2 py-1 rounded-lg text-xs text-nova/70 hover:text-nova hover:bg-nova/10 transition-colors"
+          className="px-2 py-1 rounded-lg text-xs text-red-500/70 hover:text-red-500 hover:bg-red-500/10 transition-colors"
           aria-label={showInstructions ? 'Hide instructions' : 'Show instructions'}
           aria-expanded={showInstructions}
         >
@@ -98,7 +98,7 @@ export function NetworkMismatchBanner() {
       </div>
 
       {showInstructions && (
-        <div className="px-4 pb-3 pt-0.5 text-xs text-nova/80 border-t border-nova/15">
+        <div className="px-4 pb-3 pt-0.5 text-xs text-red-500/80 border-t border-red-500/15">
           <p className="text-center">
             {walletInstructions ?? genericInstructions}
           </p>

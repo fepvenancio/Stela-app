@@ -78,24 +78,24 @@ export function PoolPairDisplay({ debtAssets, collateralAssets, interestAssets, 
       {/* Pool name + details */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs md:text-sm font-medium text-chalk truncate">
+          <span className="text-xs md:text-sm font-medium text-white truncate">
             {debtSymbol}{extraDebt} / {collSymbol}
           </span>
           {isOffchain && (
-            <span className="text-[7px] text-ash/50 uppercase tracking-wider shrink-0 border border-ash/20 px-1 rounded">oc</span>
+            <span className="text-[7px] text-gray-500/50 uppercase tracking-wider shrink-0 border border-ash/20 px-1 rounded">oc</span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-[11px] text-dust truncate">
+        <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-[11px] text-gray-400 truncate">
           {debtAmount && (
             <span>{debtAmount} {debtSymbol}</span>
           )}
           {intAmount && (
             <>
               <span className="text-edge/50">→</span>
-              <span className="text-aurora/80">{intAmount}</span>
+              <span className="text-green-500/80">{intAmount}</span>
             </>
           )}
-          <span className="font-mono text-[9px] text-ash/40">#{isOffchain ? id.slice(0, 6) : id.slice(2, 8)}</span>
+          <span className="font-mono text-[9px] text-gray-500/40">#{isOffchain ? id.slice(0, 6) : id.slice(2, 8)}</span>
         </div>
       </div>
     </div>

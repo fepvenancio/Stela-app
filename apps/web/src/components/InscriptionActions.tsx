@@ -71,14 +71,14 @@ export function InscriptionActions({
   const debtTokenAddress = debtAssets[0]?.address ?? ''
 
   if (!address) {
-    return <p className="text-sm text-dust">Connect your wallet to interact with this inscription.</p>
+    return <p className="text-sm text-gray-400">Connect your wallet to interact with this inscription.</p>
   }
 
   if (status === 'open' || status === 'partial') {
     const cancelButton = isOwner && status === 'open' && (
       <ConfirmDialog
         trigger={
-          <Button variant="outline" className="hover:text-nova hover:border-nova/30" disabled={isPending}>
+          <Button variant="outline" className="hover:text-red-500 hover:border-red-500/30" disabled={isPending}>
             {cancelPending ? 'Cancelling...' : 'Cancel Inscription'}
           </Button>
         }
@@ -96,9 +96,9 @@ export function InscriptionActions({
       return (
         <>
           <div className="space-y-6">
-            <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
-               <span className="text-[10px] text-star uppercase tracking-widest font-bold">Rewards for Lender</span>
-               <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
+            <div className="p-4 rounded-md bg-accent/5 border border-accent/10 text-center">
+               <span className="text-[10px] text-accent uppercase tracking-widest font-bold">Rewards for Lender</span>
+               <p className="text-xs text-gray-400 mt-1">Full 100% of interest assets will be claimed upon completion.</p>
             </div>
             <Button
               variant="default"
@@ -136,9 +136,9 @@ export function InscriptionActions({
     return (
       <>
         <div className="space-y-6">
-          <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
-             <span className="text-[10px] text-star uppercase tracking-widest font-bold">Multi-Lending Active</span>
-             <p className="text-xs text-dust mt-1">Total Vault Debt: {totalDebtFormatted}</p>
+          <div className="p-4 rounded-md bg-accent/5 border border-accent/10 text-center">
+             <span className="text-[10px] text-accent uppercase tracking-widest font-bold">Multi-Lending Active</span>
+             <p className="text-xs text-gray-400 mt-1">Total Vault Debt: {totalDebtFormatted}</p>
           </div>
           <form
             onSubmit={async (e) => {
@@ -171,7 +171,7 @@ export function InscriptionActions({
             className="space-y-4"
           >
             <div className="space-y-2">
-              <label htmlFor={`lend-amount-${inscriptionId}`} className="text-[10px] text-dust uppercase tracking-widest px-2">Your Contribution</label>
+              <label htmlFor={`lend-amount-${inscriptionId}`} className="text-[10px] text-gray-400 uppercase tracking-widest px-2">Your Contribution</label>
               <Input
                 id={`lend-amount-${inscriptionId}`}
                 type="text"
@@ -186,7 +186,7 @@ export function InscriptionActions({
                   if (!/^\d*\.?\d{0,3}$/.test(text)) e.preventDefault()
                 }}
                 placeholder="0.000"
-                className="h-14 text-lg bg-void/50 font-mono"
+                className="h-14 text-lg bg-[#050505]/50 font-mono"
               />
             </div>
             <Button type="submit" variant="default" size="xl" className="w-full text-lg" disabled={isPending || !lendAmount}>
@@ -210,9 +210,9 @@ export function InscriptionActions({
   if (status === 'filled' && isBorrower) {
     return (
       <div className="space-y-6">
-        <div className="p-4 rounded-md bg-aurora/5 border border-aurora/10 text-center">
-           <span className="text-[10px] text-aurora uppercase tracking-widest font-bold">Repayment Required</span>
-           <p className="text-xs text-dust mt-1 text-balance">To release your collateral, you must repay the total debt with interest.</p>
+        <div className="p-4 rounded-md bg-green-500/5 border border-green-500/10 text-center">
+           <span className="text-[10px] text-green-500 uppercase tracking-widest font-bold">Repayment Required</span>
+           <p className="text-xs text-gray-400 mt-1 text-balance">To release your collateral, you must repay the total debt with interest.</p>
         </div>
         <Button variant="accent" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
           {repayPending ? 'Repaying...' : 'Repay Inscription'}
@@ -226,8 +226,8 @@ export function InscriptionActions({
     if (!wasSigned) {
       return (
         <div className="space-y-3 text-center">
-          <p className="text-xs text-dust italic uppercase tracking-widest">Vault Expired</p>
-          <p className="text-xs text-dust">This inscription expired without any lender signing. No assets are locked.</p>
+          <p className="text-xs text-gray-400 italic uppercase tracking-widest">Vault Expired</p>
+          <p className="text-xs text-gray-400">This inscription expired without any lender signing. No assets are locked.</p>
         </div>
       )
     }
@@ -235,9 +235,9 @@ export function InscriptionActions({
     // Expired after being signed — assets are locked, can be liquidated
     return (
       <div className="space-y-6">
-        <div className="p-4 rounded-md bg-nova/5 border border-nova/10 text-center">
-           <span className="text-[10px] text-nova uppercase tracking-widest font-bold">Default Detected</span>
-           <p className="text-xs text-dust mt-1">This vault has expired without repayment. Lenders can now claim the collateral.</p>
+        <div className="p-4 rounded-md bg-red-500/5 border border-red-500/10 text-center">
+           <span className="text-[10px] text-red-500 uppercase tracking-widest font-bold">Default Detected</span>
+           <p className="text-xs text-gray-400 mt-1">This vault has expired without repayment. Lenders can now claim the collateral.</p>
         </div>
         <ConfirmDialog
           trigger={
@@ -259,9 +259,9 @@ export function InscriptionActions({
   if ((status === 'repaid' || status === 'liquidated') && shares > 0n) {
     return (
       <div className="space-y-6 text-center">
-        <div className="p-4 rounded-md bg-cosmic/5 border border-cosmic/10">
-          <span className="text-[10px] text-cosmic uppercase tracking-widest font-bold">Assets Available</span>
-          <p className="text-xs text-dust mt-1">
+        <div className="p-4 rounded-md bg-sky-500/5 border border-cosmic/10">
+          <span className="text-[10px] text-sky-500 uppercase tracking-widest font-bold">Assets Available</span>
+          <p className="text-xs text-gray-400 mt-1">
             {status === 'repaid' ? 'Debt was repaid. Claim your portion of the principal and interest.' : 'Vault was liquidated. Claim your portion of the collateral assets.'}
           </p>
         </div>
@@ -278,9 +278,9 @@ export function InscriptionActions({
       // Borrower can still repay during grace period — same repay flow
       return (
         <div className="space-y-6">
-          <div className="p-4 rounded-md bg-star/5 border border-star/10 text-center">
-            <span className="text-[10px] text-star uppercase tracking-widest font-bold">Grace Period Active</span>
-            <p className="text-xs text-dust mt-1 text-balance">Your loan has expired, but you can still repay during the grace period to reclaim your collateral.</p>
+          <div className="p-4 rounded-md bg-accent/5 border border-accent/10 text-center">
+            <span className="text-[10px] text-accent uppercase tracking-widest font-bold">Grace Period Active</span>
+            <p className="text-xs text-gray-400 mt-1 text-balance">Your loan has expired, but you can still repay during the grace period to reclaim your collateral.</p>
           </div>
           <Button variant="accent" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
             {repayPending ? 'Repaying...' : 'Repay Now'}
@@ -289,8 +289,8 @@ export function InscriptionActions({
       )
     }
     return (
-      <div className="rounded-lg border border-star/20 bg-star/5 p-4">
-        <p className="text-sm text-star">Grace period active -- the borrower can still repay.</p>
+      <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
+        <p className="text-sm text-accent">Grace period active -- the borrower can still repay.</p>
       </div>
     )
   }
@@ -299,9 +299,9 @@ export function InscriptionActions({
   if (effectiveStatus === 'overdue' && !auctionStarted) {
     return (
       <div className="space-y-6">
-        <div className="p-4 rounded-md bg-nova/5 border border-nova/10 text-center">
-          <span className="text-[10px] text-nova uppercase tracking-widest font-bold">Grace Period Expired</span>
-          <p className="text-xs text-dust mt-1">Anyone can start a Dutch auction on this collateral.</p>
+        <div className="p-4 rounded-md bg-red-500/5 border border-red-500/10 text-center">
+          <span className="text-[10px] text-red-500 uppercase tracking-widest font-bold">Grace Period Expired</span>
+          <p className="text-xs text-gray-400 mt-1">Anyone can start a Dutch auction on this collateral.</p>
         </div>
         <Button
           variant="destructive"
@@ -320,9 +320,9 @@ export function InscriptionActions({
   if (effectiveStatus === 'auctioned') {
     return (
       <div className="space-y-6">
-        <div className="p-4 rounded-md bg-nebula/5 border border-nebula/10 text-center">
-          <span className="text-[10px] text-nebula uppercase tracking-widest font-bold">Auction Active</span>
-          <p className="text-xs text-dust mt-1">A Dutch auction is in progress. The price declines over time.</p>
+        <div className="p-4 rounded-md bg-sky-400/5 border border-sky-400/10 text-center">
+          <span className="text-[10px] text-sky-400 uppercase tracking-widest font-bold">Auction Active</span>
+          <p className="text-xs text-gray-400 mt-1">A Dutch auction is in progress. The price declines over time.</p>
         </div>
         <Button
           variant="accent"
@@ -338,9 +338,9 @@ export function InscriptionActions({
   }
 
   return (
-    <div className="text-center py-4 bg-void/30 rounded-md border border-edge/20">
-      <p className="text-xs text-dust uppercase tracking-widest">Vault Locked</p>
-      <p className="text-[10px] text-ash/60 mt-1">Waiting for terms to change or lock period to end.</p>
+    <div className="text-center py-4 bg-[#050505]/30 rounded-md border border-border/20">
+      <p className="text-xs text-gray-400 uppercase tracking-widest">Vault Locked</p>
+      <p className="text-[10px] text-gray-500/60 mt-1">Waiting for terms to change or lock period to end.</p>
     </div>
   )
 }

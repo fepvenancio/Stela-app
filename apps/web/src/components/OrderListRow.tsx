@@ -50,8 +50,8 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
         selectable ? 'cursor-pointer' : ''
       } ${
         selected
-          ? 'bg-star/5 border-star/20'
-          : 'border-edge/15 hover:bg-surface/30'
+          ? 'bg-accent/5 border-accent/20'
+          : 'border-border/15 hover:bg-surface/30'
       }`}
     >
       {/* Checkbox — outer div is larger touch target */}
@@ -67,7 +67,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect?.(); } }}
             className={`w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-colors cursor-pointer ${
-              selected ? 'bg-star border-star' : 'border-dust/30 bg-surface/40 hover:border-star/50'
+              selected ? 'bg-accent border-accent' : 'border-dust/30 bg-surface/40 hover:border-accent/50'
             }`}
           >
             {selected && (
@@ -90,28 +90,28 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
         />
 
         {/* Type */}
-        <span className={`text-xs text-center ${isSwap ? 'text-dust' : 'text-chalk'}`}>
+        <span className={`text-xs text-center ${isSwap ? 'text-gray-400' : 'text-white'}`}>
           {isSwap ? 'Swap' : 'Loan'}
         </span>
 
         {/* Yield */}
-        <span className={`text-sm text-right tabular-nums font-medium ${!isSwap && yieldDisplay !== '—' ? 'text-aurora' : 'text-dust'}`}>
+        <span className={`text-sm text-right tabular-nums font-medium ${!isSwap && yieldDisplay !== '—' ? 'text-green-500' : 'text-gray-400'}`}>
           {yieldDisplay}
         </span>
 
         {/* Duration */}
-        <span className="text-sm text-right text-chalk tabular-nums">
+        <span className="text-sm text-right text-white tabular-nums">
           {isSwap ? 'Instant' : formatDuration(Number(duration))}
         </span>
 
         {/* Status */}
         <div className="flex justify-center items-center gap-1.5">
           <div className={`w-1.5 h-1.5 rounded-full ${
-            statusVariant === 'filled' || statusVariant === 'settled' ? 'bg-aurora' :
-            statusVariant === 'open' || statusVariant === 'pending' || statusVariant === 'matched' ? 'bg-star' :
+            statusVariant === 'filled' || statusVariant === 'settled' ? 'bg-green-500' :
+            statusVariant === 'open' || statusVariant === 'pending' || statusVariant === 'matched' ? 'bg-accent' :
             'bg-dust'
           }`} />
-          <span className="text-xs text-chalk capitalize">{statusLabel.toLowerCase()}</span>
+          <span className="text-xs text-white capitalize">{statusLabel.toLowerCase()}</span>
         </div>
 
         {/* Action */}
@@ -123,14 +123,14 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false); onAction() }}
                   disabled={actionPending}
-                  className="h-8 w-[46px] bg-star hover:bg-star-bright text-void text-xs font-semibold rounded-lg transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center"
+                  className="h-8 w-[46px] bg-accent hover:bg-accent-bright text-void text-xs font-semibold rounded-lg transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center"
                 >
                   {actionPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Yes'}
                 </button>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(false) }}
-                  className="h-8 w-[46px] bg-surface border border-edge/30 text-dust text-xs font-semibold rounded-lg hover:text-chalk cursor-pointer flex items-center justify-center"
+                  className="h-8 w-[46px] bg-surface border border-border/30 text-gray-400 text-xs font-semibold rounded-lg hover:text-white cursor-pointer flex items-center justify-center"
                 >
                   No
                 </button>
@@ -140,7 +140,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true) }}
                 disabled={actionPending}
-                className="h-8 w-[100px] rounded-lg text-xs font-semibold transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center bg-star/10 hover:bg-star/20 text-star border border-star/20 hover:border-star/40"
+                className="h-8 w-[100px] rounded-lg text-xs font-semibold transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 hover:border-accent/40"
               >
                 {actionPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (actionLabel ?? (isSwap ? 'Swap' : 'Lend'))}
               </button>
@@ -164,7 +164,7 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
               type="button"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAction() }}
               disabled={actionPending}
-              className="h-8 min-w-[90px] bg-star/10 hover:bg-star/20 text-star font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer border border-star/20 shrink-0 flex items-center justify-center"
+              className="h-8 min-w-[90px] bg-accent/10 hover:bg-accent/20 text-accent font-bold uppercase rounded-md transition-all disabled:opacity-40 cursor-pointer border border-accent/20 shrink-0 flex items-center justify-center"
             >
               {actionPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="text-[10px] leading-none truncate px-1">{actionLabel ?? (isSwap ? 'Swap' : 'Lend')}</span>}
             </button>
@@ -178,9 +178,9 @@ export function OrderListRow({ order, selectable, selected, onSelect, onAction, 
             {isSwap ? 'Swap' : 'Loan'}
           </Badge>
           {!isSwap && yieldDisplay !== '—' && (
-            <span className="text-[10px] text-aurora font-medium">{yieldDisplay}</span>
+            <span className="text-[10px] text-green-500 font-medium">{yieldDisplay}</span>
           )}
-          <span className="text-[10px] text-dust">{isSwap ? 'Instant' : formatDuration(Number(duration))}</span>
+          <span className="text-[10px] text-gray-400">{isSwap ? 'Instant' : formatDuration(Number(duration))}</span>
         </div>
       </div>
     </div>

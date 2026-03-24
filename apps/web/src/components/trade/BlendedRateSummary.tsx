@@ -37,11 +37,11 @@ export function BlendedRateSummary({ entries, mode }: BlendedRateSummaryProps) {
   const label = mode === 'swap' ? 'Blended Rate' : 'Blended APR'
 
   return (
-    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-surface/20 border border-edge/20">
-      <span className="text-[10px] uppercase tracking-widest font-bold text-dust">
+    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-surface/20 border border-border/20">
+      <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">
         {label}
       </span>
-      <span className="font-mono text-sm text-nebula">
+      <span className="font-mono text-sm text-sky-400">
         {blended.toFixed(2)}%
       </span>
     </div>

@@ -142,8 +142,8 @@ function normalizeOnchain(match: OnChainMatch): RankedTrade {
 function SourceBadge({ source }: { source: 'offchain' | 'onchain' }) {
   const classes =
     source === 'onchain'
-      ? 'bg-star/15 text-star'
-      : 'bg-aurora/15 text-aurora'
+      ? 'bg-accent/15 text-accent'
+      : 'bg-green-500/15 text-green-500'
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${classes}`}
@@ -192,10 +192,10 @@ function TradeRow({
   const expiryLabel = isExpired ? 'Expired' : `${formatDuration(secsLeft)} left`
 
   return (
-    <div className="grid grid-cols-12 gap-2 sm:gap-3 items-center px-3 py-2.5 border-b border-edge/20 last:border-b-0 hover:bg-surface/20 transition-colors">
+    <div className="grid grid-cols-12 gap-2 sm:gap-3 items-center px-3 py-2.5 border-b border-border/20 last:border-b-0 hover:bg-surface/20 transition-colors">
       {/* Counterparty + source badge + bot rank (col 3) */}
       <div className="col-span-3 flex flex-col gap-1 min-w-0">
-        <span className="text-chalk font-mono text-xs truncate">
+        <span className="text-white font-mono text-xs truncate">
           {formatAddress(trade.counterparty)}
         </span>
         <div className="flex items-center gap-1.5">
@@ -206,20 +206,20 @@ function TradeRow({
 
       {/* Amount (col 3) */}
       <div className="col-span-3 flex flex-col gap-0.5 min-w-0">
-        <span className="text-chalk font-medium text-xs truncate">{debtAmount}</span>
-        <span className="text-dust text-[10px]">{debtSymbol}</span>
+        <span className="text-white font-medium text-xs truncate">{debtAmount}</span>
+        <span className="text-gray-400 text-[10px]">{debtSymbol}</span>
       </div>
 
       {/* APR / Rate — hidden on mobile (col 2) */}
       <div className="hidden sm:flex col-span-2 flex-col gap-0.5">
-        <span className="text-nebula font-semibold text-xs">{scoreLabel}</span>
-        <span className="text-dust text-[10px]">{scoreTitle}</span>
+        <span className="text-sky-400 font-semibold text-xs">{scoreLabel}</span>
+        <span className="text-gray-400 text-[10px]">{scoreTitle}</span>
       </div>
 
       {/* Duration / Expiry — hidden on mobile (col 2) */}
       <div className="hidden sm:flex col-span-2 flex-col gap-0.5">
-        <span className="text-chalk text-xs">{durationLabel}</span>
-        <span className={`text-[10px] ${isExpired ? 'text-red-400' : 'text-dust'}`}>
+        <span className="text-white text-xs">{durationLabel}</span>
+        <span className={`text-[10px] ${isExpired ? 'text-red-400' : 'text-gray-400'}`}>
           {expiryLabel}
         </span>
       </div>
@@ -230,7 +230,7 @@ function TradeRow({
           type="button"
           onClick={onFill}
           disabled={isSettling || isExpired}
-          className="h-8 px-3 sm:px-4 bg-star/10 hover:bg-star/20 active:bg-star/30 text-star border border-star/30 hover:border-star/50 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-xs whitespace-nowrap flex items-center justify-center gap-1.5"
+          className="h-8 px-3 sm:px-4 bg-accent/10 hover:bg-accent/20 active:bg-accent/30 text-accent border border-accent/30 hover:border-accent/50 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-xs whitespace-nowrap flex items-center justify-center gap-1.5"
           aria-label={`Fill order from ${formatAddress(trade.counterparty)}`}
         >
           {isSettling ? (
@@ -249,7 +249,7 @@ function TradeRow({
 function SkeletonRow({ index }: { index: number }) {
   return (
     <div
-      className="grid grid-cols-12 gap-2 sm:gap-3 items-center px-3 py-2.5 border-b border-edge/20 last:border-b-0 animate-pulse"
+      className="grid grid-cols-12 gap-2 sm:gap-3 items-center px-3 py-2.5 border-b border-border/20 last:border-b-0 animate-pulse"
       aria-hidden="true"
       style={{ animationDelay: `${index * 80}ms` }}
     >
@@ -375,17 +375,17 @@ export function BestTradesPanel({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
+          <span className="text-accent font-mono text-xs uppercase tracking-[0.3em]">
             {sectionLabel}
           </span>
           {(showResults || showStaleResults) && (
-            <span className="text-[10px] text-dust">
+            <span className="text-[10px] text-gray-400">
               {ranked.length} match{ranked.length !== 1 ? 'es' : ''}
             </span>
           )}
           {mode === 'lending' && (showResults || showStaleResults) && (
             <span
-              className="text-[9px] text-dust/60 cursor-help"
+              className="text-[9px] text-gray-400/60 cursor-help"
               title="The bot settles offers with the lowest interest rate first. Rank #1 = cheapest for borrower = settled first."
             >
               (bot-ranked)
@@ -394,7 +394,7 @@ export function BestTradesPanel({
         </div>
 
         {isChecking && (
-          <span className="flex items-center gap-1.5 text-[10px] text-dust">
+          <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
             <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
             Scanning…
           </span>
@@ -402,7 +402,7 @@ export function BestTradesPanel({
       </div>
 
       {/* Body */}
-      <div className="rounded-lg border border-edge/30 overflow-clip">
+      <div className="rounded-lg border border-border/30 overflow-clip">
         {/* ── Loading skeleton (first check, no stale data) ── */}
         {isLoading && (
           <div className="flex flex-col" role="status" aria-label="Searching for best trades">
@@ -415,8 +415,8 @@ export function BestTradesPanel({
         {/* ── Empty state ── */}
         {isEmpty && (
           <div className="px-4 py-8 text-center space-y-2">
-            <p className="text-dust text-sm">No orders found — create one</p>
-            <p className="text-[10px] text-ash">
+            <p className="text-gray-400 text-sm">No orders found — create one</p>
+            <p className="text-[10px] text-gray-500">
               {mode === 'swap'
                 ? 'Be the first to post a swap order for this pair'
                 : 'Be the first to post a lending order for this pair'}
@@ -429,7 +429,7 @@ export function BestTradesPanel({
           <>
             {/* Column header — desktop only */}
             <div
-              className="hidden sm:grid grid-cols-12 gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 bg-void/95 sticky top-0 z-10"
+              className="hidden sm:grid grid-cols-12 gap-3 px-3 py-1.5 text-[9px] text-gray-400 uppercase tracking-widest font-semibold border-b border-border/40 bg-[#050505]/95 sticky top-0 z-10"
               aria-hidden="true"
             >
               <div className="col-span-3">Counterparty</div>
@@ -457,8 +457,8 @@ export function BestTradesPanel({
 
             {/* Footer hint when showing max rows */}
             {ranked.length >= MAX_ROWS && (
-              <div className="px-3 py-2 border-t border-edge/20 bg-surface/5 text-center">
-                <span className="text-[10px] text-dust">
+              <div className="px-3 py-2 border-t border-border/20 bg-surface/5 text-center">
+                <span className="text-[10px] text-gray-400">
                   Showing top {MAX_ROWS} by {mode === 'swap' ? 'rate' : 'APR'}{mode === 'lending' ? ' — ranked by bot settlement priority' : ''}
                 </span>
               </div>

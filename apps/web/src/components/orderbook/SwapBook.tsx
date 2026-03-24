@@ -48,8 +48,8 @@ export function SwapBook({ asks, bids, baseSymbol, baseDecimals, quoteSymbol }: 
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm text-dust">No swap orders yet</p>
-        <p className="text-[10px] text-ash mt-1">Swap orders will appear here</p>
+        <p className="text-sm text-gray-400">No swap orders yet</p>
+        <p className="text-[10px] text-gray-500 mt-1">Swap orders will appear here</p>
       </div>
     )
   }
@@ -57,7 +57,7 @@ export function SwapBook({ asks, bids, baseSymbol, baseDecimals, quoteSymbol }: 
   return (
     <div className="flex flex-col w-full">
       {/* Column headers */}
-      <div className="flex items-center h-7 px-3 border-b border-edge/15 text-[10px] text-ash uppercase tracking-wider">
+      <div className="flex items-center h-7 px-3 border-b border-border/15 text-[10px] text-gray-500 uppercase tracking-wider">
         <span className="w-[72px] shrink-0 text-left">Rate</span>
         <span className="flex-1 text-right">Amount ({baseSymbol})</span>
         <span className="hidden md:block w-[100px] text-right">Total</span>
@@ -66,7 +66,7 @@ export function SwapBook({ asks, bids, baseSymbol, baseDecimals, quoteSymbol }: 
       {/* Asks (top half) — worst to best, so best is near spread */}
       <div className={cn('flex flex-col', asks.length > MAX_ROWS_PER_SIDE && 'max-h-[256px] overflow-y-auto')}>
         {visibleAsks.length === 0 ? (
-          <div className="flex items-center justify-center h-8 text-[10px] text-ash">
+          <div className="flex items-center justify-center h-8 text-[10px] text-gray-500">
             No asks
           </div>
         ) : (
@@ -93,7 +93,7 @@ export function SwapBook({ asks, bids, baseSymbol, baseDecimals, quoteSymbol }: 
       {/* Bids (bottom half) — best to worst, so best is near spread */}
       <div className={cn('flex flex-col', bids.length > MAX_ROWS_PER_SIDE && 'max-h-[256px] overflow-y-auto')}>
         {visibleBids.length === 0 ? (
-          <div className="flex items-center justify-center h-8 text-[10px] text-ash">
+          <div className="flex items-center justify-center h-8 text-[10px] text-gray-500">
             No bids
           </div>
         ) : (

@@ -27,8 +27,8 @@ export function ModeToggle({ value, onChange, lendingCount, swapCount }: ModeTog
             className={cn(
               'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium tracking-wide border transition-colors duration-100 cursor-pointer',
               isActive
-                ? 'bg-star/20 text-star border-star/40'
-                : 'bg-transparent text-dust border-transparent hover:text-chalk',
+                ? 'bg-accent/20 text-accent border-accent/40'
+                : 'bg-transparent text-gray-400 border-transparent hover:text-white',
             )}
           >
             {tab.label}
@@ -37,8 +37,8 @@ export function ModeToggle({ value, onChange, lendingCount, swapCount }: ModeTog
                 className={cn(
                   'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold tabular-nums',
                   isActive
-                    ? 'bg-star/30 text-star'
-                    : 'bg-edge/30 text-ash',
+                    ? 'bg-accent/30 text-accent'
+                    : 'bg-edge/30 text-gray-500',
                 )}
               >
                 {tab.count}

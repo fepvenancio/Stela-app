@@ -93,7 +93,7 @@ function StelaRow({
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
       className={cn(
         'relative flex items-center h-[28px] px-2 transition-colors duration-75 cursor-pointer hover:bg-surface/40',
-        selected && 'bg-star/10 ring-1 ring-inset ring-star/30',
+        selected && 'bg-accent/10 ring-1 ring-inset ring-accent/30',
       )}
     >
       {/* Depth bar */}
@@ -112,10 +112,10 @@ function StelaRow({
         </span>
 
         {/* Amount */}
-        <span className={cn('font-mono text-[11px] tabular-nums text-chalk flex-1 truncate', mirrored ? 'text-left' : 'text-right')}>
+        <span className={cn('font-mono text-[11px] tabular-nums text-white flex-1 truncate', mirrored ? 'text-left' : 'text-right')}>
           {amountStr}
           {interestAmount && interestSymbol && (
-            <span className="text-[9px] text-aurora ml-1">
+            <span className="text-[9px] text-green-500 ml-1">
               {'\u2192'} {formatTokenValue(interestAmount, interestDecimals ?? decimals)} {interestSymbol}
             </span>
           )}
@@ -127,7 +127,7 @@ function StelaRow({
           className={cn(
             'text-[9px] w-[52px] shrink-0 font-mono tabular-nums',
             mirrored ? 'text-left' : 'text-right',
-            isExpired ? 'text-nova' : 'text-dust',
+            isExpired ? 'text-red-500' : 'text-gray-400',
           )}
         >
           {expires}
@@ -137,7 +137,7 @@ function StelaRow({
         <span
           className={cn(
             'w-1.5 h-1.5 rounded-full shrink-0',
-            source === 'onchain' ? 'bg-emerald-500/60' : 'bg-nebula/60',
+            source === 'onchain' ? 'bg-emerald-500/60' : 'bg-sky-400/60',
           )}
           title={source === 'onchain' ? 'On-chain' : 'Off-chain'}
         />
@@ -153,7 +153,7 @@ function StelaRow({
 function ColumnHeader({ mirrored, isLending }: { mirrored: boolean; isLending?: boolean }) {
   return (
     <div className={cn(
-      'flex items-center h-6 px-2 text-[9px] text-ash uppercase tracking-widest border-b border-edge/10',
+      'flex items-center h-6 px-2 text-[9px] text-gray-500 uppercase tracking-widest border-b border-border/10',
       mirrored && 'flex-row-reverse',
     )}>
       <span className={cn('w-[72px] shrink-0', mirrored ? 'text-right' : 'text-left')}>{isLending ? 'APR' : 'Rate'}</span>
@@ -267,23 +267,23 @@ function BookPanel({
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <div className="flex items-center justify-between px-2 border-b border-edge/15" style={{ minHeight: subtitle ? 36 : 28 }}>
+      <div className="flex items-center justify-between px-2 border-b border-border/15" style={{ minHeight: subtitle ? 36 : 28 }}>
         <div className="flex flex-col">
           <span className={cn('text-[10px] font-medium uppercase tracking-widest', sideColor)}>
             {title}
           </span>
           {subtitle && (
-            <span className="text-[8px] text-ash leading-tight">{subtitle}</span>
+            <span className="text-[8px] text-gray-500 leading-tight">{subtitle}</span>
           )}
         </div>
-        <span className="text-[9px] text-ash font-mono tabular-nums">
+        <span className="text-[9px] text-gray-500 font-mono tabular-nums">
           {rows.length}
         </span>
       </div>
       <ColumnHeader mirrored={mirrored} isLending={isLending} />
       <div className="flex-1 flex flex-col overflow-y-auto" style={{ maxHeight: `${maxRows * 28 + 4}px` }}>
         {visible.length === 0 ? (
-          <div className="flex items-center justify-center h-14 text-[10px] text-ash">
+          <div className="flex items-center justify-center h-14 text-[10px] text-gray-500">
             No orders
           </div>
         ) : (
@@ -316,13 +316,13 @@ function BookPanel({
         )}
       </div>
       {rows.length > maxRows && (
-        <div className="flex items-center justify-center h-5 text-[9px] text-ash border-t border-edge/10">
+        <div className="flex items-center justify-center h-5 text-[9px] text-gray-500 border-t border-border/10">
           +{rows.length - maxRows} more
         </div>
       )}
-      <div className="flex items-center justify-between h-6 px-2 border-t border-edge/10 text-[9px]">
-        <span className="text-ash">Vol</span>
-        <span className="text-chalk font-mono tabular-nums truncate ml-1">
+      <div className="flex items-center justify-between h-6 px-2 border-t border-border/10 text-[9px]">
+        <span className="text-gray-500">Vol</span>
+        <span className="text-white font-mono tabular-nums truncate ml-1">
           {formatTokenValue(totalVolume, decimals)} {symbol}
         </span>
       </div>
@@ -363,8 +363,8 @@ function LendingSplit({
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <p className="text-sm text-dust">No borrow requests yet</p>
-        <p className="text-[10px] text-ash mt-1">Post an order to start the market</p>
+        <p className="text-sm text-gray-400">No borrow requests yet</p>
+        <p className="text-[10px] text-gray-500 mt-1">Post an order to start the market</p>
       </div>
     )
   }
@@ -472,8 +472,8 @@ function SwapSplit({ pairData }: { pairData: OrderBookResponse }) {
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <p className="text-sm text-dust">No swap orders yet</p>
-        <p className="text-[10px] text-ash mt-1">Orders will appear when traders create swaps</p>
+        <p className="text-sm text-gray-400">No swap orders yet</p>
+        <p className="text-[10px] text-gray-500 mt-1">Orders will appear when traders create swaps</p>
       </div>
     )
   }
@@ -504,7 +504,7 @@ function SwapSplit({ pairData }: { pairData: OrderBookResponse }) {
           maxRows={MAX_ROWS}
         />
       </div>
-      <div className="hidden md:block border-t border-edge/15">
+      <div className="hidden md:block border-t border-border/15">
         <SpreadRow bestAsk={bestAsk} bestBid={bestBid} symbol={quoteSymbol} />
       </div>
 
@@ -543,9 +543,9 @@ function SwapSplit({ pairData }: { pairData: OrderBookResponse }) {
 export function SplitBook({ pairData, reversePairData, isLoading, mode, onRowClick, selectedId }: SplitBookProps) {
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-edge/30 bg-abyss overflow-hidden">
-        <div className="flex items-center justify-center h-8 border-b border-edge/20">
-          <span className="text-xs font-display uppercase tracking-wider text-chalk">Order Book</span>
+      <div className="rounded-xl border border-border/30 bg-surface overflow-hidden">
+        <div className="flex items-center justify-center h-8 border-b border-border/20">
+          <span className="text-xs font-bold uppercase tracking-wider text-white">Order Book</span>
         </div>
         <BookSkeleton />
       </div>
@@ -554,25 +554,25 @@ export function SplitBook({ pairData, reversePairData, isLoading, mode, onRowCli
 
   if (!pairData) {
     return (
-      <div className="rounded-xl border border-edge/30 bg-abyss overflow-hidden">
-        <div className="flex items-center justify-center h-8 border-b border-edge/20">
-          <span className="text-xs font-display uppercase tracking-wider text-chalk">Order Book</span>
+      <div className="rounded-xl border border-border/30 bg-surface overflow-hidden">
+        <div className="flex items-center justify-center h-8 border-b border-border/20">
+          <span className="text-xs font-bold uppercase tracking-wider text-white">Order Book</span>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ash mb-3">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500 mb-3">
             <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" />
           </svg>
-          <p className="text-sm text-dust">No orders for this pair yet</p>
-          <p className="text-[10px] text-ash mt-1">Be the first to create an order</p>
+          <p className="text-sm text-gray-400">No orders for this pair yet</p>
+          <p className="text-[10px] text-gray-500 mt-1">Be the first to create an order</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-edge/30 bg-abyss overflow-hidden">
-      <div className="flex items-center justify-center h-8 border-b border-edge/20">
-        <span className="text-xs font-display uppercase tracking-wider text-chalk">Order Book</span>
+    <div className="rounded-xl border border-border/30 bg-surface overflow-hidden">
+      <div className="flex items-center justify-center h-8 border-b border-border/20">
+        <span className="text-xs font-bold uppercase tracking-wider text-white">Order Book</span>
       </div>
 
       {mode === 'lending' ? (

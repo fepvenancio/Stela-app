@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-edge">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-border">
             <svg
               width="24"
               height="24"
@@ -43,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
               fill="none"
               stroke="currentColor"
               strokeWidth="1.5"
-              className="text-nova"
+              className="text-red-500"
               aria-hidden="true"
             >
               <circle cx="12" cy="12" r="10" />
@@ -51,9 +51,9 @@ export class ErrorBoundary extends Component<Props, State> {
               <circle cx="12" cy="16" r="0.5" fill="currentColor" />
             </svg>
           </div>
-          <p className="text-dust text-sm">Something went wrong</p>
+          <p className="text-gray-400 text-sm">Something went wrong</p>
           {process.env.NODE_ENV === 'development' && this.state.error && (
-            <p className="text-dust text-xs max-w-md text-center font-mono">
+            <p className="text-gray-400 text-xs max-w-md text-center font-mono">
               {this.state.error.message}
             </p>
           )}

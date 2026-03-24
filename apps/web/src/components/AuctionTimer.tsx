@@ -19,8 +19,8 @@ export function AuctionTimer({ endTime, label }: AuctionTimerProps) {
   if (isExpired) {
     return (
       <div className="flex items-center gap-2 text-xs font-mono">
-        <span className="inline-block h-2 w-2 rounded-full bg-nova" />
-        <span className="text-nova">{label}: Expired</span>
+        <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+        <span className="text-red-500">{label}: Expired</span>
       </div>
     )
   }
@@ -30,9 +30,9 @@ export function AuctionTimer({ endTime, label }: AuctionTimerProps) {
     totalSeconds > 21600 ? 100 : totalSeconds > 3600 ? 40 : totalSeconds > 0 ? 10 : 0
 
   const colorClass =
-    pct > 50 ? 'text-aurora' : pct > 25 ? 'text-star' : 'text-nova'
+    pct > 50 ? 'text-green-500' : pct > 25 ? 'text-accent' : 'text-red-500'
   const dotClass =
-    pct > 50 ? 'bg-aurora' : pct > 25 ? 'bg-star' : 'bg-nova'
+    pct > 50 ? 'bg-green-500' : pct > 25 ? 'bg-accent' : 'bg-red-500'
 
   return (
     <div className="flex items-center gap-2 text-xs font-mono" suppressHydrationWarning>

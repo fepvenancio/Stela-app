@@ -26,20 +26,20 @@ export function AssetBadge({ address, assetType, value, tokenId }: AssetBadgePro
 
   return (
     <Badge variant="outline" className="gap-2 px-3 py-1.5">
-      <span className="font-medium text-star">{assetType}</span>
+      <span className="font-medium text-accent">{assetType}</span>
       <Tooltip>
         <TooltipTrigger className="flex items-center gap-1.5 cursor-default">
           <TokenAvatarByAddress address={address} size={16} />
-          <span className="text-chalk font-medium">{displayName}</span>
+          <span className="text-white font-medium">{displayName}</span>
         </TooltipTrigger>
         <TooltipContent>
           <p className="font-mono text-xs">{fullAddress}</p>
-          {token && <p className="text-xs text-dust">{token.name}</p>}
+          {token && <p className="text-xs text-gray-400">{token.name}</p>}
         </TooltipContent>
       </Tooltip>
-      {value && <span className="text-chalk">{value}</span>}
+      {value && <span className="text-white">{value}</span>}
       {tokenId && tokenId !== '0' && (
-        <span className="text-dust">#{tokenId}</span>
+        <span className="text-gray-400">#{tokenId}</span>
       )}
     </Badge>
   )

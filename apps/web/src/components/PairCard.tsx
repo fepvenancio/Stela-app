@@ -48,7 +48,7 @@ export function PairCard({ pair }: PairCardProps) {
   const tradeHref = `/trade?debtToken=${pair.debt_token}&collateralToken=${pair.collateral_token}`
 
   return (
-    <div className="group relative flex items-center gap-4 p-4 rounded-xl border border-edge/30 bg-surface/10 hover:bg-surface/30 hover:border-edge/50 transition-all duration-200">
+    <div className="group relative flex items-center gap-4 p-4 rounded-xl border border-border/30 bg-surface/10 hover:bg-surface/30 hover:border-border/50 transition-all duration-200">
       {/* Full-card invisible link to pair detail — sits below all interactive elements */}
       <Link
         href={`/markets/${pairSlug}`}
@@ -69,10 +69,10 @@ export function PairCard({ pair }: PairCardProps) {
 
       {/* Pair name */}
       <div className="min-w-0 flex-1 z-[1]">
-        <span className="text-sm font-medium text-chalk group-hover:text-star transition-colors">
+        <span className="text-sm font-medium text-white group-hover:text-accent transition-colors">
           {debtSymbol} / {collSymbol}
         </span>
-        <p className="text-[10px] text-ash mt-0.5">
+        <p className="text-[10px] text-gray-500 mt-0.5">
           {pair.total_count} total stela{pair.total_count !== 1 ? 's' : ''}
         </p>
       </div>
@@ -81,16 +81,16 @@ export function PairCard({ pair }: PairCardProps) {
       <div className="hidden sm:flex items-center gap-6 text-right z-[1]">
         {/* Active listings */}
         <div className="min-w-[60px]">
-          <p className="text-xs text-chalk font-medium">{activeCount}</p>
-          <p className="text-[9px] text-ash uppercase tracking-wider">Active</p>
+          <p className="text-xs text-white font-medium">{activeCount}</p>
+          <p className="text-[9px] text-gray-500 uppercase tracking-wider">Active</p>
         </div>
 
         {/* Volume */}
         <div className="min-w-[80px]">
-          <p className="text-xs text-chalk font-medium truncate">
+          <p className="text-xs text-white font-medium truncate">
             {volumeDisplay} {debtSymbol}
           </p>
-          <p className="text-[9px] text-ash uppercase tracking-wider">Volume</p>
+          <p className="text-[9px] text-gray-500 uppercase tracking-wider">Volume</p>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export function PairCard({ pair }: PairCardProps) {
       <button
         type="button"
         onClick={() => setShowQuickLend(true)}
-        className="relative z-[1] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0 min-h-[36px]"
+        className="relative z-[1] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-accent border border-accent/30 bg-accent/5 hover:bg-accent/15 hover:border-accent/50 active:bg-accent/20 transition-colors shrink-0 min-h-[36px]"
         aria-label={`Quick Lend ${debtSymbol} / ${collSymbol}`}
       >
         Quick Lend
@@ -107,7 +107,7 @@ export function PairCard({ pair }: PairCardProps) {
       {/* Trade button — always visible, links to /trade with token addresses pre-filled */}
       <Link
         href={tradeHref}
-        className="relative z-[1] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-star border border-star/30 bg-star/5 hover:bg-star/15 hover:border-star/50 active:bg-star/20 transition-colors shrink-0 min-h-[36px]"
+        className="relative z-[1] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-accent border border-accent/30 bg-accent/5 hover:bg-accent/15 hover:border-accent/50 active:bg-accent/20 transition-colors shrink-0 min-h-[36px]"
         aria-label={`Trade ${debtSymbol} / ${collSymbol}`}
       >
         <svg
@@ -132,7 +132,7 @@ export function PairCard({ pair }: PairCardProps) {
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
-        className="text-ash group-hover:text-star transition-colors shrink-0 relative z-[1]"
+        className="text-gray-500 group-hover:text-accent transition-colors shrink-0 relative z-[1]"
         aria-hidden="true"
       >
         <path d="M6 4l4 4-4 4" />

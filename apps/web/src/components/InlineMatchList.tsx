@@ -78,22 +78,22 @@ function MultiSettleSummary({
     : `${count} orders`
 
   return (
-    <div className="px-3 py-3 border-b border-edge/20 bg-star/5">
+    <div className="px-3 py-3 border-b border-border/20 bg-accent/5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="space-y-1 text-sm">
           <div className="flex items-center gap-3">
-            <span className="text-dust">You give:</span>
-            <span className="text-chalk font-medium">
-              {giveFormatted} <span className="text-dust">{giveSymbol}</span>
+            <span className="text-gray-400">You give:</span>
+            <span className="text-white font-medium">
+              {giveFormatted} <span className="text-gray-400">{giveSymbol}</span>
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-dust">You get:</span>
-            <span className="text-chalk font-medium">
-              {receiveFormatted} <span className="text-dust">{receiveSymbol}</span>
+            <span className="text-gray-400">You get:</span>
+            <span className="text-white font-medium">
+              {receiveFormatted} <span className="text-gray-400">{receiveSymbol}</span>
             </span>
           </div>
-          <div className="text-[10px] text-dust">
+          <div className="text-[10px] text-gray-400">
             {breakdownText}
             {selection.coverage < 100 && ` — covers ${selection.coverage}% of desired amount`}
           </div>
@@ -103,7 +103,7 @@ function MultiSettleSummary({
           type="button"
           onClick={onSettle}
           disabled={isSettling}
-          className="h-9 px-5 bg-star hover:bg-star-bright text-void font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 text-sm shrink-0"
+          className="h-9 px-5 bg-accent hover:bg-accent-bright text-void font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 text-sm shrink-0"
         >
           {isSettling ? (
             <>
@@ -147,7 +147,7 @@ export function InlineMatchList({
     <section className="space-y-3">
       {/* Section header */}
       <div className="flex items-center gap-3">
-        <span className="text-star font-mono text-xs uppercase tracking-[0.3em]">
+        <span className="text-accent font-mono text-xs uppercase tracking-[0.3em]">
           {isSwap
             ? multiSettleSelection && multiSettleSelection.coverage >= 100
               ? 'Fully Matched'
@@ -156,13 +156,13 @@ export function InlineMatchList({
                 : 'Matches Found'
             : 'Compatible Orders'}
         </span>
-        <span className="text-[10px] text-dust">
+        <span className="text-[10px] text-gray-400">
           {totalMatches} order{totalMatches !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Table container — same style as browse page */}
-      <div className="rounded-lg border border-edge/30 overflow-clip">
+      <div className="rounded-lg border border-border/30 overflow-clip">
         {/* Aggregate summary for multi-settle — stays visible above scroll */}
         {showMultiSettle && (
           <MultiSettleSummary
@@ -175,7 +175,7 @@ export function InlineMatchList({
         )}
 
         {/* Table header — sticky within scroll container */}
-        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-dust uppercase tracking-widest font-semibold border-b border-edge/40 bg-void/95 sticky top-0 z-10">
+        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 text-[9px] text-gray-400 uppercase tracking-widest font-semibold border-b border-border/40 bg-[#050505]/95 sticky top-0 z-10">
           <div className="grid grid-cols-12 gap-3 flex-1">
             <div className="col-span-2">Type</div>
             <div className="col-span-3">They Borrow</div>
@@ -209,8 +209,8 @@ export function InlineMatchList({
 
         {/* Footer with count when many matches */}
         {totalMatches > 3 && (
-          <div className="px-3 py-2 border-t border-edge/20 bg-surface/5 text-center">
-            <span className="text-[10px] text-dust">
+          <div className="px-3 py-2 border-t border-border/20 bg-surface/5 text-center">
+            <span className="text-[10px] text-gray-400">
               Showing {totalMatches} {isSwap ? 'swap' : 'order'}{totalMatches !== 1 ? 's' : ''} — scroll to see all
             </span>
           </div>

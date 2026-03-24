@@ -29,20 +29,20 @@ const ROLE_LABELS: Record<PositionRole, string> = {
 }
 
 const ROLE_HOVER: Record<PositionRole, string> = {
-  lender: 'group-hover:border-star/40',
-  borrower: 'group-hover:border-nebula/40',
-  redeemable: 'group-hover:border-cosmic/40',
+  lender: 'group-hover:border-accent/40',
+  borrower: 'group-hover:border-sky-400/40',
+  redeemable: 'group-hover:border-sky-500/40',
 }
 
 const ROLE_TEXT: Record<PositionRole, string> = {
-  lender: 'text-star',
-  borrower: 'text-nebula',
-  redeemable: 'text-cosmic',
+  lender: 'text-accent',
+  borrower: 'text-sky-400',
+  redeemable: 'text-sky-500',
 }
 
 function AssetList({ assets, role }: { assets: AssetRow[]; role: string }) {
   const filtered = assets.filter((a) => a.asset_role === role)
-  if (filtered.length === 0) return <span className="text-dust italic text-xs">none</span>
+  if (filtered.length === 0) return <span className="text-gray-400 italic text-xs">none</span>
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -56,7 +56,7 @@ function AssetList({ assets, role }: { assets: AssetRow[]; role: string }) {
           : `${formatTokenValue(a.value, decimals)} ${symbol}`
 
         return (
-          <span key={`${a.asset_role}-${a.asset_index}`} className="inline-flex items-center gap-1 text-chalk text-sm font-medium">
+          <span key={`${a.asset_role}-${a.asset_index}`} className="inline-flex items-center gap-1 text-white text-sm font-medium">
             <TokenAvatarByAddress address={a.asset_address} size={14} />
             {display}
           </span>
@@ -71,16 +71,16 @@ function LenderContent({ inscription }: { inscription: EnrichedInscription }) {
   return (
     <>
       <div className="flex flex-col gap-1">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Debt</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Debt</span>
         <AssetList assets={assets} role="debt" />
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Interest</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Interest</span>
         <AssetList assets={assets} role="interest" />
       </div>
       <div className="flex items-center justify-between pt-1">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Duration</span>
-        <span className="text-chalk font-display text-base">
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Duration</span>
+        <span className="text-white font-bold text-base">
           {formatDuration(Number(inscription.duration))}
         </span>
       </div>
@@ -104,17 +104,17 @@ function BorrowerContent({ inscription }: { inscription: EnrichedInscription }) 
   return (
     <>
       <div className="flex flex-col gap-1">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Collateral</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Collateral</span>
         <AssetList assets={assets} role="collateral" />
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Debt Owed</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Debt Owed</span>
         <AssetList assets={assets} role="debt" />
       </div>
       {timeDisplay && (
         <div className="flex items-center justify-between pt-1">
-          <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Time Remaining</span>
-          <span className={`font-display text-base ${timeDisplay === 'Expired' ? 'text-nova' : 'text-chalk'}`}>
+          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Time Remaining</span>
+          <span className={`font-bold text-base ${timeDisplay === 'Expired' ? 'text-red-500' : 'text-white'}`}>
             {timeDisplay}
           </span>
         </div>
@@ -135,17 +135,17 @@ function RedeemableContent({
   return (
     <>
       <div className="flex flex-col gap-2">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Status</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Status</span>
         <Badge variant={statusKey} className="rounded-full px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider w-fit">
           {getStatusLabel(inscription.computedStatus)}
         </Badge>
       </div>
       <div className="flex items-center justify-between pt-1">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-semibold">Share Balance</span>
-        <span className="text-chalk font-display text-base">{shareBalance}</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Share Balance</span>
+        <span className="text-white font-bold text-base">{shareBalance}</span>
       </div>
       <div className="pt-2">
-        <span className="text-cosmic text-xs font-display uppercase tracking-wider">
+        <span className="text-sky-500 text-xs font-bold uppercase tracking-wider">
           Claim Available
         </span>
       </div>
@@ -161,10 +161,10 @@ export function PositionCard({ inscription, role, shareBalance }: PositionCardPr
       href={`/stela/${inscription.id}`}
       className="group block transition-all duration-300 hover:-translate-y-1"
     >
-      <Card className={`granite-noise rounded-lg border-edge bg-surface/40 p-6 transition-all duration-300 ${ROLE_HOVER[role]}`}>
-        <CardHeader className="p-0 pb-4 gap-0 border-b border-edge/10">
+      <Card className={`rounded-lg border-border bg-surface/40 p-6 transition-all duration-300 ${ROLE_HOVER[role]}`}>
+        <CardHeader className="p-0 pb-4 gap-0 border-b border-border/10">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-dust tracking-[0.2em] uppercase">
+            <span className="font-mono text-[10px] text-gray-400 tracking-[0.2em] uppercase">
               #{inscription.id.slice(2, 8)}
             </span>
             <Badge variant={statusKey} className="rounded-full px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider">
@@ -181,8 +181,8 @@ export function PositionCard({ inscription, role, shareBalance }: PositionCardPr
           )}
         </CardContent>
 
-        <CardFooter className="p-0 pt-5 border-t border-edge/10">
-          <span className={`text-[10px] ${ROLE_TEXT[role]} font-display uppercase tracking-wider`}>
+        <CardFooter className="p-0 pt-5 border-t border-border/10">
+          <span className={`text-[10px] ${ROLE_TEXT[role]} font-bold uppercase tracking-wider`}>
             {ROLE_LABELS[role]}
           </span>
         </CardFooter>

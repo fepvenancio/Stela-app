@@ -104,14 +104,14 @@ function CollectionRow({
       type="button"
       onClick={onClick}
       aria-label={`Select ${name}`}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-elevated/70 transition-colors text-left border border-transparent"
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-hover/70 transition-colors text-left border border-transparent"
     >
       <CollectionAvatar name={name} image={image} size={40} />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-chalk truncate">{name || 'Unknown Collection'}</div>
-        <div className="text-xs text-dust">{symbol || formatAddress(address)}</div>
+        <div className="text-sm font-medium text-white truncate">{name || 'Unknown Collection'}</div>
+        <div className="text-xs text-gray-400">{symbol || formatAddress(address)}</div>
       </div>
-      <div className="text-xs text-dust font-mono shrink-0">
+      <div className="text-xs text-gray-400 font-mono shrink-0">
         {formatAddress(address)}
       </div>
     </button>
@@ -225,12 +225,12 @@ export function NFTCollectionSelector({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="bg-void border-edge/50 text-chalk p-0 gap-0 sm:max-w-md overflow-hidden"
+        className="bg-[#050505] border-border/50 text-white p-0 gap-0 sm:max-w-md overflow-hidden"
         showCloseButton={true}
       >
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-0">
-          <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
+          <DialogTitle className="font-bold text-sm tracking-widest text-accent uppercase">
             Select Collection
           </DialogTitle>
         </DialogHeader>
@@ -239,7 +239,7 @@ export function NFTCollectionSelector({
         <div className="px-5 pt-3">
           <div className="relative">
             <svg
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ash"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"
               width="16"
               height="16"
               viewBox="0 0 16 16"
@@ -256,7 +256,7 @@ export function NFTCollectionSelector({
               placeholder="Search by name or paste address"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 rounded-xl bg-surface border border-edge text-chalk text-sm placeholder:text-ash outline-none focus:border-star focus:ring-1 focus:ring-star/30 transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-xl bg-surface border border-border text-white text-sm placeholder:text-gray-500 outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
               aria-label="Search collections"
             />
           </div>
@@ -265,12 +265,12 @@ export function NFTCollectionSelector({
         {/* Popular label */}
         {!search && filteredKnown.length > 0 && (
           <div className="px-5 pt-3">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-dust">Popular</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Popular</span>
           </div>
         )}
 
         {/* Divider */}
-        <div className="mx-5 mt-3 border-t border-edge" />
+        <div className="mx-5 mt-3 border-t border-border" />
 
         {/* Collection List */}
         <div className="overflow-y-auto max-h-[340px] px-2 py-2 space-y-0.5">
@@ -300,7 +300,7 @@ export function NFTCollectionSelector({
           {fetchedCollection && (
             <>
               {filteredKnown.length > 0 && (
-                <div className="mx-3 my-1 border-t border-edge/50" />
+                <div className="mx-3 my-1 border-t border-border/50" />
               )}
               <CollectionRow
                 name={fetchedCollection.name}
@@ -322,24 +322,24 @@ export function NFTCollectionSelector({
           {/* Loading state */}
           {fetching && (
             <div className="flex items-center justify-center py-6 gap-2">
-              <svg className="animate-spin h-4 w-4 text-star" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4 text-accent" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <span className="text-sm text-dust">Fetching collection...</span>
+              <span className="text-sm text-gray-400">Fetching collection...</span>
             </div>
           )}
 
           {/* Fetch error */}
           {fetchError && !fetching && (
-            <div className="text-center py-6 text-dust text-sm">
+            <div className="text-center py-6 text-gray-400 text-sm">
               {fetchError}
             </div>
           )}
 
           {/* Empty state */}
           {filteredKnown.length === 0 && !fetchedCollection && !fetching && !fetchError && (
-            <div className="text-center py-8 text-dust text-sm">
+            <div className="text-center py-8 text-gray-400 text-sm">
               {search.trim()
                 ? isAddressSearch
                   ? 'Paste a full contract address to look it up'

@@ -69,8 +69,8 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
   }
 
   return (
-    <div className="flex items-start gap-3 p-3 rounded-xl bg-abyss/50 border border-edge">
-      <span className="mt-2.5 text-[11px] text-dust font-mono w-4 text-right shrink-0">
+    <div className="flex items-start gap-3 p-3 rounded-xl bg-surface/50 border border-border">
+      <span className="mt-2.5 text-[11px] text-gray-400 font-mono w-4 text-right shrink-0">
         {index + 1}
       </span>
 
@@ -83,7 +83,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
               value={value.asset_type}
               onValueChange={(v) => onChange({ ...value, asset_type: v as AssetType })}
             >
-              <SelectTrigger id={`asset-type-${index}`} className="w-full bg-surface border-edge text-chalk text-sm h-9">
+              <SelectTrigger id={`asset-type-${index}`} className="w-full bg-surface border-border text-white text-sm h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -101,34 +101,34 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
               type="button"
               id={`token-select-${index}`}
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-2 w-full h-9 px-3 rounded-xl bg-surface border border-edge text-sm transition-colors hover:bg-elevated hover:border-edge-bright focus-visible:border-star focus-visible:ring-1 focus-visible:ring-star/30 outline-none"
+              className="flex items-center gap-2 w-full h-9 px-3 rounded-xl bg-surface border border-border text-sm transition-colors hover:bg-surface-hover hover:border-white/20 focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent/30 outline-none"
             >
               {selectedToken ? (
                 <>
                   <TokenAvatar token={selectedToken} size={20} />
-                  <span className="text-chalk font-medium truncate">
+                  <span className="text-white font-medium truncate">
                     {selectedToken.symbol}
                   </span>
-                  <span className="text-dust text-xs font-mono ml-auto hidden sm:block">
+                  <span className="text-gray-400 text-xs font-mono ml-auto hidden sm:block">
                     {formatAddress(selectedToken.addresses[NETWORK] ?? '')}
                   </span>
                 </>
               ) : isCustom && value.asset ? (
                 <>
-                  <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center bg-edge-bright text-dust text-[10px]">
+                  <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center bg-edge-bright text-gray-400 text-[10px]">
                     ?
                   </div>
-                  <span className="text-chalk font-mono text-xs truncate">
+                  <span className="text-white font-mono text-xs truncate">
                     {formatAddress(value.asset)}
                   </span>
                 </>
               ) : (
-                <span className="text-dust">Select token</span>
+                <span className="text-gray-400">Select token</span>
               )}
 
               {/* Chevron */}
               <svg
-                className="ml-auto shrink-0 text-ash"
+                className="ml-auto shrink-0 text-gray-500"
                 width="14"
                 height="14"
                 viewBox="0 0 16 16"
@@ -176,7 +176,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
               className={symbol ? 'pr-16' : ''}
             />
             {symbol && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-dust font-mono pointer-events-none">
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-mono pointer-events-none">
                 {symbol}
               </span>
             )}
@@ -202,7 +202,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
         variant="ghost"
         size="icon-xs"
         onClick={onRemove}
-        className="mt-2 text-ash hover:text-nova hover:bg-nova/10 shrink-0"
+        className="mt-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 shrink-0"
         aria-label="Remove asset"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">

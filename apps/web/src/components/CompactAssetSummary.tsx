@@ -17,7 +17,7 @@ interface CompactAssetSummaryProps {
 }
 
 export function CompactAssetSummary({ assets }: CompactAssetSummaryProps) {
-  if (assets.length === 0) return <span className="text-ash/50 text-[10px]">None</span>
+  if (assets.length === 0) return <span className="text-gray-500/50 text-[10px]">None</span>
 
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -33,7 +33,7 @@ export function CompactAssetSummary({ assets }: CompactAssetSummaryProps) {
         return (
           <div key={i} className="flex items-center gap-1.5">
             <TokenAvatarByAddress address={a.asset_address} size={14} />
-            <span className="text-xs font-medium text-chalk">{display}</span>
+            <span className="text-xs font-medium text-white">{display}</span>
           </div>
         )
       })}

@@ -8,7 +8,7 @@ export function BookSkeleton() {
   return (
     <div className="w-full">
       {/* Header skeleton */}
-      <div className="flex items-center h-7 px-3 border-b border-edge/10">
+      <div className="flex items-center h-7 px-3 border-b border-border/10">
         <div className="h-2.5 w-12 bg-edge/10 rounded animate-pulse" />
         <div className="flex-1" />
         <div className="h-2.5 w-16 bg-edge/10 rounded animate-pulse" />

@@ -45,17 +45,17 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
   const savings = formatSavingsAmount(fee.savingsBps, debtAmount, debtDecimals)
 
   return (
-    <div className="rounded-lg border border-edge/15 bg-abyss/40 overflow-clip">
+    <div className="rounded-lg border border-border/15 bg-surface/40 overflow-clip">
       {/* Header row */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-edge/10">
-        <span className="text-[10px] text-dust uppercase tracking-widest font-bold">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/10">
+        <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
           Protocol Fee
         </span>
-        <span className="font-mono text-sm text-chalk shrink-0">
+        <span className="font-mono text-sm text-white shrink-0">
           {hasDiscount ? (
             <>
-              <span className="text-dust line-through mr-1.5">{bpsToPercent(fee.totalBaseBps)}</span>
-              <span className="text-aurora">{bpsToPercent(fee.effectiveTotalBps)}</span>
+              <span className="text-gray-400 line-through mr-1.5">{bpsToPercent(fee.totalBaseBps)}</span>
+              <span className="text-green-500">{bpsToPercent(fee.effectiveTotalBps)}</span>
             </>
           ) : (
             bpsToPercent(fee.totalBaseBps)
@@ -67,12 +67,12 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
       <div className="px-3 py-2 space-y-1.5">
         {/* Treasury line */}
         <div className="flex items-center justify-between text-xs gap-2">
-          <span className="text-dust shrink-0">Treasury</span>
-          <span className="font-mono text-chalk text-right">
+          <span className="text-gray-400 shrink-0">Treasury</span>
+          <span className="font-mono text-white text-right">
             {hasDiscount ? (
               <>
-                <span className="text-dust line-through mr-1">{bpsToPercent(fee.treasuryBps)}</span>
-                <span className="text-aurora">{bpsToPercent(fee.effectiveTreasuryBps)}</span>
+                <span className="text-gray-400 line-through mr-1">{bpsToPercent(fee.treasuryBps)}</span>
+                <span className="text-green-500">{bpsToPercent(fee.effectiveTreasuryBps)}</span>
               </>
             ) : (
               bpsToPercent(fee.treasuryBps)
@@ -82,20 +82,20 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
 
         {/* Relayer line */}
         <div className="flex items-center justify-between text-xs gap-2">
-          <span className="text-dust shrink-0">Relayer</span>
-          <span className="font-mono text-chalk text-right">
+          <span className="text-gray-400 shrink-0">Relayer</span>
+          <span className="font-mono text-white text-right">
             {bpsToPercent(fee.relayerBps)}
-            <span className="text-ash ml-1 text-[10px]">(fixed)</span>
+            <span className="text-gray-500 ml-1 text-[10px]">(fixed)</span>
           </span>
         </div>
 
         {/* Discount line */}
         {address && hasDiscount && (
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-edge/10 gap-2">
-            <span className="text-dust shrink-0">Discount</span>
-            <span className="font-mono text-star text-right">
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border/10 gap-2">
+            <span className="text-gray-400 shrink-0">Discount</span>
+            <span className="font-mono text-accent text-right">
               -{fee.discountPercent}%
-              <span className="text-ash ml-1 text-[10px]">
+              <span className="text-gray-500 ml-1 text-[10px]">
                 ({Number(fee.nftBalance)} NFT{fee.nftBalance !== 1n ? 's' : ''}
                 {fee.volumeTier > 0 && <> · Tier {fee.volumeTier}</>})
               </span>
@@ -106,8 +106,8 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
         {/* Savings line */}
         {address && hasDiscount && savings && debtSymbol && (
           <div className="flex items-center justify-between text-xs">
-            <span className="text-dust">You save</span>
-            <span className="font-mono text-aurora">
+            <span className="text-gray-400">You save</span>
+            <span className="font-mono text-green-500">
               {savings} {debtSymbol}
             </span>
           </div>
@@ -115,9 +115,9 @@ export function FeeBreakdown({ type, debtAmount, debtDecimals, debtSymbol }: Fee
 
         {/* CTA for non-holders */}
         {address && !hasDiscount && !fee.isLoading && (
-          <div className="pt-1.5 border-t border-edge/10">
-            <p className="text-[10px] text-dust leading-relaxed">
-              Hold a <span className="text-star font-medium">Genesis NFT</span> for up to 50% fee discount
+          <div className="pt-1.5 border-t border-border/10">
+            <p className="text-[10px] text-gray-400 leading-relaxed">
+              Hold a <span className="text-accent font-medium">Genesis NFT</span> for up to 50% fee discount
             </p>
           </div>
         )}

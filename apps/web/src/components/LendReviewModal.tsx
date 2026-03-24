@@ -197,12 +197,12 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
   return (
     <>
     <Dialog open={open && !progress.open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-void border-edge/50 sm:max-w-lg">
+      <DialogContent className="bg-[#050505] border-border/50 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
+          <DialogTitle className="font-bold text-sm tracking-widest text-accent uppercase">
             Review & Sign
           </DialogTitle>
-          <DialogDescription className="text-dust text-xs">
+          <DialogDescription className="text-gray-400 text-xs">
             {count} item{count !== 1 ? 's' : ''} selected
             {onchainItems.length > 0 && offchainItems.length > 0
               ? ` (${onchainItems.length} on-chain, ${offchainItems.length} off-chain)`
@@ -214,12 +214,12 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
         {/* Selected inscriptions list */}
         <div className="max-h-[40vh] overflow-y-auto space-y-2 pr-1">
           {Array.from(selected.entries()).map(([id, item]) => (
-            <div key={id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface/20 border border-edge/30 group">
+            <div key={id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface/20 border border-border/30 group">
               <div className="flex flex-col gap-1 min-w-0">
                 <Link
                   href={`/stela/${id}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="font-mono text-[10px] text-ash tracking-wider uppercase hover:text-star transition-colors"
+                  className="font-mono text-[10px] text-gray-500 tracking-wider uppercase hover:text-accent transition-colors"
                 >
                   #{id.slice(2, 8)}
                 </Link>
@@ -229,7 +229,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
                     return (
                       <div key={i} className="flex items-center gap-1">
                         <TokenAvatarByAddress address={a.asset_address} size={12} />
-                        <span className="text-[10px] text-chalk font-medium">
+                        <span className="text-[10px] text-white font-medium">
                           {formatTokenValue(a.value, token?.decimals ?? 18)} {token?.symbol}
                         </span>
                       </div>
@@ -242,7 +242,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
                 size="sm"
                 onClick={() => toggle(item)}
                 disabled={isPending}
-                className="h-7 w-7 p-0 text-ash hover:text-nova hover:bg-nova/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                className="h-7 w-7 p-0 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 aria-label={`Remove inscription ${id.slice(2, 8)} from selection`}
               >
                 <X className="w-3.5 h-3.5" aria-hidden="true" />
@@ -255,28 +255,28 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
 
         {/* Total debt to provide */}
         <div className="space-y-2">
-          <h4 className="text-[10px] text-dust uppercase tracking-widest font-semibold">Total Debt to Provide</h4>
+          <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Total Debt to Provide</h4>
           <div className="grid grid-cols-2 gap-2">
             {Array.from(totals.entries()).map(([addr, total]) => {
               const token = findTokenByAddress(addr)
               const available = balances.get(addr) ?? 0n
               const hasEnough = available >= total
               return (
-                <div key={addr} className={`p-3 rounded-2xl border ${balancesLoading || balances.size === 0 || hasEnough ? 'bg-surface/20 border-edge/30' : 'bg-nova/5 border-nova/20'}`}>
+                <div key={addr} className={`p-3 rounded-2xl border ${balancesLoading || balances.size === 0 || hasEnough ? 'bg-surface/20 border-border/30' : 'bg-red-500/5 border-red-500/20'}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <TokenAvatarByAddress address={addr} size={16} />
-                    <span className="text-xs font-bold text-chalk">{token?.symbol}</span>
+                    <span className="text-xs font-bold text-white">{token?.symbol}</span>
                   </div>
-                  <div className="text-sm font-display text-star">
+                  <div className="text-sm font-bold text-accent">
                     {formatTokenValue(total.toString(), token?.decimals ?? 18)}
                   </div>
                   {balancesLoading || balances.size === 0 ? (
-                    <div className="mt-1 flex items-center gap-1 text-[9px] text-dust">
+                    <div className="mt-1 flex items-center gap-1 text-[9px] text-gray-400">
                       <Wallet2 className="w-3 h-3 animate-pulse" />
                       <span>Checking balance...</span>
                     </div>
                   ) : !hasEnough && (
-                    <div className="mt-1 flex items-center gap-1 text-[9px] text-nova">
+                    <div className="mt-1 flex items-center gap-1 text-[9px] text-red-500">
                       <Wallet2 className="w-3 h-3" />
                       <span>Insufficient: {formatTokenValue(available.toString(), token?.decimals ?? 18)} available</span>
                     </div>
@@ -292,7 +292,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
-            className="rounded-xl border-edge/50 text-dust hover:text-chalk hover:border-edge"
+            className="rounded-xl border-border/50 text-gray-400 hover:text-white hover:border-border"
           >
             Cancel
           </Button>
@@ -300,7 +300,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
             variant="default"
             onClick={handleConfirm}
             disabled={isPending || hasInsufficientBalance}
-            className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"
+            className="px-6 rounded-xl font-bold shadow-lg shadow-accent/20"
           >
             {isPending ? 'Processing...' : 'Confirm & Sign'}
           </Button>

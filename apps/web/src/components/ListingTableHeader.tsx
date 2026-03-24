@@ -27,7 +27,7 @@ function SortButton({
       onClick={() => onSort(sortKey)}
       className={`flex items-center gap-1 text-xs transition-colors cursor-pointer ${
         align === 'right' ? 'justify-end' : ''
-      } ${active ? 'text-chalk' : 'text-ash hover:text-chalk'}`}
+      } ${active ? 'text-white' : 'text-gray-500 hover:text-white'}`}
     >
       {label}
       {active && (
@@ -41,10 +41,10 @@ function SortButton({
 
 export function ListingTableHeader({ sortBy, onSortChange }: ListingTableHeaderProps) {
   const hasSort = sortBy !== undefined && onSortChange !== undefined
-  const cellClass = 'text-xs text-ash'
+  const cellClass = 'text-xs text-gray-500'
 
   return (
-    <div className="hidden md:grid grid-cols-[1fr_56px_64px_80px_72px_110px] gap-5 px-5 py-3 border-b border-edge/20">
+    <div className="hidden md:grid grid-cols-[1fr_56px_64px_80px_72px_110px] gap-5 px-5 py-3 border-b border-border/20">
       <span className={cellClass}>Pool</span>
       <span className={`${cellClass} text-center`}>Type</span>
       {hasSort ? (

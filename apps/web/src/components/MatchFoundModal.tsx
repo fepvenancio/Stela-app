@@ -81,19 +81,19 @@ function MatchCard({
   const secondsLeft = deadline - Math.floor(Date.now() / 1000)
 
   return (
-    <div className="rounded-xl border border-edge/30 overflow-hidden">
+    <div className="rounded-xl border border-border/30 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-surface/10 border-b border-edge/20">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-surface/10 border-b border-border/20">
         <div className="flex items-center gap-2">
           <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
-            isSwap ? 'bg-aurora/10 text-aurora' : 'bg-nebula/10 text-nebula'
+            isSwap ? 'bg-green-500/10 text-green-500' : 'bg-sky-400/10 text-sky-400'
           }`}>
             {isSwap ? 'Swap' : 'Loan'}
           </span>
-          <span className="text-[10px] text-dust font-mono">{formatAddress(match.borrower)}</span>
+          <span className="text-[10px] text-gray-400 font-mono">{formatAddress(match.borrower)}</span>
         </div>
         {secondsLeft > 0 && (
-          <span className="text-[10px] text-dust">
+          <span className="text-[10px] text-gray-400">
             expires {formatTimestamp(BigInt(deadline))}
           </span>
         )}
@@ -103,13 +103,13 @@ function MatchCard({
       <div className="px-4 py-3 space-y-2">
         {/* What they want to borrow (their debt = what you'll lend) */}
         <div>
-          <span className="text-[9px] text-dust uppercase tracking-widest font-bold">They borrow (you lend)</span>
+          <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">They borrow (you lend)</span>
           <div className="mt-1 space-y-1">
             {debtAssets.map((a, i) => (
               <div key={i} className="flex items-center gap-2">
                 <TokenAvatarByAddress address={a.address} size={16} />
-                <span className="text-sm text-chalk font-medium">
-                  {a.formatted} <span className="text-dust">{a.symbol}</span>
+                <span className="text-sm text-white font-medium">
+                  {a.formatted} <span className="text-gray-400">{a.symbol}</span>
                 </span>
               </div>
             ))}
@@ -118,13 +118,13 @@ function MatchCard({
 
         {/* What they offer as collateral (their collateral = what you receive if liquidated) */}
         <div>
-          <span className="text-[9px] text-star uppercase tracking-widest font-bold">Their collateral</span>
+          <span className="text-[9px] text-accent uppercase tracking-widest font-bold">Their collateral</span>
           <div className="mt-1 space-y-1">
             {collateralAssets.map((a, i) => (
               <div key={i} className="flex items-center gap-2">
                 <TokenAvatarByAddress address={a.address} size={16} />
-                <span className="text-sm text-chalk font-medium">
-                  {a.formatted} <span className="text-dust">{a.symbol}</span>
+                <span className="text-sm text-white font-medium">
+                  {a.formatted} <span className="text-gray-400">{a.symbol}</span>
                 </span>
               </div>
             ))}
@@ -134,13 +134,13 @@ function MatchCard({
         {/* Interest */}
         {interestAssets.length > 0 && (
           <div>
-            <span className="text-[9px] text-aurora uppercase tracking-widest font-bold">Interest you earn</span>
+            <span className="text-[9px] text-green-500 uppercase tracking-widest font-bold">Interest you earn</span>
             <div className="mt-1 space-y-1">
               {interestAssets.map((a, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <TokenAvatarByAddress address={a.address} size={16} />
-                  <span className="text-sm text-chalk font-medium">
-                    {a.formatted} <span className="text-dust">{a.symbol}</span>
+                  <span className="text-sm text-white font-medium">
+                    {a.formatted} <span className="text-gray-400">{a.symbol}</span>
                   </span>
                 </div>
               ))}
@@ -150,8 +150,8 @@ function MatchCard({
 
         {/* Duration */}
         {!isSwap && (
-          <div className="flex items-center gap-4 text-[11px] text-dust pt-1">
-            <span>Duration: <span className="text-chalk">{formatDuration(duration)}</span></span>
+          <div className="flex items-center gap-4 text-[11px] text-gray-400 pt-1">
+            <span>Duration: <span className="text-white">{formatDuration(duration)}</span></span>
           </div>
         )}
       </div>
@@ -181,12 +181,12 @@ export function MatchFoundModal({
 }: MatchFoundModalProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v && !isPending) onOpenChange(false) }}>
-      <DialogContent className="bg-abyss border-edge text-chalk p-0 gap-0 sm:max-w-md overflow-hidden">
+      <DialogContent className="bg-surface border-border text-white p-0 gap-0 sm:max-w-md overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-0">
-          <DialogTitle className="font-display text-sm tracking-widest text-star uppercase">
+          <DialogTitle className="font-bold text-sm tracking-widest text-accent uppercase">
             Instant Match Found
           </DialogTitle>
-          <p className="text-xs text-dust mt-1">
+          <p className="text-xs text-gray-400 mt-1">
             {matches.length === 1
               ? 'A compatible order exists! You can settle it instantly as the lender.'
               : `${matches.length} compatible orders found. Pick one to settle instantly.`}
@@ -207,7 +207,7 @@ export function MatchFoundModal({
         <DialogFooter className="px-5 pb-5 pt-0">
           <Button
             variant="ghost"
-            className="w-full text-ash hover:text-chalk"
+            className="w-full text-gray-500 hover:text-white"
             onClick={onSkip}
             disabled={isPending}
           >

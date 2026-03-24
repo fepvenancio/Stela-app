@@ -74,14 +74,14 @@ function TokenBox({
         <span className={`text-[10px] uppercase tracking-widest font-bold ${accentClass}`}>{label}</span>
         {token && balance !== undefined && balance > 0n && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-dust font-mono">
+            <span className="text-[10px] text-gray-400 font-mono">
               {formatTokenValue(balance.toString(), token.decimals)}
             </span>
             {onMaxClick && (
               <button
                 type="button"
                 onClick={onMaxClick}
-                className="text-[10px] text-star hover:text-star-bright font-bold uppercase tracking-wider cursor-pointer transition-colors"
+                className="text-[10px] text-accent hover:text-accent/80 font-bold uppercase tracking-wider cursor-pointer transition-colors"
               >
                 Max
               </button>
@@ -93,17 +93,17 @@ function TokenBox({
         <button
           type="button"
           onClick={onTokenClick}
-          className="flex items-center gap-2 h-10 px-3 rounded-md bg-surface/60 border border-edge/40 text-sm transition-colors hover:bg-elevated hover:border-edge-bright cursor-pointer shrink-0"
+          className="flex items-center gap-2 h-10 px-3 rounded-md bg-surface/60 border border-border/40 text-sm transition-colors hover:bg-surface-hover hover:border-white/20 cursor-pointer shrink-0"
         >
           {token ? (
             <>
               <TokenAvatar token={token} size={20} />
-              <span className="text-chalk font-medium">{token.symbol}</span>
+              <span className="text-white font-medium">{token.symbol}</span>
             </>
           ) : (
-            <span className="text-dust">Select</span>
+            <span className="text-gray-400">Select</span>
           )}
-          <svg className="text-ash ml-1" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg className="text-gray-500 ml-1" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M4 6l4 4 4-4" />
           </svg>
         </button>
@@ -116,7 +116,7 @@ function TokenBox({
             const raw = e.target.value
             if (raw === '' || /^\d*\.?\d{0,18}$/.test(raw)) onAmountChange(raw)
           }}
-          className="flex-1 text-right text-xl font-mono bg-transparent outline-none text-chalk placeholder:text-ash/40"
+          className="flex-1 text-right text-xl font-mono bg-transparent outline-none text-white placeholder:text-gray-500/40"
         />
       </div>
     </div>
@@ -138,7 +138,7 @@ function PresetSelector({
 }) {
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <span className="text-[10px] text-dust uppercase tracking-widest font-bold shrink-0 w-16">{label}</span>
+      <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold shrink-0 w-16">{label}</span>
       <div className="flex flex-wrap gap-1">
         {presets.map((p) => (
           <button
@@ -147,8 +147,8 @@ function PresetSelector({
             onClick={() => onSelect(p.seconds.toString())}
             className={`py-1 px-2 rounded-sm text-[10px] border transition-colors cursor-pointer font-medium ${
               selected === p.seconds.toString()
-                ? 'border-star/40 bg-star/10 text-star'
-                : 'border-edge/50 text-dust hover:text-chalk hover:border-edge-bright'
+                ? 'border-accent/40 bg-accent/10 text-accent'
+                : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
             }`}
           >
             {p.label}
@@ -268,9 +268,9 @@ export function RefinanceOfferForm({ inscriptionId, onClose }: RefinanceOfferFor
       {/* Debt Token */}
       <TokenBox
         label="New Debt"
-        accentClass="text-aurora"
-        borderClass="border-aurora/20"
-        bgClass="bg-aurora/5"
+        accentClass="text-green-500"
+        borderClass="border-green-500/20"
+        bgClass="bg-green-500/5"
         tokenAddress={debtToken}
         amount={debtAmount}
         balance={debtBalance}
@@ -282,9 +282,9 @@ export function RefinanceOfferForm({ inscriptionId, onClose }: RefinanceOfferFor
       {/* Interest Token */}
       <TokenBox
         label="New Interest"
-        accentClass="text-nebula"
-        borderClass="border-nebula/20"
-        bgClass="bg-nebula/5"
+        accentClass="text-sky-400"
+        borderClass="border-sky-400/20"
+        bgClass="bg-sky-400/5"
         tokenAddress={interestToken}
         amount={interestAmount}
         balance={interestBalance}
@@ -295,15 +295,15 @@ export function RefinanceOfferForm({ inscriptionId, onClose }: RefinanceOfferFor
 
       {/* Validation */}
       {showErrors && !isValid && (
-        <div className="px-4 py-3 rounded-lg border border-nova/20 bg-nova/5">
-          <p className="text-xs text-nova font-medium">
+        <div className="px-4 py-3 rounded-lg border border-red-500/20 bg-red-500/5">
+          <p className="text-xs text-red-500 font-medium">
             {!hasDebt && '-- Select a debt token and amount.'}
           </p>
         </div>
       )}
 
       {/* Duration & Deadline Presets */}
-      <div className="rounded-lg border border-edge/30 bg-surface/5 p-4 space-y-3">
+      <div className="rounded-lg border border-border/30 bg-surface/5 p-4 space-y-3">
         <PresetSelector
           label="Duration"
           presets={DURATION_PRESETS}
