@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'motion/react'
 import {
   ArrowLeftRight,
@@ -9,14 +10,18 @@ import {
   Layers,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAccount } from '@starknet-react/core'
 import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
+import { formatTokenValue } from '@/lib/format'
 import { TokenAvatar } from '@/components/TokenAvatar'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
 
 export default function SwapPage() {
+  const router = useRouter()
+  const { status } = useAccount()
   const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
   const { balances } = useTokenBalances()
 
@@ -28,6 +33,42 @@ export default function SwapPage() {
 
   const [sellModalOpen, setSellModalOpen] = useState(false)
   const [buyModalOpen, setBuyModalOpen] = useState(false)
+
+  const getTokenBalance = (token: TokenInfo): string => {
+    const addr = token.addresses[NETWORK]?.toLowerCase() ?? ''
+    const rawBalance = balances.get(addr)
+    return rawBalance !== undefined
+      ? formatTokenValue(rawBalance.toString(), token.decimals)
+      : '--'
+  }
+
+  const handleSwapTokens = () => {
+    const prevSell = sellToken
+    const prevBuy = buyToken
+    const prevSellAmount = sellAmount
+    const prevBuyAmount = buyAmount
+    setSellToken(prevBuy)
+    setBuyToken(prevSell)
+    setSellAmount(prevBuyAmount)
+    setBuyAmount(prevSellAmount)
+  }
+
+  const handleExecuteSwap = () => {
+    if (status !== 'connected') {
+      toast.error('Connect wallet first')
+      return
+    }
+    if (!sellAmount || Number(sellAmount) <= 0) {
+      toast.error('Enter a sell amount')
+      return
+    }
+    if (!buyAmount || Number(buyAmount) <= 0) {
+      toast.error('Enter a buy amount')
+      return
+    }
+    toast('Signing swap...')
+    router.push('/trade?mode=swap')
+  }
 
   return (
     <motion.div
@@ -81,6 +122,20 @@ export default function SwapPage() {
           <div className="bg-white/[0.02] rounded-xl p-4 border border-border focus-within:border-accent/40 transition-all">
             <div className="flex justify-between mb-2">
               <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">Sell</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const addr = sellToken.addresses[NETWORK]?.toLowerCase() ?? ''
+                  const raw = balances.get(addr)
+                  if (raw !== undefined && raw > 0n) {
+                    const maxVal = Number(raw) / 10 ** sellToken.decimals
+                    setSellAmount(maxVal.toString())
+                  }
+                }}
+                className="text-[9px] font-bold text-accent hover:text-white transition-colors cursor-pointer"
+              >
+                MAX
+              </button>
             </div>
             <div className="flex items-center justify-between gap-3">
               <input
@@ -100,11 +155,20 @@ export default function SwapPage() {
                 <ChevronDown size={14} className="text-gray-500" />
               </button>
             </div>
+            <div className="mt-2">
+              <span className="text-[10px] text-gray-500">
+                Balance: {getTokenBalance(sellToken)}
+              </span>
+            </div>
           </div>
 
           {/* Arrow */}
           <div className="flex justify-center -my-4 relative z-10">
-            <button className="w-10 h-10 bg-surface border border-border rounded-xl flex items-center justify-center hover:border-accent transition-colors shadow-lg group cursor-pointer">
+            <button
+              type="button"
+              onClick={handleSwapTokens}
+              className="w-10 h-10 bg-surface border border-border rounded-xl flex items-center justify-center hover:border-accent transition-colors shadow-lg group cursor-pointer"
+            >
               <ArrowDown size={18} className="text-accent group-hover:translate-y-0.5 transition-transform" />
             </button>
           </div>
@@ -132,6 +196,11 @@ export default function SwapPage() {
                 <ChevronDown size={14} className="text-gray-500" />
               </button>
             </div>
+            <div className="mt-2">
+              <span className="text-[10px] text-gray-500">
+                Balance: {getTokenBalance(buyToken)}
+              </span>
+            </div>
           </div>
 
           {/* Info */}
@@ -152,7 +221,7 @@ export default function SwapPage() {
 
           {/* CTA */}
           <button
-            onClick={() => toast('Coming soon')}
+            onClick={handleExecuteSwap}
             className="w-full bg-white text-black py-3.5 rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-gray-200 transition-all shadow-xl shadow-white/5 cursor-pointer"
           >
             Execute Swap

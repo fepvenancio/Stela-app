@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Sparkles,
-  X,
+  Trash2,
   ChevronDown,
   Zap,
   ArrowLeftRight,
@@ -12,9 +13,11 @@ import {
   Check,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAccount } from '@starknet-react/core'
 import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
+import { formatTokenValue } from '@/lib/format'
 import { TokenAvatar } from '@/components/TokenAvatar'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
@@ -33,6 +36,8 @@ interface InscribeData {
 }
 
 export default function BorrowPage() {
+  const router = useRouter()
+  const { status } = useAccount()
   const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
   const { balances } = useTokenBalances()
 
@@ -54,8 +59,26 @@ export default function BorrowPage() {
     if (step < 4) {
       setStep((s) => s + 1)
     } else {
-      toast('Coming soon')
+      handleFinalizeInscription()
     }
+  }
+
+  const handleFinalizeInscription = () => {
+    if (status !== 'connected') {
+      toast.error('Connect wallet first')
+      return
+    }
+    if (!data.name.trim()) {
+      toast.error('Enter an artifact name')
+      return
+    }
+    const filledAssets = data.assets.filter((a) => a.amount && Number(a.amount) > 0)
+    if (filledAssets.length === 0) {
+      toast.error('Enter an amount for at least one asset')
+      return
+    }
+    toast('Signing inscription...')
+    router.push('/trade?mode=advanced')
   }
 
   const addAsset = () => {
@@ -65,11 +88,26 @@ export default function BorrowPage() {
     }))
   }
 
+  const removeAsset = (idx: number) => {
+    setData((prev) => ({
+      ...prev,
+      assets: prev.assets.filter((_, i) => i !== idx),
+    }))
+  }
+
   const updateAssetAmount = (idx: number, amount: string) => {
     setData((prev) => ({
       ...prev,
       assets: prev.assets.map((a, i) => (i === idx ? { ...a, amount } : a)),
     }))
+  }
+
+  const getTokenBalance = (token: TokenInfo): string => {
+    const addr = token.addresses[NETWORK]?.toLowerCase() ?? ''
+    const rawBalance = balances.get(addr)
+    return rawBalance !== undefined
+      ? formatTokenValue(rawBalance.toString(), token.decimals)
+      : '--'
   }
 
   const activeAssetToken = assetModalIndex !== null ? data.assets[assetModalIndex]?.token : undefined
@@ -219,31 +257,46 @@ export default function BorrowPage() {
 
                       <div className="space-y-4">
                         {data.assets.map((asset, idx) => (
-                          <div key={idx} className="grid grid-cols-2 gap-4">
-                            <div className="bg-white/[0.02] rounded-2xl p-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
-                              <button
-                                type="button"
-                                onClick={() => setAssetModalIndex(idx)}
-                                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                              >
-                                <TokenAvatar token={asset.token} size={20} />
-                                <span className="font-bold text-sm text-white truncate">
-                                  {asset.token.symbol}
-                                </span>
-                              </button>
-                              <ChevronDown
-                                size={16}
-                                className="text-gray-700 shrink-0 pointer-events-none"
-                              />
+                          <div key={idx}>
+                            <div className="grid grid-cols-[1fr_1fr_auto] gap-4">
+                              <div className="bg-white/[0.02] rounded-2xl h-14 px-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
+                                <button
+                                  type="button"
+                                  onClick={() => setAssetModalIndex(idx)}
+                                  className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                                >
+                                  <TokenAvatar token={asset.token} size={20} />
+                                  <span className="font-bold text-sm text-white truncate">
+                                    {asset.token.symbol}
+                                  </span>
+                                </button>
+                                <ChevronDown
+                                  size={16}
+                                  className="text-gray-700 shrink-0 pointer-events-none"
+                                />
+                              </div>
+                              <div className="bg-white/[0.02] rounded-2xl h-14 px-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
+                                <input
+                                  type="number" inputMode="decimal" step="any"
+                                  value={asset.amount}
+                                  onChange={(e) => updateAssetAmount(idx, e.target.value)}
+                                  placeholder="0.00"
+                                  className="bg-transparent font-mono font-bold text-lg outline-none w-full placeholder:text-gray-800"
+                                />
+                              </div>
+                              {data.assets.length > 1 && (
+                                <button
+                                  onClick={() => removeAsset(idx)}
+                                  className="h-14 w-10 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors rounded-xl"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
                             </div>
-                            <div className="bg-white/[0.02] rounded-2xl p-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
-                              <input
-                                type="number" inputMode="decimal" step="any"
-                                value={asset.amount}
-                                onChange={(e) => updateAssetAmount(idx, e.target.value)}
-                                placeholder="0.00"
-                                className="bg-transparent font-mono font-bold text-lg outline-none w-full placeholder:text-gray-800"
-                              />
+                            <div className="mt-1 px-1">
+                              <span className="text-[10px] text-gray-500">
+                                Balance: {getTokenBalance(asset.token)}
+                              </span>
                             </div>
                           </div>
                         ))}
@@ -288,7 +341,7 @@ export default function BorrowPage() {
                               onChange={(e) =>
                                 setData({ ...data, duration: Number(e.target.value) })
                               }
-                              className="bg-transparent font-mono font-bold text-2xl outline-none w-full"
+                              className="bg-transparent font-mono font-bold text-xl outline-none w-full"
                             />
                             <span
                               className={`text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap ${
@@ -380,7 +433,7 @@ export default function BorrowPage() {
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-50" />
 
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-600 font-bold uppercase tracking-[0.2em]">
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
                             Artifact Name
                           </span>
                           <span className="text-base font-bold text-white tracking-tight">
@@ -389,7 +442,7 @@ export default function BorrowPage() {
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-600 font-bold uppercase tracking-[0.2em]">
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
                             Locked Assets
                           </span>
                           <div className="flex items-center gap-3">
@@ -411,7 +464,7 @@ export default function BorrowPage() {
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-600 font-bold uppercase tracking-[0.2em]">
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
                             Duration
                           </span>
                           <div className="flex items-center gap-2">
@@ -434,7 +487,7 @@ export default function BorrowPage() {
 
                         <div className="pt-8 border-t border-white/5 flex items-center justify-between">
                           <div className="flex flex-col">
-                            <span className="text-[10px] text-gray-600 font-bold uppercase tracking-[0.2em]">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
                               Network
                             </span>
                             <span className="text-[10px] text-accent font-bold uppercase tracking-widest mt-1">
@@ -452,7 +505,7 @@ export default function BorrowPage() {
 
           {/* Navigation buttons */}
           {!isSuccess && (
-            <div className="flex items-center gap-4 mt-12 px-12 pb-12">
+            <div className="flex items-center gap-4 mt-12">
               {step > 1 && (
                 <button
                   onClick={goBack}

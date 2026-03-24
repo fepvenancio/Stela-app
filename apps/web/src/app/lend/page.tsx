@@ -12,11 +12,16 @@ import {
   ArrowLeftRight,
   ShieldCheck,
   Zap,
+  Clock,
+  Wifi,
+  WifiOff,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAccount } from '@starknet-react/core'
 import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
+import { formatTokenValue } from '@/lib/format'
 import { TokenAvatar } from '@/components/TokenAvatar'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
@@ -28,6 +33,7 @@ interface BasketItem {
 
 export default function LendPage() {
   const router = useRouter()
+  const { status } = useAccount()
   const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
   const { balances } = useTokenBalances()
 
@@ -36,6 +42,8 @@ export default function LendPage() {
   ])
   const [interestRate, setInterestRate] = useState('')
   const [repaymentToken, setRepaymentToken] = useState<TokenInfo>(tokens[0])
+  const [duration, setDuration] = useState('')
+  const [gasless, setGasless] = useState(true)
 
   // Modal state: null = closed, number = which basket index is open, 'repayment' = repayment modal
   const [tokenModalIndex, setTokenModalIndex] = useState<number | 'repayment' | null>(null)
@@ -54,6 +62,32 @@ export default function LendPage() {
 
   const navigateToBorrow = () => {
     router.push('/borrow')
+  }
+
+  const getTokenBalance = (token: TokenInfo): string => {
+    const addr = token.addresses[NETWORK]?.toLowerCase() ?? ''
+    const rawBalance = balances.get(addr)
+    return rawBalance !== undefined
+      ? formatTokenValue(rawBalance.toString(), token.decimals)
+      : '--'
+  }
+
+  const handleConfirmLending = () => {
+    if (status !== 'connected') {
+      toast.error('Connect wallet first')
+      return
+    }
+    const filledItems = basket.filter((b) => b.amount && Number(b.amount) > 0)
+    if (filledItems.length === 0) {
+      toast.error('Enter an amount for at least one asset')
+      return
+    }
+    if (!interestRate || Number(interestRate) <= 0) {
+      toast.error('Enter a target interest rate')
+      return
+    }
+    toast('Signing order...')
+    router.push('/trade?mode=lend')
   }
 
   // Determine which token is "selected" for the currently open modal
@@ -129,44 +163,67 @@ export default function LendPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       key={idx}
-                      className="bg-white/[0.01] rounded-2xl p-5 flex items-center justify-between border border-border group hover:border-accent/20 transition-all"
+                      className="bg-white/[0.01] rounded-2xl p-5 border border-border group hover:border-accent/20 transition-all"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center border border-border shadow-inner">
-                          <TokenAvatar token={item.token} size={28} />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center border border-border shadow-inner">
+                            <TokenAvatar token={item.token} size={28} />
+                          </div>
+                          <div className="flex flex-col">
+                            <button
+                              type="button"
+                              onClick={() => setTokenModalIndex(idx)}
+                              className="flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <span className="font-bold text-lg text-white">{item.token.symbol}</span>
+                              <ChevronDown size={14} className="text-gray-500" />
+                            </button>
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                              {item.token.name}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <button
-                            type="button"
-                            onClick={() => setTokenModalIndex(idx)}
-                            className="flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <span className="font-bold text-lg text-white">{item.token.symbol}</span>
-                            <ChevronDown size={14} className="text-gray-600" />
-                          </button>
-                          <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-                            {item.token.name}
-                          </span>
+                        <div className="flex items-center gap-6">
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const addr = item.token.addresses[NETWORK]?.toLowerCase() ?? ''
+                                  const raw = balances.get(addr)
+                                  if (raw !== undefined && raw > 0n) {
+                                    const maxVal = Number(raw) / 10 ** item.token.decimals
+                                    updateBasketAmount(idx, maxVal.toString())
+                                  }
+                                }}
+                                className="text-[9px] font-bold text-accent hover:text-white transition-colors cursor-pointer"
+                              >
+                                MAX
+                              </button>
+                              <input
+                                type="number" inputMode="decimal" step="any"
+                                placeholder="0.00"
+                                value={item.amount}
+                                onChange={(e) => updateBasketAmount(idx, e.target.value)}
+                                className="bg-transparent text-right font-mono text-xl font-medium outline-none w-32 placeholder:text-gray-800"
+                              />
+                            </div>
+                          </div>
+                          {basket.length > 1 && (
+                            <button
+                              onClick={() => removeFromBasket(idx)}
+                              className="text-gray-500 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
-                        <div className="flex flex-col items-end">
-                          <input
-                            type="number" inputMode="decimal" step="any"
-                            placeholder="0.00"
-                            value={item.amount}
-                            onChange={(e) => updateBasketAmount(idx, e.target.value)}
-                            className="bg-transparent text-right font-mono text-2xl font-medium outline-none w-32 placeholder:text-gray-800"
-                          />
-                        </div>
-                        {basket.length > 1 && (
-                          <button
-                            onClick={() => removeFromBasket(idx)}
-                            className="text-gray-800 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )}
+                      <div className="mt-1 pl-16">
+                        <span className="text-[10px] text-gray-500">
+                          Balance: {getTokenBalance(item.token)}
+                        </span>
                       </div>
                     </motion.div>
                   ))}
@@ -208,6 +265,57 @@ export default function LendPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Duration & Mode */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
+                    Offer Duration (Days)
+                  </label>
+                  <div className="bg-white/[0.01] rounded-2xl h-14 px-5 flex items-center gap-3 border border-border">
+                    <Clock size={16} className="text-gray-600 shrink-0" />
+                    <input
+                      type="number" inputMode="decimal" step="1" min="0"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      placeholder="7"
+                      className="bg-transparent flex-1 text-right font-mono text-base font-bold outline-none placeholder:text-gray-800"
+                    />
+                    <span className="text-gray-500 font-bold text-xs shrink-0">days</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
+                    Funding Mode
+                  </label>
+                  <div className="bg-white/[0.01] rounded-2xl h-14 px-1.5 flex items-center border border-border">
+                    <button
+                      type="button"
+                      onClick={() => setGasless(true)}
+                      className={`flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-bold text-[10px] uppercase tracking-[0.15em] transition-all cursor-pointer ${
+                        gasless
+                          ? 'bg-accent/10 text-accent border border-accent/20'
+                          : 'text-gray-500 hover:text-gray-300 border border-transparent'
+                      }`}
+                    >
+                      <Wifi size={14} />
+                      Gasless
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGasless(false)}
+                      className={`flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-bold text-[10px] uppercase tracking-[0.15em] transition-all cursor-pointer ${
+                        !gasless
+                          ? 'bg-white/10 text-white border border-white/10'
+                          : 'text-gray-500 hover:text-gray-300 border border-transparent'
+                      }`}
+                    >
+                      <WifiOff size={14} />
+                      On-Chain
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -237,12 +345,24 @@ export default function LendPage() {
                   {interestRate ? `${interestRate}%` : '--'}
                 </span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Duration</span>
+                <span className="font-bold text-sm text-white">
+                  {duration ? `${duration} days` : '--'}
+                </span>
+              </div>
               <div className="h-px bg-border" />
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 text-sm">Est. Gas</span>
                 <span className="text-xs font-bold text-accent flex items-center gap-1.5 uppercase tracking-widest">
-                  <Zap size={14} className="fill-accent" />
-                  Gasless
+                  {gasless ? (
+                    <>
+                      <Zap size={14} className="fill-accent" />
+                      Gasless
+                    </>
+                  ) : (
+                    <span className="text-white">On-Chain</span>
+                  )}
                 </span>
               </div>
             </div>
@@ -259,7 +379,7 @@ export default function LendPage() {
             </div>
 
             <button
-              onClick={() => toast('Coming soon')}
+              onClick={handleConfirmLending}
               className="w-full bg-white text-black py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.25em] transition-all hover:bg-gray-200 flex items-center justify-center gap-4 group shadow-2xl shadow-white/5 cursor-pointer"
             >
               Confirm Lending
