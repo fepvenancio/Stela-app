@@ -38,7 +38,7 @@ export function ModeToggle({ value, onChange, lendingCount, swapCount }: ModeTog
                   'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold tabular-nums',
                   isActive
                     ? 'bg-accent/30 text-accent'
-                    : 'bg-edge/30 text-gray-500',
+                    : 'bg-white/[0.1] text-gray-500',
                 )}
               >
                 {tab.count}

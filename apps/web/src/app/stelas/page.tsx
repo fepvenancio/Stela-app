@@ -357,7 +357,7 @@ function PositionRow({ ins, userAddress }: { ins: EnrichedInscription & { shareB
   }
 
   const variantStyles = {
-    repay: 'bg-green-500/10 text-aurora border-aurora/25 hover:bg-green-500/20 hover:border-aurora/40',
+    repay: 'bg-green-500/10 text-green-500 border-green-500/25 hover:bg-green-500/20 hover:border-green-500/40',
     claim: 'bg-accent/10 text-accent border-accent/25 hover:bg-accent/20 hover:border-accent/40',
     redeem: 'bg-accent/10 text-accent border-accent/25 hover:bg-accent/20 hover:border-accent/40',
   }
@@ -841,7 +841,7 @@ function NFTCollectionCard({
           )}
           {group.bestInterestRate && (
             <div className="min-w-[60px]">
-              <p className="text-xs text-aurora font-medium">{group.bestInterestRate}%</p>
+              <p className="text-xs text-green-500 font-medium">{group.bestInterestRate}%</p>
               <p className="text-[9px] text-gray-500 uppercase tracking-wider">Lowest Rate</p>
             </div>
           )}

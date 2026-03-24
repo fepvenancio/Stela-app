@@ -149,7 +149,7 @@ export function OffchainMatchListRow({
               <span className="text-[8px] text-gray-400 uppercase">D</span>
               <AssetCell assets={debtAssets} />
             </div>
-            <div className="text-edge/40">|</div>
+            <div className="text-gray-600">|</div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="text-[8px] text-gray-400 uppercase">C</span>
               <AssetCell assets={collateralAssets} />
@@ -241,7 +241,7 @@ export function OnchainMatchListRow({
               <span className="text-[8px] text-gray-400 uppercase">D</span>
               <AssetCell assets={debtAssets} />
             </div>
-            <div className="text-edge/40">|</div>
+            <div className="text-gray-600">|</div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="text-[8px] text-gray-400 uppercase">C</span>
               <AssetCell assets={collateralAssets} />

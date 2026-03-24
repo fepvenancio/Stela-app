@@ -76,7 +76,7 @@ export function AuctionPrice({
         {pctOfDebt.toFixed(1)}% of original debt
       </div>
       {/* Declining price bar */}
-      <div className="h-2 w-full rounded-full bg-edge/20 overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-white/[0.08] overflow-hidden">
         <div
           className="h-full rounded-full bg-accent transition-all duration-1000"
           style={{ width: `${Math.min(100, pctOfDebt)}%` }}

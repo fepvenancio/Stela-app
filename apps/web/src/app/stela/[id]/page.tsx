@@ -41,8 +41,8 @@ function detectIdType(id: string): IdType {
 /* ── Role-colored asset display ─────────────────────────── */
 
 const ROLE_META = {
-  debt: { label: 'Borrow', dot: 'bg-nebula', text: 'text-nebula', bg: 'bg-nebula/8', border: 'border-nebula/20' },
-  interest: { label: 'Interest', dot: 'bg-green-500', text: 'text-aurora', bg: 'bg-green-500/8', border: 'border-aurora/20' },
+  debt: { label: 'Borrow', dot: 'bg-accent', text: 'text-accent', bg: 'bg-accent/8', border: 'border-accent/20' },
+  interest: { label: 'Interest', dot: 'bg-green-500', text: 'text-green-500', bg: 'bg-green-500/8', border: 'border-green-500/20' },
   collateral: { label: 'Collateral', dot: 'bg-accent', text: 'text-accent', bg: 'bg-accent/8', border: 'border-accent/20' },
 } as const
 
@@ -84,7 +84,7 @@ function AssetSection({ role, assets, isLoading }: { role: AssetRole; assets: Di
       </div>
       <div className="flex flex-wrap gap-1.5">
         {isLoading ? (
-          <Skeleton className="h-8 w-28 rounded-full bg-edge/20" />
+          <Skeleton className="h-8 w-28 rounded-full bg-white/[0.08]" />
         ) : assets.length > 0 ? (
           assets.map((a, i) => <AssetPillDisplay key={`${role}-${i}`} asset={a} />)
         ) : (
@@ -198,7 +198,7 @@ function OrderView({ id }: { id: string }) {
       }
       sidebarTitle="Offer Actions"
       sidebarActions={
-        isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
+        isLoading ? <Skeleton className="h-24 w-full bg-white/[0.08]" /> : (
           <OrderActions
             orderId={id}
             status={order?.status ?? 'cancelled'}
@@ -516,7 +516,7 @@ function InscriptionView({ id }: { id: string }) {
       }
       sidebarTitle="Vault Actions"
       sidebarActions={
-        isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
+        isLoading ? <Skeleton className="h-24 w-full bg-white/[0.08]" /> : (
           <>
             <InscriptionActions
               inscriptionId={id}
@@ -615,8 +615,8 @@ function StelaLayout({
               <div className="flex items-center gap-2">
                 {badges}
                 {multiLender && (
-                  <span className="inline-flex items-center gap-1 text-[9px] text-cosmic uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full bg-cosmic/8 border border-cosmic/20">
-                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-cosmic" aria-hidden="true">
+                  <span className="inline-flex items-center gap-1 text-[9px] text-accent uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full bg-accent/8 border border-accent/20">
+                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-accent" aria-hidden="true">
                       <circle cx="4" cy="5" r="2" /><circle cx="10" cy="5" r="2" />
                       <path d="M1 12c0-2 1.5-3 3-3s3 1 3 3" /><path d="M7 12c0-2 1.5-3 3-3s3 1 3 3" />
                     </svg>
@@ -630,7 +630,7 @@ function StelaLayout({
             <div className="grid sm:grid-cols-2 gap-8">
               <div className="space-y-1">
                 <span className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-bold">Lender Yield</span>
-                {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
+                {isLoading ? <Skeleton className="h-9 w-28 bg-white/[0.08]" /> : (
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold text-accent">
                       {roiInfo ? `+${roiInfo.yieldPct}%` : 'Variable'}
@@ -641,7 +641,7 @@ function StelaLayout({
               </div>
               <div className="space-y-1">
                 <span className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-bold">Duration</span>
-                {isLoading ? <Skeleton className="h-9 w-28 bg-edge/20" /> : (
+                {isLoading ? <Skeleton className="h-9 w-28 bg-white/[0.08]" /> : (
                   <div>
                     <span className="text-3xl font-bold text-white">{duration ?? '--'}</span>
                     <span className="text-[9px] text-gray-400 uppercase tracking-widest block mt-0.5">{durationLabel}</span>

@@ -133,7 +133,7 @@ export default function OrderPage({ params }: OrderPageProps) {
             <div className="grid sm:grid-cols-2 gap-12">
               <div className="space-y-1">
                 <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Total Reward for Lender</span>
-                {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
+                {isLoading ? <Skeleton className="h-10 w-32 bg-white/[0.08]" /> : (
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold text-accent">
                       {roiInfo ? `+${roiInfo.yieldPct}%` : 'Variable'}
@@ -148,7 +148,7 @@ export default function OrderPage({ params }: OrderPageProps) {
 
               <div className="space-y-1">
                 <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Loan Duration</span>
-                {isLoading ? <Skeleton className="h-10 w-32 bg-edge/20" /> : (
+                {isLoading ? <Skeleton className="h-10 w-32 bg-white/[0.08]" /> : (
                   <div className="flex flex-col">
                     <span className="text-4xl font-bold text-white">
                       {formatDuration(Number(duration))}
@@ -189,11 +189,11 @@ export default function OrderPage({ params }: OrderPageProps) {
               ] as const).map(({ role, assets }) => (
                 <div key={role} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3 shrink-0 w-32">
-                    <div className={`w-2 h-2 rounded-full ${role === 'debt' ? 'bg-nebula' : role === 'interest' ? 'bg-green-500' : 'bg-accent'}`} />
+                    <div className={`w-2 h-2 rounded-full ${role === 'debt' ? 'bg-accent' : role === 'interest' ? 'bg-green-500' : 'bg-accent'}`} />
                     <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">{role}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 sm:justify-end flex-1">
-                    {isLoading ? <Skeleton className="h-8 w-24 bg-edge/20" /> : assets.length > 0 ? (
+                    {isLoading ? <Skeleton className="h-8 w-24 bg-white/[0.08]" /> : assets.length > 0 ? (
                       assets.map((ra, idx) => {
                         const token = findTokenByAddress(ra.asset_address)
                         const formattedValue = ra.asset_type === 'ERC721' ? undefined : formatTokenValue(ra.value, token?.decimals ?? 18)
@@ -250,7 +250,7 @@ export default function OrderPage({ params }: OrderPageProps) {
               </div>
 
               <div className="pt-4 border-t border-accent/10">
-                {isLoading ? <Skeleton className="h-24 w-full bg-edge/20" /> : (
+                {isLoading ? <Skeleton className="h-24 w-full bg-white/[0.08]" /> : (
                   <Web3ActionWrapper message="Connect your wallet to make an offer">
                     {isPending && !isOwner ? (
                       isMultiLender ? (
@@ -394,7 +394,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                   <span className="text-[10px] text-gray-400 uppercase">Time Remaining</span>
                   <span
                     suppressHydrationWarning
-                    className={`text-xs font-mono ${countdown.isExpired ? 'text-nova' : countdown.isUrgent ? 'text-nova' : countdown.isAtRisk ? 'text-accent' : 'text-aurora'}`}
+                    className={`text-xs font-mono ${countdown.isExpired ? 'text-nova' : countdown.isUrgent ? 'text-nova' : countdown.isAtRisk ? 'text-accent' : 'text-green-500'}`}
                   >
                     {countdown.formatted}
                   </span>

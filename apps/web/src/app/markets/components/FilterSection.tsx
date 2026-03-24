@@ -79,7 +79,7 @@ export function FilterSection({
             ))}
           </ToggleGroup>
 
-          <div className="w-px h-5 bg-edge/30 shrink-0" />
+          <div className="w-px h-5 bg-white/[0.1] shrink-0" />
 
           <ToggleGroup
             type="single"

@@ -26,7 +26,7 @@ const POPULAR_SYMBOLS = ['ETH', 'STRK', 'USDC', 'USDT', 'WBTC']
 function CustomTokenAvatar({ size = 36 }: { size?: number }) {
   return (
     <div
-      className="relative shrink-0 rounded-full flex items-center justify-center bg-edge-bright text-gray-400"
+      className="relative shrink-0 rounded-full flex items-center justify-center bg-white/10 text-gray-400"
       style={{ width: size, height: size, fontSize: size * 0.45 }}
     >
       <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">

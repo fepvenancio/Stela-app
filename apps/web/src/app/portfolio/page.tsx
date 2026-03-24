@@ -78,7 +78,7 @@ function SectionHeading({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-surface/20 border-b border-border/20">
       <span className="text-[11px] font-mono uppercase tracking-wider text-gray-400">{label}</span>
-      <div className="flex-1 h-px bg-edge/15" />
+      <div className="flex-1 h-px bg-white/[0.08]" />
     </div>
   )
 }
@@ -86,8 +86,8 @@ function SectionHeading({ label }: { label: string }) {
 /* Tab config — full static class strings so Tailwind doesn't purge them */
 const TAB_CONFIG = [
   { value: 'active', label: 'Active', activeClass: 'data-[state=active]:text-accent data-[state=active]:after:bg-accent' },
-  { value: 'pending', label: 'Pending', activeClass: 'data-[state=active]:text-aurora data-[state=active]:after:bg-green-500' },
-  { value: 'history', label: 'History', activeClass: 'data-[state=active]:text-cosmic data-[state=active]:after:bg-cosmic' },
+  { value: 'pending', label: 'Pending', activeClass: 'data-[state=active]:text-green-500 data-[state=active]:after:bg-green-500' },
+  { value: 'history', label: 'History', activeClass: 'data-[state=active]:text-gray-400 data-[state=active]:after:bg-gray-400' },
 ] as const
 
 const PENDING_ORDER_STATUSES = new Set(['pending', 'matched'])

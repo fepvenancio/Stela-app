@@ -281,7 +281,7 @@ function TokenPairsSection({ ownerFilter }: { ownerFilter: OwnerFilter }) {
         <div className="mt-6 rounded-xl border border-border/30 overflow-clip">
           <div className="flex items-center gap-3 px-4 py-2 bg-surface/20 border-b border-border/20">
             <span className="text-[11px] font-mono uppercase tracking-wider text-gray-400">Your Positions</span>
-            <div className="flex-1 h-px bg-edge/15" />
+            <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
           <ListingTableHeader />
           {allPositions.map((ins) => (
@@ -357,7 +357,7 @@ function PositionRow({ ins, userAddress }: { ins: EnrichedInscription & { shareB
   }
 
   const variantStyles = {
-    repay: 'bg-green-500/10 text-aurora border-aurora/25 hover:bg-green-500/20 hover:border-aurora/40',
+    repay: 'bg-green-500/10 text-green-500 border-green-500/25 hover:bg-green-500/20 hover:border-green-500/40',
     claim: 'bg-accent/10 text-accent border-accent/25 hover:bg-accent/20 hover:border-accent/40',
     redeem: 'bg-accent/10 text-accent border-accent/25 hover:bg-accent/20 hover:border-accent/40',
   }
@@ -841,7 +841,7 @@ function NFTCollectionCard({
           )}
           {group.bestInterestRate && (
             <div className="min-w-[60px]">
-              <p className="text-xs text-aurora font-medium">{group.bestInterestRate}%</p>
+              <p className="text-xs text-green-500 font-medium">{group.bestInterestRate}%</p>
               <p className="text-[9px] text-gray-500 uppercase tracking-wider">Lowest Rate</p>
             </div>
           )}
@@ -1049,9 +1049,9 @@ function MarketsInfoSection() {
       {/* Trust signals */}
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-gray-400/60 uppercase tracking-widest">
         <span>Open Source</span>
-        <span className="text-edge/40">|</span>
+        <span className="text-gray-600">|</span>
         <span>Immutable</span>
-        <span className="text-edge/40">|</span>
+        <span className="text-gray-600">|</span>
         <span>StarkNet</span>
       </div>
     </div>

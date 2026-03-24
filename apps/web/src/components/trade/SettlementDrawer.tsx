@@ -58,7 +58,7 @@ export type SettlementDrawerProps = {
 function StepIcon({ status }: { status: StepStatus }) {
   switch (status) {
     case 'idle':
-      return <Circle className="w-4 h-4 text-edge shrink-0" />
+      return <Circle className="w-4 h-4 text-gray-600 shrink-0" />
     case 'active':
       return <Loader2 className="w-4 h-4 text-accent animate-spin shrink-0" />
     case 'success':

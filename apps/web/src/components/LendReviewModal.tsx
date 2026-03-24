@@ -251,7 +251,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
           ))}
         </div>
 
-        <Separator className="bg-edge/30" />
+        <Separator className="bg-white/[0.1]" />
 
         {/* Total debt to provide */}
         <div className="space-y-2">

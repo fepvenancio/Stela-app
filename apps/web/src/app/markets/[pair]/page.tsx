@@ -404,21 +404,21 @@ function PairDetailContent({ debtToken, collateralToken }: { debtToken: string; 
         {/* Stats bar */}
         <div className="flex items-center gap-4 sm:gap-6 mt-4 p-3 rounded-xl bg-surface/20 border border-border/30">
           <div>
-            <p className={cn('text-xs font-medium font-mono tabular-nums', stats.bestYield !== null ? 'text-aurora' : 'text-gray-400')}>
+            <p className={cn('text-xs font-medium font-mono tabular-nums', stats.bestYield !== null ? 'text-green-500' : 'text-gray-400')}>
               {stats.bestYield !== null ? `${stats.bestYield.toFixed(1)}%` : '--'}
             </p>
             <p className="text-[9px] text-gray-500 uppercase tracking-wider">
               {mode === 'lending' ? 'Best APR' : 'Best Rate'}
             </p>
           </div>
-          <div className="w-px h-6 bg-edge/30" />
+          <div className="w-px h-6 bg-white/[0.1]" />
           <div>
             <p className="text-xs text-white font-medium font-mono tabular-nums">
               {stelaCount}
             </p>
             <p className="text-[9px] text-gray-500 uppercase tracking-wider">Orders</p>
           </div>
-          <div className="w-px h-6 bg-edge/30" />
+          <div className="w-px h-6 bg-white/[0.1]" />
           <div>
             <p className="text-xs text-white font-medium font-mono tabular-nums">{stats.totalActive}</p>
             <p className="text-[9px] text-gray-500 uppercase tracking-wider">Active</p>

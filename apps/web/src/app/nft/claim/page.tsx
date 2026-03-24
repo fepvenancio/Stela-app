@@ -151,7 +151,7 @@ export default function GenesisClaimPage() {
 
             {pos.isLoadingTokenIds && (
               <div className="flex justify-center py-4">
-                <Skeleton className="h-6 w-32 bg-edge/20" />
+                <Skeleton className="h-6 w-32 bg-white/[0.08]" />
               </div>
             )}
 

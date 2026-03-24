@@ -54,7 +54,7 @@ function CollectionAvatar({
   if (image && !imgError) {
     return (
       <div
-        className="relative shrink-0 rounded-lg overflow-hidden bg-edge/20"
+        className="relative shrink-0 rounded-lg overflow-hidden bg-white/[0.08]"
         style={{ width: size, height: size }}
       >
         <img

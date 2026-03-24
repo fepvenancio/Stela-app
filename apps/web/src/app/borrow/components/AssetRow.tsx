@@ -12,15 +12,15 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
   debt: {
     label: 'You Receive',
     short: 'You Receive',
-    color: 'nebula',
-    bgClass: 'bg-nebula/10',
-    borderClass: 'border-nebula/25',
-    textClass: 'text-nebula',
+    color: 'accent',
+    bgClass: 'bg-accent/10',
+    borderClass: 'border-accent/25',
+    textClass: 'text-accent',
   },
   collateral: {
     label: 'You Lock',
     short: 'You Lock',
-    color: 'star',
+    color: 'accent',
     bgClass: 'bg-accent/10',
     borderClass: 'border-accent/25',
     textClass: 'text-accent',
@@ -28,10 +28,10 @@ const ROLE_META: Record<AssetRole, { label: string; short: string; color: string
   interest: {
     label: 'You Pay Interest',
     short: 'You Pay Interest',
-    color: 'aurora',
+    color: 'green-500',
     bgClass: 'bg-green-500/10',
-    borderClass: 'border-aurora/25',
-    textClass: 'text-aurora',
+    borderClass: 'border-green-500/25',
+    textClass: 'text-green-500',
   },
 }
 

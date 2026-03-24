@@ -66,7 +66,7 @@ function InfoCard({ label, children, mono }: { label: string; children: React.Re
 function StatusNode({ label, description, color = 'star', icon }: { label: string; description?: string; color?: string; icon?: React.ReactNode }) {
   const colorMap: Record<string, string> = {
     star: 'text-accent border-accent/20',
-    aurora: 'text-aurora border-aurora/20',
+    aurora: 'text-green-500 border-green-500/20',
     nova: 'text-nova border-nova/20',
     ash: 'text-gray-500 border-border/40',
     chalk: 'text-white border-border/40'
@@ -182,7 +182,7 @@ export default function DocsPage() {
                   </div>
                   <div className="space-y-2">
                      {[1,2,3].map(i => (
-                       <div key={i} className="h-1 bg-edge/30 rounded-full w-full" style={{ width: `${100 - i*20}%`, margin: '0 auto' }} />
+                       <div key={i} className="h-1 bg-white/[0.1] rounded-full w-full" style={{ width: `${100 - i*20}%`, margin: '0 auto' }} />
                      ))}
                   </div>
                </div>
@@ -614,7 +614,7 @@ export default function DocsPage() {
         <section className="relative">
           <SectionHeading>Fee Structure</SectionHeading>
           <div className="bg-surface border border-border/20 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-4 gap-px bg-edge/10">
+            <div className="grid grid-cols-4 gap-px bg-white/[0.06]">
               <div className="bg-surface/60 p-5">
                 <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Event</span>
               </div>
@@ -629,7 +629,7 @@ export default function DocsPage() {
               </div>
             </div>
             {/* Settlement (Lending) */}
-            <div className="grid grid-cols-4 gap-px bg-edge/10">
+            <div className="grid grid-cols-4 gap-px bg-white/[0.06]">
               <div className="bg-surface/10 p-5">
                 <span className="text-sm text-white font-bold uppercase tracking-widest">Settlement (Lending)</span>
               </div>
@@ -644,7 +644,7 @@ export default function DocsPage() {
               </div>
             </div>
             {/* Swap */}
-            <div className="grid grid-cols-4 gap-px bg-edge/10">
+            <div className="grid grid-cols-4 gap-px bg-white/[0.06]">
               <div className="bg-surface/10 p-5">
                 <span className="text-sm text-white font-bold uppercase tracking-widest">Swap</span>
               </div>
@@ -659,7 +659,7 @@ export default function DocsPage() {
               </div>
             </div>
             {/* Redemption */}
-            <div className="grid grid-cols-4 gap-px bg-edge/10">
+            <div className="grid grid-cols-4 gap-px bg-white/[0.06]">
               <div className="bg-surface/10 p-5">
                 <span className="text-sm text-white font-bold uppercase tracking-widest">Redemption</span>
               </div>
@@ -674,7 +674,7 @@ export default function DocsPage() {
               </div>
             </div>
             {/* Liquidation */}
-            <div className="grid grid-cols-4 gap-px bg-edge/10">
+            <div className="grid grid-cols-4 gap-px bg-white/[0.06]">
               <div className="bg-surface/10 p-5">
                 <span className="text-sm text-white font-bold uppercase tracking-widest">Liquidation</span>
               </div>
@@ -919,7 +919,7 @@ export default function DocsPage() {
                </div>
                <div className="bg-[#050505]/50 border border-border/20 rounded-lg p-5">
                   <span className="text-[10px] text-gray-400 uppercase tracking-widest block mb-2">Status</span>
-                  <span className="text-aurora font-mono text-sm uppercase">Active</span>
+                  <span className="text-green-500 font-mono text-sm uppercase">Active</span>
                </div>
             </div>
           </div>

@@ -418,8 +418,8 @@ function TradeForm({
 
         <TokenBox
           label={isLend ? "I'll borrow" : 'I receive'}
-          accentClass="text-aurora"
-          borderClass="border-aurora/20"
+          accentClass="text-green-500"
+          borderClass="border-green-500/20"
           bgClass="bg-green-500/5"
           asset={receiveAsset}
           balance={receiveBalance}
@@ -431,9 +431,9 @@ function TradeForm({
           <div className="pt-1">
             <TokenBox
               label="Interest"
-              accentClass="text-nebula"
-              borderClass="border-nebula/20"
-              bgClass="bg-nebula/5"
+              accentClass="text-accent"
+              borderClass="border-accent/20"
+              bgClass="bg-accent/5"
               asset={interestAsset}
               balance={interestBalance}
               onTokenClick={() => setOpenSelector('interest')}
@@ -555,26 +555,26 @@ function TradeForm({
           <div className="flex items-center justify-center gap-3 text-[11px] text-gray-500">
             {!hasFullMatch && (
               <>
-                <span className={form.mode === 'offchain' ? 'text-aurora' : 'text-accent'}>
+                <span className={form.mode === 'offchain' ? 'text-green-500' : 'text-accent'}>
                   {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
                 </span>
-                <span className="text-edge">·</span>
+                <span className="text-gray-600">·</span>
               </>
             )}
-            <span className={feePreview.savingsBps > 0 ? 'text-aurora' : ''}>
+            <span className={feePreview.savingsBps > 0 ? 'text-green-500' : ''}>
               {feeText} fee
               {feePreview.savingsBps > 0 && <span className="text-gray-500 ml-0.5">(-{feePreview.discountPercent}%)</span>}
             </span>
             {isLend && !hasFullMatch && (
               <>
-                <span className="text-edge">·</span>
+                <span className="text-gray-600">·</span>
                 <span>{formatDurationHuman(Number(form.duration))}</span>
               </>
             )}
             {form.roiInfo && (
               <>
-                <span className="text-edge">·</span>
-                <span className="text-aurora font-medium">+{form.roiInfo.yieldPct}%</span>
+                <span className="text-gray-600">·</span>
+                <span className="text-green-500 font-medium">+{form.roiInfo.yieldPct}%</span>
               </>
             )}
           </div>
@@ -794,7 +794,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
           </div>
 
           {/* Divider */}
-          <div className="hidden md:block w-px self-stretch bg-edge/30" />
+          <div className="hidden md:block w-px self-stretch bg-white/[0.08]" />
 
           {/* Deadline / Expiry */}
           <div className="space-y-3 flex-1 min-w-0">
@@ -865,7 +865,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
                 </div>
               </div>
 
-              <div className="w-px h-5 bg-edge/40 hidden sm:block" />
+              <div className="w-px h-5 bg-white/10 hidden sm:block" />
 
               {/* Funding */}
               <div className="flex items-center gap-2">
@@ -985,7 +985,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
             {form.roiInfo && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Est. Yield</span>
-                <span className="text-aurora font-bold">+{form.roiInfo.yieldPct}%</span>
+                <span className="text-green-500 font-bold">+{form.roiInfo.yieldPct}%</span>
               </div>
             )}
             {form.matchesVisible && form.hasMatches && (
@@ -1201,7 +1201,7 @@ function CollectionOfferForm() {
           >
             {selectedCollection ? (
               <>
-                <div className="relative shrink-0 rounded-lg overflow-hidden bg-edge/20" style={{ width: 40, height: 40 }}>
+                <div className="relative shrink-0 rounded-lg overflow-hidden bg-white/[0.06]" style={{ width: 40, height: 40 }}>
                   {selectedCollection.image ? (
                     <img
                       src={selectedCollection.image}
@@ -1244,8 +1244,8 @@ function CollectionOfferForm() {
         {/* Debt (what lender offers) */}
         <TokenBox
           label="I'll lend"
-          accentClass="text-aurora"
-          borderClass="border-aurora/20"
+          accentClass="text-green-500"
+          borderClass="border-green-500/20"
           bgClass="bg-green-500/5"
           asset={debtAsset}
           balance={debtBalance}
@@ -1258,9 +1258,9 @@ function CollectionOfferForm() {
         <div className="pt-1">
           <TokenBox
             label="Interest"
-            accentClass="text-nebula"
-            borderClass="border-nebula/20"
-            bgClass="bg-nebula/5"
+            accentClass="text-accent"
+            borderClass="border-accent/20"
+            bgClass="bg-accent/5"
             asset={interestAsset}
             balance={interestBalance}
             onTokenClick={() => setOpenSelector('interest')}
@@ -1336,15 +1336,15 @@ function CollectionOfferForm() {
 
         {/* Info strip */}
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
-          <span className="text-aurora">Gasless</span>
-          <span className="text-edge">·</span>
-          <span className={feePreview.savingsBps > 0 ? 'text-aurora' : ''}>
+          <span className="text-green-500">Gasless</span>
+          <span className="text-gray-600">·</span>
+          <span className={feePreview.savingsBps > 0 ? 'text-green-500' : ''}>
             {feeText} fee
             {feePreview.savingsBps > 0 && <span className="text-gray-500 ml-0.5">(-{feePreview.discountPercent}%)</span>}
           </span>
-          <span className="text-edge">·</span>
+          <span className="text-gray-600">·</span>
           <span>{formatDurationHuman(Number(durationPreset))}</span>
-          <span className="text-edge">·</span>
+          <span className="text-gray-600">·</span>
           <span className="text-gray-400">Any NFT in collection</span>
         </div>
       </div>
@@ -1501,7 +1501,7 @@ function CollectionOfferBrowser() {
                     <span className="text-xs text-gray-400 font-mono">{formatAddress(offer.collection_address)}</span>
                   )}
                 </div>
-                <span className="text-edge text-xs">|</span>
+                <span className="text-gray-600 text-xs">|</span>
                 <div className="flex items-center gap-1">
                   {debtToken && <TokenAvatar token={debtToken} size={14} />}
                   <span className="text-xs text-white">
@@ -1511,10 +1511,10 @@ function CollectionOfferBrowser() {
                 </div>
                 {intToken && intValue && (
                   <>
-                    <span className="text-edge text-xs">+</span>
+                    <span className="text-gray-600 text-xs">+</span>
                     <div className="flex items-center gap-1">
                       <TokenAvatar token={intToken} size={14} />
-                      <span className="text-xs text-nebula">
+                      <span className="text-xs text-accent">
                         {formatTokenValue(intValue, intToken.decimals)} {intToken.symbol}
                       </span>
                     </div>
@@ -1802,9 +1802,9 @@ function InfoSections({ activeTab }: { activeTab: 'swap' | 'lend' | 'advanced' }
       {/* Trust signals */}
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[11px] text-gray-400/60 uppercase tracking-widest">
         <span>Open Source</span>
-        <span className="text-edge/40">|</span>
+        <span className="text-gray-600/40">|</span>
         <span>Immutable</span>
-        <span className="text-edge/40">|</span>
+        <span className="text-gray-600/40">|</span>
         <span>StarkNet</span>
       </div>
     </div>
@@ -1897,7 +1897,7 @@ function TradeContent() {
                 onClick={() => setCollectionView(v)}
                 className={`py-1.5 px-3 rounded-sm text-[11px] font-medium transition-colors cursor-pointer ${
                   collectionView === v
-                    ? 'bg-green-500/10 text-aurora border border-aurora/25'
+                    ? 'bg-green-500/10 text-green-500 border border-green-500/25'
                     : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
                 }`}
               >

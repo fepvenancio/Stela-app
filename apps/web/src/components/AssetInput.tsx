@@ -115,7 +115,7 @@ export function AssetInput({ index, value, onChange, onRemove, balances }: Asset
                 </>
               ) : isCustom && value.asset ? (
                 <>
-                  <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center bg-edge-bright text-gray-400 text-[10px]">
+                  <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center bg-white/10 text-gray-400 text-[10px]">
                     ?
                   </div>
                   <span className="text-white font-mono text-xs truncate">

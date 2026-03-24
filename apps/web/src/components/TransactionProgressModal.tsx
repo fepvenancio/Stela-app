@@ -24,7 +24,7 @@ export interface TransactionProgressModalProps {
 function StepIcon({ status }: { status: StepState['status'] }) {
   switch (status) {
     case 'idle':
-      return <Circle className="w-5 h-5 text-edge" />
+      return <Circle className="w-5 h-5 text-gray-600" />
     case 'active':
       return <Loader2 className="w-5 h-5 text-accent animate-spin" />
     case 'success':

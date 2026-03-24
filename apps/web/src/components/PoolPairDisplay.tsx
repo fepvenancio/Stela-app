@@ -91,7 +91,7 @@ export function PoolPairDisplay({ debtAssets, collateralAssets, interestAssets, 
           )}
           {intAmount && (
             <>
-              <span className="text-edge/50">→</span>
+              <span className="text-gray-600">→</span>
               <span className="text-green-500/80">{intAmount}</span>
             </>
           )}

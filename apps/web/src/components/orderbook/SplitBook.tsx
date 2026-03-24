@@ -388,7 +388,7 @@ function LendingSplit({
           onRowClick={onRowClick}
           selectedId={selectedId}
         />
-        <div className="w-px bg-edge/15 shrink-0" />
+        <div className="w-px bg-white/[0.08] shrink-0" />
         <BookPanel
           title={`Borrow ${quoteSymbol}`}
           subtitle={`Lend ${quoteSymbol} to earn APR`}
@@ -423,7 +423,7 @@ function LendingSplit({
           onRowClick={onRowClick}
           selectedId={selectedId}
         />
-        <div className="h-px bg-edge/15" />
+        <div className="h-px bg-white/[0.08]" />
         <BookPanel
           title={`Borrow ${quoteSymbol}`}
           subtitle={`Lend ${quoteSymbol} to earn APR`}
@@ -492,7 +492,7 @@ function SwapSplit({ pairData }: { pairData: OrderBookResponse }) {
           totalVolume={pairData.swaps.totalAskVolume}
           maxRows={MAX_ROWS}
         />
-        <div className="w-px bg-edge/15 shrink-0" />
+        <div className="w-px bg-white/[0.08] shrink-0" />
         <BookPanel
           title={`Buy ${baseSymbol}`}
           side="bid"
