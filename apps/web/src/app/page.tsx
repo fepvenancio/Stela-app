@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
-export default function HomePage() {
-  redirect('/trade')
+export default function Home() {
+  redirect('/dashboard')
 }
