@@ -89,11 +89,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/trade',
-        destination: '/dashboard',
-        permanent: true,
-      },
-      {
         source: '/markets',
         destination: '/stelas',
         permanent: true,
