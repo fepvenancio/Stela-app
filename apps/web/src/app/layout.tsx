@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, IBM_Plex_Mono, Cinzel } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { Providers } from './providers'
 import { AppShell } from '@/components/AppShell'
@@ -10,8 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
-const ibmMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-ibm-mono', display: 'swap' })
-const cinzel = Cinzel({ subsets: ['latin'], weight: ['400', '600', '700'], variable: '--font-cinzel', display: 'swap' })
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-jetbrains', display: 'swap' })
 
 export const metadata: Metadata = {
   title: {
@@ -45,11 +44,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${ibmMono.variable} ${cinzel.variable} font-sans bg-void text-chalk antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-[#050505] text-white antialiased`}
       >
         <Providers>
           <TooltipProvider>
-            <div className="starfield" aria-hidden="true" />
             <AppShell>
               <ErrorBoundary>{children}</ErrorBoundary>
             </AppShell>
