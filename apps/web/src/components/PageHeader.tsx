@@ -21,7 +21,7 @@ export function PageHeader({ title, description, cta }: PageHeaderProps) {
         )}
       </div>
       {cta && (
-        <Button asChild variant="gold" size="sm" className="shrink-0 gap-1.5 rounded-full px-5">
+        <Button asChild variant="default" size="sm" className="shrink-0 gap-1.5 rounded-full px-5">
           <Link href={cta.href}>
             <Plus className="size-4" />
             {cta.label}

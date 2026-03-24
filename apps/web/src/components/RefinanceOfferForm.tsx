@@ -329,7 +329,7 @@ export function RefinanceOfferForm({ inscriptionId, onClose }: RefinanceOfferFor
           Cancel
         </Button>
         <Button
-          variant="gold"
+          variant="default"
           className="flex-1 uppercase tracking-[0.15em] text-sm"
           onClick={handleSubmit}
           disabled={isPending}

@@ -181,7 +181,7 @@ function LendTab({
       {connected ? (
         bestOrder && onLend ? (
           <Button
-            variant="gold"
+            variant="default"
             size="lg"
             className="w-full"
             disabled={isLendingPending}
@@ -190,7 +190,7 @@ function LendTab({
             {isLendingPending ? 'Signing...' : `Lend at ${bestApr?.toFixed(1)}% APR`}
           </Button>
         ) : bestApr !== null ? (
-          <Button variant="gold" size="lg" className="w-full" asChild>
+          <Button variant="default" size="lg" className="w-full" asChild>
             <Link href={`/trade?pair=${pairParam}&action=lend`}>
               Lend at Best Rate
             </Link>
@@ -320,7 +320,7 @@ function BorrowTab({
 
       {/* Action */}
       {connected ? (
-        <Button variant="aurora" size="lg" className="w-full" asChild>
+        <Button variant="accent" size="lg" className="w-full" asChild>
           <Link href={`/trade?pair=${pairParam}&action=borrow`}>
             Create Borrow Order
           </Link>
@@ -413,7 +413,7 @@ function SwapTab({
       {/* Action */}
       {connected ? (
         bestRate !== null ? (
-          <Button variant="gold" size="lg" className="w-full" asChild>
+          <Button variant="default" size="lg" className="w-full" asChild>
             <Link href={`/trade?pair=${pairParam}&action=swap`}>
               Swap at Best Rate
             </Link>

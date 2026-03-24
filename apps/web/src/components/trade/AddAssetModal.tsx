@@ -225,7 +225,7 @@ export function AddAssetModal({
             </div>
 
             <Button
-              variant="gold"
+              variant="default"
               size="lg"
               className="w-full"
               onClick={handleAdd}

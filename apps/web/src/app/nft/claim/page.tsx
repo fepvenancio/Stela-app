@@ -66,7 +66,7 @@ export default function GenesisClaimPage() {
               </svg>
             </div>
             <p className="text-dust text-sm mb-4">You don&apos;t own any Genesis NFTs yet.</p>
-            <Button asChild variant="gold" className="rounded-full px-8">
+            <Button asChild variant="default" className="rounded-full px-8">
               <Link href="/nft">Mint Genesis NFT</Link>
             </Button>
           </div>

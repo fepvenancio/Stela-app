@@ -230,7 +230,7 @@ export function SellPositionModal({
               Cancel
             </Button>
             <Button
-              variant="gold"
+              variant="default"
               onClick={handleSell}
               disabled={!canSubmit}
               className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"

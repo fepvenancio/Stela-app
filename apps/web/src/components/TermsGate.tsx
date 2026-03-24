@@ -54,7 +54,7 @@ export function TermsGate() {
               This signature is free and does not trigger a transaction.
             </p>
             <Button
-              variant="gold"
+              variant="default"
               onClick={signTerms}
               disabled={signing}
               className="shrink-0 min-w-[140px]"

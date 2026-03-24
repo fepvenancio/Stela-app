@@ -101,7 +101,7 @@ export function ShareListingsSection({ inscriptionId }: ShareListingsSectionProp
                   </Button>
                 ) : !expired && address ? (
                   <Button
-                    variant="aurora"
+                    variant="accent"
                     size="sm"
                     onClick={() => setBuyListing(listing)}
                     className="text-[10px] uppercase tracking-widest"

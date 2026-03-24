@@ -7,13 +7,13 @@ import { Toggle as TogglePrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const toggleVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-star/15 data-[state=on]:text-star data-[state=on]:border-star/40 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:border-star focus-visible:ring-star/50 focus-visible:ring-[3px] outline-none whitespace-nowrap",
+  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent/15 data-[state=on]:text-accent data-[state=on]:border-accent/40 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:border-accent focus-visible:ring-accent/50 focus-visible:ring-[3px] outline-none whitespace-nowrap",
   {
     variants: {
       variant: {
-        default: "bg-transparent text-dust hover:bg-white/5 hover:text-chalk",
+        default: "bg-transparent text-gray-400 hover:bg-white/5 hover:text-white",
         outline:
-          "border border-edge bg-transparent text-dust shadow-xs hover:border-edge-bright hover:text-chalk data-[state=on]:border-star",
+          "border border-border bg-transparent text-gray-400 shadow-xs hover:border-white/20 hover:text-white data-[state=on]:border-accent",
       },
       size: {
         default: "h-9 px-2 min-w-9",

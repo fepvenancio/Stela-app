@@ -171,7 +171,7 @@ export function BuyShareModal({ open, onOpenChange, listing }: BuyShareModalProp
               Cancel
             </Button>
             <Button
-              variant="gold"
+              variant="default"
               onClick={handleBuy}
               disabled={isPending || expired || progress.open}
               className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"

@@ -511,7 +511,7 @@ function TradeForm({
         {hasTokens && (
           <Web3ActionWrapper message="Connect your wallet to trade" centered={false}>
             <Button
-              variant="gold"
+              variant="default"
               className="w-full uppercase tracking-[0.15em] text-sm"
               onClick={form.handleSubmit}
               disabled={isProcessing || form.isChecking}
@@ -583,7 +583,7 @@ function TradeForm({
         {/* Not ready — no tokens */}
         {!hasTokens && (
           <Web3ActionWrapper message="Connect your wallet to trade" centered={false}>
-            <Button variant="gold" className="w-full uppercase tracking-wider" disabled>
+            <Button variant="default" className="w-full uppercase tracking-wider" disabled>
               Select tokens
             </Button>
           </Web3ActionWrapper>
@@ -1009,7 +1009,7 @@ function AdvancedForm({ debtToken, collateralToken }: { debtToken: string | null
         <div className="mt-5">
           <Web3ActionWrapper message="Connect your wallet to create an inscription">
             <Button
-              variant="gold"
+              variant="default"
               size="lg"
               className="w-full h-14 uppercase tracking-[0.2em] text-sm shadow-[0_0_20px_rgba(232,168,37,0.15)] hover:shadow-[0_0_30px_rgba(232,168,37,0.25)] transition-all"
               onClick={form.handleSubmit}
@@ -1318,7 +1318,7 @@ function CollectionOfferForm() {
         {/* Submit */}
         <Web3ActionWrapper message="Connect your wallet to create a collection offer" centered={false}>
           <Button
-            variant="gold"
+            variant="default"
             className="w-full uppercase tracking-[0.15em] text-sm"
             onClick={handleSubmit}
             disabled={isPending}
@@ -1591,7 +1591,7 @@ function CollectionOfferBrowser() {
                     </div>
 
                     <Button
-                      variant="gold"
+                      variant="default"
                       className="w-full uppercase tracking-[0.15em] text-xs"
                       onClick={() => handleAccept(offer)}
                       disabled={isAccepting || !tokenId || acceptingId === offer.id}

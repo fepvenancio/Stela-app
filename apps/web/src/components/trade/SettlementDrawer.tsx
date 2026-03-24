@@ -542,7 +542,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
             {/* Pre-confirm: primary CTA */}
             {!showProgress && (
               <Button
-                variant="gold"
+                variant="default"
                 size="xl"
                 className="w-full"
                 onClick={handleConfirm}
@@ -563,7 +563,7 @@ export function SettlementDrawer(props: SettlementDrawerProps) {
             {/* Success: done button (auto-closes after 2s) */}
             {showProgress && isDone && (
               <Button
-                variant="aurora"
+                variant="accent"
                 size="xl"
                 className="w-full"
                 onClick={handleClose}

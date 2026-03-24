@@ -181,7 +181,7 @@ export function TransferSharesModal({ open, onOpenChange, inscriptionId, maxShar
               Cancel
             </Button>
             <Button
-              variant="gold"
+              variant="default"
               onClick={handleTransfer}
               disabled={!canSubmit}
               className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"

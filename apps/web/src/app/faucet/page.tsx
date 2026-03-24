@@ -146,7 +146,7 @@ function MintCard({
           )}
 
           <Button
-            variant="gold"
+            variant="default"
             onClick={handleMint}
             disabled={isPending || !address}
             className="h-9 px-6 uppercase tracking-widest text-xs"

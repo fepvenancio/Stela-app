@@ -297,7 +297,7 @@ export function LendReviewModal({ open, onOpenChange }: LendReviewModalProps) {
             Cancel
           </Button>
           <Button
-            variant="gold"
+            variant="default"
             onClick={handleConfirm}
             disabled={isPending || hasInsufficientBalance}
             className="px-6 rounded-xl font-bold shadow-lg shadow-star/20"

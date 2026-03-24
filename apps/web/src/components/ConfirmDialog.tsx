@@ -17,7 +17,7 @@ interface ConfirmDialogProps {
   title: string
   description: string
   confirmLabel: string
-  confirmVariant?: "gold" | "aurora" | "nova" | "cosmic" | "destructive"
+  confirmVariant?: "default" | "accent" | "destructive" | "secondary" | "outline" | "ghost"
   onConfirm: () => void | Promise<void>
   isPending?: boolean
 }

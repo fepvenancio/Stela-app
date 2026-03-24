@@ -141,7 +141,7 @@ function MintSection({
               </div>
 
               <Button
-                variant="gold"
+                variant="default"
                 className="w-full"
                 onClick={handleMint}
                 disabled={!canMint}

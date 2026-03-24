@@ -159,7 +159,7 @@ function MatchCard({
       {/* Settle button */}
       <div className="px-4 pb-3">
         <Button
-          variant="gold"
+          variant="default"
           className="w-full"
           onClick={onSettle}
           disabled={isPending}

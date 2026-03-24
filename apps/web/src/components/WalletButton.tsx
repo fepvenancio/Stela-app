@@ -305,7 +305,7 @@ export function WalletButton() {
 
   return (
     <>
-      <Button variant="gold" size="lg" className="rounded-full px-8 shadow-lg shadow-star/10 hover:shadow-star/20" onClick={() => setConnectOpen(true)}>
+      <Button variant="default" size="lg" className="rounded-full px-8 shadow-lg shadow-star/10 hover:shadow-star/20" onClick={() => setConnectOpen(true)}>
         Connect Wallet
       </Button>
       <ConnectWalletModal open={connectOpen} onOpenChange={setConnectOpen} />

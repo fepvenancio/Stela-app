@@ -111,7 +111,7 @@ export function OrderActions({
                     className="h-14 text-lg bg-void/50 font-mono"
                   />
                 </div>
-                <Button type="submit" variant="gold" size="xl" className="w-full text-lg" disabled={signPending || !lendAmount}>
+                <Button type="submit" variant="default" size="xl" className="w-full text-lg" disabled={signPending || !lendAmount}>
                   {signPending ? 'Settling...' : 'Sign & Settle'}
                 </Button>
               </form>
@@ -122,7 +122,7 @@ export function OrderActions({
                   <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
                 </div>
                 <Button
-                  variant="gold"
+                  variant="default"
                   size="xl"
                   className="w-full text-lg"
                   disabled={signPending}
@@ -181,7 +181,7 @@ export function OrderActions({
               <p className="text-[10px] text-aurora uppercase tracking-widest font-bold">Settled On-Chain</p>
               <p className="text-xs text-dust mt-1">This order was settled and is now an active inscription.</p>
             </div>
-            <Button asChild variant="aurora" size="xl" className="w-full text-lg">
+            <Button asChild variant="accent" size="xl" className="w-full text-lg">
               <Link href="/markets">View in Markets to Repay</Link>
             </Button>
           </div>

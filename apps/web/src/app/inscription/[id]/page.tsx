@@ -159,7 +159,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
                   <div className="flex items-center gap-2 shrink-0">
                     {canApprove && (
                       <Button
-                        variant="aurora"
+                        variant="accent"
                         size="sm"
                         disabled={approvePending}
                         onClick={() => {
@@ -594,7 +594,7 @@ export default function InscriptionPage({ params }: InscriptionPageProps) {
                   Transfer
                 </Button>
                 <Button
-                  variant="gold"
+                  variant="default"
                   size="sm"
                   onClick={() => setSellModalOpen(true)}
                   className="flex-1 rounded-xl text-[10px] uppercase tracking-widest"

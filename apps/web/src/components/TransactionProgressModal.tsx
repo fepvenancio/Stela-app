@@ -104,7 +104,7 @@ export function TransactionProgressModal({ open, steps, txHash, onClose, title }
 
         <DialogFooter>
           <Button
-            variant={isComplete ? 'gold' : hasError ? 'outline' : 'ghost'}
+            variant={isComplete ? 'default' : hasError ? 'outline' : 'ghost'}
             size="lg"
             onClick={onClose}
             className="w-full"

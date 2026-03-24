@@ -313,7 +313,7 @@ function RefinanceOffersSection({ inscriptionId, isBorrower }: { inscriptionId: 
                   <div className="flex items-center gap-2 shrink-0">
                     {canApprove && (
                       <Button
-                        variant="aurora"
+                        variant="accent"
                         size="sm"
                         disabled={approvePending}
                         onClick={() => {

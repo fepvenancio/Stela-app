@@ -85,7 +85,7 @@ export function InscriptionActions({
         title="Cancel Inscription"
         description="Are you sure you want to cancel this inscription? This action cannot be undone."
         confirmLabel="Cancel Inscription"
-        confirmVariant="nova"
+        confirmVariant="destructive"
         onConfirm={cancel}
         isPending={cancelPending}
       />
@@ -101,7 +101,7 @@ export function InscriptionActions({
                <p className="text-xs text-dust mt-1">Full 100% of interest assets will be claimed upon completion.</p>
             </div>
             <Button
-              variant="gold"
+              variant="default"
               size="xl"
               className="w-full text-lg"
               disabled={isPending}
@@ -189,7 +189,7 @@ export function InscriptionActions({
                 className="h-14 text-lg bg-void/50 font-mono"
               />
             </div>
-            <Button type="submit" variant="gold" size="xl" className="w-full text-lg" disabled={isPending || !lendAmount}>
+            <Button type="submit" variant="default" size="xl" className="w-full text-lg" disabled={isPending || !lendAmount}>
               {signPending ? 'Signing...' : 'Sign & Lend'}
             </Button>
           </form>
@@ -214,7 +214,7 @@ export function InscriptionActions({
            <span className="text-[10px] text-aurora uppercase tracking-widest font-bold">Repayment Required</span>
            <p className="text-xs text-dust mt-1 text-balance">To release your collateral, you must repay the total debt with interest.</p>
         </div>
-        <Button variant="aurora" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
+        <Button variant="accent" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
           {repayPending ? 'Repaying...' : 'Repay Inscription'}
         </Button>
       </div>
@@ -241,14 +241,14 @@ export function InscriptionActions({
         </div>
         <ConfirmDialog
           trigger={
-            <Button variant="nova" size="xl" className="w-full text-lg" disabled={isPending}>
+            <Button variant="destructive" size="xl" className="w-full text-lg" disabled={isPending}>
               {liquidatePending ? 'Liquidating...' : 'Liquidate Vault'}
             </Button>
           }
           title="Liquidate Inscription"
           description="Are you sure you want to liquidate this inscription? This will claim the collateral and cannot be undone."
           confirmLabel="Liquidate"
-          confirmVariant="nova"
+          confirmVariant="destructive"
           onConfirm={liquidate}
           isPending={liquidatePending}
         />
@@ -265,7 +265,7 @@ export function InscriptionActions({
             {status === 'repaid' ? 'Debt was repaid. Claim your portion of the principal and interest.' : 'Vault was liquidated. Claim your portion of the collateral assets.'}
           </p>
         </div>
-        <Button variant="cosmic" size="xl" className="w-full text-lg" onClick={() => redeem(shares)} disabled={isPending}>
+        <Button variant="secondary" size="xl" className="w-full text-lg" onClick={() => redeem(shares)} disabled={isPending}>
           {redeemPending ? 'Redeeming...' : 'Claim Assets'}
         </Button>
       </div>
@@ -282,7 +282,7 @@ export function InscriptionActions({
             <span className="text-[10px] text-star uppercase tracking-widest font-bold">Grace Period Active</span>
             <p className="text-xs text-dust mt-1 text-balance">Your loan has expired, but you can still repay during the grace period to reclaim your collateral.</p>
           </div>
-          <Button variant="aurora" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
+          <Button variant="accent" size="xl" className="w-full text-lg" onClick={() => repay(debtAssets, interestAssets)} disabled={isPending}>
             {repayPending ? 'Repaying...' : 'Repay Now'}
           </Button>
         </div>
@@ -304,7 +304,7 @@ export function InscriptionActions({
           <p className="text-xs text-dust mt-1">Anyone can start a Dutch auction on this collateral.</p>
         </div>
         <Button
-          variant="nova"
+          variant="destructive"
           size="xl"
           className="w-full text-lg"
           onClick={() => startAuction(BigInt(inscriptionId))}
@@ -325,7 +325,7 @@ export function InscriptionActions({
           <p className="text-xs text-dust mt-1">A Dutch auction is in progress. The price declines over time.</p>
         </div>
         <Button
-          variant="aurora"
+          variant="accent"
           size="xl"
           className="w-full text-lg"
           onClick={() => bid(BigInt(inscriptionId), debtTokenAddress)}

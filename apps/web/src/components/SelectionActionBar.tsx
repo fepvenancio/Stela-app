@@ -59,7 +59,7 @@ export function SelectionActionBar({ onReview }: SelectionActionBarProps) {
             Clear
           </Button>
           <Button
-            variant="gold"
+            variant="default"
             size="sm"
             onClick={onReview}
             className="h-8 px-5 rounded-xl font-bold shadow-lg shadow-star/20"
