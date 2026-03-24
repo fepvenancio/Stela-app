@@ -233,11 +233,20 @@ export default function LendPage() {
               {/* Interest & Repayment Config */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-3">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
-                    Target Interest
-                  </label>
+                  <div className="flex items-center justify-between px-1">
+                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                      Target Interest
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addToBasket}
+                      className="p-1 bg-accent/10 text-accent rounded hover:bg-accent/20 transition-colors cursor-pointer"
+                      title="Add another asset"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
                   <div className="bg-white/[0.01] rounded-2xl h-14 px-5 flex items-center gap-3 border border-border">
-                    <Percent size={16} className="text-gray-600 shrink-0" />
                     <input
                       type="number" inputMode="decimal" step="any"
                       value={interestRate}
@@ -281,7 +290,6 @@ export default function LendPage() {
                       placeholder="7"
                       className="bg-transparent flex-1 text-right font-mono text-base font-bold outline-none placeholder:text-gray-800"
                     />
-                    <span className="text-gray-500 font-bold text-xs shrink-0">days</span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
