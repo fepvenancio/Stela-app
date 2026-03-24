@@ -18,6 +18,8 @@ import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
 import { TokenAvatar } from '@/components/TokenAvatar'
+import { TokenSelectorModal } from '@/components/TokenSelectorModal'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
 
 interface BasketItem {
   token: TokenInfo
@@ -27,12 +29,16 @@ interface BasketItem {
 export default function LendPage() {
   const router = useRouter()
   const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
+  const { balances } = useTokenBalances()
 
   const [basket, setBasket] = useState<BasketItem[]>([
     { token: tokens[0], amount: '' },
   ])
   const [interestRate, setInterestRate] = useState('')
-  const [repaymentToken, setRepaymentToken] = useState(tokens[0]?.symbol ?? '')
+  const [repaymentToken, setRepaymentToken] = useState<TokenInfo>(tokens[0])
+
+  // Modal state: null = closed, number = which basket index is open, 'repayment' = repayment modal
+  const [tokenModalIndex, setTokenModalIndex] = useState<number | 'repayment' | null>(null)
 
   const addToBasket = () => {
     setBasket((prev) => [...prev, { token: tokens[0], amount: '' }])
@@ -42,18 +48,30 @@ export default function LendPage() {
     setBasket((prev) => prev.filter((_, i) => i !== idx))
   }
 
-  const updateBasketToken = (idx: number, symbol: string) => {
-    const found = tokens.find((t) => t.symbol === symbol)
-    if (!found) return
-    setBasket((prev) => prev.map((item, i) => (i === idx ? { ...item, token: found } : item)))
-  }
-
   const updateBasketAmount = (idx: number, amount: string) => {
     setBasket((prev) => prev.map((item, i) => (i === idx ? { ...item, amount } : item)))
   }
 
   const navigateToBorrow = () => {
     router.push('/borrow')
+  }
+
+  // Determine which token is "selected" for the currently open modal
+  const activeBasketToken =
+    typeof tokenModalIndex === 'number' ? basket[tokenModalIndex]?.token : undefined
+  const activeSelectedAddress =
+    tokenModalIndex === 'repayment'
+      ? (repaymentToken.addresses[NETWORK] ?? '')
+      : (activeBasketToken?.addresses[NETWORK] ?? '')
+
+  const handleTokenSelect = (token: TokenInfo) => {
+    if (tokenModalIndex === 'repayment') {
+      setRepaymentToken(token)
+    } else if (typeof tokenModalIndex === 'number') {
+      setBasket((prev) =>
+        prev.map((item, i) => (i === tokenModalIndex ? { ...item, token } : item)),
+      )
+    }
   }
 
   return (
@@ -118,23 +136,14 @@ export default function LendPage() {
                           <TokenAvatar token={item.token} size={28} />
                         </div>
                         <div className="flex flex-col">
-                          <div className="relative">
-                            <select
-                              value={item.token.symbol}
-                              onChange={(e) => updateBasketToken(idx, e.target.value)}
-                              className="bg-transparent font-bold text-lg outline-none cursor-pointer appearance-none pr-6 text-white"
-                            >
-                              {tokens.map((t) => (
-                                <option key={t.symbol} value={t.symbol} className="bg-[#0A0A0A]">
-                                  {t.symbol}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown
-                              size={14}
-                              className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none"
-                            />
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setTokenModalIndex(idx)}
+                            className="flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <span className="font-bold text-lg text-white">{item.token.symbol}</span>
+                            <ChevronDown size={14} className="text-gray-600" />
+                          </button>
                           <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
                             {item.token.name}
                           </span>
@@ -190,18 +199,15 @@ export default function LendPage() {
                   </label>
                   <div className="bg-white/[0.01] rounded-2xl p-5 flex items-center justify-between border border-border">
                     <RefreshCw size={18} className="text-gray-700" />
-                    <select
-                      value={repaymentToken}
-                      onChange={(e) => setRepaymentToken(e.target.value)}
-                      className="bg-transparent font-bold text-sm outline-none cursor-pointer text-white flex-1 text-right appearance-none"
+                    <button
+                      type="button"
+                      onClick={() => setTokenModalIndex('repayment')}
+                      className="flex items-center gap-2 cursor-pointer flex-1 justify-end"
                     >
-                      {tokens.map((t) => (
-                        <option key={t.symbol} value={t.symbol} className="bg-[#0A0A0A]">
-                          {t.symbol}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className="text-gray-700 ml-2" />
+                      <TokenAvatar token={repaymentToken} size={20} />
+                      <span className="font-bold text-sm text-white">{repaymentToken.symbol}</span>
+                      <ChevronDown size={14} className="text-gray-700" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -268,6 +274,16 @@ export default function LendPage() {
           </div>
         </div>
       </div>
+
+      {/* Single shared modal for basket items + repayment token */}
+      <TokenSelectorModal
+        open={tokenModalIndex !== null}
+        onOpenChange={(open) => { if (!open) setTokenModalIndex(null) }}
+        onSelect={handleTokenSelect}
+        selectedAddress={activeSelectedAddress}
+        balances={balances}
+        showCustomOption={false}
+      />
     </motion.div>
   )
 }

@@ -16,6 +16,8 @@ import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
 import { TokenAvatar } from '@/components/TokenAvatar'
+import { TokenSelectorModal } from '@/components/TokenSelectorModal'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
 
 interface AssetEntry {
   token: TokenInfo
@@ -32,6 +34,7 @@ interface InscribeData {
 
 export default function BorrowPage() {
   const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
+  const { balances } = useTokenBalances()
 
   const [step, setStep] = useState(1)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -42,6 +45,9 @@ export default function BorrowPage() {
     lendEnabled: true,
     swapEnabled: true,
   })
+
+  // null = closed, number = asset index being edited
+  const [assetModalIndex, setAssetModalIndex] = useState<number | null>(null)
 
   const goBack = () => setStep((s) => s - 1)
   const goNext = () => {
@@ -59,19 +65,21 @@ export default function BorrowPage() {
     }))
   }
 
-  const updateAssetToken = (idx: number, symbol: string) => {
-    const found = tokens.find((t) => t.symbol === symbol)
-    if (!found) return
-    setData((prev) => ({
-      ...prev,
-      assets: prev.assets.map((a, i) => (i === idx ? { ...a, token: found } : a)),
-    }))
-  }
-
   const updateAssetAmount = (idx: number, amount: string) => {
     setData((prev) => ({
       ...prev,
       assets: prev.assets.map((a, i) => (i === idx ? { ...a, amount } : a)),
+    }))
+  }
+
+  const activeAssetToken = assetModalIndex !== null ? data.assets[assetModalIndex]?.token : undefined
+  const activeSelectedAddress = activeAssetToken?.addresses[NETWORK] ?? ''
+
+  const handleAssetTokenSelect = (token: TokenInfo) => {
+    if (assetModalIndex === null) return
+    setData((prev) => ({
+      ...prev,
+      assets: prev.assets.map((a, i) => (i === assetModalIndex ? { ...a, token } : a)),
     }))
   }
 
@@ -213,25 +221,20 @@ export default function BorrowPage() {
                         {data.assets.map((asset, idx) => (
                           <div key={idx} className="grid grid-cols-2 gap-4">
                             <div className="bg-white/[0.02] rounded-2xl p-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => setAssetModalIndex(idx)}
+                                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                              >
                                 <TokenAvatar token={asset.token} size={20} />
-                                <select
-                                  value={asset.token.symbol}
-                                  onChange={(e) => updateAssetToken(idx, e.target.value)}
-                                  className="bg-transparent font-bold text-sm outline-none cursor-pointer w-full text-white appearance-none"
-                                >
-                                  {tokens.map((t) => (
-                                    <option
-                                      key={t.symbol}
-                                      value={t.symbol}
-                                      className="bg-[#0A0A0A]"
-                                    >
-                                      {t.symbol}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <ChevronDown size={16} className="text-gray-700 shrink-0" />
+                                <span className="font-bold text-sm text-white truncate">
+                                  {asset.token.symbol}
+                                </span>
+                              </button>
+                              <ChevronDown
+                                size={16}
+                                className="text-gray-700 shrink-0 pointer-events-none"
+                              />
                             </div>
                             <div className="bg-white/[0.02] rounded-2xl p-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
                               <input
@@ -475,6 +478,16 @@ export default function BorrowPage() {
           )}
         </div>
       </motion.div>
+
+      {/* Single shared modal for all asset token selections */}
+      <TokenSelectorModal
+        open={assetModalIndex !== null}
+        onOpenChange={(open) => { if (!open) setAssetModalIndex(null) }}
+        onSelect={handleAssetTokenSelect}
+        selectedAddress={activeSelectedAddress}
+        balances={balances}
+        showCustomOption={false}
+      />
     </div>
   )
 }

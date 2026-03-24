@@ -13,9 +13,12 @@ import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
 import { TokenAvatar } from '@/components/TokenAvatar'
+import { TokenSelectorModal } from '@/components/TokenSelectorModal'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
 
 export default function SwapPage() {
   const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
+  const { balances } = useTokenBalances()
 
   const [swapMode, setSwapMode] = useState<'tokens' | 'stelas'>('tokens')
   const [sellToken, setSellToken] = useState<TokenInfo>(tokens[0])
@@ -23,15 +26,8 @@ export default function SwapPage() {
   const [sellAmount, setSellAmount] = useState('')
   const [buyAmount, setBuyAmount] = useState('')
 
-  const updateSellToken = (symbol: string) => {
-    const found = tokens.find((t) => t.symbol === symbol)
-    if (found) setSellToken(found)
-  }
-
-  const updateBuyToken = (symbol: string) => {
-    const found = tokens.find((t) => t.symbol === symbol)
-    if (found) setBuyToken(found)
-  }
+  const [sellModalOpen, setSellModalOpen] = useState(false)
+  const [buyModalOpen, setBuyModalOpen] = useState(false)
 
   return (
     <motion.div
@@ -94,19 +90,13 @@ export default function SwapPage() {
                 onChange={(e) => setSellAmount(e.target.value)}
                 className="bg-transparent text-2xl font-mono font-bold outline-none w-full placeholder:text-gray-800"
               />
-              <button className="bg-white/5 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-white/5 hover:bg-white/10 transition-colors shrink-0">
+              <button
+                type="button"
+                onClick={() => setSellModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-colors shrink-0 cursor-pointer"
+              >
                 <TokenAvatar token={sellToken} size={20} />
-                <select
-                  value={sellToken.symbol}
-                  onChange={(e) => updateSellToken(e.target.value)}
-                  className="bg-transparent font-bold text-sm outline-none cursor-pointer appearance-none text-white"
-                >
-                  {tokens.map((t) => (
-                    <option key={t.symbol} value={t.symbol} className="bg-[#0A0A0A]">
-                      {t.symbol}
-                    </option>
-                  ))}
-                </select>
+                <span className="font-bold text-sm text-white">{sellToken.symbol}</span>
                 <ChevronDown size={14} className="text-gray-500" />
               </button>
             </div>
@@ -132,19 +122,13 @@ export default function SwapPage() {
                 onChange={(e) => setBuyAmount(e.target.value)}
                 className="bg-transparent text-2xl font-mono font-bold outline-none w-full placeholder:text-gray-800"
               />
-              <button className="bg-white/5 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-white/5 hover:bg-white/10 transition-colors shrink-0">
+              <button
+                type="button"
+                onClick={() => setBuyModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-colors shrink-0 cursor-pointer"
+              >
                 <TokenAvatar token={buyToken} size={20} />
-                <select
-                  value={buyToken.symbol}
-                  onChange={(e) => updateBuyToken(e.target.value)}
-                  className="bg-transparent font-bold text-sm outline-none cursor-pointer appearance-none text-white"
-                >
-                  {tokens.map((t) => (
-                    <option key={t.symbol} value={t.symbol} className="bg-[#0A0A0A]">
-                      {t.symbol}
-                    </option>
-                  ))}
-                </select>
+                <span className="font-bold text-sm text-white">{buyToken.symbol}</span>
                 <ChevronDown size={14} className="text-gray-500" />
               </button>
             </div>
@@ -192,6 +176,26 @@ export default function SwapPage() {
           </div>
         </div>
       )}
+
+      {/* Sell token modal */}
+      <TokenSelectorModal
+        open={sellModalOpen}
+        onOpenChange={setSellModalOpen}
+        onSelect={(token) => setSellToken(token)}
+        selectedAddress={sellToken.addresses[NETWORK] ?? ''}
+        balances={balances}
+        showCustomOption={false}
+      />
+
+      {/* Buy token modal */}
+      <TokenSelectorModal
+        open={buyModalOpen}
+        onOpenChange={setBuyModalOpen}
+        onSelect={(token) => setBuyToken(token)}
+        selectedAddress={buyToken.addresses[NETWORK] ?? ''}
+        balances={balances}
+        showCustomOption={false}
+      />
     </motion.div>
   )
 }
