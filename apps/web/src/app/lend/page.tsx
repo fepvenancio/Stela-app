@@ -124,9 +124,9 @@ export default function LendPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
         {/* Left column — form */}
-        <div className="lg:col-span-3 space-y-8">
+        <div className="lg:col-span-3">
           <div className="bg-surface rounded-3xl border border-border overflow-hidden shadow-2xl">
             {/* Tab toggle */}
             <div className="flex p-1.5 bg-white/[0.02] m-8 rounded-2xl border border-border">
@@ -321,8 +321,8 @@ export default function LendPage() {
         </div>
 
         {/* Right column — summary */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-surface rounded-3xl border border-border p-8 space-y-8 sticky top-32">
+        <div className="lg:col-span-2">
+          <div className="bg-surface rounded-3xl border border-border p-8 space-y-8 sticky top-24">
             <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gray-500">
               Transaction Summary
             </h3>
