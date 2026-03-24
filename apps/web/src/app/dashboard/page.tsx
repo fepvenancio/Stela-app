@@ -77,7 +77,7 @@ function PositionRow({ id, role, status, assets }: PositionRowProps) {
       <span className={`text-sm font-bold capitalize ${statusColor}`}>{status}</span>
       <div className="flex items-center justify-end gap-2">
         <span className="text-sm text-gray-400 truncate">{assets}</span>
-        <ArrowRight size={14} className="text-gray-600 group-hover:text-accent transition-colors flex-shrink-0" />
+        <ArrowRight size={14} className="text-gray-500 group-hover:text-accent transition-colors flex-shrink-0" />
       </div>
     </Link>
   )
@@ -248,7 +248,7 @@ export default function DashboardPage() {
           {!isConnected ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <div className="w-14 h-14 rounded-2xl bg-white/[0.02] border border-border flex items-center justify-center">
-                <Wallet size={20} className="text-gray-600" />
+                <Wallet size={20} className="text-gray-500" />
               </div>
               <p className="text-sm text-gray-500">Connect your wallet to view positions</p>
             </div>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
           ) : activePositions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <div className="w-14 h-14 rounded-2xl bg-white/[0.02] border border-border flex items-center justify-center">
-                <TrendingUp size={20} className="text-gray-600" />
+                <TrendingUp size={20} className="text-gray-500" />
               </div>
               <p className="text-sm text-gray-500 text-center max-w-xs">
                 No active positions yet. Start by lending or borrowing.
@@ -303,12 +303,12 @@ export default function DashboardPage() {
 
             {!isConnected ? (
               <div className="flex flex-col items-center justify-center py-8 gap-3">
-                <Wallet size={18} className="text-gray-600" />
-                <p className="text-xs text-gray-600 text-center">Connect wallet to view</p>
+                <Wallet size={18} className="text-gray-500" />
+                <p className="text-xs text-gray-500 text-center">Connect wallet to view</p>
               </div>
             ) : tokenList.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 gap-3">
-                <p className="text-xs text-gray-600 text-center">No token balances found</p>
+                <p className="text-xs text-gray-500 text-center">No token balances found</p>
                 {NETWORK === 'sepolia' && (
                   <Link href="/faucet">
                     <Button variant="outline" size="sm" className="text-xs">Get Testnet Tokens</Button>

@@ -19,19 +19,19 @@ export function MarketRow({ symbol, totalLent, lendApy, borrowApy, utilization }
       </div>
       <div className="flex flex-col">
         <span className="text-lg font-bold text-white tracking-tighter font-mono">{totalLent}</span>
-        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-1">Total Lent</span>
+        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Total Lent</span>
       </div>
       <div className="flex flex-col">
         <span className="text-lg font-bold text-green-500 tracking-tighter font-mono">{lendApy}</span>
-        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-1">Lend APY</span>
+        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Lend APY</span>
       </div>
       <div className="flex flex-col">
         <span className="text-lg font-bold text-orange-500 tracking-tighter font-mono">{borrowApy}</span>
-        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-1">Borrow APY</span>
+        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Borrow APY</span>
       </div>
       <div className="flex flex-col items-end">
         <UtilizationBar percent={utilization} />
-        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-2">{utilization}% Utilized</span>
+        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">{utilization}% Utilized</span>
       </div>
     </div>
   )

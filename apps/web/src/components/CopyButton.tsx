@@ -28,7 +28,7 @@ export function CopyButton({ value, className, label = 'Value' }: CopyButtonProp
       onClick={(e) => { e.stopPropagation(); e.preventDefault(); copy() }}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy() } }}
       className={cn(
-        'inline-flex items-center justify-center p-1 rounded hover:bg-surface/60 transition-colors text-gray-500 hover:text-white cursor-pointer',
+        'inline-flex items-center justify-center p-2 rounded hover:bg-surface/60 transition-colors text-gray-500 hover:text-white cursor-pointer focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:outline-none',
         className
       )}
       aria-label={`Copy ${label}`}

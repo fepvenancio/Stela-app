@@ -64,7 +64,7 @@ export function BrowseControls({
           <button
             type="button"
             onClick={onToggleFilters}
-            className={`flex items-center gap-1.5 px-4 h-12 rounded-2xl border text-sm transition-colors ${
+            className={`flex items-center gap-1.5 px-4 h-12 rounded-2xl border text-sm transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:outline-none ${
               showFilters || filtersActive
                 ? 'bg-accent/10 border-accent/30 text-accent'
                 : 'bg-surface/50 border-border text-gray-400 hover:text-white hover:bg-surface/60'

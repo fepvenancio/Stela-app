@@ -71,7 +71,7 @@ export function Sidebar() {
       <div className="p-6 border-t border-border">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-center p-3 rounded-xl text-gray-600 hover:bg-white/5 transition-colors"
+          className="w-full flex items-center justify-center p-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
           aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
           {isOpen ? <X size={18} /> : <Menu size={18} />}

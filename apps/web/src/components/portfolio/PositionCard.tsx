@@ -17,9 +17,9 @@ interface PositionCardProps {
 }
 
 const ROLE_COLORS: Record<PositionRole, string> = {
-  lender: 'star',
-  borrower: 'nebula',
-  redeemable: 'cosmic',
+  lender: 'accent',
+  borrower: 'blue',
+  redeemable: 'sky',
 }
 
 const ROLE_LABELS: Record<PositionRole, string> = {
