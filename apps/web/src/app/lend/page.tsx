@@ -174,41 +174,38 @@ export default function LendPage() {
               </div>
 
               {/* Interest & Repayment Config */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between px-1">
-                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
-                      Target Interest
-                    </label>
-                  </div>
-                  <div className="bg-white/[0.01] rounded-2xl p-5 flex items-center justify-between border border-border">
-                    <Percent size={18} className="text-gray-700" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
+                    Target Interest
+                  </label>
+                  <div className="bg-white/[0.01] rounded-2xl h-14 px-5 flex items-center gap-3 border border-border">
+                    <Percent size={16} className="text-gray-600 shrink-0" />
                     <input
                       type="number" inputMode="decimal" step="any"
                       value={interestRate}
                       onChange={(e) => setInterestRate(e.target.value)}
                       placeholder="0.00"
-                      className="bg-transparent text-right font-mono text-xl font-medium outline-none w-24 placeholder:text-gray-800"
+                      className="bg-transparent flex-1 text-right font-mono text-base font-bold outline-none placeholder:text-gray-800"
                     />
-                    <span className="text-gray-700 font-bold text-sm ml-2">%</span>
+                    <span className="text-gray-500 font-bold text-xs shrink-0">%</span>
                   </div>
                 </div>
-                <div className="space-y-4">
+                <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
                     Repayment Asset
                   </label>
-                  <div className="bg-white/[0.01] rounded-2xl p-5 flex items-center justify-between border border-border">
-                    <RefreshCw size={18} className="text-gray-700" />
-                    <button
-                      type="button"
-                      onClick={() => setTokenModalIndex('repayment')}
-                      className="flex items-center gap-2 cursor-pointer flex-1 justify-end"
-                    >
-                      <TokenAvatar token={repaymentToken} size={20} />
-                      <span className="font-bold text-sm text-white">{repaymentToken.symbol}</span>
-                      <ChevronDown size={14} className="text-gray-700" />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTokenModalIndex('repayment')}
+                    className="bg-white/[0.01] rounded-2xl h-14 px-5 flex items-center gap-3 border border-border hover:border-accent/20 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw size={16} className="text-gray-600 shrink-0" />
+                    <div className="flex-1" />
+                    <TokenAvatar token={repaymentToken} size={20} />
+                    <span className="font-bold text-sm text-white">{repaymentToken.symbol}</span>
+                    <ChevronDown size={14} className="text-gray-500" />
+                  </button>
                 </div>
               </div>
             </div>
