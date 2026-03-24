@@ -1,8 +1,5 @@
-<svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="96" y="440" width="320" height="32" rx="4" fill="#e8a825"/>
-  <path d="M128 440 V112 Q256 80 384 112 V440 H128Z" fill="#e8a825"/>
-  <rect x="128" y="144" width="256" height="8" fill="#0a0a0e" fill-opacity="0.2"/>
-  <rect x="176" y="210" width="160" height="20" rx="4" fill="#0a0a0e" fill-opacity="0.2"/>
-  <rect x="176" y="260" width="160" height="20" rx="4" fill="#0a0a0e" fill-opacity="0.2"/>
-  <rect x="176" y="310" width="160" height="20" rx="4" fill="#0a0a0e" fill-opacity="0.2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#3B82F6"/>
+  <path d="M16 6.5a1 1 0 0 1 .65.24l7 6A1 1 0 0 1 24 13.5v6a6.5 6.5 0 0 1-5.25 6.38l-2.5.5a1 1 0 0 1-.5 0l-2.5-.5A6.5 6.5 0 0 1 8 19.5v-6a1 1 0 0 1 .35-.76l7-6A1 1 0 0 1 16 6.5z" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 16l2.5 2.5L20 13" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
