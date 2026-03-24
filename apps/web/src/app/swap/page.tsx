@@ -84,7 +84,7 @@ export default function SwapPage() {
             </div>
             <div className="flex items-center justify-between gap-3">
               <input
-                type="number"
+                type="number" inputMode="decimal" step="any"
                 placeholder="0.00"
                 value={sellAmount}
                 onChange={(e) => setSellAmount(e.target.value)}
@@ -116,7 +116,7 @@ export default function SwapPage() {
             </div>
             <div className="flex items-center justify-between gap-3">
               <input
-                type="number"
+                type="number" inputMode="decimal" step="any"
                 placeholder="0.00"
                 value={buyAmount}
                 onChange={(e) => setBuyAmount(e.target.value)}

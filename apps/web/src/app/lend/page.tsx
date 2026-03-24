@@ -152,7 +152,7 @@ export default function LendPage() {
                       <div className="flex items-center gap-6">
                         <div className="flex flex-col items-end">
                           <input
-                            type="number"
+                            type="number" inputMode="decimal" step="any"
                             placeholder="0.00"
                             value={item.amount}
                             onChange={(e) => updateBasketAmount(idx, e.target.value)}
@@ -184,7 +184,7 @@ export default function LendPage() {
                   <div className="bg-white/[0.01] rounded-2xl p-5 flex items-center justify-between border border-border">
                     <Percent size={18} className="text-gray-700" />
                     <input
-                      type="number"
+                      type="number" inputMode="decimal" step="any"
                       value={interestRate}
                       onChange={(e) => setInterestRate(e.target.value)}
                       placeholder="0.00"

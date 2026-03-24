@@ -238,7 +238,7 @@ export default function BorrowPage() {
                             </div>
                             <div className="bg-white/[0.02] rounded-2xl p-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
                               <input
-                                type="number"
+                                type="number" inputMode="decimal" step="any"
                                 value={asset.amount}
                                 onChange={(e) => updateAssetAmount(idx, e.target.value)}
                                 placeholder="0.00"
@@ -283,7 +283,7 @@ export default function BorrowPage() {
                           </label>
                           <div className="bg-white/[0.02] rounded-2xl p-6 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
                             <input
-                              type="number"
+                              type="number" inputMode="decimal" step="any"
                               value={data.duration}
                               onChange={(e) =>
                                 setData({ ...data, duration: Number(e.target.value) })
