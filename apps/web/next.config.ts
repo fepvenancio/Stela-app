@@ -113,6 +113,11 @@ const nextConfig: NextConfig = {
         destination: '/nft/claim',
         permanent: true,
       },
+      {
+        source: '/trade',
+        destination: '/lend',
+        permanent: false,
+      },
     ]
   },
 }
