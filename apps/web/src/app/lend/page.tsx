@@ -1,362 +1,627 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'motion/react'
-import {
-  Plus,
-  Trash2,
-  ChevronDown,
-  ArrowLeftRight,
-  ShieldCheck,
-  Zap,
-  Clock,
-  Wifi,
-  WifiOff,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { useAccount } from '@starknet-react/core'
-import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
-import { formatTokenValue } from '@/lib/format'
-import { TokenAvatar } from '@/components/TokenAvatar'
+import { useOrderForm } from '@/hooks/useOrderForm'
+import { useFeePreview } from '@/hooks/useFeePreview'
+import type { AssetInputValue } from '@/components/AssetInput'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
-import { useTokenBalances } from '@/hooks/useTokenBalances'
+import { TokenAvatar } from '@/components/TokenAvatar'
+import { TransactionProgressModal } from '@/components/TransactionProgressModal'
+import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
+import { FeeBreakdown } from '@/components/FeeBreakdown'
+import { BestTradesPanel } from '@/components/trade/BestTradesPanel'
+import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
+import { Button } from '@/components/ui/button'
+import { formatTokenValue } from '@/lib/format'
+import type { MatchedOrder } from '@/hooks/useInstantSettle'
+import type { OnChainMatch } from '@/hooks/useMatchDetection'
+import {
+  LEND_DEADLINE_PRESETS,
+  DURATION_PRESETS,
+  formatDurationHuman,
+  emptyAsset,
+} from '@/lib/trade-constants'
 
-interface BasketItem {
-  token: TokenInfo
-  amount: string
+/* ── Spinner ─────────────────────────────────────────────── */
+
+function Spinner({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  )
 }
+
+/* ── Token Input Box ─────────────────────────────────────── */
+
+function TokenBox({
+  label,
+  accentClass,
+  borderClass,
+  bgClass,
+  asset,
+  balance,
+  onTokenClick,
+  onAmountChange,
+  onMaxClick,
+}: {
+  label: string
+  accentClass: string
+  borderClass: string
+  bgClass: string
+  asset: AssetInputValue
+  balance?: bigint
+  onTokenClick: () => void
+  onAmountChange: (val: string) => void
+  onMaxClick?: () => void
+}) {
+  const token = asset.asset ? findTokenByAddress(asset.asset) : null
+
+  return (
+    <div className={`${bgClass} border ${borderClass} rounded-lg p-3 sm:p-4 overflow-hidden`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className={`text-[10px] uppercase tracking-widest font-bold ${accentClass}`}>{label}</span>
+        {token && balance !== undefined && balance > 0n && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 font-mono">
+              {formatTokenValue(balance.toString(), token.decimals)}
+            </span>
+            {onMaxClick && (
+              <button
+                type="button"
+                onClick={onMaxClick}
+                className="text-[10px] text-accent hover:text-accent/80 font-bold uppercase tracking-wider cursor-pointer transition-colors"
+              >
+                Max
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          onClick={onTokenClick}
+          className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 sm:px-3 rounded-md bg-surface/60 border border-border/40 text-sm transition-colors hover:bg-surface-hover hover:border-white/20 cursor-pointer shrink-0"
+        >
+          {token ? (
+            <>
+              <TokenAvatar token={token} size={20} />
+              <span className="text-white font-medium">{token.symbol}</span>
+            </>
+          ) : (
+            <span className="text-gray-400">Select</span>
+          )}
+          <svg className="text-gray-500 ml-1" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M4 6l4 4 4-4" />
+          </svg>
+        </button>
+        <input
+          type="text"
+          inputMode="decimal"
+          placeholder="0.00"
+          value={asset.value}
+          onChange={(e) => {
+            const raw = e.target.value
+            if (raw === '' || /^\d*\.?\d{0,18}$/.test(raw)) onAmountChange(raw)
+          }}
+          className="flex-1 min-w-0 text-right text-lg sm:text-xl font-mono bg-transparent outline-none text-white placeholder:text-gray-500/40"
+        />
+      </div>
+    </div>
+  )
+}
+
+/* ── Lend Page ───────────────────────────────────────────── */
 
 export default function LendPage() {
   const router = useRouter()
-  const { status } = useAccount()
-  const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
-  const { balances } = useTokenBalances()
+  const form = useOrderForm('lending')
+  const feePreview = useFeePreview('lending')
+  const [openSelector, setOpenSelector] = useState<'debt' | 'collateral' | 'interest' | null>(null)
 
-  // Debt assets (what the lender offers)
-  const [debtBasket, setDebtBasket] = useState<BasketItem[]>([
-    { token: tokens[0], amount: '' },
-  ])
-  // Interest assets (what the lender wants back as interest)
-  const [interestBasket, setInterestBasket] = useState<BasketItem[]>([
-    { token: tokens[1] ?? tokens[0], amount: '' },
-  ])
-  const [duration, setDuration] = useState('')
-  const [gasless, setGasless] = useState(true)
+  const debtAsset = form.debtAssets[0] ?? emptyAsset()
+  const collateralAsset = form.collateralAssets[0] ?? emptyAsset()
+  const interestAsset = form.interestAssets[0] ?? emptyAsset()
 
-  // Modal state: null=closed, 'debt-N'=debt basket idx, 'interest-N'=interest basket idx
-  const [modalTarget, setModalTarget] = useState<string | null>(null)
+  const debtBalance = debtAsset.asset ? form.balances.get(debtAsset.asset.toLowerCase()) : undefined
+  const collateralBalance = collateralAsset.asset ? form.balances.get(collateralAsset.asset.toLowerCase()) : undefined
+  const interestBalance = interestAsset.asset ? form.balances.get(interestAsset.asset.toLowerCase()) : undefined
 
-  /* ── Debt basket helpers ────────────────────────── */
-  const addDebt = () => setDebtBasket(prev => [...prev, { token: tokens[0], amount: '' }])
-  const removeDebt = (i: number) => setDebtBasket(prev => prev.filter((_, idx) => idx !== i))
-  const updateDebtAmount = (i: number, amount: string) =>
-    setDebtBasket(prev => prev.map((item, idx) => idx === i ? { ...item, amount } : item))
+  /* ── Token selection handlers ──── */
 
-  /* ── Interest basket helpers ────────────────────── */
-  const addInterest = () => setInterestBasket(prev => [...prev, { token: tokens[0], amount: '' }])
-  const removeInterest = (i: number) => setInterestBasket(prev => prev.filter((_, idx) => idx !== i))
-  const updateInterestAmount = (i: number, amount: string) =>
-    setInterestBasket(prev => prev.map((item, idx) => idx === i ? { ...item, amount } : item))
-
-  const navigateToBorrow = () => router.push('/borrow')
-
-  const getTokenBalance = (token: TokenInfo): string => {
-    const addr = token.addresses[NETWORK]?.toLowerCase() ?? ''
-    const raw = balances.get(addr)
-    return raw !== undefined ? formatTokenValue(raw.toString(), token.decimals) : '--'
-  }
-
-  const fillMax = (token: TokenInfo, setter: (val: string) => void) => {
-    const addr = token.addresses[NETWORK]?.toLowerCase() ?? ''
-    const raw = balances.get(addr)
-    if (raw !== undefined && raw > 0n) {
-      setter((Number(raw) / 10 ** token.decimals).toString())
+  const handleTokenSelect = useCallback((slot: 'debt' | 'collateral' | 'interest', token: TokenInfo) => {
+    const addr = token.addresses[NETWORK] ?? ''
+    const newAsset: AssetInputValue = {
+      asset: addr,
+      asset_type: 'ERC20',
+      value: '',
+      token_id: '0',
+      decimals: token.decimals,
     }
-  }
+    if (slot === 'debt') form.setDebtAssets([newAsset])
+    else if (slot === 'collateral') form.setCollateralAssets([newAsset])
+    else form.setInterestAssets([newAsset])
+    setOpenSelector(null)
+  }, [form])
 
-  const handleConfirmLending = () => {
-    if (status !== 'connected') { toast.error('Connect wallet first'); return }
-    const filledDebt = debtBasket.filter(b => b.amount && Number(b.amount) > 0)
-    if (filledDebt.length === 0) { toast.error('Enter an amount for at least one debt asset'); return }
-    const filledInterest = interestBasket.filter(b => b.amount && Number(b.amount) > 0)
-    if (filledInterest.length === 0) { toast.error('Enter an amount for at least one interest asset'); return }
-    toast('Signing order...')
-    router.push('/trade?mode=lend')
-  }
-
-  /* ── Modal token selection ────────────────────── */
-  const getModalToken = (): TokenInfo | undefined => {
-    if (!modalTarget) return undefined
-    const [type, idxStr] = modalTarget.split('-')
-    const idx = Number(idxStr)
-    if (type === 'debt') return debtBasket[idx]?.token
-    if (type === 'interest') return interestBasket[idx]?.token
-    return undefined
-  }
-
-  const handleTokenSelect = (token: TokenInfo) => {
-    if (!modalTarget) return
-    const [type, idxStr] = modalTarget.split('-')
-    const idx = Number(idxStr)
-    if (type === 'debt') {
-      setDebtBasket(prev => prev.map((item, i) => i === idx ? { ...item, token } : item))
-    } else if (type === 'interest') {
-      setInterestBasket(prev => prev.map((item, i) => i === idx ? { ...item, token } : item))
+  const handleAmountChange = useCallback((slot: 'debt' | 'collateral' | 'interest', val: string) => {
+    if (slot === 'debt') {
+      const current = form.debtAssets[0] ?? emptyAsset()
+      form.setDebtAssets([{ ...current, value: val }])
+    } else if (slot === 'collateral') {
+      const current = form.collateralAssets[0] ?? emptyAsset()
+      form.setCollateralAssets([{ ...current, value: val }])
+    } else {
+      const current = form.interestAssets[0] ?? emptyAsset()
+      form.setInterestAssets([{ ...current, value: val }])
     }
-  }
+  }, [form])
 
-  const activeToken = getModalToken()
+  const handleMaxClick = useCallback((slot: 'debt' | 'collateral' | 'interest') => {
+    const asset = slot === 'debt' ? debtAsset : slot === 'collateral' ? collateralAsset : interestAsset
+    const balance = slot === 'debt' ? debtBalance : slot === 'collateral' ? collateralBalance : interestBalance
+    const token = asset.asset ? findTokenByAddress(asset.asset) : null
+    if (token && balance) {
+      const formatted = formatTokenValue(balance.toString(), token.decimals)
+      if (slot === 'debt') form.setDebtAssets([{ ...debtAsset, value: formatted }])
+      else if (slot === 'collateral') form.setCollateralAssets([{ ...collateralAsset, value: formatted }])
+      else form.setInterestAssets([{ ...interestAsset, value: formatted }])
+    }
+  }, [form, debtAsset, collateralAsset, interestAsset, debtBalance, collateralBalance, interestBalance])
 
-  /* ── Render a basket row ────────────────────── */
-  const renderRow = (
-    item: BasketItem,
-    idx: number,
-    list: BasketItem[],
-    modalPrefix: string,
-    updateAmount: (i: number, val: string) => void,
-    removeItem: (i: number) => void,
-  ) => (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      key={`${modalPrefix}-${idx}`}
-      className="bg-white/[0.01] rounded-2xl p-4 border border-border group hover:border-accent/20 transition-all"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center border border-border shadow-inner shrink-0">
-            <TokenAvatar token={item.token} size={24} />
-          </div>
-          <button
-            type="button"
-            onClick={() => setModalTarget(`${modalPrefix}-${idx}`)}
-            className="flex items-center gap-1 cursor-pointer"
-          >
-            <span className="font-bold text-sm text-white">{item.token.symbol}</span>
-            <ChevronDown size={12} className="text-gray-500" />
-          </button>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => fillMax(item.token, (v) => updateAmount(idx, v))}
-            className="text-[9px] font-bold text-accent hover:text-white transition-colors cursor-pointer"
-          >
-            MAX
-          </button>
-          <input
-            type="number" inputMode="decimal" step="any"
-            placeholder="0.00"
-            value={item.amount}
-            onChange={(e) => updateAmount(idx, e.target.value)}
-            className="bg-transparent text-right font-mono text-base font-bold outline-none w-28 placeholder:text-gray-800"
-          />
-          {list.length > 1 && (
-            <button
-              onClick={() => removeItem(idx)}
-              className="text-gray-500 hover:text-red-500 transition-colors cursor-pointer"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="mt-1 pl-13 text-[10px] text-gray-500 pl-[52px]">
-        Balance: {getTokenBalance(item.token)}
-      </div>
-    </motion.div>
-  )
+  /* ── Match state analysis ──── */
 
-  /* ── Summary stats ────────────────────── */
-  const filledDebtCount = debtBasket.filter(b => b.amount && Number(b.amount) > 0).length
-  const filledInterestCount = interestBasket.filter(b => b.amount && Number(b.amount) > 0).length
+  const hasTokens = form.hasDebt && form.hasCollateral
+  const showMatches = form.matchesVisible && form.hasMatches
+  const totalMatches = showMatches ? form.offchainMatches.length + form.onchainMatches.length : 0
+  const sel = form.multiSettleSelection
+  const coverage = sel?.coverage ?? 0
+  const hasFullMatch = showMatches && sel != null && coverage >= 100
+  const hasPartialMatch = showMatches && sel != null && coverage > 0 && coverage < 100
+  const isProcessing = form.isPending || form.isCreatingOnChain || form.isSettling || form.isSettlingOnChain || form.multiSettleState.phase !== 'idle'
+
+  const feeText = (feePreview.effectiveTotalBps / 100).toFixed(2) + '%'
+
+  const handleFill = useCallback((_order: MatchedOrder | OnChainMatch, _source: 'offchain' | 'onchain') => {
+    // BestTradesPanel fill — handled via main submit flow
+  }, [])
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="max-w-5xl mx-auto space-y-8"
-    >
+    <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-white">Lend Assets</h1>
         <p className="text-gray-500 mt-1 font-medium text-sm">
-          Create a liquid Stela to earn interest on your assets.
+          Create a lending offer to earn interest on your assets.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
-        {/* Left column — form */}
-        <div className="lg:col-span-3 flex flex-col">
-          <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-2xl flex-1 flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        {/* Left column -- form */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
+          <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-2xl">
             {/* Tab toggle */}
             <div className="flex p-1.5 bg-white/[0.02] m-6 rounded-xl border border-border">
               <button className="flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-[0.2em] bg-white text-black shadow-xl">
                 Lend Assets
               </button>
               <button
-                onClick={navigateToBorrow}
+                onClick={() => router.push('/borrow')}
                 className="flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-gray-300 cursor-pointer"
               >
                 Borrow Assets
               </button>
             </div>
 
-            <div className="px-6 pb-6 space-y-6 flex-1">
-              {/* Debt basket */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-xs font-bold tracking-tight text-white">Debt Assets</h3>
-                  <button onClick={addDebt} className="p-1.5 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-colors cursor-pointer">
-                    <Plus size={14} />
-                  </button>
+            <div className="px-6 pb-6 space-y-4">
+              {/* 3 Baskets */}
+              <div className="space-y-1">
+                <TokenBox
+                  label="I'm Lending"
+                  accentClass="text-accent"
+                  borderClass="border-accent/20"
+                  bgClass="bg-accent/5"
+                  asset={debtAsset}
+                  balance={debtBalance}
+                  onTokenClick={() => setOpenSelector('debt')}
+                  onAmountChange={(val) => handleAmountChange('debt', val)}
+                  onMaxClick={() => handleMaxClick('debt')}
+                />
+
+                <TokenBox
+                  label="Collateral Required"
+                  accentClass="text-orange-400"
+                  borderClass="border-orange-400/20"
+                  bgClass="bg-orange-400/5"
+                  asset={collateralAsset}
+                  balance={collateralBalance}
+                  onTokenClick={() => setOpenSelector('collateral')}
+                  onAmountChange={(val) => handleAmountChange('collateral', val)}
+                />
+
+                <TokenBox
+                  label="Interest Wanted"
+                  accentClass="text-green-500"
+                  borderClass="border-green-500/20"
+                  bgClass="bg-green-500/5"
+                  asset={interestAsset}
+                  balance={interestBalance}
+                  onTokenClick={() => setOpenSelector('interest')}
+                  onAmountChange={(val) => handleAmountChange('interest', val)}
+                />
+              </div>
+
+              {/* Validation Errors */}
+              {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
+                <div className="px-4 py-3 rounded-lg border border-red-500/20 bg-red-500/5">
+                  <p className="text-xs text-red-400 font-medium">
+                    {!form.hasDebt && 'Select a token to lend. '}
+                    {!form.hasCollateral && 'Select the collateral you require.'}
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  {debtBasket.map((item, idx) => renderRow(item, idx, debtBasket, 'debt', updateDebtAmount, removeDebt))}
+              )}
+
+              {/* Duration */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Loan Duration</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {DURATION_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      type="button"
+                      onClick={() => form.setDurationPreset(p.seconds.toString())}
+                      className={`py-1.5 px-3 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                        form.durationPreset === p.seconds.toString()
+                          ? 'border-accent/40 bg-accent/10 text-accent'
+                          : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
+                      }`}
+                    >{p.label}</button>
+                  ))}
                 </div>
               </div>
 
-              {/* Interest basket */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-xs font-bold tracking-tight text-white">Interest Assets</h3>
-                  <button onClick={addInterest} className="p-1.5 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-colors cursor-pointer">
-                    <Plus size={14} />
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {interestBasket.map((item, idx) => renderRow(item, idx, interestBasket, 'interest', updateInterestAmount, removeInterest))}
+              {/* Deadline */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Order Expiry</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {LEND_DEADLINE_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      type="button"
+                      onClick={() => form.setDeadlinePreset(p.seconds.toString())}
+                      className={`py-1.5 px-3 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                        form.deadlinePreset === p.seconds.toString()
+                          ? 'border-accent/40 bg-accent/10 text-accent'
+                          : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
+                      }`}
+                    >{p.label}</button>
+                  ))}
                 </div>
               </div>
 
-              {/* Duration & Mode */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
-                    Duration
-                  </label>
-                  <div className="bg-white/[0.01] rounded-xl h-12 px-4 flex items-center gap-3 border border-border">
-                    <Clock size={14} className="text-gray-500 shrink-0" />
-                    <input
-                      type="number" inputMode="decimal" step="1" min="0"
-                      value={duration}
-                      onChange={(e) => setDuration(e.target.value)}
-                      placeholder="7"
-                      className="bg-transparent flex-1 text-right font-mono text-sm font-bold outline-none placeholder:text-gray-800"
-                    />
+              {/* Mode + Funding */}
+              <div className="flex flex-wrap gap-4">
+                <div className="space-y-2">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Mode</span>
+                  <div className="flex gap-1">
+                    {(['offchain', 'onchain'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => form.setMode(m)}
+                        className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
+                          form.mode === m
+                            ? 'bg-accent/10 text-accent border border-accent/25'
+                            : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
+                        }`}
+                      >
+                        {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
-                    Funding Mode
-                  </label>
-                  <div className="bg-white/[0.01] rounded-xl h-12 px-1 flex items-center border border-border">
-                    <button
-                      type="button"
-                      onClick={() => setGasless(true)}
-                      className={`flex-1 h-10 rounded-lg flex items-center justify-center gap-1.5 font-bold text-[10px] uppercase tracking-[0.12em] transition-all cursor-pointer ${
-                        gasless
-                          ? 'bg-accent/10 text-accent border border-accent/20'
-                          : 'text-gray-500 hover:text-gray-300 border border-transparent'
-                      }`}
-                    >
-                      <Wifi size={12} />
-                      Gasless
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGasless(false)}
-                      className={`flex-1 h-10 rounded-lg flex items-center justify-center gap-1.5 font-bold text-[10px] uppercase tracking-[0.12em] transition-all cursor-pointer ${
-                        !gasless
-                          ? 'bg-white/10 text-white border border-white/10'
-                          : 'text-gray-500 hover:text-gray-300 border border-transparent'
-                      }`}
-                    >
-                      <WifiOff size={12} />
-                      On-Chain
-                    </button>
+
+                <div className="space-y-2">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Funding</span>
+                  <div className="flex gap-1">
+                    {([
+                      { value: 'single', label: 'Single' },
+                      { value: 'multi', label: 'Multi' },
+                    ] as const).map((f) => (
+                      <button
+                        key={f.value}
+                        type="button"
+                        onClick={() => form.setMultiLender(f.value === 'multi')}
+                        className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
+                          (form.multiLender ? 'multi' : 'single') === f.value
+                            ? 'bg-accent/10 text-accent border border-accent/25'
+                            : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
+
+              {/* Checking indicator */}
+              {form.isChecking && hasTokens && (
+                <div className="flex items-center justify-center gap-2 py-3 text-gray-400 text-xs">
+                  <Spinner className="h-3.5 w-3.5" />
+                  Checking for matches...
+                </div>
+              )}
+
+              {/* Match status bar */}
+              {hasTokens && showMatches && !form.isChecking && (
+                <div className="flex items-center gap-2 px-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  <span className="text-xs text-accent font-bold uppercase tracking-wider">
+                    {hasFullMatch ? 'Fully Matched' : hasPartialMatch ? `${coverage}% Matched` : 'Matches Available'}
+                  </span>
+                  <span className="text-[10px] text-gray-400">
+                    {totalMatches} order{totalMatches !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
+
+              {/* Settings box when no full match */}
+              {hasTokens && !hasFullMatch && !form.isChecking && (
+                <div className={`rounded-lg border p-3 ${
+                  hasPartialMatch ? 'border-accent/20 bg-accent/5' : 'border-border/30 bg-surface/5'
+                }`}>
+                  {hasPartialMatch ? (
+                    <p className="text-xs text-gray-400">
+                      Fill the matched {coverage}% and create an order for the remainder.
+                    </p>
+                  ) : showMatches ? (
+                    <p className="text-xs text-gray-400">
+                      Enter amounts to fill existing orders, or configure and create a new lending order.
+                    </p>
+                  ) : (
+                    <div>
+                      <p className="text-xs text-white font-medium">No matches found</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        Create a lending order to broadcast your offer to the network.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Fee breakdown */}
+              {hasTokens && <FeeBreakdown type="lending" />}
+
+              {/* Submit button */}
+              {hasTokens && (
+                <Web3ActionWrapper message="Connect your wallet to lend" centered={false}>
+                  <Button
+                    variant="default"
+                    className="w-full uppercase tracking-[0.15em] text-sm"
+                    onClick={form.handleSubmit}
+                    disabled={isProcessing || form.isChecking}
+                  >
+                    {isProcessing ? (
+                      <div className="flex items-center gap-2">
+                        <Spinner />
+                        Processing...
+                      </div>
+                    ) : form.isChecking ? (
+                      'Checking...'
+                    ) : hasFullMatch ? (
+                      'Fill Order'
+                    ) : hasPartialMatch ? (
+                      `Fill ${coverage}% + Create Order`
+                    ) : showMatches && !sel ? (
+                      'Fill Order'
+                    ) : form.mode === 'offchain' ? (
+                      'Sign & Create Lending Order'
+                    ) : (
+                      'Create On-Chain Inscription'
+                    )}
+                  </Button>
+                </Web3ActionWrapper>
+              )}
+
+              {!hasTokens && (
+                <Web3ActionWrapper message="Connect your wallet to lend" centered={false}>
+                  <Button variant="default" className="w-full uppercase tracking-wider" disabled>
+                    Select tokens to lend
+                  </Button>
+                </Web3ActionWrapper>
+              )}
+
+              {/* Best Trades Panel */}
+              {hasTokens && (
+                <BestTradesPanel
+                  offchainMatches={form.offchainMatches}
+                  onchainMatches={form.onchainMatches}
+                  isChecking={form.isChecking}
+                  mode="lending"
+                  onFill={handleFill}
+                  isSettling={isProcessing}
+                />
+              )}
+
+              {/* Info strip */}
+              {hasTokens && !form.isChecking && (
+                <div className="flex items-center justify-center gap-3 text-[11px] text-gray-500">
+                  {!hasFullMatch && (
+                    <>
+                      <span className={form.mode === 'offchain' ? 'text-green-500' : 'text-accent'}>
+                        {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
+                      </span>
+                      <span className="text-gray-600">·</span>
+                    </>
+                  )}
+                  <span className={feePreview.savingsBps > 0 ? 'text-green-500' : ''}>
+                    {feeText} fee
+                    {feePreview.savingsBps > 0 && <span className="text-gray-500 ml-0.5">(-{feePreview.discountPercent}%)</span>}
+                  </span>
+                  {!hasFullMatch && (
+                    <>
+                      <span className="text-gray-600">·</span>
+                      <span>{formatDurationHuman(Number(form.duration))}</span>
+                    </>
+                  )}
+                  {form.roiInfo && (
+                    <>
+                      <span className="text-gray-600">·</span>
+                      <span className="text-green-500 font-medium">+{form.roiInfo.yieldPct}%</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right column — summary */}
-        <div className="lg:col-span-2 flex flex-col">
-          <div className="bg-surface rounded-2xl border border-border p-6 flex-1 flex flex-col justify-between sticky top-24">
-            <div className="space-y-6">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
-                Transaction Summary
-              </h3>
+        {/* Right column -- summary */}
+        <div className="lg:col-span-2">
+          <div className="bg-surface rounded-2xl border border-border p-6 sticky top-24 space-y-6">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+              Lending Summary
+            </h3>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">Debt Assets</span>
-                  <span className="font-mono font-bold text-sm text-white">{filledDebtCount}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">Interest Assets</span>
-                  <span className="font-mono font-bold text-sm text-white">{filledInterestCount}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">Protocol Fee</span>
-                  <span className="font-bold text-sm text-white">0.25%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">Duration</span>
-                  <span className="font-bold text-sm text-white">
-                    {duration ? `${duration} days` : '--'}
-                  </span>
-                </div>
-                <div className="h-px bg-border" />
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">Est. Gas</span>
-                  <span className="text-xs font-bold text-accent flex items-center gap-1.5 uppercase tracking-widest">
-                    {gasless ? (
-                      <><Zap size={14} className="fill-accent" />Gasless</>
-                    ) : (
-                      <span className="text-white">On-Chain</span>
-                    )}
-                  </span>
-                </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Lending</span>
+                <span className="font-mono font-bold text-sm text-white">
+                  {debtAsset.asset ? (
+                    <span className="flex items-center gap-1.5">
+                      {debtAsset.value || '0'}{' '}
+                      {findTokenByAddress(debtAsset.asset)?.symbol ?? '?'}
+                    </span>
+                  ) : '--'}
+                </span>
               </div>
-
-              <div className="bg-white/[0.02] rounded-xl p-4 border border-border space-y-3">
-                <div className="flex items-center gap-2 text-accent">
-                  <ShieldCheck size={16} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Secure P2P Match</span>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Collateral</span>
+                <span className="font-mono font-bold text-sm text-white">
+                  {collateralAsset.asset ? (
+                    <span className="flex items-center gap-1.5">
+                      {collateralAsset.value || '0'}{' '}
+                      {findTokenByAddress(collateralAsset.asset)?.symbol ?? '?'}
+                    </span>
+                  ) : '--'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Interest</span>
+                <span className="font-mono font-bold text-sm text-white">
+                  {interestAsset.asset ? (
+                    <span className="flex items-center gap-1.5">
+                      {interestAsset.value || '0'}{' '}
+                      {findTokenByAddress(interestAsset.asset)?.symbol ?? '?'}
+                    </span>
+                  ) : '--'}
+                </span>
+              </div>
+              <div className="h-px bg-border" />
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Duration</span>
+                <span className="font-bold text-sm text-white">
+                  {formatDurationHuman(Number(form.duration))}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Protocol Fee</span>
+                <span className="font-bold text-sm text-white">{feeText}</span>
+              </div>
+              {form.roiInfo && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm">Yield</span>
+                  <span className="font-bold text-sm text-green-500">+{form.roiInfo.yieldPct}%</span>
                 </div>
-                <p className="text-[11px] text-gray-500 leading-relaxed">
-                  Your offer will be listed on the Stela P2P marketplace. Funds are held in a secure StarkNet smart contract.
-                </p>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Mode</span>
+                <span className="text-xs font-bold text-accent flex items-center gap-1.5 uppercase tracking-widest">
+                  {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Funding</span>
+                <span className="text-xs font-bold text-white uppercase tracking-widest">
+                  {form.multiLender ? 'Multi-Lender' : 'Single Lender'}
+                </span>
               </div>
             </div>
 
-            <button
-              onClick={handleConfirmLending}
-              className="w-full bg-white text-black py-4 rounded-xl font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-200 flex items-center justify-center gap-3 group shadow-xl shadow-white/5 cursor-pointer mt-6"
-            >
-              Confirm Lending
-              <ArrowLeftRight size={16} className="group-hover:rotate-180 transition-transform duration-1000" />
-            </button>
+            <div className="bg-white/[0.02] rounded-xl p-4 border border-border space-y-3">
+              <div className="flex items-center gap-2 text-accent">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Secure P2P Lending</span>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                Your lending offer is matched with borrowers. Collateral is locked in a StarkNet smart contract locker until repayment.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Token selector modal */}
+      {/* ── Token Selector Modals ─────────────────────────── */}
       <TokenSelectorModal
-        open={modalTarget !== null}
-        onOpenChange={(open) => { if (!open) setModalTarget(null) }}
-        onSelect={handleTokenSelect}
-        selectedAddress={activeToken?.addresses[NETWORK] ?? ''}
-        balances={balances}
+        open={openSelector === 'debt'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('debt', token)}
+        selectedAddress={debtAsset.asset}
         showCustomOption={false}
+        balances={form.balances}
       />
-    </motion.div>
+      <TokenSelectorModal
+        open={openSelector === 'collateral'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('collateral', token)}
+        selectedAddress={collateralAsset.asset}
+        showCustomOption={false}
+        balances={form.balances}
+      />
+      <TokenSelectorModal
+        open={openSelector === 'interest'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('interest', token)}
+        selectedAddress={interestAsset.asset}
+        showCustomOption={false}
+        balances={form.balances}
+      />
+
+      {/* ── Progress Modals ───────────────────────────────── */}
+      {(() => {
+        const active = [form.createProgress, form.settleProgress, form.onchainProgress, form.onchainSettleProgress].find(p => p.open)
+        const multiOpen = form.multiSettleModalOpen && form.multiSettleState.phase !== 'idle'
+        if (active && !multiOpen) {
+          return (
+            <TransactionProgressModal
+              open
+              steps={active.steps}
+              txHash={active.txHash}
+              onClose={active.close}
+            />
+          )
+        }
+        if (multiOpen) {
+          return (
+            <MultiSettleProgressModal
+              open
+              state={form.multiSettleState}
+              onClose={() => {
+                form.setMultiSettleModalOpen(false)
+                form.resetMultiSettle()
+              }}
+            />
+          )
+        }
+        return null
+      })()}
+    </div>
   )
 }

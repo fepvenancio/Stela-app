@@ -1,546 +1,628 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'motion/react'
-import {
-  Sparkles,
-  Trash2,
-  ChevronDown,
-  Zap,
-  ArrowLeftRight,
-  Layers,
-  Check,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { useAccount } from '@starknet-react/core'
-import { getTokensForNetwork } from '@fepvenancio/stela-sdk'
+import { findTokenByAddress } from '@fepvenancio/stela-sdk'
 import type { TokenInfo } from '@fepvenancio/stela-sdk'
 import { NETWORK } from '@/lib/config'
-import { formatTokenValue } from '@/lib/format'
-import { TokenAvatar } from '@/components/TokenAvatar'
+import { useOrderForm } from '@/hooks/useOrderForm'
+import { useFeePreview } from '@/hooks/useFeePreview'
+import type { AssetInputValue } from '@/components/AssetInput'
 import { TokenSelectorModal } from '@/components/TokenSelectorModal'
-import { useTokenBalances } from '@/hooks/useTokenBalances'
+import { TokenAvatar } from '@/components/TokenAvatar'
+import { TransactionProgressModal } from '@/components/TransactionProgressModal'
+import { MultiSettleProgressModal } from '@/components/MultiSettleProgressModal'
+import { FeeBreakdown } from '@/components/FeeBreakdown'
+import { BestTradesPanel } from '@/components/trade/BestTradesPanel'
+import { Web3ActionWrapper } from '@/components/Web3ActionWrapper'
+import { Button } from '@/components/ui/button'
+import { formatTokenValue } from '@/lib/format'
+import type { MatchedOrder } from '@/hooks/useInstantSettle'
+import type { OnChainMatch } from '@/hooks/useMatchDetection'
+import {
+  LEND_DEADLINE_PRESETS,
+  DURATION_PRESETS,
+  formatDurationHuman,
+  emptyAsset,
+} from '@/lib/trade-constants'
 
-interface AssetEntry {
-  token: TokenInfo
-  amount: string
+/* ── Spinner ─────────────────────────────────────────────── */
+
+function Spinner({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  )
 }
 
-interface InscribeData {
-  name: string
-  assets: AssetEntry[]
-  duration: number
-  lendEnabled: boolean
-  swapEnabled: boolean
+/* ── Token Input Box ─────────────────────────────────────── */
+
+function TokenBox({
+  label,
+  accentClass,
+  borderClass,
+  bgClass,
+  asset,
+  balance,
+  onTokenClick,
+  onAmountChange,
+  onMaxClick,
+}: {
+  label: string
+  accentClass: string
+  borderClass: string
+  bgClass: string
+  asset: AssetInputValue
+  balance?: bigint
+  onTokenClick: () => void
+  onAmountChange: (val: string) => void
+  onMaxClick?: () => void
+}) {
+  const token = asset.asset ? findTokenByAddress(asset.asset) : null
+
+  return (
+    <div className={`${bgClass} border ${borderClass} rounded-lg p-3 sm:p-4 overflow-hidden`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className={`text-[10px] uppercase tracking-widest font-bold ${accentClass}`}>{label}</span>
+        {token && balance !== undefined && balance > 0n && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 font-mono">
+              {formatTokenValue(balance.toString(), token.decimals)}
+            </span>
+            {onMaxClick && (
+              <button
+                type="button"
+                onClick={onMaxClick}
+                className="text-[10px] text-accent hover:text-accent/80 font-bold uppercase tracking-wider cursor-pointer transition-colors"
+              >
+                Max
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          onClick={onTokenClick}
+          className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 sm:px-3 rounded-md bg-surface/60 border border-border/40 text-sm transition-colors hover:bg-surface-hover hover:border-white/20 cursor-pointer shrink-0"
+        >
+          {token ? (
+            <>
+              <TokenAvatar token={token} size={20} />
+              <span className="text-white font-medium">{token.symbol}</span>
+            </>
+          ) : (
+            <span className="text-gray-400">Select</span>
+          )}
+          <svg className="text-gray-500 ml-1" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M4 6l4 4 4-4" />
+          </svg>
+        </button>
+        <input
+          type="text"
+          inputMode="decimal"
+          placeholder="0.00"
+          value={asset.value}
+          onChange={(e) => {
+            const raw = e.target.value
+            if (raw === '' || /^\d*\.?\d{0,18}$/.test(raw)) onAmountChange(raw)
+          }}
+          className="flex-1 min-w-0 text-right text-lg sm:text-xl font-mono bg-transparent outline-none text-white placeholder:text-gray-500/40"
+        />
+      </div>
+    </div>
+  )
 }
+
+/* ── Borrow Page ─────────────────────────────────────────── */
 
 export default function BorrowPage() {
   const router = useRouter()
-  const { status } = useAccount()
-  const tokens = useMemo(() => getTokensForNetwork(NETWORK), [])
-  const { balances } = useTokenBalances()
+  const form = useOrderForm('lending')
+  const feePreview = useFeePreview('lending')
+  const [openSelector, setOpenSelector] = useState<'debt' | 'collateral' | 'interest' | null>(null)
 
-  const [step, setStep] = useState(1)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [data, setData] = useState<InscribeData>({
-    name: '',
-    assets: [{ token: tokens[0], amount: '' }],
-    duration: 0,
-    lendEnabled: true,
-    swapEnabled: true,
-  })
+  const debtAsset = form.debtAssets[0] ?? emptyAsset()
+  const collateralAsset = form.collateralAssets[0] ?? emptyAsset()
+  const interestAsset = form.interestAssets[0] ?? emptyAsset()
 
-  // null = closed, number = asset index being edited
-  const [assetModalIndex, setAssetModalIndex] = useState<number | null>(null)
+  const debtBalance = debtAsset.asset ? form.balances.get(debtAsset.asset.toLowerCase()) : undefined
+  const collateralBalance = collateralAsset.asset ? form.balances.get(collateralAsset.asset.toLowerCase()) : undefined
+  const interestBalance = interestAsset.asset ? form.balances.get(interestAsset.asset.toLowerCase()) : undefined
 
-  const goBack = () => setStep((s) => s - 1)
-  const goNext = () => {
-    if (step < 4) {
-      setStep((s) => s + 1)
+  /* ── Token selection handlers ──── */
+
+  const handleTokenSelect = useCallback((slot: 'debt' | 'collateral' | 'interest', token: TokenInfo) => {
+    const addr = token.addresses[NETWORK] ?? ''
+    const newAsset: AssetInputValue = {
+      asset: addr,
+      asset_type: 'ERC20',
+      value: '',
+      token_id: '0',
+      decimals: token.decimals,
+    }
+    if (slot === 'debt') form.setDebtAssets([newAsset])
+    else if (slot === 'collateral') form.setCollateralAssets([newAsset])
+    else form.setInterestAssets([newAsset])
+    setOpenSelector(null)
+  }, [form])
+
+  const handleAmountChange = useCallback((slot: 'debt' | 'collateral' | 'interest', val: string) => {
+    if (slot === 'debt') {
+      const current = form.debtAssets[0] ?? emptyAsset()
+      form.setDebtAssets([{ ...current, value: val }])
+    } else if (slot === 'collateral') {
+      const current = form.collateralAssets[0] ?? emptyAsset()
+      form.setCollateralAssets([{ ...current, value: val }])
     } else {
-      handleFinalizeInscription()
+      const current = form.interestAssets[0] ?? emptyAsset()
+      form.setInterestAssets([{ ...current, value: val }])
     }
-  }
+  }, [form])
 
-  const handleFinalizeInscription = () => {
-    if (status !== 'connected') {
-      toast.error('Connect wallet first')
-      return
+  const handleMaxClick = useCallback((slot: 'debt' | 'collateral' | 'interest') => {
+    const asset = slot === 'debt' ? debtAsset : slot === 'collateral' ? collateralAsset : interestAsset
+    const balance = slot === 'debt' ? debtBalance : slot === 'collateral' ? collateralBalance : interestBalance
+    const token = asset.asset ? findTokenByAddress(asset.asset) : null
+    if (token && balance) {
+      const formatted = formatTokenValue(balance.toString(), token.decimals)
+      if (slot === 'debt') form.setDebtAssets([{ ...debtAsset, value: formatted }])
+      else if (slot === 'collateral') form.setCollateralAssets([{ ...collateralAsset, value: formatted }])
+      else form.setInterestAssets([{ ...interestAsset, value: formatted }])
     }
-    if (!data.name.trim()) {
-      toast.error('Enter an artifact name')
-      return
-    }
-    const filledAssets = data.assets.filter((a) => a.amount && Number(a.amount) > 0)
-    if (filledAssets.length === 0) {
-      toast.error('Enter an amount for at least one asset')
-      return
-    }
-    toast('Signing inscription...')
-    router.push('/trade?mode=advanced')
-  }
+  }, [form, debtAsset, collateralAsset, interestAsset, debtBalance, collateralBalance, interestBalance])
 
-  const addAsset = () => {
-    setData((prev) => ({
-      ...prev,
-      assets: [...prev.assets, { token: tokens[0], amount: '' }],
-    }))
-  }
+  /* ── Match state analysis ──── */
 
-  const removeAsset = (idx: number) => {
-    setData((prev) => ({
-      ...prev,
-      assets: prev.assets.filter((_, i) => i !== idx),
-    }))
-  }
+  const hasTokens = form.hasDebt && form.hasCollateral
+  const showMatches = form.matchesVisible && form.hasMatches
+  const totalMatches = showMatches ? form.offchainMatches.length + form.onchainMatches.length : 0
+  const sel = form.multiSettleSelection
+  const coverage = sel?.coverage ?? 0
+  const hasFullMatch = showMatches && sel != null && coverage >= 100
+  const hasPartialMatch = showMatches && sel != null && coverage > 0 && coverage < 100
+  const isProcessing = form.isPending || form.isCreatingOnChain || form.isSettling || form.isSettlingOnChain || form.multiSettleState.phase !== 'idle'
 
-  const updateAssetAmount = (idx: number, amount: string) => {
-    setData((prev) => ({
-      ...prev,
-      assets: prev.assets.map((a, i) => (i === idx ? { ...a, amount } : a)),
-    }))
-  }
+  const feeText = (feePreview.effectiveTotalBps / 100).toFixed(2) + '%'
 
-  const getTokenBalance = (token: TokenInfo): string => {
-    const addr = token.addresses[NETWORK]?.toLowerCase() ?? ''
-    const rawBalance = balances.get(addr)
-    return rawBalance !== undefined
-      ? formatTokenValue(rawBalance.toString(), token.decimals)
-      : '--'
-  }
-
-  const activeAssetToken = assetModalIndex !== null ? data.assets[assetModalIndex]?.token : undefined
-  const activeSelectedAddress = activeAssetToken?.addresses[NETWORK] ?? ''
-
-  const handleAssetTokenSelect = (token: TokenInfo) => {
-    if (assetModalIndex === null) return
-    setData((prev) => ({
-      ...prev,
-      assets: prev.assets.map((a, i) => (i === assetModalIndex ? { ...a, token } : a)),
-    }))
-  }
+  const handleFill = useCallback((_order: MatchedOrder | OnChainMatch, _source: 'offchain' | 'onchain') => {
+    // BestTradesPanel fill — handled via main submit flow
+  }, [])
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh] p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative bg-surface w-full max-w-xl rounded-[3rem] border border-border shadow-2xl overflow-hidden"
-      >
-        <div className="p-12">
-          {/* Header with progress dots */}
-          <div className="flex items-center justify-between mb-12">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center border border-accent/20">
-                <Sparkles className="text-accent" size={24} />
+    <div className="max-w-5xl mx-auto space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Borrow Assets</h1>
+        <p className="text-gray-500 mt-1 font-medium text-sm">
+          Borrow tokens by locking collateral and paying interest.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        {/* Left column -- form */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
+          <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-2xl">
+            {/* Tab toggle */}
+            <div className="flex p-1.5 bg-white/[0.02] m-6 rounded-xl border border-border">
+              <button
+                onClick={() => router.push('/lend')}
+                className="flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-gray-300 cursor-pointer"
+              >
+                Lend Assets
+              </button>
+              <button className="flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-[0.2em] bg-white text-black shadow-xl">
+                Borrow Assets
+              </button>
+            </div>
+
+            <div className="px-6 pb-6 space-y-4">
+              {/* 3 Baskets */}
+              <div className="space-y-1">
+                <TokenBox
+                  label="I Want to Borrow"
+                  accentClass="text-green-500"
+                  borderClass="border-green-500/20"
+                  bgClass="bg-green-500/5"
+                  asset={debtAsset}
+                  balance={debtBalance}
+                  onTokenClick={() => setOpenSelector('debt')}
+                  onAmountChange={(val) => handleAmountChange('debt', val)}
+                />
+
+                <TokenBox
+                  label="I'll Lock as Collateral"
+                  accentClass="text-orange-400"
+                  borderClass="border-orange-400/20"
+                  bgClass="bg-orange-400/5"
+                  asset={collateralAsset}
+                  balance={collateralBalance}
+                  onTokenClick={() => setOpenSelector('collateral')}
+                  onAmountChange={(val) => handleAmountChange('collateral', val)}
+                  onMaxClick={() => handleMaxClick('collateral')}
+                />
+
+                <TokenBox
+                  label="I'll Pay as Interest"
+                  accentClass="text-accent"
+                  borderClass="border-accent/20"
+                  bgClass="bg-accent/5"
+                  asset={interestAsset}
+                  balance={interestBalance}
+                  onTokenClick={() => setOpenSelector('interest')}
+                  onAmountChange={(val) => handleAmountChange('interest', val)}
+                  onMaxClick={() => handleMaxClick('interest')}
+                />
               </div>
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight text-white">Inscribe</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  {[1, 2, 3, 4].map((s) => (
-                    <div
-                      key={s}
-                      className={`h-1 rounded-full transition-all duration-500 ${
-                        step >= s ? 'w-6 bg-accent' : 'w-2 bg-white/10'
+
+              {/* Validation Errors */}
+              {form.showErrors && (!form.hasDebt || !form.hasCollateral) && (
+                <div className="px-4 py-3 rounded-lg border border-red-500/20 bg-red-500/5">
+                  <p className="text-xs text-red-400 font-medium">
+                    {!form.hasDebt && 'Select a token to borrow. '}
+                    {!form.hasCollateral && 'Select the collateral to lock.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Duration */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Loan Duration</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {DURATION_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      type="button"
+                      onClick={() => form.setDurationPreset(p.seconds.toString())}
+                      className={`py-1.5 px-3 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                        form.durationPreset === p.seconds.toString()
+                          ? 'border-accent/40 bg-accent/10 text-accent'
+                          : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
                       }`}
-                    />
+                    >{p.label}</button>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Step content */}
-          <div className="min-h-[400px] flex flex-col justify-center">
-            <AnimatePresence mode="wait">
-              {isSuccess ? (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center space-y-8"
-                >
-                  <div className="w-32 h-32 bg-green-500/10 rounded-full flex items-center justify-center mx-auto border border-green-500/20 relative">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2, type: 'spring' }}
-                    >
-                      <Check className="text-green-500" size={64} />
-                    </motion.div>
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="absolute inset-0 rounded-full border-2 border-green-500/30"
-                    />
+              {/* Deadline */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Order Expiry</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {LEND_DEADLINE_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      type="button"
+                      onClick={() => form.setDeadlinePreset(p.seconds.toString())}
+                      className={`py-1.5 px-3 rounded-lg text-xs border transition-all cursor-pointer font-medium ${
+                        form.deadlinePreset === p.seconds.toString()
+                          ? 'border-accent/40 bg-accent/10 text-accent'
+                          : 'border-border/50 text-gray-400 hover:text-white hover:border-white/20'
+                      }`}
+                    >{p.label}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mode + Funding */}
+              <div className="flex flex-wrap gap-4">
+                <div className="space-y-2">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Mode</span>
+                  <div className="flex gap-1">
+                    {(['offchain', 'onchain'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => form.setMode(m)}
+                        className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
+                          form.mode === m
+                            ? 'bg-accent/10 text-accent border border-accent/25'
+                            : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
+                        }`}
+                      >
+                        {m === 'offchain' ? 'Off-Chain' : 'On-Chain'}
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-4">
-                    <h3 className="text-3xl font-bold text-white tracking-tight">
-                      Inscription Complete
-                    </h3>
-                    <p className="text-gray-500 max-w-xs mx-auto leading-relaxed">
-                      Your Stela has been etched into the StarkNet ledger. It is now a permanent
-                      digital artifact.
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Funding</span>
+                  <div className="flex gap-1">
+                    {([
+                      { value: 'single', label: 'Single' },
+                      { value: 'multi', label: 'Multi' },
+                    ] as const).map((f) => (
+                      <button
+                        key={f.value}
+                        type="button"
+                        onClick={() => form.setMultiLender(f.value === 'multi')}
+                        className={`py-1 px-2.5 rounded-sm text-[10px] font-medium transition-colors cursor-pointer ${
+                          (form.multiLender ? 'multi' : 'single') === f.value
+                            ? 'bg-accent/10 text-accent border border-accent/25'
+                            : 'text-gray-400 hover:text-white border border-border/40 hover:border-white/20'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Checking indicator */}
+              {form.isChecking && hasTokens && (
+                <div className="flex items-center justify-center gap-2 py-3 text-gray-400 text-xs">
+                  <Spinner className="h-3.5 w-3.5" />
+                  Checking for matches...
+                </div>
+              )}
+
+              {/* Match status bar */}
+              {hasTokens && showMatches && !form.isChecking && (
+                <div className="flex items-center gap-2 px-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  <span className="text-xs text-accent font-bold uppercase tracking-wider">
+                    {hasFullMatch ? 'Fully Matched' : hasPartialMatch ? `${coverage}% Matched` : 'Matches Available'}
+                  </span>
+                  <span className="text-[10px] text-gray-400">
+                    {totalMatches} order{totalMatches !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
+
+              {/* Settings box when no full match */}
+              {hasTokens && !hasFullMatch && !form.isChecking && (
+                <div className={`rounded-lg border p-3 ${
+                  hasPartialMatch ? 'border-accent/20 bg-accent/5' : 'border-border/30 bg-surface/5'
+                }`}>
+                  {hasPartialMatch ? (
+                    <p className="text-xs text-gray-400">
+                      Fill the matched {coverage}% and create an order for the remainder.
                     </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setIsSuccess(false)
-                      setStep(1)
-                      setData({
-                        name: '',
-                        assets: [{ token: tokens[0], amount: '' }],
-                        duration: 0,
-                        lendEnabled: true,
-                        swapEnabled: true,
-                      })
-                    }}
-                    className="bg-white text-black px-12 py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-gray-200 transition-all shadow-2xl shadow-white/5 cursor-pointer"
+                  ) : showMatches ? (
+                    <p className="text-xs text-gray-400">
+                      Enter amounts to fill existing orders, or create a new borrow order.
+                    </p>
+                  ) : (
+                    <div>
+                      <p className="text-xs text-white font-medium">No matches found</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        Create a borrow order to broadcast your request to lenders.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Fee breakdown */}
+              {hasTokens && <FeeBreakdown type="lending" />}
+
+              {/* Submit button */}
+              {hasTokens && (
+                <Web3ActionWrapper message="Connect your wallet to borrow" centered={false}>
+                  <Button
+                    variant="default"
+                    className="w-full uppercase tracking-[0.15em] text-sm"
+                    onClick={form.handleSubmit}
+                    disabled={isProcessing || form.isChecking}
                   >
-                    Create Another
-                  </button>
-                </motion.div>
-              ) : (
-                <>
-                  {/* Step 1: Identity */}
-                  {step === 1 && (
-                    <motion.div
-                      key="step1"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="space-y-8"
-                    >
-                      <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-white tracking-tight">
-                          Identity of the Artifact
-                        </h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">
-                          Give your Stela a unique name. This will be etched into the protocol
-                          forever.
-                        </p>
+                    {isProcessing ? (
+                      <div className="flex items-center gap-2">
+                        <Spinner />
+                        Processing...
                       </div>
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
-                          Artifact Name
-                        </label>
-                        <input
-                          type="text"
-                          value={data.name}
-                          onChange={(e) => setData({ ...data, name: e.target.value })}
-                          placeholder="e.g. Genesis Vault"
-                          className="w-full bg-white/[0.02] border border-border rounded-2xl p-6 outline-none focus:border-accent/40 transition-all text-lg placeholder:text-gray-800 font-bold"
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 2: Assets */}
-                  {step === 2 && (
-                    <motion.div
-                      key="step2"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="space-y-8"
-                    >
-                      <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-white tracking-tight">
-                          Select Underlying Assets
-                        </h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">
-                          Choose the tokens you want to lock within this Stela. You can add multiple
-                          assets.
-                        </p>
-                      </div>
-
-                      <div className="space-y-4">
-                        {data.assets.map((asset, idx) => (
-                          <div key={idx}>
-                            <div className="grid grid-cols-[1fr_1fr_auto] gap-4">
-                              <div className="bg-white/[0.02] rounded-2xl h-14 px-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
-                                <button
-                                  type="button"
-                                  onClick={() => setAssetModalIndex(idx)}
-                                  className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                                >
-                                  <TokenAvatar token={asset.token} size={20} />
-                                  <span className="font-bold text-sm text-white truncate">
-                                    {asset.token.symbol}
-                                  </span>
-                                </button>
-                                <ChevronDown
-                                  size={16}
-                                  className="text-gray-700 shrink-0 pointer-events-none"
-                                />
-                              </div>
-                              <div className="bg-white/[0.02] rounded-2xl h-14 px-5 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
-                                <input
-                                  type="number" inputMode="decimal" step="any"
-                                  value={asset.amount}
-                                  onChange={(e) => updateAssetAmount(idx, e.target.value)}
-                                  placeholder="0.00"
-                                  className="bg-transparent font-mono font-bold text-lg outline-none w-full placeholder:text-gray-800"
-                                />
-                              </div>
-                              {data.assets.length > 1 && (
-                                <button
-                                  onClick={() => removeAsset(idx)}
-                                  className="h-14 w-10 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors rounded-xl"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
-                            </div>
-                            <div className="mt-1 px-1">
-                              <span className="text-[10px] text-gray-500">
-                                Balance: {getTokenBalance(asset.token)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                        <button
-                          onClick={addAsset}
-                          className="w-full py-4 border border-dashed border-white/10 rounded-2xl text-[10px] font-bold text-gray-500 uppercase tracking-widest hover:border-accent/40 hover:text-accent transition-all cursor-pointer"
-                        >
-                          + Add Another Asset
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 3: Configuration */}
-                  {step === 3 && (
-                    <motion.div
-                      key="step3"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="space-y-8"
-                    >
-                      <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-white tracking-tight">
-                          Configuration &amp; Permissions
-                        </h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">
-                          Set the lock duration. If set to 0, your Stela remains liquid, allowing
-                          for instant swaps and lending.
-                        </p>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="space-y-3">
-                          <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 px-1">
-                            Lock Duration (Days)
-                          </label>
-                          <div className="bg-white/[0.02] rounded-2xl p-6 flex items-center justify-between border border-border group focus-within:border-accent/40 transition-all">
-                            <input
-                              type="number" inputMode="decimal" step="any"
-                              value={data.duration}
-                              onChange={(e) =>
-                                setData({ ...data, duration: Number(e.target.value) })
-                              }
-                              className="bg-transparent font-mono font-bold text-xl outline-none w-full"
-                            />
-                            <span
-                              className={`text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap ${
-                                data.duration === 0
-                                  ? 'bg-green-500/10 text-green-500'
-                                  : 'bg-orange-500/10 text-orange-500'
-                              }`}
-                            >
-                              {data.duration === 0 ? 'LIQUID' : 'LOCKED'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <button
-                            onClick={() =>
-                              setData({ ...data, lendEnabled: !data.lendEnabled })
-                            }
-                            className={`p-6 rounded-2xl border transition-all flex flex-col gap-3 cursor-pointer ${
-                              data.lendEnabled
-                                ? 'bg-accent/10 border-accent/40'
-                                : 'bg-white/[0.02] border-border opacity-50'
-                            }`}
-                          >
-                            <Zap
-                              size={20}
-                              className={data.lendEnabled ? 'text-accent' : 'text-gray-600'}
-                            />
-                            <div className="text-left">
-                              <span className="text-xs font-bold text-white block">
-                                Lend Enabled
-                              </span>
-                              <span className="text-[10px] text-gray-500">
-                                Allow as collateral
-                              </span>
-                            </div>
-                          </button>
-                          <button
-                            onClick={() =>
-                              setData({ ...data, swapEnabled: !data.swapEnabled })
-                            }
-                            className={`p-6 rounded-2xl border transition-all flex flex-col gap-3 cursor-pointer ${
-                              data.swapEnabled
-                                ? 'bg-accent/10 border-accent/40'
-                                : 'bg-white/[0.02] border-border opacity-50'
-                            }`}
-                          >
-                            <ArrowLeftRight
-                              size={20}
-                              className={data.swapEnabled ? 'text-accent' : 'text-gray-600'}
-                            />
-                            <div className="text-left">
-                              <span className="text-xs font-bold text-white block">
-                                Swap Enabled
-                              </span>
-                              <span className="text-[10px] text-gray-500">
-                                Allow instant exit
-                              </span>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 4: Review */}
-                  {step === 4 && (
-                    <motion.div
-                      key="step4"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="space-y-10"
-                    >
-                      <div className="text-center space-y-4">
-                        <div className="w-24 h-24 bg-accent/10 rounded-[2rem] flex items-center justify-center mx-auto border border-accent/20 shadow-2xl shadow-accent/10">
-                          <Layers className="text-accent" size={48} />
-                        </div>
-                        <h3 className="text-3xl font-bold text-white tracking-tight">
-                          Finalize Inscription
-                        </h3>
-                        <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">
-                          Review your Stela parameters. Once inscribed, the core structure is
-                          immutable.
-                        </p>
-                      </div>
-
-                      <div className="bg-white/[0.02] rounded-[2.5rem] border border-border p-10 space-y-8 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-50" />
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
-                            Artifact Name
-                          </span>
-                          <span className="text-base font-bold text-white tracking-tight">
-                            {data.name || 'Untitled Artifact'}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
-                            Locked Assets
-                          </span>
-                          <div className="flex items-center gap-3">
-                            <div className="flex -space-x-2">
-                              {data.assets.map((a, i) => (
-                                <div
-                                  key={i}
-                                  className="w-8 h-8 rounded-full bg-surface border-2 border-surface flex items-center justify-center overflow-hidden"
-                                >
-                                  <TokenAvatar token={a.token} size={28} />
-                                </div>
-                              ))}
-                            </div>
-                            <span className="font-mono font-bold text-white text-sm">
-                              {data.assets.length} Asset
-                              {data.assets.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
-                            Duration
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                data.duration === 0 ? 'bg-green-500' : 'bg-orange-500'
-                              }`}
-                            />
-                            <span
-                              className={`text-xs font-bold ${
-                                data.duration === 0 ? 'text-green-500' : 'text-orange-500'
-                              }`}
-                            >
-                              {data.duration === 0
-                                ? 'Liquid Artifact'
-                                : `${data.duration} Days Lock`}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="pt-8 border-t border-white/5 flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
-                              Network
-                            </span>
-                            <span className="text-[10px] text-accent font-bold uppercase tracking-widest mt-1">
-                              StarkNet {NETWORK === 'sepolia' ? 'Sepolia' : 'Mainnet'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </>
+                    ) : form.isChecking ? (
+                      'Checking...'
+                    ) : hasFullMatch ? (
+                      'Fill Match'
+                    ) : hasPartialMatch ? (
+                      `Fill ${coverage}% + Create Order`
+                    ) : showMatches && !sel ? (
+                      'Fill Match'
+                    ) : form.mode === 'offchain' ? (
+                      'Sign & Create Borrow Order'
+                    ) : (
+                      'Create On-Chain Inscription'
+                    )}
+                  </Button>
+                </Web3ActionWrapper>
               )}
-            </AnimatePresence>
-          </div>
 
-          {/* Navigation buttons */}
-          {!isSuccess && (
-            <div className="flex items-center gap-4 mt-12">
-              {step > 1 && (
-                <button
-                  onClick={goBack}
-                  className="flex-1 bg-white/5 text-white py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/10 border border-white/5 cursor-pointer"
-                >
-                  Back
-                </button>
+              {!hasTokens && (
+                <Web3ActionWrapper message="Connect your wallet to borrow" centered={false}>
+                  <Button variant="default" className="w-full uppercase tracking-wider" disabled>
+                    Select tokens to borrow
+                  </Button>
+                </Web3ActionWrapper>
               )}
-              <button
-                onClick={goNext}
-                className="flex-[2] bg-white text-black py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-200 shadow-2xl shadow-white/5 flex items-center justify-center gap-3 cursor-pointer"
-              >
-                {step === 4 ? (
-                  <>
-                    <Sparkles size={18} />
-                    Finalize Inscription
-                  </>
-                ) : (
-                  'Continue'
-                )}
-              </button>
+
+              {/* Best Trades Panel */}
+              {hasTokens && (
+                <BestTradesPanel
+                  offchainMatches={form.offchainMatches}
+                  onchainMatches={form.onchainMatches}
+                  isChecking={form.isChecking}
+                  mode="lending"
+                  onFill={handleFill}
+                  isSettling={isProcessing}
+                />
+              )}
+
+              {/* Info strip */}
+              {hasTokens && !form.isChecking && (
+                <div className="flex items-center justify-center gap-3 text-[11px] text-gray-500">
+                  {!hasFullMatch && (
+                    <>
+                      <span className={form.mode === 'offchain' ? 'text-green-500' : 'text-accent'}>
+                        {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
+                      </span>
+                      <span className="text-gray-600">·</span>
+                    </>
+                  )}
+                  <span className={feePreview.savingsBps > 0 ? 'text-green-500' : ''}>
+                    {feeText} fee
+                    {feePreview.savingsBps > 0 && <span className="text-gray-500 ml-0.5">(-{feePreview.discountPercent}%)</span>}
+                  </span>
+                  {!hasFullMatch && (
+                    <>
+                      <span className="text-gray-600">·</span>
+                      <span>{formatDurationHuman(Number(form.duration))}</span>
+                    </>
+                  )}
+                  {form.roiInfo && (
+                    <>
+                      <span className="text-gray-600">·</span>
+                      <span className="text-green-500 font-medium">+{form.roiInfo.yieldPct}%</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </motion.div>
 
-      {/* Single shared modal for all asset token selections */}
+        {/* Right column -- summary */}
+        <div className="lg:col-span-2">
+          <div className="bg-surface rounded-2xl border border-border p-6 sticky top-24 space-y-6">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+              Borrow Summary
+            </h3>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Borrowing</span>
+                <span className="font-mono font-bold text-sm text-white">
+                  {debtAsset.asset ? (
+                    <span className="flex items-center gap-1.5">
+                      {debtAsset.value || '0'}{' '}
+                      {findTokenByAddress(debtAsset.asset)?.symbol ?? '?'}
+                    </span>
+                  ) : '--'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Collateral</span>
+                <span className="font-mono font-bold text-sm text-white">
+                  {collateralAsset.asset ? (
+                    <span className="flex items-center gap-1.5">
+                      {collateralAsset.value || '0'}{' '}
+                      {findTokenByAddress(collateralAsset.asset)?.symbol ?? '?'}
+                    </span>
+                  ) : '--'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Interest</span>
+                <span className="font-mono font-bold text-sm text-white">
+                  {interestAsset.asset ? (
+                    <span className="flex items-center gap-1.5">
+                      {interestAsset.value || '0'}{' '}
+                      {findTokenByAddress(interestAsset.asset)?.symbol ?? '?'}
+                    </span>
+                  ) : '--'}
+                </span>
+              </div>
+              <div className="h-px bg-border" />
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Duration</span>
+                <span className="font-bold text-sm text-white">
+                  {formatDurationHuman(Number(form.duration))}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Protocol Fee</span>
+                <span className="font-bold text-sm text-white">{feeText}</span>
+              </div>
+              {form.roiInfo && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm">Interest Rate</span>
+                  <span className="font-bold text-sm text-orange-400">+{form.roiInfo.yieldPct}%</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Mode</span>
+                <span className="text-xs font-bold text-accent flex items-center gap-1.5 uppercase tracking-widest">
+                  {form.mode === 'offchain' ? 'Gasless' : 'On-Chain'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Funding</span>
+                <span className="text-xs font-bold text-white uppercase tracking-widest">
+                  {form.multiLender ? 'Multi-Lender' : 'Single Lender'}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white/[0.02] rounded-xl p-4 border border-border space-y-3">
+              <div className="flex items-center gap-2 text-accent">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Collateral Protected</span>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                Your collateral is locked in a StarkNet smart contract locker. Repay the loan to unlock it. Pro-rata interest means you only pay for time borrowed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Token Selector Modals ─────────────────────────── */}
       <TokenSelectorModal
-        open={assetModalIndex !== null}
-        onOpenChange={(open) => { if (!open) setAssetModalIndex(null) }}
-        onSelect={handleAssetTokenSelect}
-        selectedAddress={activeSelectedAddress}
-        balances={balances}
+        open={openSelector === 'debt'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('debt', token)}
+        selectedAddress={debtAsset.asset}
         showCustomOption={false}
+        balances={form.balances}
       />
+      <TokenSelectorModal
+        open={openSelector === 'collateral'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('collateral', token)}
+        selectedAddress={collateralAsset.asset}
+        showCustomOption={false}
+        balances={form.balances}
+      />
+      <TokenSelectorModal
+        open={openSelector === 'interest'}
+        onOpenChange={(open) => { if (!open) setOpenSelector(null) }}
+        onSelect={(token) => handleTokenSelect('interest', token)}
+        selectedAddress={interestAsset.asset}
+        showCustomOption={false}
+        balances={form.balances}
+      />
+
+      {/* ── Progress Modals ───────────────────────────────── */}
+      {(() => {
+        const active = [form.createProgress, form.settleProgress, form.onchainProgress, form.onchainSettleProgress].find(p => p.open)
+        const multiOpen = form.multiSettleModalOpen && form.multiSettleState.phase !== 'idle'
+        if (active && !multiOpen) {
+          return (
+            <TransactionProgressModal
+              open
+              steps={active.steps}
+              txHash={active.txHash}
+              onClose={active.close}
+            />
+          )
+        }
+        if (multiOpen) {
+          return (
+            <MultiSettleProgressModal
+              open
+              state={form.multiSettleState}
+              onClose={() => {
+                form.setMultiSettleModalOpen(false)
+                form.resetMultiSettle()
+              }}
+            />
+          )
+        }
+        return null
+      })()}
     </div>
   )
 }
